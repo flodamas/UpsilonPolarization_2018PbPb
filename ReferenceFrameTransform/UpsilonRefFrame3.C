@@ -54,16 +54,9 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 
   	// ******** Create a Ntuple to store kinematics of Upsilon and daughter muons ******** //
   	gROOT -> cd();
-  	// TString varlist_Lab = "upsM:upsRap:upsPt:upsPz:upsEta:upsPhi:upsCosTheta:muplPt:muplPz:muplEta:muplPhi:muplCosTheta:mumiPt:mumiPz:mumiEta:mumiPhi";
-  	TString varlist_LabUps = "upsM:upsRap:upsPt:upsPz:upsEta:upsPhi:upsCosTheta";
-  	TString varlist_LabMu = "muplPt:muplPz:muplEta:muplPhi:muplCosTheta:mumiPt:mumiPz:mumiEta:mumiPhi";
-  	TString varlist_HX = "muplCosThetaPrimeHX:muplPhiPrimeHX";
-  	TString varlist_CS = "muplCosThetaPrimeCS:muplPhiPrimeCS";
+  	TString varlist = "upsM:upsRap:upsPt:upsPz:upsEta:upsPhi:upsCosTheta:muplPt:muplPz:muplEta:muplPhi:muplCosTheta:mumiPt:mumiPz:mumiEta:mumiPhi:muplM:muplCosThetaPrimeHX:muplPhiPrimeHX:muplCosThetaPrimeCS:muplPhiPrimeCS";
+  	TNtuple* UpsMuNTuple = new TNtuple("UpsMuKinematics", "Upsilon in the lab frame ntuple", varlist);
 
-  	TNtuple* LabupsNTuple = new TNtuple("LabUpsKinematics", "Upsilon in the lab frame ntuple", varlist_LabUps);
-  	TNtuple* LabmuNTuple = new TNtuple("LabMuKinematics", "muons in the lab frame ntuple", varlist_LabMu);
-  	TNtuple* HXNTuple = new TNtuple("HXKinematics", "Upsilon in HX frame ntuple", varlist_HX);
-  	TNtuple* CSNTuple = new TNtuple("CSKinematics", "Upsilon in CS frame ntuple", varlist_CS);
 
 	// ******** Set beam energy for the Collins-Soper reference frame ******** //
 	double sqrt_S_NN = 5.02; //(Center of mass Energy per nucleon pair in TeV)
@@ -159,26 +152,6 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 				Reco_mumi_pz = Reco_mumi_4mom->Pz();
 				Reco_mumi_E = Reco_mumi_4mom->Energy();	
 
-				// ******** Fill LabNtuple with kinematics of upsilon and muons in the Lab Frame ******** //
-				LabupsNTuple -> Fill(
-				  Reco_QQ_m,
-			      Reco_QQ_y,
-			      Reco_QQ_pt,
-			      Reco_QQ_pz,
-			      Reco_QQ_eta,
-			      Reco_QQ_phi,
-			      Reco_QQ_costheta);
-				LabmuNTuple -> Fill(
-			      Reco_mupl_pt,
-			      Reco_mupl_pz,
-			      Reco_mupl_eta,
-			      Reco_mupl_phi,
-			      Reco_mupl_costheta,
-			      Reco_mumi_pt,
-			      Reco_mumi_pz,
-			      Reco_mumi_eta,
-			      Reco_mumi_phi);
-
 
 				// ******** Construct 4-momentum vector of upsilon, muons, and beams (Lab Frame) ******** //
 				// (documetation of TVector3 and TLorentzVector: https://root.cern.ch/root/html534/guides/users-guide/PhysicsVectors.html#lorentz-boost)
@@ -204,6 +177,7 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 				cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
 				cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
 
+				// cout << "ups |P|: " << ups4MomLab.P() << endl;
 
 				// ******** Rotate the lab frame so that z-axis heads to upsilon's momentum direction and x-axis is on the production plane ******** //
 				// (Note. TVector3.Ratate() rotates the vectors not the coordinates, so should rotate -phi and -theta)
@@ -225,6 +199,9 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 				ups4MomLab.SetY(upsPvecLab.Py());
 				ups4MomLab.SetZ(upsPvecLab.Pz());
 
+				// cout << "ups |P| after rotation: " << ups4MomLab.P() << endl;
+				// cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
+
 				// ******** Transform variables of muons from the lab frame to the upsilon's rest frame ******** //
 				TLorentzVector ups4MomBoosted(upsPvecLab,Reco_QQ_E);   
 				TLorentzVector mupl4MomBoosted(muplPvecLab,Reco_mupl_E);
@@ -243,10 +220,6 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 				cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
 				cout << "mu+: p = (" << mupl4MomBoosted.Px() << ", " << mupl4MomBoosted.Py()  << ", " << mupl4MomBoosted.Pz() << ")" << endl;
 				cout << "mu-: p = (" << mumi4MomBoosted.Px() << ", " << mumi4MomBoosted.Py()  << ", " << mumi4MomBoosted.Pz() << ")" << endl;
-
-
-				// ******** Fill HXNtuple with kinematics of upsilon and muons in the Helicity Frame ******** //
-				HXNTuple -> Fill(mupl4MomBoosted.CosTheta(), mupl4MomBoosted.Phi());
 
 
 				// ******** HX to CS (rotation from HX frame to CS frame) ******** //
@@ -305,10 +278,35 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 				// cout << endl;
 				// cout << "Rotated unit Vec: (" << ZHXunitVec.Px() << ", " << ZHXunitVec.Py() << ", " << ZHXunitVec.Pz() << ")" << endl;
 
- 				// ******** Fill CSNtuple with kinematics of upsilon and muons in the Collis-Soper Frame ******** //
-				CSNTuple -> Fill(muplPvecBoostedCS.CosTheta(), muplPvecBoostedCS.Phi());
+				// ******** Fill Ntuple with kinematics of upsilon and muons in the Lab, HX, and CS frames******** //
+				float tuple[] = {
+				  static_cast<float>(Reco_QQ_m),
+			      static_cast<float>(Reco_QQ_y),
+			      static_cast<float>(Reco_QQ_pt),
+			      static_cast<float>(Reco_QQ_pz),
+			      static_cast<float>(Reco_QQ_eta),
+			      static_cast<float>(Reco_QQ_phi),
+			      static_cast<float>(Reco_QQ_costheta),
 
+			      static_cast<float>(Reco_mupl_pt),
+			      static_cast<float>(Reco_mupl_pz),
+			      static_cast<float>(Reco_mupl_eta),
+			      static_cast<float>(Reco_mupl_phi),
+			      static_cast<float>(Reco_mupl_costheta),
+			      static_cast<float>(Reco_mumi_pt),
+			      static_cast<float>(Reco_mumi_pz),
+			      static_cast<float>(Reco_mumi_eta),
+			      static_cast<float>(Reco_mumi_phi),
 
+			      static_cast<float>(mupl4MomBoosted.Mag()), 
+			      static_cast<float>(mupl4MomBoosted.CosTheta()), 
+			      static_cast<float>(mupl4MomBoosted.Phi()),
+
+			      static_cast<float>(muplPvecBoostedCS.CosTheta()), 
+			      static_cast<float>(muplPvecBoostedCS.Phi())
+			  	};
+				
+				UpsMuNTuple -> Fill(tuple);	
 
 			}
 
@@ -316,12 +314,9 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 	}
 
 	// ******** Create a file and store the ntuples ******** //
-	TFile* file = new TFile("Upsilon1S_Reference_Frames3.root","RECREATE","Upsilon 1S"); 
+	TFile* file = new TFile("Upsilon1S_Reference_Frames3_Reco.root","RECREATE","Upsilon 1S"); 
   	
-  	LabupsNTuple -> Write();
-  	LabmuNTuple -> Write();
-  	HXNTuple -> Write();
-  	CSNTuple -> Write();
+  	UpsMuNTuple -> Write();
 
   	file -> Close();
 
