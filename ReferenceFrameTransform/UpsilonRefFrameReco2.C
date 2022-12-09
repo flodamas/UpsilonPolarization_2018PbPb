@@ -16,7 +16,7 @@
 
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
 
-void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boost class in stead of the explicit maxtrix) 
+void UpsilonRefFrameReco2() { //version2 (In this version, I used TLorentzVector Boost class in stead of the explicit maxtrix) 
 
 	// ******** Start measuring time ******** //
 	clock_t start, end, cpu_time;
