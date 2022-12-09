@@ -25,8 +25,8 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 	// ******** Open OniaTree file ******** //
 	// (To get the file, type the command below on the CERN server)
 	// (xrdcp root://cms-xrd-global.cern.ch//store/user/fdamas//UpsilonPolarizationPbPb/MC/UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/Upsilon1S_pThat-2_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/220912_133418/0001/Oniatree_MC_numEvent1000_1342.root .)
-	TFile *infile = TFile::Open("Oniatree_MC_numEvent1000_1342.root");
-	// TFile *infile = TFile::Open("/eos/cms/store/group/phys_heavyions/dileptons/Data2018/PbPb502TeV/TTrees/MiniAOD/OniaTree_MiniAOD_2018DoubleMuonPD_GlbAndTrkMuon_MuonJSON_merged.root");//(a data file made by JaeBeom)
+	// TFile *infile = TFile::Open("Oniatree_MC_numEvent1000_1342.root");
+	TFile *infile = TFile::Open("/eos/cms/store/group/phys_heavyions/dileptons/Data2018/PbPb502TeV/TTrees/MiniAOD/OniaTree_MiniAOD_2018DoubleMuonPD_GlbAndTrkMuon_MuonJSON_merged.root");//(a data file made by JaeBeom)
 	TDirectoryFile *hionia = (TDirectoryFile*)gDirectory -> Get("hionia");
 	TTree *OniaTree = (TTree*)hionia -> Get("myTree");
 
@@ -51,6 +51,14 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 	Short_t Reco_QQ_mupl_idx[1000];
     Short_t Reco_QQ_mumi_idx[1000];	
 
+    Int_t Reco_mu_SelectionType[1000];
+    //(parameters for quality cuts)
+  	float_t Reco_QQ_VtxProb[66];
+    Int_t Reco_mu_nPixWMea[66];
+    Int_t Reco_mu_nTrkWMea[66];
+    float_t Reco_mu_dxy[1000];
+    float_t Reco_mu_dz[1000];
+
 	CloneArr_QQ = 0;
 	CloneArr_mu = 0;
 
@@ -63,6 +71,12 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 	OniaTree -> SetBranchAddress("Reco_QQ_sign", &Reco_QQ_sign);
 	OniaTree -> SetBranchAddress("Reco_QQ_mupl_idx", Reco_QQ_mupl_idx);
 	OniaTree -> SetBranchAddress("Reco_QQ_mumi_idx", Reco_QQ_mumi_idx);
+
+	OniaTree -> SetBranchAddress("Reco_QQ_VtxProb", &Reco_QQ_VtxProb);
+	OniaTree -> SetBranchAddress("Reco_mu_nPixWMea", &Reco_mu_nPixWMea);
+	OniaTree -> SetBranchAddress("Reco_mu_nTrkWMea", &Reco_mu_nTrkWMea);
+	OniaTree -> SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
+	OniaTree -> SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
     Double_t Reco_QQ_phi, Reco_QQ_costheta, Reco_QQ_pt, Reco_QQ_y, Reco_QQ_eta, Reco_QQ_px, Reco_QQ_py, Reco_QQ_pz, Reco_QQ_E, Reco_QQ_m;	
 	Double_t Reco_mupl_phi, Reco_mupl_costheta, Reco_mupl_pt, Reco_mupl_y, Reco_mupl_eta, Reco_mupl_px, Reco_mupl_py, Reco_mupl_pz, Reco_mupl_E;
@@ -90,7 +104,7 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 	// ******** Start the event loop - read onia tree and save values for bit 14 in Ntuples ******** //
 	for(int EveNum=0; EveNum<(totEntries); EveNum++){
 
-		cout << "*********************************************" << endl;
+		// cout << "*********************************************" << endl;
 
 		// ******** Show how much % of the process has been completed ******** //	
 		if(EveNum%100000==0){
@@ -105,7 +119,8 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 		// ******** Load the values ******** //
 		OniaTree -> GetEntry(EveNum); 
 
-		cout<< "Cen:" << Centrality << endl;
+		if( !((HLTriggers&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1))) ) continue;
+		// cout<< "Cen:" << Centrality << endl;
 
 		for(int QQEveNum=0; QQEveNum<Reco_QQ_size; QQEveNum++){
 
@@ -113,9 +128,39 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 			TLorentzVector *Reco_mupl_4mom = (TLorentzVector*) CloneArr_mu->At(Reco_QQ_mupl_idx[QQEveNum]);
 			TLorentzVector *Reco_mumi_4mom = (TLorentzVector*) CloneArr_mu->At(Reco_QQ_mumi_idx[QQEveNum]);
 
-			if( ((HLTriggers&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
-				&& ((Reco_QQ_trig[QQEveNum]&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
-				/*&&*/ (Reco_QQ_sign[QQEveNum])==0
+			// ******** Apply cuts ******** //
+
+		    bool passMuonTypePl = true;
+		    passMuonTypePl = passMuonTypePl && (Reco_mu_SelectionType[Reco_QQ_mupl_idx[QQEveNum]]&((int)pow(2,1)));
+		    passMuonTypePl = passMuonTypePl && (Reco_mu_SelectionType[Reco_QQ_mupl_idx[QQEveNum]]&((int)pow(2,3)));
+
+		    bool passMuonTypeMi = true;
+		    passMuonTypeMi = passMuonTypeMi && (Reco_mu_SelectionType[Reco_QQ_mumi_idx[QQEveNum]]&((int)pow(2,1)));
+		    passMuonTypeMi = passMuonTypeMi && (Reco_mu_SelectionType[Reco_QQ_mumi_idx[QQEveNum]]&((int)pow(2,3)));
+
+		    //(2018 Hybrid soft id cut)
+		    bool muplSoft = (  //(Reco_mu_TMOneStaTight[Reco_QQ_mupl_idx[irqq]]==true) &&
+		        (Reco_mu_nTrkWMea[Reco_QQ_mupl_idx[QQEveNum]] > 5) && // (at least 6 hits in the silicon strip layers)
+		        (Reco_mu_nPixWMea[Reco_QQ_mupl_idx[QQEveNum]] > 0) && // (at least 1 hit in the pixel detectors)
+		        (fabs(Reco_mu_dxy[Reco_QQ_mupl_idx[QQEveNum]])<0.3) && // (distance btw the track and the event vertex_xy <0.3cm)
+		        (fabs(Reco_mu_dz[Reco_QQ_mupl_idx[QQEveNum]])<20.) && // (distance btw the track and the event vertex_z <20cm)
+		        passMuonTypePl        //			 &&  (Reco_mu_highPurity[Reco_QQ_mupl_idx[irqq]]==true) 
+		        ) ; 
+
+	      	bool mumiSoft = ( //(Reco_mu_TMOneStaTight[Reco_QQ_mumi_idx[irqq]]==true) &&
+	        	(Reco_mu_nTrkWMea[Reco_QQ_mumi_idx[QQEveNum]] > 5) && // (at least 6 hits in the silicon strip layers)
+	            (Reco_mu_nPixWMea[Reco_QQ_mumi_idx[QQEveNum]] > 0) && // (at least 1 hit in the pixel detectors)
+	            (fabs(Reco_mu_dxy[Reco_QQ_mumi_idx[QQEveNum]])<0.3) && // (distance btw the track and the event vertex_xy <0.3cm)
+	            (fabs(Reco_mu_dz[Reco_QQ_mumi_idx[QQEveNum]])<20.)  && // (distance btw the track and the event vertex_z <20cm)
+	            passMuonTypeMi       //			 &&  (Reco_mu_highPurity[Reco_QQ_mupl_idx[irqq]]==true) 
+	            ) ; 
+
+	        if ( !(muplSoft && mumiSoft) ) continue;   
+	      
+	      	if ( Reco_QQ_VtxProb[QQEveNum]  < 0.01 ) continue;
+
+			if( ((Reco_QQ_trig[QQEveNum]&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
+				&& (Reco_QQ_sign[QQEveNum])==0
 				// && (Reco_QQ_type[QQEveNum]==1)
 				// && ((Reco_QQ_4mom->Pt())<50) 
 				// && (abs(Reco_QQ_4mom->Rapidity())<2.40) 	
@@ -124,16 +169,6 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 				&& (abs(Reco_mupl_4mom->Eta())<2.4)  
 				&& (abs(Reco_mumi_4mom->Eta())<2.4)  
 				// && (Centrality/2. >= 10 && Centrality/2. < 90)
-
-				// && (Reco_QQ_VtxProb[QQEveNum]>=0.01) // (reconstructed dimuon vertex probabiliy > 1%)
-				// && (Reco_mu_nTrkWMea[Reco_QQ_mupl_idx[QQEveNum]]>5)   // (at least 6 hits in the silicon strip layers)
-				// && (Reco_mu_nTrkWMea[Reco_QQ_mumi_idx[QQEveNum]]>5)
-				// && (Reco_mu_nPixWMea[Reco_QQ_mupl_idx[QQEveNum]]>0)   // (at least 1 hit in the pixel detectors)
-				// && (Reco_mu_nPixWMea[Reco_QQ_mumi_idx[QQEveNum]]>0)
-				// && (abs(Reco_mu_dxy[Reco_QQ_mupl_idx[QQEveNum]])<0.3) // (distance btw the track and the event vertex_xy <0.3cm)
-				// && (abs(Reco_mu_dxy[Reco_QQ_mumi_idx[QQEveNum]])<0.3)
-				// 	&& (abs(Reco_mu_dz[Reco_QQ_mupl_idx[QQEveNum]])<20.)  // (distance btw the track and the event vertex_z <20cm)
-				// && (abs(Reco_mu_dz[Reco_QQ_mumi_idx[QQEveNum]])<20.))
 				){
 
 				// ******** Store kinematics of upsilon and muons (Lab Frame) into variables ******** //
@@ -188,10 +223,10 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 				TLorentzVector beam24MomLab(beam2PvecLab, beam2_E);
 
 
-				cout << "<<In the lab frame>>" << endl;
-				cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
-				cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
-				cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
+				// cout << "<<In the lab frame>>" << endl;
+				// cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
+				// cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
+				// cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
 
 				// cout << "ups |P|: " << ups4MomLab.P() << endl;
 
@@ -231,11 +266,11 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 
 
 			    // ******** Print out momentums of upsilon and daughter muons in the upsilon's rest frame ******** //
-				cout << endl;
-				cout << "<<Rotated and Boosted to the quarkonium rest frame>>" << endl;
-				cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
-				cout << "mu+: p = (" << mupl4MomBoosted.Px() << ", " << mupl4MomBoosted.Py()  << ", " << mupl4MomBoosted.Pz() << ")" << endl;
-				cout << "mu-: p = (" << mumi4MomBoosted.Px() << ", " << mumi4MomBoosted.Py()  << ", " << mumi4MomBoosted.Pz() << ")" << endl;
+				// cout << endl;
+				// cout << "<<Rotated and Boosted to the quarkonium rest frame>>" << endl;
+				// cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
+				// cout << "mu+: p = (" << mupl4MomBoosted.Px() << ", " << mupl4MomBoosted.Py()  << ", " << mupl4MomBoosted.Pz() << ")" << endl;
+				// cout << "mu-: p = (" << mumi4MomBoosted.Px() << ", " << mumi4MomBoosted.Py()  << ", " << mumi4MomBoosted.Pz() << ")" << endl;
 
 
 				// ******** HX to CS (rotation from HX frame to CS frame) ******** //
@@ -253,11 +288,11 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 			    beam24MomBoosted.Boost(-ups4MomLab.BoostVector());
 
 			     // ******** Print out momentums of two beams in the upsilon's rest frame ******** //
-				cout << endl;
-				cout << "<<Rotated and Boosted to the quarkonium rest frame>>" << endl;
-				cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
-				cout << "beam1: p = (" << beam14MomBoosted.Px() << ", " << beam14MomBoosted.Py()  << ", " << beam14MomBoosted.Pz() << ")" << endl;
-				cout << "beam2: p = (" << beam24MomBoosted.Px() << ", " << beam24MomBoosted.Py()  << ", " << beam24MomBoosted.Pz() << ")" << endl;
+				// cout << endl;
+				// cout << "<<Rotated and Boosted to the quarkonium rest frame>>" << endl;
+				// cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
+				// cout << "beam1: p = (" << beam14MomBoosted.Px() << ", " << beam14MomBoosted.Py()  << ", " << beam14MomBoosted.Pz() << ")" << endl;
+				// cout << "beam2: p = (" << beam24MomBoosted.Px() << ", " << beam24MomBoosted.Py()  << ", " << beam24MomBoosted.Pz() << ")" << endl;
 
 				
 
@@ -281,10 +316,10 @@ void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the
 				else cout <<  "beam1PvecBoosted.Pz() = 0?" << endl;
 
 				// ******** Print out the angles ******** //
-				cout << endl;
-				cout << "angle between ZHX and b1: " << Angle_B1ZHX << endl;
-				cout << "angle between b1 and b2: " << Angle_B1miB2 << " (half: " << (Angle_B1miB2)/2. << ")"<< endl;
-				cout << "angle between ZHX and ZCS: " << delta << " (" << delta*180./M_PI << "deg)" << endl;
+				// cout << endl;
+				// cout << "angle between ZHX and b1: " << Angle_B1ZHX << endl;
+				// cout << "angle between b1 and b2: " << Angle_B1miB2 << " (half: " << (Angle_B1miB2)/2. << ")"<< endl;
+				// cout << "angle between ZHX and ZCS: " << delta << " (" << delta*180./M_PI << "deg)" << endl;
 
 
 				// ******** Rotate the coordinate along the y-axis by the angle between z_HX and z_CS ******** //
