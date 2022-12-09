@@ -5,8 +5,10 @@ This is the code to transform daughter muons in the lab frame to the Helicity, a
 
 ### File description
 - Oniatree_MC_numEvent1000_1342.root : Input Oniatree File
-- UpsilonRefFrame2.C : Boosted muons to the upsilon's rest frame and rotated the coordinate by $\phi$ and $\theta$ of upsilon in the lab frame.<br />
+- UpsilonRefFrameReco2.C : Boosted muons to the upsilon's rest frame and rotated the coordinate by $\phi$ and $\theta$ of upsilon in the lab frame.<br />
 (Used the same method in the sample code ([upsilonTwoBodyDecay.C](https://github.com/flodamas/UpsilonPolarization_2018PbPb/blob/main/upsilonTwoBodyDecay.C)).)
-- UpsilonRefFrame3.C : Rotated the coordinate by $\phi$ and $\theta$ of upsilon in the lab frame and boosted muons to the upsilon's rest frame.
+- UpsilonRefFrameReco3.C : Rotated the coordinate by $\phi$ and $\theta$ of upsilon in the lab frame and boosted muons to the upsilon's rest frame.
 
--> UpsilonRefFrame2.C and UpsilonRefFrame3.C give the same results.
+-> UpsilonRefFrameReco2.C and UpsilonRefFrameReoc3.C give the same results.
+
+- UpsilonRefFrameGen.C : Modifided "UpsilonRefFrameReco2.C" file to read GenOnly file produced in 2016
