@@ -25,8 +25,8 @@ void UpsilonRefFrameReco2() { //version2 (In this version, I used TLorentzVector
 	// ******** Open OniaTree file ******** //
 	// (To get the file, type the command below on the CERN server)
 	// (xrdcp root://cms-xrd-global.cern.ch//store/user/fdamas//UpsilonPolarizationPbPb/MC/UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/Upsilon1S_pThat-2_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/220912_133418/0001/Oniatree_MC_numEvent1000_1342.root .)
-	// TFile *infile = TFile::Open("Oniatree_MC_numEvent1000_1342.root"); //(a file from Florian (applied cuts are unknown))
-	TFile *infile = TFile::Open("/eos/cms/store/group/phys_heavyions/dileptons/Data2018/PbPb502TeV/TTrees/MiniAOD/OniaTree_MiniAOD_2018DoubleMuonPD_GlbAndTrkMuon_MuonJSON_merged.root");//(a new file made by JaeBeom)
+	// TFile *infile = TFile::Open("Oniatree_MC_numEvent1000_1342.root"); //(a MC file from Florian (applied cuts are unknown))
+	TFile *infile = TFile::Open("/eos/cms/store/group/phys_heavyions/dileptons/Data2018/PbPb502TeV/TTrees/MiniAOD/OniaTree_MiniAOD_2018DoubleMuonPD_GlbAndTrkMuon_MuonJSON_merged.root");//(a data file made by JaeBeom)
 	TDirectoryFile *hionia = (TDirectoryFile*)gDirectory -> Get("hionia");
 	TTree *OniaTree = (TTree*)hionia -> Get("myTree");
 
@@ -50,6 +50,14 @@ void UpsilonRefFrameReco2() { //version2 (In this version, I used TLorentzVector
 	Short_t Reco_QQ_mupl_idx[1000];
     Short_t Reco_QQ_mumi_idx[1000];	
 
+    Int_t Reco_mu_SelectionType[1000];
+    //(parameters for quality cuts)
+  	float_t Reco_QQ_VtxProb[66];
+    Int_t Reco_mu_nPixWMea[66];
+    Int_t Reco_mu_nTrkWMea[66];
+    float_t Reco_mu_dxy[1000];
+    float_t Reco_mu_dz[1000];
+
 	CloneArr_QQ = 0;
 	CloneArr_mu = 0;
 
@@ -62,6 +70,13 @@ void UpsilonRefFrameReco2() { //version2 (In this version, I used TLorentzVector
 	OniaTree -> SetBranchAddress("Reco_QQ_sign", &Reco_QQ_sign);
 	OniaTree -> SetBranchAddress("Reco_QQ_mupl_idx", Reco_QQ_mupl_idx);
 	OniaTree -> SetBranchAddress("Reco_QQ_mumi_idx", Reco_QQ_mumi_idx);
+	OniaTree -> SetBranchAddress("Reco_mu_SelectionType", Reco_mu_SelectionType);
+
+	OniaTree -> SetBranchAddress("Reco_QQ_VtxProb", &Reco_QQ_VtxProb);
+	OniaTree -> SetBranchAddress("Reco_mu_nPixWMea", &Reco_mu_nPixWMea);
+	OniaTree -> SetBranchAddress("Reco_mu_nTrkWMea", &Reco_mu_nTrkWMea);
+	OniaTree -> SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
+	OniaTree -> SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
     Double_t Reco_QQ_phi, Reco_QQ_costheta, Reco_QQ_pt, Reco_QQ_y, Reco_QQ_eta, Reco_QQ_px, Reco_QQ_py, Reco_QQ_pz, Reco_QQ_E, Reco_QQ_m;	
 	Double_t Reco_mupl_phi, Reco_mupl_costheta, Reco_mupl_pt, Reco_mupl_y, Reco_mupl_eta, Reco_mupl_px, Reco_mupl_py, Reco_mupl_pz, Reco_mupl_E;
@@ -103,6 +118,7 @@ void UpsilonRefFrameReco2() { //version2 (In this version, I used TLorentzVector
 		// ******** Load the values ******** //
 		OniaTree -> GetEntry(EveNum); 
 
+		if( !((HLTriggers&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1))) ) continue;
 		// cout<< "Cen:" << Centrality << endl;
 
 		for(int QQEveNum=0; QQEveNum<Reco_QQ_size; QQEveNum++){
@@ -112,8 +128,37 @@ void UpsilonRefFrameReco2() { //version2 (In this version, I used TLorentzVector
 			TLorentzVector *Reco_mumi_4mom = (TLorentzVector*) CloneArr_mu->At(Reco_QQ_mumi_idx[QQEveNum]);
 
 			// ******** Apply cuts ******** //
-			if( ((HLTriggers&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
-				&& ((Reco_QQ_trig[QQEveNum]&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
+
+		    bool passMuonTypePl = true;
+		    passMuonTypePl = passMuonTypePl && (Reco_mu_SelectionType[Reco_QQ_mupl_idx[QQEveNum]]&((int)pow(2,1)));
+		    passMuonTypePl = passMuonTypePl && (Reco_mu_SelectionType[Reco_QQ_mupl_idx[QQEveNum]]&((int)pow(2,3)));
+
+		    bool passMuonTypeMi = true;
+		    passMuonTypeMi = passMuonTypeMi && (Reco_mu_SelectionType[Reco_QQ_mumi_idx[QQEveNum]]&((int)pow(2,1)));
+		    passMuonTypeMi = passMuonTypeMi && (Reco_mu_SelectionType[Reco_QQ_mumi_idx[QQEveNum]]&((int)pow(2,3)));
+
+		    //(2018 Hybrid soft id cut)
+		    bool muplSoft = (  //(Reco_mu_TMOneStaTight[Reco_QQ_mupl_idx[irqq]]==true) &&
+		        (Reco_mu_nTrkWMea[Reco_QQ_mupl_idx[QQEveNum]] > 5) && // (at least 6 hits in the silicon strip layers)
+		        (Reco_mu_nPixWMea[Reco_QQ_mupl_idx[QQEveNum]] > 0) && // (at least 1 hit in the pixel detectors)
+		        (fabs(Reco_mu_dxy[Reco_QQ_mupl_idx[QQEveNum]])<0.3) && // (distance btw the track and the event vertex_xy <0.3cm)
+		        (fabs(Reco_mu_dz[Reco_QQ_mupl_idx[QQEveNum]])<20.) && // (distance btw the track and the event vertex_z <20cm)
+		        passMuonTypePl        //			 &&  (Reco_mu_highPurity[Reco_QQ_mupl_idx[irqq]]==true) 
+		        ) ; 
+
+	      	bool mumiSoft = ( //(Reco_mu_TMOneStaTight[Reco_QQ_mumi_idx[irqq]]==true) &&
+	        	(Reco_mu_nTrkWMea[Reco_QQ_mumi_idx[QQEveNum]] > 5) && // (at least 6 hits in the silicon strip layers)
+	            (Reco_mu_nPixWMea[Reco_QQ_mumi_idx[QQEveNum]] > 0) && // (at least 1 hit in the pixel detectors)
+	            (fabs(Reco_mu_dxy[Reco_QQ_mumi_idx[QQEveNum]])<0.3) && // (distance btw the track and the event vertex_xy <0.3cm)
+	            (fabs(Reco_mu_dz[Reco_QQ_mumi_idx[QQEveNum]])<20.)  && // (distance btw the track and the event vertex_z <20cm)
+	            passMuonTypeMi       //			 &&  (Reco_mu_highPurity[Reco_QQ_mupl_idx[irqq]]==true) 
+	            ) ; 
+
+	        if ( !(muplSoft && mumiSoft) ) continue;   
+	      
+	      	if ( Reco_QQ_VtxProb[QQEveNum]  < 0.01 ) continue;
+
+			if( ((Reco_QQ_trig[QQEveNum]&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
 				&& (Reco_QQ_sign[QQEveNum])==0
 				// && (Reco_QQ_type[QQEveNum]==1)
 				// && ((Reco_QQ_4mom->Pt())<50) 
@@ -123,16 +168,6 @@ void UpsilonRefFrameReco2() { //version2 (In this version, I used TLorentzVector
 				&& (abs(Reco_mupl_4mom->Eta())<2.4)  
 				&& (abs(Reco_mumi_4mom->Eta())<2.4)  
 				// && (Centrality/2. >= 10 && Centrality/2. < 90)
-
-				// && (Reco_QQ_VtxProb[QQEveNum]>=0.01) // (reconstructed dimuon vertex probabiliy > 1%)
-				// && (Reco_mu_nTrkWMea[Reco_QQ_mupl_idx[QQEveNum]]>5)   // (at least 6 hits in the silicon strip layers)
-				// && (Reco_mu_nTrkWMea[Reco_QQ_mumi_idx[QQEveNum]]>5)
-				// && (Reco_mu_nPixWMea[Reco_QQ_mupl_idx[QQEveNum]]>0)   // (at least 1 hit in the pixel detectors)
-				// && (Reco_mu_nPixWMea[Reco_QQ_mumi_idx[QQEveNum]]>0)
-				// && (abs(Reco_mu_dxy[Reco_QQ_mupl_idx[QQEveNum]])<0.3) // (distance btw the track and the event vertex_xy <0.3cm)
-				// && (abs(Reco_mu_dxy[Reco_QQ_mumi_idx[QQEveNum]])<0.3)
-				// 	&& (abs(Reco_mu_dz[Reco_QQ_mupl_idx[QQEveNum]])<20.)  // (distance btw the track and the event vertex_z <20cm)
-				// && (abs(Reco_mu_dz[Reco_QQ_mumi_idx[QQEveNum]])<20.))
 				){
 
 				// ******** Store kinematics of upsilon and muons (Lab Frame) into variables ******** //
