@@ -7,6 +7,7 @@
 #include "TVector3.h"
 #include "TRotation.h"
 #include "TLorentzVector.h"
+#include "TClonesArray.h"
 
 #include <iostream>
 #include <fstream>
@@ -15,7 +16,7 @@
 
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
 
-void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coordinate to production plane and boost to the quarkonium rest frame) 
+void UpsilonRefFrameReco3() { //version3 (In this version, I tried to rotate the coordinate to production plane and boost to the quarkonium rest frame) 
 
 	// ******** Start measuring time ******** //
 	clock_t start, end, cpu_time;
@@ -25,10 +26,23 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 	// (To get the file, type the command below on the CERN server)
 	// (xrdcp root://cms-xrd-global.cern.ch//store/user/fdamas//UpsilonPolarizationPbPb/MC/UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/Upsilon1S_pThat-2_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/220912_133418/0001/Oniatree_MC_numEvent1000_1342.root .)
 	TFile *infile = TFile::Open("Oniatree_MC_numEvent1000_1342.root");
+	// TFile *infile = TFile::Open("/eos/cms/store/group/phys_heavyions/dileptons/Data2018/PbPb502TeV/TTrees/MiniAOD/OniaTree_MiniAOD_2018DoubleMuonPD_GlbAndTrkMuon_MuonJSON_merged.root");//(a data file made by JaeBeom)
 	TDirectoryFile *hionia = (TDirectoryFile*)gDirectory -> Get("hionia");
 	TTree *OniaTree = (TTree*)hionia -> Get("myTree");
 
+	// ******** Select Upsilon mass region bits ******** //	
+	// 2018
+	// Bit1: HLT_HIL1DoubleMuOpen_v1       (Double muon inclusive)
+	// Bit13: HLT_HIL3MuONHitQ10_L2MuO_MAXdR3p5_M1to5_v1  (J/psi region)
+	// Bit14: HLT_HIL3Mu2p5NHitQ10_L2Mu2_M7toinf_v1 (Upsilon + high masses)
+	const Int_t NTriggers = 3;
+	const Int_t Bits[NTriggers] = {1, 13, 14};
+	Int_t SelectedBit = 2;//(This will be used in the loop for HLTrigger and Reco_QQ_Trig)
+
+
 	// ******** Define variables in the tree ******** //
+	ULong64_t HLTriggers;
+	ULong64_t Reco_QQ_trig[66];
 	Int_t Centrality; 
 	TClonesArray *CloneArr_QQ;
 	TClonesArray *CloneArr_mu;
@@ -40,6 +54,8 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 	CloneArr_QQ = 0;
 	CloneArr_mu = 0;
 
+	OniaTree -> SetBranchAddress("HLTriggers", &HLTriggers);
+	OniaTree -> SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
 	OniaTree -> SetBranchAddress("Centrality", &Centrality);
 	OniaTree -> SetBranchAddress("Reco_QQ_4mom", &CloneArr_QQ);
 	OniaTree -> SetBranchAddress("Reco_mu_4mom", &CloneArr_mu);
@@ -97,16 +113,16 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 			TLorentzVector *Reco_mupl_4mom = (TLorentzVector*) CloneArr_mu->At(Reco_QQ_mupl_idx[QQEveNum]);
 			TLorentzVector *Reco_mumi_4mom = (TLorentzVector*) CloneArr_mu->At(Reco_QQ_mumi_idx[QQEveNum]);
 
-			if( // ((HLTriggers&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
-				// && ((Reco_QQ_trig[QQEveNum]&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
+			if( ((HLTriggers&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
+				&& ((Reco_QQ_trig[QQEveNum]&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
 				/*&&*/ (Reco_QQ_sign[QQEveNum])==0
 				// && (Reco_QQ_type[QQEveNum]==1)
 				// && ((Reco_QQ_4mom->Pt())<50) 
 				// && (abs(Reco_QQ_4mom->Rapidity())<2.40) 	
-				// && ((Reco_mupl_4mom->Pt())>3.5)
-				// && ((Reco_mumi_4mom->Pt())>3.5)    	
-				// && (abs(Reco_mupl_4mom->Eta())<2.4)  
-				// && (abs(Reco_mumi_4mom->Eta())<2.4)  
+				&& ((Reco_mupl_4mom->Pt())>3.5)
+				&& ((Reco_mumi_4mom->Pt())>3.5)    	
+				&& (abs(Reco_mupl_4mom->Eta())<2.4)  
+				&& (abs(Reco_mumi_4mom->Eta())<2.4)  
 				// && (Centrality/2. >= 10 && Centrality/2. < 90)
 
 				// && (Reco_QQ_VtxProb[QQEveNum]>=0.01) // (reconstructed dimuon vertex probabiliy > 1%)
@@ -251,13 +267,17 @@ void UpsilonRefFrame3() { //version3 (In this version, I tried to rotate the coo
 				TVector3 ZHXunitVec(0, 0, 1); //(define z_HX unit vector)
 
 				double Angle_B1ZHX = beam1PvecBoosted.Angle(ZHXunitVec); //(angle between beam1 and z_HX)
+				double Angle_B2ZHX = beam2PvecBoosted.Angle(-ZHXunitVec); //(angle between beam2 and -z_HX =(-beam2 and z_HX) )
 				double Angle_B1miB2 = beam1PvecBoosted.Angle(-beam2PvecBoosted); //(angle between beam1 and -beam2)
 
 				double delta = 0; //(define and initialize the angle between z_HX and z_CS)
 
 				// (The math for caculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
-				if(beam1PvecBoosted.Pz()>0) delta = Angle_B1ZHX + Angle_B1miB2/2.;
-				else if(beam1PvecBoosted.Pz()<0) delta = Angle_B1ZHX - Angle_B1miB2/2.;
+				// if(beam1PvecBoosted.Pz()>0) delta = Angle_B1ZHX + Angle_B1miB2/2.;
+				// else if(beam1PvecBoosted.Pz()<0) delta = Angle_B1ZHX - Angle_B1miB2/2.;
+				// else cout <<  "beam1PvecBoosted.Pz() = 0?" << endl;
+				if(Angle_B1ZHX > Angle_B2ZHX) delta = Angle_B2ZHX + Angle_B1miB2/2.;
+				else if(Angle_B1ZHX < Angle_B2ZHX) delta = Angle_B1ZHX + Angle_B1miB2/2.;
 				else cout <<  "beam1PvecBoosted.Pz() = 0?" << endl;
 
 				// ******** Print out the angles ******** //
