@@ -7,6 +7,7 @@
 #include "TVector3.h"
 #include "TRotation.h"
 #include "TLorentzVector.h"
+#include "TClonesArray.h"
 
 #include <iostream>
 #include <fstream>
@@ -24,11 +25,23 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 	// ******** Open OniaTree file ******** //
 	// (To get the file, type the command below on the CERN server)
 	// (xrdcp root://cms-xrd-global.cern.ch//store/user/fdamas//UpsilonPolarizationPbPb/MC/UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/Upsilon1S_pThat-2_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/220912_133418/0001/Oniatree_MC_numEvent1000_1342.root .)
-	TFile *infile = TFile::Open("Oniatree_MC_numEvent1000_1342.root");
+	// TFile *infile = TFile::Open("Oniatree_MC_numEvent1000_1342.root"); //(a file from Florian (applied cuts are unknown))
+	TFile *infile = TFile::Open("/eos/cms/store/group/phys_heavyions/dileptons/Data2018/PbPb502TeV/TTrees/MiniAOD/OniaTree_MiniAOD_2018DoubleMuonPD_GlbAndTrkMuon_MuonJSON_merged.root");//(a new file made by JaeBeom)
 	TDirectoryFile *hionia = (TDirectoryFile*)gDirectory -> Get("hionia");
 	TTree *OniaTree = (TTree*)hionia -> Get("myTree");
 
+	// ******** Select Upsilon mass region bits ******** //	
+	// 2018
+	// Bit1: HLT_HIL1DoubleMuOpen_v1       (Double muon inclusive)
+	// Bit13: HLT_HIL3MuONHitQ10_L2MuO_MAXdR3p5_M1to5_v1  (J/psi region)
+	// Bit14: HLT_HIL3Mu2p5NHitQ10_L2Mu2_M7toinf_v1 (Upsilon + high masses)
+	const Int_t NTriggers = 3;
+	const Int_t Bits[NTriggers] = {1, 13, 14};
+	Int_t SelectedBit = 2;//(This will be used in the loop for HLTrigger and Reco_QQ_Trig)
+
 	// ******** Define variables in the tree ******** //
+	ULong64_t HLTriggers;
+	ULong64_t Reco_QQ_trig[66];
 	Int_t Centrality; 
 	TClonesArray *CloneArr_QQ;
 	TClonesArray *CloneArr_mu;
@@ -40,6 +53,8 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 	CloneArr_QQ = 0;
 	CloneArr_mu = 0;
 
+	OniaTree -> SetBranchAddress("HLTriggers", &HLTriggers);
+	OniaTree -> SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
 	OniaTree -> SetBranchAddress("Centrality", &Centrality);
 	OniaTree -> SetBranchAddress("Reco_QQ_4mom", &CloneArr_QQ);
 	OniaTree -> SetBranchAddress("Reco_mu_4mom", &CloneArr_mu);
@@ -73,7 +88,7 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 	// ******** Start the event loop - read onia tree and save values for bit 14 in Ntuples ******** //
 	for(int EveNum=0; EveNum<(totEntries); EveNum++){
 
-		cout << "*********************************************" << endl;
+		// cout << "*********************************************" << endl;
 
 		// ******** Show how much % of the process has been completed ******** //	
 		if(EveNum%100000==0){
@@ -88,7 +103,7 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 		// ******** Load the values ******** //
 		OniaTree -> GetEntry(EveNum); 
 
-		cout<< "Cen:" << Centrality << endl;
+		// cout<< "Cen:" << Centrality << endl;
 
 		for(int QQEveNum=0; QQEveNum<Reco_QQ_size; QQEveNum++){
 
@@ -96,16 +111,17 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 			TLorentzVector *Reco_mupl_4mom = (TLorentzVector*) CloneArr_mu->At(Reco_QQ_mupl_idx[QQEveNum]);
 			TLorentzVector *Reco_mumi_4mom = (TLorentzVector*) CloneArr_mu->At(Reco_QQ_mumi_idx[QQEveNum]);
 
-			if( // ((HLTriggers&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
-				// && ((Reco_QQ_trig[QQEveNum]&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
-				/*&&*/ (Reco_QQ_sign[QQEveNum])==0
+			// ******** Apply cuts ******** //
+			if( ((HLTriggers&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
+				&& ((Reco_QQ_trig[QQEveNum]&(ULong64_t)(1<<(Bits[SelectedBit]-1)))==(ULong64_t)(1<<(Bits[SelectedBit]-1)))
+				&& (Reco_QQ_sign[QQEveNum])==0
 				// && (Reco_QQ_type[QQEveNum]==1)
 				// && ((Reco_QQ_4mom->Pt())<50) 
 				// && (abs(Reco_QQ_4mom->Rapidity())<2.40) 	
-				// && ((Reco_mupl_4mom->Pt())>3.5)
-				// && ((Reco_mumi_4mom->Pt())>3.5)    	
-				// && (abs(Reco_mupl_4mom->Eta())<2.4)  
-				// && (abs(Reco_mumi_4mom->Eta())<2.4)  
+				&& ((Reco_mupl_4mom->Pt())>3.5)
+				&& ((Reco_mumi_4mom->Pt())>3.5)    	
+				&& (abs(Reco_mupl_4mom->Eta())<2.4)  
+				&& (abs(Reco_mumi_4mom->Eta())<2.4)  
 				// && (Centrality/2. >= 10 && Centrality/2. < 90)
 
 				// && (Reco_QQ_VtxProb[QQEveNum]>=0.01) // (reconstructed dimuon vertex probabiliy > 1%)
@@ -170,10 +186,10 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 				TLorentzVector beam24MomLab(beam2PvecLab, beam2_E);
 
 
-				cout << "<<In the lab frame>>" << endl;
-				cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
-				cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
-				cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
+				// cout << "<<In the lab frame>>" << endl;
+				// cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
+				// cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
+				// cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
 
 
 				// ******** Transform variables of muons from the lab frame to the upsilon's rest frame ******** //
@@ -189,11 +205,11 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 
 
 			    // ******** Print out momentums of upsilon and daughter muons in the upsilon's rest frame ******** //
-				cout << endl;
-				cout << "<<Boosted to the quarkonium rest frame>>" << endl;
-				cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
-				cout << "mu+: p = (" << mupl4MomBoosted.Px() << ", " << mupl4MomBoosted.Py()  << ", " << mupl4MomBoosted.Pz() << ")" << endl;
-				cout << "mu-: p = (" << mumi4MomBoosted.Px() << ", " << mumi4MomBoosted.Py()  << ", " << mumi4MomBoosted.Pz() << ")" << endl;
+				// cout << endl;
+				// cout << "<<Boosted to the quarkonium rest frame>>" << endl;
+				// cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
+				// cout << "mu+: p = (" << mupl4MomBoosted.Px() << ", " << mupl4MomBoosted.Py()  << ", " << mupl4MomBoosted.Pz() << ")" << endl;
+				// cout << "mu-: p = (" << mumi4MomBoosted.Px() << ", " << mumi4MomBoosted.Py()  << ", " << mumi4MomBoosted.Pz() << ")" << endl;
 
 
 				// ******** Rotate the coordinate ******** //
@@ -207,10 +223,10 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 				mumiPvecBoosted.RotateY(-upsPvecLab.Theta());
 
 				// ******** Print out momentums of daughter muons in the upsilon's rest frame after coordinate rotation ******** //
-				cout << endl;
-				cout << "<<Rotated the quarkonium rest frame>>" << endl;
-				cout << "mu+: p = (" << muplPvecBoosted.Px() << ", " << muplPvecBoosted.Py()  << ", " << muplPvecBoosted.Pz() << ")" << endl;
-				cout << "mu-: p = (" << mumiPvecBoosted.Px() << ", " << mumiPvecBoosted.Py()  << ", " << mumiPvecBoosted.Pz() << ")" << endl;	    
+				// cout << endl;
+				// cout << "<<Rotated the quarkonium rest frame>>" << endl;
+				// cout << "mu+: p = (" << muplPvecBoosted.Px() << ", " << muplPvecBoosted.Py()  << ", " << muplPvecBoosted.Pz() << ")" << endl;
+				// cout << "mu-: p = (" << mumiPvecBoosted.Px() << ", " << mumiPvecBoosted.Py()  << ", " << mumiPvecBoosted.Pz() << ")" << endl;	    
 
 				TLorentzVector mupl4MomBoostedRot(muplPvecBoosted, mupl4MomBoosted.E());
 
@@ -234,11 +250,11 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 			    beam24MomBoosted.Boost(-ups4MomLab.BoostVector());
 
 			     // ******** Print out momentums of two beams in the upsilon's rest frame ******** //
-				cout << endl;
-				cout << "<<Boosted to the quarkonium rest frame>>" << endl;
-				cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
-				cout << "beam1: p = (" << beam14MomBoosted.Px() << ", " << beam14MomBoosted.Py()  << ", " << beam14MomBoosted.Pz() << ")" << endl;
-				cout << "beam2: p = (" << beam24MomBoosted.Px() << ", " << beam24MomBoosted.Py()  << ", " << beam24MomBoosted.Pz() << ")" << endl;
+				// cout << endl;
+				// cout << "<<Boosted to the quarkonium rest frame>>" << endl;
+				// cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
+				// cout << "beam1: p = (" << beam14MomBoosted.Px() << ", " << beam14MomBoosted.Py()  << ", " << beam14MomBoosted.Pz() << ")" << endl;
+				// cout << "beam2: p = (" << beam24MomBoosted.Px() << ", " << beam24MomBoosted.Py()  << ", " << beam24MomBoosted.Pz() << ")" << endl;
 
 
 				// ******** Rotate the coordinate ******** //
@@ -255,28 +271,33 @@ void UpsilonRefFrame2() { //version2 (In this version, I used TLorentzVector Boo
 				beam2PvecBoosted.RotateY(-upsPvecLab.Theta());
 
 				// ******** Print out momentums of daughter muons in the upsilon's rest frame after coordinate rotation ******** //
-				cout << endl;
-				cout << "<<Rotated the quarkonium rest frame>>" << endl;
-				cout << "beam1: p = (" << beam1PvecBoosted.Px() << ", " << beam1PvecBoosted.Py()  << ", " << beam1PvecBoosted.Pz() << ")" << endl;
-				cout << "beam2: p = (" << beam2PvecBoosted.Px() << ", " << beam2PvecBoosted.Py()  << ", " << beam2PvecBoosted.Pz() << ")" << endl;	    
+				// cout << endl;
+				// cout << "<<Rotated the quarkonium rest frame>>" << endl;
+				// cout << "beam1: p = (" << beam1PvecBoosted.Px() << ", " << beam1PvecBoosted.Py()  << ", " << beam1PvecBoosted.Pz() << ")" << endl;
+				// cout << "beam2: p = (" << beam2PvecBoosted.Px() << ", " << beam2PvecBoosted.Py()  << ", " << beam2PvecBoosted.Pz() << ")" << endl;	    
 
 				// ******** Calculate the angle between z_HX and z_CS ******** //
 				TVector3 ZHXunitVec(0, 0, 1); //(define z_HX unit vector)
 				double Angle_B1ZHX = beam1PvecBoosted.Angle(ZHXunitVec); //(angle between beam1 and z_HX)
+				double Angle_B2ZHX = beam2PvecBoosted.Angle(-ZHXunitVec); //(angle between beam2 and -z_HX =(-beam2 and z_HX) )
 				double Angle_B1miB2 = beam1PvecBoosted.Angle(-beam2PvecBoosted); //(angle between beam1 and -beam2)
 
 				double delta = 0; //(define and initialize the angle between z_HX and z_CS)
 
-				// (The math for caculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
-				if(beam1PvecBoosted.Pz()>0) delta = Angle_B1ZHX + Angle_B1miB2/2.;
-				else if(beam1PvecBoosted.Pz()<0) delta = Angle_B1ZHX - Angle_B1miB2/2.;
+				// // (The math for caculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
+				// if(beam1PvecBoosted.Pz()>0) delta = Angle_B1ZHX + Angle_B1miB2/2.;
+				// else if(beam1PvecBoosted.Pz()<0) delta = Angle_B1ZHX - Angle_B1miB2/2.;
+				// else cout <<  "beam1PvecBoosted.Pz() = 0?" << endl;
+				if(Angle_B1ZHX > Angle_B2ZHX) delta = Angle_B2ZHX + Angle_B1miB2/2.;
+				else if(Angle_B1ZHX < Angle_B2ZHX) delta = Angle_B1ZHX + Angle_B1miB2/2.;
 				else cout <<  "beam1PvecBoosted.Pz() = 0?" << endl;
 
+
 				// ******** Print out the angles ******** //
-				cout << endl;
-				cout << "angle between ZHX and b1: " << Angle_B1ZHX << endl;
-				cout << "angle between b1 and -b2: " << Angle_B1miB2 << " (half: " << (Angle_B1miB2)/2. << ")"<< endl;
-				cout << "angle between ZHX and ZCS: " << delta << " (" << delta*180./M_PI << "deg)" << endl;
+				// cout << endl;
+				// cout << "angle between ZHX and b1: " << Angle_B1ZHX << endl;
+				// cout << "angle between b1 and -b2: " << Angle_B1miB2 << " (half: " << (Angle_B1miB2)/2. << ")"<< endl;
+				// cout << "angle between ZHX and ZCS: " << delta << " (" << delta*180./M_PI << "deg)" << endl;
 
 
 				// ******** Rotate the coordinate along the y-axis by the angle between z_HX and z_CS ******** //
