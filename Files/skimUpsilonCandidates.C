@@ -2,7 +2,6 @@
 #include "TStyle.h"
 #include "TFile.h"
 #include "TNtuple.h"
-#include "TF1.h"
 #include "TRandom3.h"
 #include "TVector3.h"
 #include "TRotation.h"
@@ -33,9 +32,9 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 	const Int_t Bits[NTriggers] = {1, 13, 14};
 	Int_t SelectedBit = 2; //(This will be used in the loop for HLTrigger and Reco_QQ_Trig)
 
-	// ******** Define variables in the tree ******** //
+	/// OniaTree variables
 	ULong64_t HLTriggers;
-	ULong64_t Reco_QQ_trig[66];
+	ULong64_t Reco_QQ_trig[1000];
 	Int_t Centrality;
 	TClonesArray* CloneArr_QQ = nullptr;
 	TClonesArray* CloneArr_mu = nullptr;
@@ -46,11 +45,11 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 
 	Int_t Reco_mu_SelectionType[1000];
 	//(parameters for quality cuts)
-	float_t Reco_QQ_VtxProb[66];
-	Int_t Reco_mu_nPixWMea[66];
-	Int_t Reco_mu_nTrkWMea[66];
-	float_t Reco_mu_dxy[1000];
-	float_t Reco_mu_dz[1000];
+	Float_t Reco_QQ_VtxProb[1000];
+	Int_t Reco_mu_nPixWMea[1000];
+	Int_t Reco_mu_nTrkWMea[1000];
+	Float_t Reco_mu_dxy[1000];
+	Float_t Reco_mu_dz[1000];
 
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 	OniaTree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
@@ -69,13 +68,13 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
-	Float_t Reco_QQ_phi, Reco_QQ_costheta, Reco_QQ_pt, Reco_QQ_y, Reco_QQ_eta, Reco_QQ_px, Reco_QQ_py, Reco_QQ_pz, Reco_QQ_E, Reco_QQ_m;
+	Float_t Reco_QQ_phi, Reco_QQ_costheta, Reco_QQ_pt, Reco_QQ_y, Reco_QQ_px, Reco_QQ_py, Reco_QQ_pz, Reco_QQ_E, Reco_QQ_m;
 	Float_t Reco_mupl_phi, Reco_mupl_costheta, Reco_mupl_pt, Reco_mupl_y, Reco_mupl_eta, Reco_mupl_px, Reco_mupl_py, Reco_mupl_pz, Reco_mupl_E;
 	Float_t Reco_mumi_phi, Reco_mumi_costheta, Reco_mumi_pt, Reco_mumi_y, Reco_mumi_eta, Reco_mumi_px, Reco_mumi_py, Reco_mumi_pz, Reco_mumi_E;
 
 	// ******** Create a Ntuple to store kinematics of Upsilon and daughter muons ******** //
 	gROOT->cd();
-	TString varlist = "centrality:upsM:upsRap:upsPt:upsPz:upsEta:upsPhi:upsCosTheta:muplPt:muplPz:muplEta:muplPhi:muplCosTheta:mumiPt:mumiPz:mumiEta:mumiPhi:muplM:muplCosThetaPrimeHX:muplPhiPrimeHX:muplCosThetaPrimeCS:muplPhiPrimeCS";
+	TString varlist = "centrality:upsM:upsRap:upsPt:upsPz:upsPhi:upsCosTheta:muplPt:muplPz:muplEta:muplPhi:muplCosTheta:mumiPt:mumiPz:mumiEta:mumiPhi:muplM:muplCosThetaPrimeHX:muplPhiPrimeHX:muplCosThetaPrimeCS:muplPhiPrimeCS";
 	TNtuple* UpsMuNTuple = new TNtuple("UpsMuKinematics", "Upsilon in the lab frame ntuple", varlist);
 
 	// ******** Set beam energy for the Collins-Soper reference frame ******** //
@@ -112,6 +111,8 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 
 			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iQQ);
 
+			if (Reco_QQ_4mom->M() < 8 || Reco_QQ_4mom->M() > 14) continue; // speedup!
+
 			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue;
 
 			/// single-muon selection criteria
@@ -119,12 +120,12 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			int iMuMinus = Reco_QQ_mumi_idx[iQQ];
 
 			// global AND tracker muons
-			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
-			if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
+			//if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
+			//if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
 
 			// passing hybrid-soft Id
-			if (!((Reco_mu_nTrkWMea[Reco_QQ_mupl_idx[iMuPlus]] > 5) && (Reco_mu_nPixWMea[Reco_QQ_mupl_idx[iMuPlus]] > 0) && (fabs(Reco_mu_dxy[Reco_QQ_mupl_idx[iMuPlus]]) < 0.3) && (fabs(Reco_mu_dz[Reco_QQ_mupl_idx[iMuPlus]]) < 20.))) continue;
-			if (!((Reco_mu_nTrkWMea[Reco_QQ_mupl_idx[iMuMinus]] > 5) && (Reco_mu_nPixWMea[Reco_QQ_mupl_idx[iMuMinus]] > 0) && (fabs(Reco_mu_dxy[Reco_QQ_mupl_idx[iMuMinus]]) < 0.3) && (fabs(Reco_mu_dz[Reco_QQ_mupl_idx[iMuMinus]]) < 20.))) continue;
+			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
+			if (!((Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.))) continue;
 
 			// acceptance
 
@@ -143,7 +144,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			Reco_QQ_costheta = Reco_QQ_4mom->CosTheta();
 			Reco_QQ_pt = Reco_QQ_4mom->Pt();
 			Reco_QQ_y = Reco_QQ_4mom->Rapidity();
-			Reco_QQ_eta = Reco_QQ_4mom->Eta();
 			Reco_QQ_px = Reco_QQ_4mom->Px();
 			Reco_QQ_py = Reco_QQ_4mom->Py();
 			Reco_QQ_pz = Reco_QQ_4mom->Pz();
@@ -316,7 +316,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			  static_cast<float>(Reco_QQ_y),
 			  static_cast<float>(Reco_QQ_pt),
 			  static_cast<float>(Reco_QQ_pz),
-			  static_cast<float>(Reco_QQ_eta),
 			  static_cast<float>(Reco_QQ_phi),
 			  static_cast<float>(Reco_QQ_costheta),
 
