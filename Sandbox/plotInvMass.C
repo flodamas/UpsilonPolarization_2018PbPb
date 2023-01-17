@@ -1,7 +1,7 @@
 #include "../Tools/Style/tdrStyle.C"
 #include "../Tools/Style/CMS_lumi.C"
 
-void plotInvMass(Int_t dimuonPtCut = 15,
+void plotInvMass(Int_t minPt = 0, Int_t maxPt = 30,
                  const char* filename = "../Files/upsilonSkimmedTree.root") {
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
@@ -18,7 +18,6 @@ void plotInvMass(Int_t dimuonPtCut = 15,
 	Float_t binMin = 8, binMax = 14;
 	Int_t nBins = 80;
 
-	Int_t minPt = 0, maxPt = dimuonPtCut;
 	Int_t minCent = 0, maxCent = 90;
 
 	TTreeReader reader("UpsMuKinematics", f);
@@ -34,6 +33,10 @@ void plotInvMass(Int_t dimuonPtCut = 15,
 
 	// loop over the number of events in the TTree
 	while (reader.Next()) {
+		if (*upsPt < minPt) continue;
+
+		if (*upsPt > maxPt) continue;
+
 		invMass = *upsM;
 
 		massTree->Fill();
@@ -60,12 +63,12 @@ void plotInvMass(Int_t dimuonPtCut = 15,
 	//frame->SetMaximum(nEntries / 150);
 	//frame->SetMinimum(0.8);
 
-	TPaveText* pt = new TPaveText(0.6, 0.9, 0.9, 0.7, "NDCNB");
+	TPaveText* pt = new TPaveText(0.5, 0.9, 0.9, 0.7, "NDCNB");
 	pt->SetFillColor(4000);
 	pt->SetBorderSize(0);
 	pt->AddText(Form("Centrality %d-%d%%", minCent, maxCent));
 	pt->AddText("|#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV");
-	//pt->AddText(Form("bin: %d<#it{p}_{T}<%d, %.1f<y<%.1f", minPt, maxPt, minRapid, maxRapid));
+	pt->AddText(Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", minPt, maxPt));
 
 	pt->SetAllWith("", "align", 12);
 	pt->Draw();
