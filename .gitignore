@@ -25,6 +25,7 @@
 *.la
 *.a
 *.lib
+*.pcm
 
 # Executables
 *.exe
@@ -34,3 +35,4 @@
 # Others
 *.root
 *.png
+.DS_Store
