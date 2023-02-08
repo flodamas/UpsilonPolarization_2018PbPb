@@ -1,8 +1,8 @@
 #include "../Tools/Style/tdrStyle.C"
 #include "../Tools/Style/CMS_lumi.C"
 
-void plotInvMass(Int_t minPt = 0, Int_t maxPt = 30,
-                 const char* filename = "../Files/upsilonSkimmedTree.root") {
+void plotInvMass(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, Int_t centMax = 90,
+                 const char* filename = "../Files/miniAOD_upsilonTree.root") {
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -15,10 +15,8 @@ void plotInvMass(Int_t minPt = 0, Int_t maxPt = 30,
 	extraText = "       Internal";
 
 	//tdrStyle->SetTitleYOffset(1.2);
-	Float_t binMin = 8, binMax = 14;
-	Int_t nBins = 80;
-
-	Int_t minCent = 0, maxCent = 90;
+	Float_t binMin = 7, binMax = 14;
+	Int_t nBins = 100; // to get 50 MeV / bin
 
 	TTreeReader reader("UpsMuKinematics", f);
 	TTreeReaderValue<Float_t> centrality(reader, "centrality");
@@ -33,6 +31,10 @@ void plotInvMass(Int_t minPt = 0, Int_t maxPt = 30,
 
 	// loop over the number of events in the TTree
 	while (reader.Next()) {
+		if (*centrality < 2 * centMin) continue;
+
+		if (*centrality > 2 * centMax) continue;
+
 		if (*upsPt < minPt) continue;
 
 		if (*upsPt > maxPt) continue;
@@ -66,17 +68,17 @@ void plotInvMass(Int_t minPt = 0, Int_t maxPt = 30,
 	TPaveText* pt = new TPaveText(0.5, 0.9, 0.9, 0.7, "NDCNB");
 	pt->SetFillColor(4000);
 	pt->SetBorderSize(0);
-	pt->AddText(Form("Centrality %d-%d%%", minCent, maxCent));
+	pt->AddText(Form("Centrality %d-%d%%", centMin, centMax));
 	pt->AddText("|#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV");
 	pt->AddText(Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", minPt, maxPt));
 
 	pt->SetAllWith("", "align", 12);
 	pt->Draw();
 
-	CMS_lumi(canvas, "2018 PbPb data (1.6 nb^{-1}, 5.02 TeV)");
+	CMS_lumi(canvas, "2018 PbPb miniAOD, DoubleMuon PD");
 
 	canvas->Modified();
 	canvas->Update();
 
-	canvas->SaveAs("mass_distrib/test.png", "RECREATE");
+	canvas->SaveAs(Form("mass_distrib/cent%dto%d_pt%dto%dGeV.png", centMin, centMax, minPt, maxPt), "RECREATE");
 }
