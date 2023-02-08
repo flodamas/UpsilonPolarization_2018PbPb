@@ -7,7 +7,7 @@ void fixOverlay() { gPad->RedrawAxis(); }
 void rootlogon() {
 	TStyle* tdrStyle = new TStyle("tdrStyle", "Style for P-TDR");
 
-	gROOT->ProcessLine(".L ../Tools/CustomRoofitPDFs/ExtendedCrystalBall.cxx+");
+	gROOT->ProcessLine(".L ../Tools/CustomRoofitPDFs/ExtendedCrystalBall.cxx");
 
 	// For the canvas:
 	tdrStyle->SetCanvasBorderMode(0);
@@ -87,7 +87,7 @@ void rootlogon() {
 	// Margins:
 	tdrStyle->SetPadTopMargin(0.06);
 	tdrStyle->SetPadBottomMargin(0.13);
-	tdrStyle->SetPadLeftMargin(0.16);
+	tdrStyle->SetPadLeftMargin(0.14);
 	tdrStyle->SetPadRightMargin(0.025);
 
 	// For the Global title:
@@ -114,7 +114,7 @@ void rootlogon() {
 	// tdrStyle->SetTitleXSize(Float_t size = 0.02); // Another way to set the
 	// size? tdrStyle->SetTitleYSize(Float_t size = 0.02);
 	tdrStyle->SetTitleXOffset(0.9);
-	tdrStyle->SetTitleYOffset(1.25);
+	tdrStyle->SetTitleYOffset(1.1);
 	// tdrStyle->SetTitleOffset(1.1, "Y"); // Another way to set the Offset
 
 	// For the axis labels:

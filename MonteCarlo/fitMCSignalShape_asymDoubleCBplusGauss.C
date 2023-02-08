@@ -1,27 +1,41 @@
-#include "TROOT.h"
-#include "TStyle.h"
-#include "TFile.h"
-#include "TNtuple.h"
-#include "TRandom3.h"
-#include "TVector3.h"
-#include "TRotation.h"
-#include "TLorentzVector.h"
-#include "TClonesArray.h"
+#include "../Tools/Style/tdrStyle.C"
+#include "../Tools/Style/CMS_lumi.C"
 
-#include <iostream>
-#include <fstream>
-#include <cmath>
+TPaveText* createCustomLegend(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR) {
+	auto* text = new TPaveText(0.58, 0.9, 0.93, 0.6, "NDCNB");
+	text->SetFillStyle(4000);
+	text->SetBorderSize(0);
 
-// (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
+	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
+	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
+	text->AddText(Form("#alpha = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));
+	text->AddText(Form("n = %.3f #pm %.3f", order.getVal(), order.getError()));
+	text->AddText(Form("#alpha' = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
+	text->AddText(Form("n' = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
 
-void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018DoubleMuonPD_GlbAndTrkMuon_MuonJSON_merged.root", const char* outputFileName = "upsilonSkimmedTree.root") {
-	// ******** Open OniaTree file ******** //
-	// (To get the file, type the command below on the CERN server)
-	// (xrdcp root://cms-xrd-global.cern.ch//store/user/fdamas//UpsilonPolarizationPbPb/MC/UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/Upsilon1S_pThat-2_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/220912_133418/0001/Oniatree_MC_numEvent1000_1342.root .)
-	// TFile *infile = TFile::Open("Oniatree_MC_numEvent1000_1342.root"); //(a MC file from Florian (applied cuts are unknown))
-	TFile* infile = TFile::Open(inputFileName, "READ"); //(a data file made by JaeBeom)
-	TDirectoryFile* hionia = (TDirectoryFile*)gDirectory->Get("hionia");
-	TTree* OniaTree = (TTree*)hionia->Get("myTree");
+	text->SetAllWith(" ", "align", 12);
+	return text;
+}
+
+void fitMCSignalShape_asymDoubleCBplusGauss(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, Int_t centMax = 90, Long64_t nEvents = -1) {
+	const char* filename = "../../Run3_muons/files/UpsilonEmbedded_2018pbpb_Oniatree_10_3_2.root";
+
+	TFile* file = TFile::Open(filename, "READ");
+	if (!file) {
+		cout << "File " << filename << " not found. Check the directory of the file." << endl;
+		return;
+	}
+
+	cout << "File " << filename << " opened" << endl;
+
+	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
+
+	writeExtraText = true; // if extra text
+	extraText = "      Simulation Internal";
+
+	//tdrStyle->SetTitleYOffset(1.2);
+	Float_t binMin = 8, binMax = 11;
+	Int_t nBins = 60;
 
 	// ******** Select Upsilon mass region bits ******** //
 	// 2018
@@ -33,6 +47,12 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 	Int_t SelectedBit = 2; //(This will be used in the loop for HLTrigger and Reco_QQ_Trig)
 
 	/// OniaTree variables
+
+	// gen level
+
+	Float_t Gen_weight;
+
+	// reco level
 	ULong64_t HLTriggers;
 	ULong64_t Reco_QQ_trig[1000];
 	Int_t Centrality;
@@ -50,6 +70,8 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 	Int_t Reco_mu_nTrkWMea[1000];
 	Float_t Reco_mu_dxy[1000];
 	Float_t Reco_mu_dz[1000];
+
+	OniaTree->SetBranchAddress("Gen_weight", &Gen_weight);
 
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 	OniaTree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
@@ -85,18 +107,25 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 	double beam2_E = beam1_E;
 	//double delta = 0; //(Angle between ZHX(Z-axis in the Helicity frame) and ZCS(Z-axis in the Collins-Soper frame))
 
-	Long64_t totEntries = OniaTree->GetEntries();
+	if (nEvents == -1) nEvents = OniaTree->GetEntries();
 
-	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
+	TTree* massTree = new TTree("massTree", "");
+	massTree->SetDirectory(0);
+	Float_t invMass = 0.;
+	massTree->Branch("mass", &invMass, "invMass/F");
+
+	for (Long64_t iEvent = 0; iEvent < nEvents; iEvent++) {
 		if (iEvent % 10000 == 0) {
-			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
+			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, nEvents, 100. * iEvent / nEvents) << flush;
 		}
 
+		// ******** Load the values ******** //
 		OniaTree->GetEntry(iEvent);
 
 		// event selection
+		if (Centrality < 2 * centMin) continue;
 
-		if (Centrality > 2 * 90) continue; // discard events with centrality > 90% in 2018 data
+		if (Centrality > 2 * centMax) continue;
 
 		if (!((HLTriggers & (ULong64_t)(1 << (Bits[SelectedBit] - 1))) == (ULong64_t)(1 << (Bits[SelectedBit] - 1)))) continue; // must fire the upsilon HLT path
 
@@ -110,17 +139,21 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 
 			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iQQ);
 
-			if (Reco_QQ_4mom->M() < 7 || Reco_QQ_4mom->M() > 14) continue; // speedup!
+			if (Reco_QQ_4mom->M() < binMin || Reco_QQ_4mom->M() > binMax) continue; // speedup!
 
 			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue;
+
+			if (Reco_QQ_4mom->Pt() < minPt) continue;
+
+			if (Reco_QQ_4mom->Pt() > maxPt) continue;
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
 			int iMuMinus = Reco_QQ_mumi_idx[iQQ];
 
 			// global AND tracker muons
-			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
-			if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
+			//if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
+			//if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
 
 			// passing hybrid-soft Id
 			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
@@ -186,11 +219,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			TVector3 beam2PvecLab(0, 0, beam2_p);
 			TLorentzVector beam24MomLab(beam2PvecLab, beam2_E);
 
-			// cout << "<<In the lab frame>>" << endl;
-			// cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
-			// cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
-			// cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
-
 			// ******** Transform variables of muons from the lab frame to the upsilon's rest frame ******** //
 			TLorentzVector ups4MomBoosted(upsPvecLab, Reco_QQ_E);
 			TLorentzVector mupl4MomBoosted(muplPvecLab, Reco_mupl_E);
@@ -202,13 +230,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			mupl4MomBoosted.Boost(-ups4MomLab.BoostVector());
 			mumi4MomBoosted.Boost(-ups4MomLab.BoostVector());
 
-			// ******** Print out momentums of upsilon and daughter muons in the upsilon's rest frame ******** //
-			// cout << endl;
-			// cout << "<<Boosted to the quarkonium rest frame>>" << endl;
-			// cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
-			// cout << "mu+: p = (" << mupl4MomBoosted.Px() << ", " << mupl4MomBoosted.Py()  << ", " << mupl4MomBoosted.Pz() << ")" << endl;
-			// cout << "mu-: p = (" << mumi4MomBoosted.Px() << ", " << mumi4MomBoosted.Py()  << ", " << mumi4MomBoosted.Pz() << ")" << endl;
-
 			// ******** Rotate the coordinate ******** //
 			TVector3 muplPvecBoosted(mupl4MomBoosted.Px(), mupl4MomBoosted.Py(), mupl4MomBoosted.Pz());
 			TVector3 mumiPvecBoosted(mumi4MomBoosted.Px(), mumi4MomBoosted.Py(), mumi4MomBoosted.Pz());
@@ -218,12 +239,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			muplPvecBoosted.RotateY(-upsPvecLab.Theta());
 			mumiPvecBoosted.RotateZ(-upsPvecLab.Phi());
 			mumiPvecBoosted.RotateY(-upsPvecLab.Theta());
-
-			// ******** Print out momentums of daughter muons in the upsilon's rest frame after coordinate rotation ******** //
-			// cout << endl;
-			// cout << "<<Rotated the quarkonium rest frame>>" << endl;
-			// cout << "mu+: p = (" << muplPvecBoosted.Px() << ", " << muplPvecBoosted.Py()  << ", " << muplPvecBoosted.Pz() << ")" << endl;
-			// cout << "mu-: p = (" << mumiPvecBoosted.Px() << ", " << mumiPvecBoosted.Py()  << ", " << mumiPvecBoosted.Pz() << ")" << endl;
 
 			TLorentzVector mupl4MomBoostedRot(muplPvecBoosted, mupl4MomBoosted.E());
 
@@ -236,10 +251,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			// ******** Transform variables of beams from the lab frame to the upsilon's rest frame ******** //
 			TLorentzVector beam14MomBoosted(beam1PvecLab, beam1_E);
 			TLorentzVector beam24MomBoosted(beam2PvecLab, beam2_E);
-
-			// ups4MomLab.SetX(-1);
-			// ups4MomLab.SetY(0);
-			// ups4MomLab.SetZ(0);
 
 			beam14MomBoosted.Boost(-ups4MomLab.BoostVector());
 			beam24MomBoosted.Boost(-ups4MomLab.BoostVector());
@@ -289,12 +300,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			else
 				cout << "beam1PvecBoosted.Pz() = 0?" << endl;
 
-			// ******** Print out the angles ******** //
-			// cout << endl;
-			// cout << "angle between ZHX and b1: " << Angle_B1ZHX << endl;
-			// cout << "angle between b1 and -b2: " << Angle_B1miB2 << " (half: " << (Angle_B1miB2)/2. << ")"<< endl;
-			// cout << "angle between ZHX and ZCS: " << delta << " (" << delta*180./M_PI << "deg)" << endl;
-
 			// ******** Rotate the coordinate along the y-axis by the angle between z_HX and z_CS ******** //
 			TVector3 muplPvecBoostedCS(muplPvecBoosted.Px(), muplPvecBoosted.Py(), muplPvecBoosted.Pz());
 			TVector3 mumiPvecBoostedCS(mumiPvecBoosted.Px(), mumiPvecBoosted.Py(), mumiPvecBoosted.Pz());
@@ -303,48 +308,130 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			muplPvecBoostedCS.RotateY(delta);
 			mumiPvecBoostedCS.RotateY(delta);
 
-			// cout << endl;
-			// cout << "Rotated unit Vec: (" << ZHXunitVec.Px() << ", " << ZHXunitVec.Py() << ", " << ZHXunitVec.Pz() << ")" << endl;
-			// cout << "mupl CosTheta, mupl Phi: " << muplPvecBoostedCS.CosTheta() << ", " << muplPvecBoostedCS.Phi() << endl;
+			invMass = Reco_QQ_m;
 
-			// ******** Fill Ntuple with kinematics of upsilon and muons in the Lab, HX, and CS frames******** //
-			float tuple[] = {
-			  static_cast<float>(Centrality),
-
-			  static_cast<float>(Reco_QQ_m),
-			  static_cast<float>(Reco_QQ_y),
-			  static_cast<float>(Reco_QQ_pt),
-			  static_cast<float>(Reco_QQ_pz),
-			  static_cast<float>(Reco_QQ_phi),
-			  static_cast<float>(Reco_QQ_costheta),
-
-			  static_cast<float>(Reco_mupl_pt),
-			  static_cast<float>(Reco_mupl_pz),
-			  static_cast<float>(Reco_mupl_eta),
-			  static_cast<float>(Reco_mupl_phi),
-			  static_cast<float>(Reco_mupl_costheta),
-			  static_cast<float>(Reco_mumi_pt),
-			  static_cast<float>(Reco_mumi_pz),
-			  static_cast<float>(Reco_mumi_eta),
-			  static_cast<float>(Reco_mumi_phi),
-
-			  static_cast<float>(mupl4MomBoostedRot.Mag()),
-			  static_cast<float>(muplPvecBoosted.CosTheta()),
-			  static_cast<float>(muplPvecBoosted.Phi()),
-
-			  static_cast<float>(muplPvecBoostedCS.CosTheta()),
-			  static_cast<float>(muplPvecBoostedCS.Phi())};
-
-			UpsMuNTuple->Fill(tuple);
+			massTree->Fill();
 		}
-	}
 
-	// ******** Create a file and store the ntuples ******** //
-	TFile* file = new TFile(outputFileName, "RECREATE");
+	} // end of the loop on events
 
-	UpsMuNTuple->Write();
+	cout << endl;
 
-	file->Close();
+	Long64_t nEntries = massTree->GetEntries();
 
-	return;
+	using namespace RooFit;
+	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
+
+	// The RooRealVar name must be the same as the branch name!!!
+	RooRealVar mass("mass", "m_{#mu^{#plus}#mu^{#minus}}", binMin, binMax, "GeV");
+	RooDataSet data("data", "data", massTree, RooArgSet(mass));
+
+	auto* canvas = new TCanvas("canvas", "", 600, 650);
+	//canvas->Divide(2);
+	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
+	pad1->SetBottomMargin(0.01);
+	pad1->SetLogy();
+	pad1->Draw();
+	pad1->cd();
+
+	RooPlot* frame = mass.frame(Title(" "), Range(binMin, binMax));
+	//frame->SetYTitle(Form("Candidates / (%d MeV)", (int)1000 * (binMax - binMin) / nBins));
+	data.plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
+
+	// Asymetric double CB
+	RooRealVar mean("mean", "", 9., 10.);
+	RooRealVar sigmaInf("sigmaInf", "", .05, .12);
+	RooRealVar alphaInf("alphaInf", "", 0.1, 10);
+	RooRealVar orderInf("orderInf", "", 0.1, 10);
+	RooRealVar sigmaSup("sigmaSup", "", .05, .12);
+	RooRealVar alphaSup("alphaSup", "", 0.1, 10);
+	RooRealVar orderSup("orderSup", "", 0.1, 20);
+
+	RooCrystalBall asymCB("asymCB", "", mass, mean, sigmaInf, sigmaSup, alphaInf, orderInf, alphaSup, orderSup);
+
+	// Gaussian
+	//RooRealVar resFraction("resFraction", "", 0.01, 1);
+	RooRealVar sigma_gauss("sigma_gauss", "", .02, .2);
+
+	RooGaussian gauss("gauss", "", mass, mean, sigma_gauss);
+
+	// add the two
+	RooRealVar normFraction("normFraction", "", 0.01, 1);
+	RooAddPdf signal("signal", "sum", RooArgList(asymCB, gauss), RooArgList(normFraction));
+
+	auto* fitResult = signal.fitTo(data, Save(), Extended(kTRUE), PrintLevel(-1), Minos(kTRUE), NumCPU(3), Range(binMin, binMax));
+
+	fitResult->Print("v");
+
+	signal.plotOn(frame, LineColor(kRed));
+
+	frame->Draw();
+
+	frame->SetMaximum(nEntries);
+	frame->SetMinimum(.8);
+
+	//auto* text = createCustomLegend(mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
+	//text->Draw("SAME");
+
+	TPaveText* pt = new TPaveText(0.18, 0.9, 0.5, 0.65, "NDCNB");
+	pt->SetFillColor(4000);
+	pt->SetBorderSize(0);
+	pt->AddText(Form("Centrality %d-%d%%", centMin, centMax));
+	pt->AddText("|#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV");
+	pt->AddText("|y^{#mu#mu}| < 2.4");
+	pt->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV", minPt, maxPt));
+
+	pt->SetAllWith("", "align", 12);
+	pt->Draw("SAME");
+
+	CMS_lumi(pad1, "Hydjet-embedded PbPb MC");
+
+	// pull distribution
+	canvas->cd();
+	TPad* pad2 = new TPad("pad2", "pad2", 0, 0.0, 1, .25);
+	pad2->SetTopMargin(0.015);
+	pad2->SetBottomMargin(0.34);
+	pad2->SetTicks(1, 1);
+	pad2->Draw();
+	pad2->cd();
+
+	RooHist* hpull = frame->pullHist();
+	//hpull->SetMarkerSize(0.8);
+	RooPlot* pullFrame = mass.frame(Title(" "));
+	pullFrame->addPlotable(hpull, "PZ");
+	//pullFrame->SetTitleSize(0);
+	pullFrame->GetYaxis()->SetTitleOffset(0.4);
+	pullFrame->GetYaxis()->SetTitle("pull");
+	pullFrame->GetYaxis()->SetTitleSize(0.17);
+	pullFrame->GetYaxis()->SetLabelSize(0.15);
+	//pullFrame->GetYaxis()->SetRangeUser(-4.5, 4.5);
+	//  pullFrame->GetYaxis()->SetLimits(-6,6) ;
+	//	pullFrame->GetYaxis()->CenterTitle();
+
+	pullFrame->GetXaxis()->SetTitle("m_{#mu^{+}#mu^{#minus}} (GeV)");
+	//pullFrame->GetXaxis()->SetTitleOffset(1.20);
+	//pullFrame->GetXaxis()->SetLabelOffset(0.1);
+	pullFrame->GetXaxis()->SetLabelSize(0.15);
+	pullFrame->GetXaxis()->SetTitleSize(0.17);
+	//	pullFrame->GetXaxis()->CenterTitle();
+	// pullFrame->GetXaxis()->SetTitleFont(43);
+	// pullFrame->GetYaxis()->SetTitleFont(43);
+
+	pullFrame->GetYaxis()->SetTickSize(0.03);
+	//pullFrame->GetYaxis()->SetNdivisions(505);
+	pullFrame->GetXaxis()->SetTickSize(0.03);
+	pullFrame->Draw();
+
+	TLatex textChi2;
+	textChi2.SetTextAlign(12);
+	textChi2.SetTextSize(0.15);
+	textChi2.DrawLatexNDC(0.7, 0.85, Form("#chi^{2} / n_{d.o.f.} = %.1f", frame->chiSquare(9)));
+
+	//canvas->Modified();
+	//canvas->Update();
+	canvas->cd();
+	pad1->Draw();
+	pad2->Draw();
+
+	canvas->SaveAs(Form("signal/asymDoubleCBplusGauss_cent%dto%d_pt%dto%dGeV.png", centMin, centMax, minPt, maxPt), "RECREATE");
 }
