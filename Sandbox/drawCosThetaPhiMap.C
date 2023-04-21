@@ -22,20 +22,20 @@ void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, In
 
 	// (cos theta, phi) 2D distribution maps for CS and HX frames
 
-	Int_t nCosThetaBins = 20;
-	Float_t cosThetaMin = -1, cosThetaMax = 1;
+	Int_t nCosThetaBins = 10;
+	Float_t cosThetaMin = 0, cosThetaMax = 1;
 
 	//	Double_t cosThetaBinning[] = {-1, -0.8, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1};
 	//	nCosThetaBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
 
-	Int_t nPhiBins = 22;
-	Float_t phiMin = -220, phiMax = 220;
+	Int_t nPhiBins = 12;
+	Float_t phiMin = -180, phiMax = 180;
 
 	//Double_t phiBinning[] = {-TMath::Pi(), -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 180};
 	//	nPhiBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
 
-	TH2F* hCS = new TH2F("hCS", ";cos #theta_{CS}; #varphi_{CS} (#circ)", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TH2F* hHX = new TH2F("hHX", ";cos #theta_{HX}; #varphi_{HX} (#circ)", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TH2F* hCS = new TH2F("hCS", ";|cos #theta_{CS}|; #varphi_{CS} (#circ)", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TH2F* hHX = new TH2F("hHX", ";|cos #theta_{HX}|; #varphi_{HX} (#circ)", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
 	// loop over the number of events in the TTree
 	while (reader.Next()) {
@@ -43,16 +43,13 @@ void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, In
 
 		if (*centrality > 2 * centMax) continue;
 
-		if (*upsPt < minPt) continue;
-
-		if (*upsPt > maxPt) continue;
+		if (*upsPt < minPt || *upsPt > maxPt) continue;
 
 		// select dimuon candidates within the Y(1S) mass window
-		if (*upsM < 9) continue;
-		if (*upsM > 10) continue;
+		if (*upsM < 9 || *upsM > 10) continue;
 
-		hCS->Fill(*muplCosThetaPrimeCS, *muplPhiPrimeCS * 180 / TMath::Pi());
-		hHX->Fill(*muplCosThetaPrimeHX, *muplPhiPrimeHX * 180 / TMath::Pi());
+		hCS->Fill(fabs(*muplCosThetaPrimeCS), *muplPhiPrimeCS);
+		hHX->Fill(fabs(*muplCosThetaPrimeHX), *muplPhiPrimeHX);
 
 	} // end of the loop on events
 
@@ -67,25 +64,25 @@ void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, In
 
 	auto* canvasCS = new TCanvas("canvasCS", "", 700, 600);
 	hCS->Draw("COLZ");
-	legend->DrawLatexNDC(.5, .87, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV", centMin, centMax, minPt, maxPt));
+	legend->DrawLatexNDC(.5, .9, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV", centMin, centMax, minPt, maxPt));
 
-	hCS->GetYaxis()->SetRangeUser(-180, 240);
+	hCS->GetYaxis()->SetRangeUser(-190, 240);
 
 	gPad->Update();
 
-	CMS_lumi(canvasCS, "2018 PbPb data (1.6 nb^{-1}, 5.02 TeV)");
+	CMS_lumi(canvasCS, "2018 PbPb miniAOD, DoubleMuon PD");
 
 	canvasCS->SaveAs(Form("frame_distrib/CS_cent%dto%d_pt%dto%dGeV.png", centMin, centMax, minPt, maxPt), "RECREATE");
 
 	auto* canvasHX = new TCanvas("canvasHX", "", 700, 600);
 	hHX->Draw("COLZ");
-	legend->DrawLatexNDC(.5, .87, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV", centMin, centMax, minPt, maxPt));
+	legend->DrawLatexNDC(.5, .9, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV", centMin, centMax, minPt, maxPt));
 
 	gPad->Update();
 
-	hHX->GetYaxis()->SetRangeUser(-180, 240);
+	hHX->GetYaxis()->SetRangeUser(-190, 240);
 
-	CMS_lumi(canvasHX, "2018 PbPb data (1.6 nb^{-1}, 5.02 TeV)");
+	CMS_lumi(canvasHX, "2018 PbPb miniAOD, DoubleMuon PD");
 
 	canvasHX->SaveAs(Form("frame_distrib/HX_cent%dto%d_pt%dto%dGeV.png", centMin, centMax, minPt, maxPt), "RECREATE");
 }
