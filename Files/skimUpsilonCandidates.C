@@ -14,14 +14,13 @@
 
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
 
-void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018DoubleMuonPD_GlbAndTrkMuon_MuonJSON_merged.root", const char* outputFileName = "upsilonSkimmedTree.root") {
+void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_GlbAndTrk_HLTFilterBit14.root", const char* outputFileName = "upsilonSkimmedDataset.root") {
 	// ******** Open OniaTree file ******** //
 	// (To get the file, type the command below on the CERN server)
 	// (xrdcp root://cms-xrd-global.cern.ch//store/user/fdamas//UpsilonPolarizationPbPb/MC/UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/Upsilon1S_pThat-2_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/220912_133418/0001/Oniatree_MC_numEvent1000_1342.root .)
-	// TFile *infile = TFile::Open("Oniatree_MC_numEvent1000_1342.root"); //(a MC file from Florian (applied cuts are unknown))
-	TFile* infile = TFile::Open(inputFileName, "READ"); //(a data file made by JaeBeom)
-	TDirectoryFile* hionia = (TDirectoryFile*)gDirectory->Get("hionia");
-	TTree* OniaTree = (TTree*)hionia->Get("myTree");
+
+	TFile* infile = TFile::Open(inputFileName, "READ");
+	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
 	// ******** Select Upsilon mass region bits ******** //
 	// 2018
@@ -33,6 +32,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 	Int_t SelectedBit = 2; //(This will be used in the loop for HLTrigger and Reco_QQ_Trig)
 
 	/// OniaTree variables
+	Float_t zVtx;
 	ULong64_t HLTriggers;
 	ULong64_t Reco_QQ_trig[1000];
 	Int_t Centrality;
@@ -51,6 +51,8 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 	Float_t Reco_mu_dxy[1000];
 	Float_t Reco_mu_dz[1000];
 
+	OniaTree->SetBranchAddress("zVtx", &zVtx);
+
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 	OniaTree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
@@ -68,14 +70,26 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
-	Float_t Reco_QQ_phi, Reco_QQ_costheta, Reco_QQ_pt, Reco_QQ_y, Reco_QQ_px, Reco_QQ_py, Reco_QQ_pz, Reco_QQ_E, Reco_QQ_m;
-	Float_t Reco_mupl_phi, Reco_mupl_costheta, Reco_mupl_pt, Reco_mupl_y, Reco_mupl_eta, Reco_mupl_px, Reco_mupl_py, Reco_mupl_pz, Reco_mupl_E;
-	Float_t Reco_mumi_phi, Reco_mumi_costheta, Reco_mumi_pt, Reco_mumi_y, Reco_mumi_eta, Reco_mumi_px, Reco_mumi_py, Reco_mumi_pz, Reco_mumi_E;
+	double Reco_QQ_E, Reco_mupl_E, Reco_mumi_E;
 
-	// ******** Create a Ntuple to store kinematics of Upsilon and daughter muons ******** //
-	gROOT->cd();
-	TString varlist = "centrality:upsM:upsRap:upsPt:upsPz:upsPhi:upsCosTheta:muplPt:muplPz:muplEta:muplPhi:muplCosTheta:mumiPt:mumiPz:mumiEta:mumiPhi:muplM:muplCosThetaPrimeHX:muplPhiPrimeHX:muplCosThetaPrimeCS:muplPhiPrimeCS";
-	TNtuple* UpsMuNTuple = new TNtuple("UpsMuKinematics", "Upsilon in the lab frame ntuple", varlist);
+	/// RooDataSet output: one entry = one dimuon candidate!
+	RooRealVar centVar("centrality", "event centrality", 0, 200);
+
+	Float_t lowMassCut = 8, highMassCut = 14;
+	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
+	RooRealVar yVar("rapidity", "dimuon rapidity", -2.4, 2.4);
+	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
+
+	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
+	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", -180, 180, "#circ");
+
+	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
+	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
+
+	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
+	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
+
+	RooDataSet dataset("dataset", "skimmed dataset", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
 
 	// ******** Set beam energy for the Collins-Soper reference frame ******** //
 	double sqrt_S_NN = 5.02;                 //(Center of mass Energy per nucleon pair in TeV)
@@ -83,7 +97,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 	double beam1_E = beam1_p;
 	double beam2_p = -beam1_p;
 	double beam2_E = beam1_E;
-	//double delta = 0; //(Angle between ZHX(Z-axis in the Helicity frame) and ZCS(Z-axis in the Collins-Soper frame))
+	double delta = 0; //(Angle between ZHX(Z-axis in the Helicity frame) and ZCS(Z-axis in the Collins-Soper frame))
 
 	Long64_t totEntries = OniaTree->GetEntries();
 
@@ -95,8 +109,9 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 		OniaTree->GetEntry(iEvent);
 
 		// event selection
+		//if (fabs(zVtx) > 15) continue;
 
-		if (Centrality > 2 * 90) continue; // discard events with centrality > 90% in 2018 data
+		if (Centrality >= 2 * 90) continue; // discard events with centrality >= 90% in 2018 data
 
 		if (!((HLTriggers & (ULong64_t)(1 << (Bits[SelectedBit] - 1))) == (ULong64_t)(1 << (Bits[SelectedBit] - 1)))) continue; // must fire the upsilon HLT path
 
@@ -110,9 +125,11 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 
 			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iQQ);
 
-			if (Reco_QQ_4mom->M() < 7 || Reco_QQ_4mom->M() > 14) continue; // speedup!
+			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
 			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue;
+
+			//if (Reco_QQ_4mom->Pt() > 50) continue;
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
@@ -139,45 +156,22 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			if (Reco_mumi_4mom->Pt() < 3.5) continue;
 
 			// ******** Store kinematics of upsilon and muons (Lab Frame) into variables ******** //
-			Reco_QQ_phi = Reco_QQ_4mom->Phi();
-			Reco_QQ_costheta = Reco_QQ_4mom->CosTheta();
-			Reco_QQ_pt = Reco_QQ_4mom->Pt();
-			Reco_QQ_y = Reco_QQ_4mom->Rapidity();
-			Reco_QQ_px = Reco_QQ_4mom->Px();
-			Reco_QQ_py = Reco_QQ_4mom->Py();
-			Reco_QQ_pz = Reco_QQ_4mom->Pz();
-			Reco_QQ_E = Reco_QQ_4mom->Energy();
-			Reco_QQ_m = Reco_QQ_4mom->M();
 
-			Reco_mupl_phi = Reco_mupl_4mom->Phi();
-			Reco_mupl_costheta = Reco_mupl_4mom->CosTheta();
-			Reco_mupl_pt = Reco_mupl_4mom->Pt();
-			Reco_mupl_y = Reco_mupl_4mom->Rapidity();
-			Reco_mupl_eta = Reco_mupl_4mom->Eta();
-			Reco_mupl_px = Reco_mupl_4mom->Px();
-			Reco_mupl_py = Reco_mupl_4mom->Py();
-			Reco_mupl_pz = Reco_mupl_4mom->Pz();
+			Reco_QQ_E = Reco_QQ_4mom->Energy();
+
 			Reco_mupl_E = Reco_mupl_4mom->Energy();
 
-			Reco_mumi_phi = Reco_mumi_4mom->Phi();
-			Reco_mumi_costheta = Reco_mumi_4mom->CosTheta();
-			Reco_mumi_pt = Reco_mumi_4mom->Pt();
-			Reco_mumi_y = Reco_mumi_4mom->Rapidity();
-			Reco_mumi_eta = Reco_mumi_4mom->Eta();
-			Reco_mumi_px = Reco_mumi_4mom->Px();
-			Reco_mumi_py = Reco_mumi_4mom->Py();
-			Reco_mumi_pz = Reco_mumi_4mom->Pz();
 			Reco_mumi_E = Reco_mumi_4mom->Energy();
 
 			// ******** Construct 4-momentum vector of upsilon and muons (Lab Frame) ******** //
 			// (documetation of TVector3 and TLorentzVector: https://root.cern.ch/root/html534/guides/users-guide/PhysicsVectors.html#lorentz-boost)
-			TVector3 upsPvecLab(Reco_QQ_px, Reco_QQ_py, Reco_QQ_pz);
+			TVector3 upsPvecLab(Reco_QQ_4mom->Px(), Reco_QQ_4mom->Py(), Reco_QQ_4mom->Pz());
 			TLorentzVector ups4MomLab(upsPvecLab, Reco_QQ_E);
 
-			TVector3 muplPvecLab(Reco_mupl_px, Reco_mupl_py, Reco_mupl_pz);
+			TVector3 muplPvecLab(Reco_mupl_4mom->Px(), Reco_mupl_4mom->Py(), Reco_mupl_4mom->Pz());
 			TLorentzVector mupl4MomLab(muplPvecLab, Reco_mupl_E);
 
-			TVector3 mumiPvecLab(Reco_mumi_px, Reco_mumi_py, Reco_mumi_pz);
+			TVector3 mumiPvecLab(Reco_mumi_4mom->Px(), Reco_mumi_4mom->Py(), Reco_mumi_4mom->Pz());
 			TLorentzVector mumi4MomLab(mumiPvecLab, Reco_mumi_E);
 
 			TVector3 beam1PvecLab(0, 0, beam1_p);
@@ -276,7 +270,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			double Angle_B2ZHX = beam2PvecBoosted.Angle(-ZHXunitVec);        //(angle between beam2 and -z_HX =(-beam2 and z_HX) )
 			double Angle_B1miB2 = beam1PvecBoosted.Angle(-beam2PvecBoosted); //(angle between beam1 and -beam2)
 
-			double delta = 0; //(define and initialize the angle between z_HX and z_CS)
+			delta = 0; // reset the angle between z_HX and z_CS
 
 			// // (The math for caculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
 			// if(beam1PvecBoosted.Pz()>0) delta = Angle_B1ZHX + Angle_B1miB2/2.;
@@ -303,48 +297,33 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_MiniAOD_2018Dou
 			muplPvecBoostedCS.RotateY(delta);
 			mumiPvecBoostedCS.RotateY(delta);
 
-			// cout << endl;
-			// cout << "Rotated unit Vec: (" << ZHXunitVec.Px() << ", " << ZHXunitVec.Py() << ", " << ZHXunitVec.Pz() << ")" << endl;
-			// cout << "mupl CosTheta, mupl Phi: " << muplPvecBoostedCS.CosTheta() << ", " << muplPvecBoostedCS.Phi() << endl;
+			// fill the dataset
 
-			// ******** Fill Ntuple with kinematics of upsilon and muons in the Lab, HX, and CS frames******** //
-			float tuple[] = {
-			  static_cast<float>(Centrality),
+			centVar = Centrality;
 
-			  static_cast<float>(Reco_QQ_m),
-			  static_cast<float>(Reco_QQ_y),
-			  static_cast<float>(Reco_QQ_pt),
-			  static_cast<float>(Reco_QQ_pz),
-			  static_cast<float>(Reco_QQ_phi),
-			  static_cast<float>(Reco_QQ_costheta),
+			massVar = Reco_QQ_4mom->M();
+			yVar = Reco_QQ_4mom->Rapidity();
+			ptVar = Reco_QQ_4mom->Pt();
 
-			  static_cast<float>(Reco_mupl_pt),
-			  static_cast<float>(Reco_mupl_pz),
-			  static_cast<float>(Reco_mupl_eta),
-			  static_cast<float>(Reco_mupl_phi),
-			  static_cast<float>(Reco_mupl_costheta),
-			  static_cast<float>(Reco_mumi_pt),
-			  static_cast<float>(Reco_mumi_pz),
-			  static_cast<float>(Reco_mumi_eta),
-			  static_cast<float>(Reco_mumi_phi),
+			cosThetaLabVar = Reco_mupl_4mom->CosTheta();
+			phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
 
-			  static_cast<float>(mupl4MomBoostedRot.Mag()),
-			  static_cast<float>(muplPvecBoosted.CosTheta()),
-			  static_cast<float>(muplPvecBoosted.Phi()),
+			cosThetaCSVar = muplPvecBoostedCS.CosTheta();
+			phiCSVar = muplPvecBoostedCS.Phi() * 180 / TMath::Pi();
 
-			  static_cast<float>(muplPvecBoostedCS.CosTheta()),
-			  static_cast<float>(muplPvecBoostedCS.Phi())};
+			cosThetaHXVar = muplPvecBoosted.CosTheta();
+			phiHXVar = muplPvecBoosted.Phi() * 180 / TMath::Pi();
 
-			UpsMuNTuple->Fill(tuple);
-		}
-	}
+			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
 
-	// ******** Create a file and store the ntuples ******** //
-	TFile* file = new TFile(outputFileName, "RECREATE");
+		} // end of reco QQ loop
+	}   // enf of event loop
 
-	UpsMuNTuple->Write();
+	TFile file(outputFileName, "RECREATE");
 
-	file->Close();
+	dataset.Write();
+
+	file.Close();
 
 	return;
 }

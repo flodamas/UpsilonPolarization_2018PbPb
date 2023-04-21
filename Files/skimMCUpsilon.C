@@ -14,7 +14,7 @@
 
 #include "../Tools/Parameters/CentralityValues.h"
 
-void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_GlbAndTrk_twoSampleMerged.root", const char* outputFileName = "MCUpsilonSkimmedTree.root") {
+void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_GlbAndTrk_twoSampleMerged.root", const char* outputFileName = "MCUpsilonSkimmedWeightedDataset.root") {
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
@@ -73,15 +73,33 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
-	Float_t nColl;
+	Float_t nColl, weight = 0;
 	Float_t Reco_QQ_phi, Reco_QQ_costheta, Reco_QQ_pt, Reco_QQ_y, Reco_QQ_px, Reco_QQ_py, Reco_QQ_pz, Reco_QQ_E, Reco_QQ_m;
 	Float_t Reco_mupl_phi, Reco_mupl_costheta, Reco_mupl_pt, Reco_mupl_y, Reco_mupl_eta, Reco_mupl_px, Reco_mupl_py, Reco_mupl_pz, Reco_mupl_E;
 	Float_t Reco_mumi_phi, Reco_mumi_costheta, Reco_mumi_pt, Reco_mumi_y, Reco_mumi_eta, Reco_mumi_px, Reco_mumi_py, Reco_mumi_pz, Reco_mumi_E;
 
-	// ******** Create a Ntuple to store kinematics of Upsilon and daughter muons ******** //
-	gROOT->cd();
-	TString varlist = "genWeight:centrality:nColl:upsM:upsRap:upsPt:upsPz:upsPhi:upsCosTheta:muplPt:muplPz:muplEta:muplPhi:muplCosTheta:mumiPt:mumiPz:mumiEta:mumiPhi:muplM:muplCosThetaPrimeHX:muplPhiPrimeHX:muplCosThetaPrimeCS:muplPhiPrimeCS";
-	TNtuple* UpsMuNTuple = new TNtuple("UpsMuKinematics", "Upsilon in the lab frame ntuple", varlist);
+	/// RooDataSet output: one entry = one dimuon candidate!
+
+	// weighting by event directly on the fly
+	RooRealVar centVar("centrality", "event centrality", 0, 200);
+	//RooRealVar nCollVar("nColl", "estimated number of binary nucleon-nucleon scatterings", 0, 2200);
+	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight)", 0, 10000);
+
+	Float_t lowMassCut = 8, highMassCut = 12;
+	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
+	RooRealVar yVar("rapidity", "dimuon rapidity", -2.4, 2.4);
+	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
+
+	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
+	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", -180, 180, "#circ");
+
+	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
+	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
+
+	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
+	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
+
+	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"));
 
 	// ******** Set beam energy for the Collins-Soper reference frame ******** //
 	double sqrt_S_NN = 5.02;                 //(Center of mass Energy per nucleon pair in TeV)
@@ -89,7 +107,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	double beam1_E = beam1_p;
 	double beam2_p = -beam1_p;
 	double beam2_E = beam1_E;
-	//double delta = 0; //(Angle between ZHX(Z-axis in the Helicity frame) and ZCS(Z-axis in the Collins-Soper frame))
+	double delta = 0; //(Angle between ZHX(Z-axis in the Helicity frame) and ZCS(Z-axis in the Collins-Soper frame))
 
 	Long64_t totEntries = OniaTree->GetEntries();
 
@@ -102,7 +120,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 
 		// event selection
 
-		if (Centrality > 2 * 90) continue; // discard events with centrality > 90% in 2018 data
+		if (Centrality >= 2 * 90) continue; // discard events with centrality > 90% in 2018 data
 
 		if (!((HLTriggers & (ULong64_t)(1 << (Bits[SelectedBit] - 1))) == (ULong64_t)(1 << (Bits[SelectedBit] - 1)))) continue; // must fire the upsilon HLT path
 
@@ -115,7 +133,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
 			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
 
-			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (Bits[SelectedBit] - 1))) == (ULong64_t)(1 << (Bits[SelectedBit] - 1)))) continue; // dimuon matching
+			//	if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (Bits[SelectedBit] - 1))) == (ULong64_t)(1 << (Bits[SelectedBit] - 1)))) continue; // dimuon matching
 
 			if (Reco_QQ_sign[iQQ] != 0) continue; // only opposite-sign muon pairs
 
@@ -123,7 +141,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 
 			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iQQ);
 
-			if (Reco_QQ_4mom->M() < 7 || Reco_QQ_4mom->M() > 14) continue; // speedup!
+			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
 			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue;
 
@@ -316,50 +334,34 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 			muplPvecBoostedCS.RotateY(delta);
 			mumiPvecBoostedCS.RotateY(delta);
 
-			// cout << endl;
-			// cout << "Rotated unit Vec: (" << ZHXunitVec.Px() << ", " << ZHXunitVec.Py() << ", " << ZHXunitVec.Pz() << ")" << endl;
-			// cout << "mupl CosTheta, mupl Phi: " << muplPvecBoostedCS.CosTheta() << ", " << muplPvecBoostedCS.Phi() << endl;
+			// fill the dataset
+			weight = nColl * Gen_weight;
 
-			// ******** Fill Ntuple with kinematics of upsilon and muons in the Lab, HX, and CS frames******** //
-			float tuple[] = {
-			  static_cast<float>(Gen_weight),
-			  static_cast<float>(Centrality),
-			  static_cast<float>(nColl),
+			centVar = Centrality;
 
-			  static_cast<float>(Reco_QQ_m),
-			  static_cast<float>(Reco_QQ_y),
-			  static_cast<float>(Reco_QQ_pt),
-			  static_cast<float>(Reco_QQ_pz),
-			  static_cast<float>(Reco_QQ_phi),
-			  static_cast<float>(Reco_QQ_costheta),
+			eventWeightVar = weight;
+			massVar = Reco_QQ_4mom->M();
+			yVar = Reco_QQ_4mom->Rapidity();
+			ptVar = Reco_QQ_4mom->Pt();
 
-			  static_cast<float>(Reco_mupl_pt),
-			  static_cast<float>(Reco_mupl_pz),
-			  static_cast<float>(Reco_mupl_eta),
-			  static_cast<float>(Reco_mupl_phi),
-			  static_cast<float>(Reco_mupl_costheta),
-			  static_cast<float>(Reco_mumi_pt),
-			  static_cast<float>(Reco_mumi_pz),
-			  static_cast<float>(Reco_mumi_eta),
-			  static_cast<float>(Reco_mumi_phi),
+			cosThetaLabVar = Reco_mupl_4mom->CosTheta();
+			phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
 
-			  static_cast<float>(mupl4MomBoostedRot.Mag()),
-			  static_cast<float>(muplPvecBoosted.CosTheta()),
-			  static_cast<float>(muplPvecBoosted.Phi()),
+			cosThetaCSVar = muplPvecBoostedCS.CosTheta();
+			phiCSVar = muplPvecBoostedCS.Phi() * 180 / TMath::Pi();
 
-			  static_cast<float>(muplPvecBoostedCS.CosTheta()),
-			  static_cast<float>(muplPvecBoostedCS.Phi())};
+			cosThetaHXVar = muplPvecBoosted.CosTheta();
+			phiHXVar = muplPvecBoosted.Phi() * 180 / TMath::Pi();
 
-			UpsMuNTuple->Fill(tuple);
+			dataset.add(RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), weight);
 		}
 	}
 
-	// ******** Create a file and store the ntuples ******** //
-	TFile* file = new TFile(outputFileName, "RECREATE");
+	TFile file(outputFileName, "RECREATE");
 
-	UpsMuNTuple->Write();
+	dataset.Write();
 
-	file->Close();
+	file.Close();
 
 	return;
 }
