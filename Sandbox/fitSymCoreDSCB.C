@@ -7,8 +7,6 @@
 
 #include "../Tools/Parameters/PhysicsConstants.h"
 
-//#include "../MonteCarlo/fitMCSignalShape_asymDoubleCB.C"
-
 #include "../Tools/CustomRoofitPDFs/ErrorFuncTimesExp.h"
 
 void fitSymCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
@@ -17,15 +15,12 @@ void fitSymCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE,
 	TString fitModelName = Form("symCoreDSCB_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 
 	// get the tail parameters of the signal shape first in case the MC fit is needed
-	RooConstVar alphaInf, orderInf, alphaSup, orderSup;
+	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
+	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
+	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
+	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
 
-	RooArgSet tailParams(alphaInf, orderInf, alphaSup, orderSup); // mind the ordering
-	cout << endl
-	     << "before getting the tails" << endl;
-
-	CheckTailParameters(tailParams, "symCoreDSCB", centMin, centMax, ptMin, ptMax);
-
-	//RooArgSet tailParams = GetMCSignalTailParameters(/*alphaInf, orderInf, alphaSup, orderSup, */ "symCoreDSCB", centMin, centMax, ptMin, ptMax);
+	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, "symCoreDSCB", centMin, centMax, ptMin, ptMax);
 
 	const char* filename = "../Files/upsilonSkimmedDataset.root";
 	TFile* f = TFile::Open(filename, "READ");
@@ -75,7 +70,7 @@ void fitSymCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE,
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.3, 9.6);
 	RooRealVar sigma_1S("sigma_1S", "", .05, .15);
 
-	RooCrystalBall signal_1S("signal_1S", "", *massVar, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
+	RooCrystalBall signal_1S("signal_1S", "", *massVar, mean_1S, sigma_1S, *alphaInf, *orderInf, *alphaSup, *orderSup);
 	RooRealVar nSignal_1S("nSignal_1S", "N 1S", 0, nEntries);
 
 	// Y(2S) signal shape, mass scaling for mean and widths
@@ -84,7 +79,7 @@ void fitSymCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE,
 	RooFormulaVar mean_2S("mean_2S", "massScaling_2S*mean_1S", RooArgSet(massScaling_2S, mean_1S));
 	RooFormulaVar sigma_2S("sigma_2S", "massScaling_2S*sigma_1S", RooArgSet(massScaling_2S, sigma_1S));
 
-	RooCrystalBall signal_2S("signal_2S", "", *massVar, mean_2S, sigma_2S, alphaInf, orderInf, alphaSup, orderSup);
+	RooCrystalBall signal_2S("signal_2S", "", *massVar, mean_2S, sigma_2S, *alphaInf, *orderInf, *alphaSup, *orderSup);
 	RooRealVar nSignal_2S("nSignal_2S", "N 2S", 0, nEntries / 2);
 
 	// Y(3S) signal shape, mass scaling for mean and widths
@@ -93,7 +88,7 @@ void fitSymCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE,
 	RooFormulaVar mean_3S("mean_3S", "massScaling_3S*mean_1S", RooArgSet(massScaling_3S, mean_1S));
 	RooFormulaVar sigma_3S("sigma_3S", "massScaling_3S*sigma_1S", RooArgSet(massScaling_3S, sigma_1S));
 
-	RooCrystalBall signal_3S("signal_3S", "", *massVar, mean_3S, sigma_3S, alphaInf, orderInf, alphaSup, orderSup);
+	RooCrystalBall signal_3S("signal_3S", "", *massVar, mean_3S, sigma_3S, *alphaInf, *orderInf, *alphaSup, *orderSup);
 	RooRealVar nSignal_3S("nSignal_3S", "N 3S", 0, nEntries / 4);
 
 	// background: error function x exponential

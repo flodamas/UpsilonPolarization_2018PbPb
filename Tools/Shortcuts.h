@@ -48,8 +48,8 @@ RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int
 // return the signal shape tail parameters (alphaL, orderL, alphaR, orderR)
 // based on the name of the fit model, if there is no .txt file corresponding, it will perform the MC fit in order to extract the parameters
 
-RooArgSet GetMCSignalTailParameters(RooConstVar outAlphaInf, RooConstVar outOrderInf, RooConstVar outAlphaSup, RooConstVar outOrderSup, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
-	RooArgSet tailParams(outAlphaInf, outOrderInf, outAlphaSup, outOrderSup);
+RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+	RooArgSet tailParams(*alphaInf, *orderInf, *alphaSup, *orderSup);
 
 	// if the .txt file for this specific fit model exists, just read the tail parameters from it
 	const char* mcFileName = Form("../MonteCarlo/SignalParameters/%s_cent%dto%d_pt%dto%d.txt", signalShapeName.Data(), centMin, centMax, ptMin, ptMax);
@@ -59,8 +59,15 @@ RooArgSet GetMCSignalTailParameters(RooConstVar outAlphaInf, RooConstVar outOrde
 		     << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
 		tailParams.readFromFile(mcFileName);
 	} else {
-		//tailParams = extractMCSignalTails_symCoreDSCB(centMin, centMax, ptMin, ptMax);
+		cout << endl
+		     << mcFileName << " file does not seem to exist, you need to extract the signal tail paramaters from MC fit first!" << endl;
 	}
+
+	// fix the tail parameters
+	alphaInf->setConstant();
+	orderInf->setConstant();
+	alphaSup->setConstant();
+	orderSup->setConstant();
 
 	cout << endl
 	     << "Tail parameters fixed to the following MC signal values:" << endl;
