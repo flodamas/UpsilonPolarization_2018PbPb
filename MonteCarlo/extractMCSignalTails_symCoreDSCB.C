@@ -1,14 +1,11 @@
-#include "../Tools/Style/tdrStyle.C"
-#include "../Tools/Style/CMS_lumi.C"
 
 #include "../Tools/Style/FitDistributions.h"
-#include "../Tools/Style/Legends.h"
 
 #include "../Tools/Shortcuts.h"
 
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
-RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
 	const char* filename = "../Files/MCUpsilonSkimmedWeightedDataset.root";
 
 	TFile* file = TFile::Open(filename, "READ");
@@ -17,9 +14,6 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	}
 
 	cout << "File " << filename << " opened" << endl;
-
-	writeExtraText = true; // if extra text
-	extraText = "      Simulation Internal";
 
 	// we only extract the tail parameters for a specific pt bin, they do not vary significantly with cos theta or phi within this pt bin
 	Bool_t isCSframe = kTRUE;
@@ -63,11 +57,8 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	TString outputName = Form("symCoreDSCB_cent%dto%d_pt%dto%d", centMin, centMax, ptMin, ptMax);
 
 	// save signal shape parameters in a txt file to be read for data fit
-	RooArgSet* tailParams = new RooArgSet(alphaInf, orderInf, alphaSup, orderSup);
 
-	SaveMCSignalTailParameters(tailParams, outputName.Data()); // so that we don't have to refit later
+	SaveMCSignalTailParameters(RooArgSet(alphaInf, orderInf, alphaSup, orderSup), outputName.Data()); // so that we don't have to refit later
 
 	file->Close();
-
-	return tailParams;
 }

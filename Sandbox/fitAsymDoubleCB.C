@@ -7,8 +7,6 @@
 
 #include "../Tools/Parameters/PhysicsConstants.h"
 
-//#include "../MonteCarlo/fitMCSignalShape_asymDoubleCB.C"
-
 #include "../Tools/CustomRoofitPDFs/ErrorFuncTimesExp.h"
 
 void fitAsymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
@@ -16,17 +14,13 @@ void fitAsymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE
 
 	TString fitModelName = Form("asymDoubleCB_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 
-	// fit the MC signal shape if the corresponding file does not exist
-	const char* mcFileName = Form("../MonteCarlo/SignalParameters/%s.txt", fitModelName.Data());
-	/*
-	if (!fopen(mcFileName, "r")) {
-		cout << endl
-		     << "MC file does not exist, need to fit the signal shape first, be patient..." << endl;
-		fitMCSignalShape_asymDoubleCB(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
-		return;
-	}
-*/
-	const char* filename = "../Files/upsilonSkimmedDataset.root";
+	// get the tail parameters of the signal shape first in case the MC fit is needed
+	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
+	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
+	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
+	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
+
+	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, "asymDoubleCB", centMin, centMax, ptMin, ptMax);
 
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
@@ -68,20 +62,7 @@ void fitAsymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE
 	/// fitting model
 
 	// signal: one asymmetrical double-sided Crystal Ball PDF per resonance
-
 	// tail parameters fixed to MC extracted values, and identical for the three resonances
-	// read the values from the corresponding txt file
-	RooArgSet* tailParams = GetMCSignalParameters(fitModelName);
-
-	//	RooConstVar alphaInf("alphaInf", " ", tailParams.getRealValue("alphaInf", 1, true));
-
-	RooConstVar* alphaInf = (RooConstVar*)tailParams->find("alphaInf");
-	alphaInf->Print("v");
-	cout << endl
-	     << "alpha inf = " << alphaInf->getVal() << endl;
-	RooConstVar* orderInf = (RooConstVar*)tailParams->find("orderInf");
-	RooConstVar* alphaSup = (RooConstVar*)tailParams->find("alphaSup");
-	RooConstVar* orderSup = (RooConstVar*)tailParams->find("orderSup");
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.3, 9.6);
@@ -89,8 +70,8 @@ void fitAsymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE
 	RooRealVar sigmaSup_1S("sigmaSup_1S", "", .05, .15);
 
 	RooCrystalBall signal_1S("signal_1S", "", *massVar, mean_1S, sigmaInf_1S, sigmaSup_1S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar nSignal_1S("nSignal_1S", "N 1S", 10000, 0, nEntries);
-	/*
+	RooRealVar nSignal_1S("nSignal_1S", "N 1S", 0, nEntries);
+
 	// Y(2S) signal shape, mass scaling for mean and widths
 	RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
 
@@ -99,7 +80,7 @@ void fitAsymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE
 	RooFormulaVar sigmaSup_2S("sigmaSup_2S", "massScaling_2S*sigmaSup_1S", RooArgSet(massScaling_2S, sigmaSup_1S));
 
 	RooCrystalBall signal_2S("signal_2S", "", *massVar, mean_2S, sigmaInf_2S, sigmaSup_2S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar nSignal_2S("nSignal_2S", "N 2S", 1000, 0, nEntries);
+	RooRealVar nSignal_2S("nSignal_2S", "N 2S", 0, nEntries / 2);
 
 	// Y(3S) signal shape, mass scaling for mean and widths
 	RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
@@ -109,7 +90,7 @@ void fitAsymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE
 	RooFormulaVar sigmaSup_3S("sigmaSup_3S", "massScaling_3S*sigmaSup_1S", RooArgSet(massScaling_3S, sigmaSup_1S));
 
 	RooCrystalBall signal_3S("signal_3S", "", *massVar, mean_3S, sigmaInf_3S, sigmaSup_3S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar nSignal_3S("nSignal_3S", "N 3S", 500, 0, nEntries);
+	RooRealVar nSignal_3S("nSignal_3S", "N 3S", 0, nEntries / 4);
 
 	// background: error function x exponential
 	RooRealVar err_mu("err_mu", "err_mu", 0, 15);
@@ -164,7 +145,7 @@ void fitAsymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE
 	frame->Draw();
 	gPad->RedrawAxis();
 
-	frame->SetMaximum(nEntries / 25);
+	//frame->SetMaximum(nEntries / 25);
 
 	CMS_lumi(pad1, "2018 PbPb miniAOD, DoubleMuon PD");
 
@@ -180,5 +161,4 @@ void fitAsymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE
 	pad2->Draw();
 
 	canvas->SaveAs(Form("mass_distrib/%s.png", fitModelName.Data()), "RECREATE");
-	*/
 }

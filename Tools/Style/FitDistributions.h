@@ -42,29 +42,6 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	return bottomPad;
 }
 
-void SaveMCSignalTailParameters(RooArgSet* params, const char* outputName) {
-	params->writeToFile(Form("../MonteCarlo/SignalParameters/%s.txt", outputName));
-}
-
-RooArgSet* GetMCSignalParameters(const char* mcFileName) {
-	RooRealVar alphaInf("alphaInf", "", 1);
-	RooRealVar orderInf("orderInf", "", 1);
-	RooRealVar alphaSup("alphaSup", "", 1);
-	RooRealVar orderSup("orderSup", "", 1);
-
-	// read the values from the corresponding txt files -> mind the ordering!!
-	RooArgSet* tailParams = new RooArgSet(alphaInf, orderInf, alphaSup, orderSup);
-
-	tailParams->readFromFile(Form("../MonteCarlo/SignalParameters/%s.txt", mcFileName));
-	cout << endl
-	     << "Tail parameters fixed to the following MC signal values:" << endl;
-	tailParams->Print("v");
-
-	// fix the tail parameters
-	alphaInf.setConstant();
-	orderInf.setConstant();
-	alphaSup.setConstant();
-	orderSup.setConstant();
-
-	return tailParams;
+void SaveMCSignalTailParameters(RooArgSet params, const char* outputName) {
+	params.writeToFile(Form("../MonteCarlo/SignalParameters/%s.txt", outputName));
 }

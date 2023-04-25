@@ -1,28 +1,24 @@
-//#include "../Tools/Style/tdrStyle.C"
-//#include "../Tools/Style/CMS_lumi.C"
-//#include "../Tools/Style/FitDistributions.h"
-//#include "../Tools/Style/Legends.h"
+#include "../Tools/Style/tdrStyle.C"
+#include "../Tools/Style/CMS_lumi.C"
+#include "../Tools/Style/FitDistributions.h"
+#include "../Tools/Style/Legends.h"
 
 #include "../Tools/Shortcuts.h"
 
 #include "../Tools/Parameters/PhysicsConstants.h"
 
-#include "../MonteCarlo/fitMCSignalShape_asymDoubleCB.C"
-
 void fitAsymDoubleCB_Exponential(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	Int_t centMin = 0, centMax = 90;
 
-	TString fitModelName = Form("asymDoubleCB_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
+	TString fitModelName = Form("asymDoubleCB_expo_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 
-	// fit the MC signal shape if the corresponding file does not exist
-	const char* mcFileName = Form("../MonteCarlo/SignalParameters/%s.txt", fitModelName.Data());
+	// get the tail parameters of the signal shape first in case the MC fit is needed
+	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
+	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
+	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
+	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
 
-	if (!fopen(mcFileName, "r")) {
-		cout << endl
-		     << "MC file does not exist, need to fit the signal shape first, be patient..." << endl;
-		fitMCSignalShape_asymDoubleCB(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
-		return;
-	}
+	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, "asymDoubleCB", centMin, centMax, ptMin, ptMax);
 
 	const char* filename = "../Files/upsilonSkimmedDataset.root";
 	TFile* f = TFile::Open(filename, "READ");
@@ -67,32 +63,13 @@ void fitAsymDoubleCB_Exponential(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	// signal: one extended Crystal Ball PDF per resonance
 	// tail parameters fixed to MC extracted values, and identical for the three resonances
-	RooRealVar alphaInf("alphaInf", "", 1);
-	RooRealVar orderInf("orderInf", "", 1);
-	RooRealVar alphaSup("alphaSup", "", 1);
-	RooRealVar orderSup("orderSup", "", 1);
-
-	// read the values from the corresponding txt files -> mind the ordering!!
-	RooArgSet tailParams(alphaInf, orderInf, alphaSup, orderSup);
-
-	if (!fopen(mcFileName, "r")) cout << "SOMETHING IS FUCKED UP" << endl;
-
-	tailParams.readFromFile(Form("../MonteCarlo/SignalParameters/%s.txt", fitModelName.Data()));
-	cout << endl
-	     << "Tail parameters fixed to the following MC signal values:" << endl;
-	tailParams.Print("v");
-	// fix the tail parameters
-	alphaInf.setConstant();
-	orderInf.setConstant();
-	alphaSup.setConstant();
-	orderSup.setConstant();
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.3, 9.6);
 	RooRealVar sigmaInf_1S("sigmaInf_1S", "", .05, .15);
 	RooRealVar sigmaSup_1S("sigmaSup_1S", "", .05, .15);
 
-	RooCrystalBall signal_1S("signal_1S", "", *massVar, mean_1S, sigmaInf_1S, sigmaSup_1S, alphaInf, orderInf, alphaSup, orderSup);
+	RooCrystalBall signal_1S("signal_1S", "", *massVar, mean_1S, sigmaInf_1S, sigmaSup_1S, *alphaInf, *orderInf, *alphaSup, *orderSup);
 	RooRealVar nSignal_1S("nSignal_1S", "N 1S", 0, nEntries);
 
 	// Y(2S) signal shape, mass scaling for mean and widths
@@ -102,7 +79,7 @@ void fitAsymDoubleCB_Exponential(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 	RooFormulaVar sigmaInf_2S("sigmaInf_2S", "massScaling_2S*sigmaInf_1S", RooArgSet(massScaling_2S, sigmaInf_1S));
 	RooFormulaVar sigmaSup_2S("sigmaSup_2S", "massScaling_2S*sigmaSup_1S", RooArgSet(massScaling_2S, sigmaSup_1S));
 
-	RooCrystalBall signal_2S("signal_2S", "", *massVar, mean_2S, sigmaInf_2S, sigmaSup_2S, alphaInf, orderInf, alphaSup, orderSup);
+	RooCrystalBall signal_2S("signal_2S", "", *massVar, mean_2S, sigmaInf_2S, sigmaSup_2S, *alphaInf, *orderInf, *alphaSup, *orderSup);
 	RooRealVar nSignal_2S("nSignal_2S", "N 2S", 0, nEntries / 2);
 
 	// Y(3S) signal shape, mass scaling for mean and widths
@@ -112,7 +89,7 @@ void fitAsymDoubleCB_Exponential(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 	RooFormulaVar sigmaInf_3S("sigmaInf_3S", "massScaling_3S*sigmaInf_1S", RooArgSet(massScaling_3S, sigmaInf_1S));
 	RooFormulaVar sigmaSup_3S("sigmaSup_3S", "massScaling_3S*sigmaSup_1S", RooArgSet(massScaling_3S, sigmaSup_1S));
 
-	RooCrystalBall signal_3S("signal_3S", "", *massVar, mean_3S, sigmaInf_3S, sigmaSup_3S, alphaInf, orderInf, alphaSup, orderSup);
+	RooCrystalBall signal_3S("signal_3S", "", *massVar, mean_3S, sigmaInf_3S, sigmaSup_3S, *alphaInf, *orderInf, *alphaSup, *orderSup);
 	RooRealVar nSignal_3S("nSignal_3S", "N 3S", 0, nEntries / 4);
 
 	// background: exponential
