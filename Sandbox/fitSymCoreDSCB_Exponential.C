@@ -7,12 +7,10 @@
 
 #include "../Tools/Parameters/PhysicsConstants.h"
 
-#include "../Tools/CustomRoofitPDFs/ErrorFuncTimesExp.h"
-
-void fitSymCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+void fitSymCoreDSCB_Exponential(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	Int_t centMin = 0, centMax = 90;
 
-	TString fitModelName = Form("symCoreDSCB_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
+	TString fitModelName = Form("symCoreDSCB_expo_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 
 	// get the tail parameters of the signal shape first in case the MC fit is needed
 	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
@@ -91,17 +89,15 @@ void fitSymCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE,
 	RooCrystalBall signal_3S("signal_3S", "", *massVar, mean_3S, sigma_3S, *alphaInf, *orderInf, *alphaSup, *orderSup);
 	RooRealVar nSignal_3S("nSignal_3S", "N 3S", 0, nEntries / 4);
 
-	// background: error function x exponential
-	RooRealVar err_mu("err_mu", "err_mu", 0, 15);
-	RooRealVar err_sigma("err_sigma", "err_sigma", 0, 10);
-	RooRealVar exp_lambda("exp_lambda", "m_lambda", 0, 15);
+	// background: exponential
+	RooRealVar exp_lambda("exp_lambda", "m_lambda", -15, 15);
 
-	ErrorFuncTimesExp bkgPDF("bkgPDF", "", *massVar, err_mu, err_sigma, exp_lambda);
+	RooExponential bkgPDF("bkgPDF", "", *massVar, exp_lambda);
 	RooRealVar nBkg("nBkg", "N background events", 0, nEntries);
 
 	RooAddPdf fitModel("fitModel", "", RooArgList(signal_1S, signal_2S, signal_3S, bkgPDF), RooArgList(nSignal_1S, nSignal_2S, nSignal_3S, nBkg));
 
-	auto* fitResult = fitModel.fitTo(*massDataset, Save(), Extended(kTRUE), PrintLevel(-1), Minos(kTRUE), NumCPU(4), Range(binMin, binMax));
+	auto* fitResult = fitModel.fitTo(*massDataset, Save(), Extended(kTRUE), PrintLevel(-1), Minos(kTRUE), NumCPU(3), Range(binMin, binMax));
 
 	fitResult->Print("v");
 
@@ -144,7 +140,7 @@ void fitSymCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE,
 	frame->Draw();
 	gPad->RedrawAxis();
 
-	frame->SetMaximum(nEntries / 30);
+	//frame->SetMaximum(nEntries / 10);
 	//frame->SetMinimum(0.8);
 
 	CMS_lumi(pad1, "2018 PbPb miniAOD, DoubleMuon PD");
