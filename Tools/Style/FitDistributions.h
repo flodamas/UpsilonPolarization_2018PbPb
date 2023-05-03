@@ -3,7 +3,7 @@
 TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	TPad* bottomPad = new TPad("bottomPad", "bottomPad", 0, 0.0, 1, .25);
 	bottomPad->SetTopMargin(0.015);
-	bottomPad->SetBottomMargin(0.34);
+	bottomPad->SetBottomMargin(0.4);
 	bottomPad->SetTicks(1, 1);
 	bottomPad->Draw();
 	bottomPad->cd();
@@ -11,7 +11,7 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	RooPlot* pullFrame = (frame->getPlotVar())->frame(frame->GetXaxis()->GetXmin(), frame->GetXaxis()->GetXmax());
 	pullFrame->addPlotable(frame->pullHist(), "PZ");
 	pullFrame->SetTitle(" ");
-	pullFrame->GetYaxis()->SetTitleOffset(0.4);
+	pullFrame->GetYaxis()->SetTitleOffset(0.35);
 	pullFrame->GetYaxis()->SetTitle("Pull");
 	pullFrame->GetYaxis()->SetTitleSize(0.17);
 	pullFrame->GetYaxis()->SetLabelSize(0.15);
