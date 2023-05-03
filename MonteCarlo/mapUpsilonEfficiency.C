@@ -18,11 +18,13 @@
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
+#include "../Tools/Parameters/AnalysisParameters.h"
+
 #include "../Tools/Parameters/CentralityValues.h"
 
 #include "../Tools/Parameters/MuonScaleFactors.h"
 
-void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, Int_t muTrkSFindex = 0, Int_t muIdSFindex = 0, Int_t muTrigSFindex = 0, Int_t muFilterIndex = 2) {
+void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, Int_t muTrkSFindex = 0, Int_t muIdSFindex = 0, Int_t muTrigSFindex = 0) {
 	const char* filename = Form("../Files/OniaTree_Y%dS_miniAOD_HydjetEmbeddedMC.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -38,15 +40,6 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 	Int_t centMin = 0, centMax = 90;
 
 	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
-
-	// ******** Select Upsilon mass region bits ******** //
-	// 2018
-	// Bit1: HLT_HIL1DoubleMuOpen_v1       (Double muon inclusive)
-	// Bit13: HLT_HIL3MuONHitQ10_L2MuO_MAXdR3p5_M1to5_v1  (J/psi region)
-	// Bit14: HLT_HIL3Mu2p5NHitQ10_L2Mu2_M7toinf_v1 (Upsilon + high masses)
-	const Int_t NTriggers = 3;
-	const Int_t Bits[NTriggers] = {1, 13, 14};
-	Int_t SelectedBit = 2; //(This will be used in the loop for HLTrigger and Reco_QQ_Trig)
 
 	/// OniaTree variables
 
@@ -66,6 +59,7 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 	Short_t Reco_QQ_mumi_idx[1000];
 	Short_t Gen_QQ_whichRec[1000];
 
+	ULong64_t Reco_mu_trig[1000];
 	Int_t Reco_mu_SelectionType[1000];
 	//(parameters for quality cuts)
 	Float_t Reco_QQ_VtxProb[1000];
@@ -95,6 +89,7 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 	OniaTree->SetBranchAddress("Reco_QQ_mupl_idx", Reco_QQ_mupl_idx);
 	OniaTree->SetBranchAddress("Reco_QQ_mumi_idx", Reco_QQ_mumi_idx);
 
+	OniaTree->SetBranchAddress("Reco_mu_trig", Reco_mu_trig);
 	OniaTree->SetBranchAddress("Reco_mu_SelectionType", Reco_mu_SelectionType);
 
 	OniaTree->SetBranchAddress("Reco_QQ_VtxProb", &Reco_QQ_VtxProb);
@@ -134,7 +129,8 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 
 	TLorentzVector* genLorentzVector = new TLorentzVector();
 
-	double weight, muPlusSF, muMinusSF;
+	double weight, muTrkSF, muIdSF, muTrigSF;
+	double tnp_trig_weight_mupl = -1, tnp_trig_weight_mumi = -1;
 	Bool_t allGood, firesTrigger, isRecoMatched, goodVertexProba, withinAcceptance, trackerAndGlobalMuons, hybridSoftMuons;
 
 	bool muPlusMatchesL2 = false, muPlusMatchesL3 = false, muMinusMatchesL2 = false, muMinusMatchesL3 = false;
@@ -151,9 +147,9 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 
 		// event selection
 
-		if (Centrality > 2 * 90) continue; // discard events with centrality > 90% in 2018 data
+		if (Centrality >= 2 * 90) continue; // discard events with centrality >= 90% in 2018 data
 
-		firesTrigger = ((HLTriggers & (ULong64_t)(1 << (Bits[SelectedBit] - 1))) == (ULong64_t)(1 << (Bits[SelectedBit] - 1)));
+		firesTrigger = ((HLTriggers & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)));
 
 		// get N_coll from HF
 		Int_t hiBin = GetHiBinFromhiHF(SumET_HF);
@@ -178,7 +174,7 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 			isRecoMatched = iReco > -1;
 
 			if (isRecoMatched) {
-				//	if (!((Reco_QQ_trig[iReco] & (ULong64_t)(1 << (Bits[SelectedBit] - 1))) == (ULong64_t)(1 << (Bits[SelectedBit] - 1)))) continue; // dimuon matching
+				//	if (!((Reco_QQ_trig[iReco] & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)))) continue; // dimuon matching
 
 				goodVertexProba = Reco_QQ_VtxProb[iReco] > 0.01;
 
@@ -343,12 +339,64 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 
 				allGood = firesTrigger && isRecoMatched && goodVertexProba && trackerAndGlobalMuons && hybridSoftMuons && withinAcceptance;
 
-				// muon scale factors
-				muPlusSF = tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, muIdSFindex) * tnp_weight_trk_pbpb(Reco_mupl_eta, muTrkSFindex) * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, muFilterIndex, muTrigSFindex);
+				/// muon scale factors
+				muTrkSF = tnp_weight_trk_pbpb(Reco_mupl_eta, muTrkSFindex) * tnp_weight_trk_pbpb(Reco_mumi_eta, muTrkSFindex);
 
-				muMinusSF = tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, muIdSFindex) * tnp_weight_trk_pbpb(Reco_mumi_eta, muTrkSFindex) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, muFilterIndex, muTrigSFindex);
+				muIdSF = tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, muIdSFindex) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, muIdSFindex);
 
-				weight *= muPlusSF * muMinusSF;
+				// muon trigger SF is more tricky, need to know which muon passed which trigger filter
+				bool mupl_L2Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, L2FilterBit))) == ((ULong64_t)pow(2, L2FilterBit)));
+				bool mupl_L3Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, L3FilterBit))) == ((ULong64_t)pow(2, L3FilterBit)));
+				bool mumi_L2Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, L2FilterBit))) == ((ULong64_t)pow(2, L2FilterBit)));
+				bool mumi_L3Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, L3FilterBit))) == ((ULong64_t)pow(2, L3FilterBit)));
+				if (mupl_L2Filter == false || mumi_L2Filter == false) {
+					cout << "TnP ERROR !!!! ::: No matched L2 filter2 " << endl;
+					cout << endl;
+				}
+
+				bool mupl_isL2 = (mupl_L2Filter && !mupl_L3Filter);
+				bool mupl_isL3 = (mupl_L2Filter && mupl_L3Filter);
+				bool mumi_isL2 = (mumi_L2Filter && !mumi_L3Filter);
+				bool mumi_isL3 = (mumi_L2Filter && mumi_L3Filter);
+				bool SelDone = false;
+
+				if (mupl_isL2 && mumi_isL3) {
+					tnp_trig_weight_mupl = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, muTrigSFindex);
+					tnp_trig_weight_mumi = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, muTrigSFindex);
+					SelDone = true;
+				} else if (mupl_isL3 && mumi_isL2) {
+					tnp_trig_weight_mupl = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, muTrigSFindex);
+					tnp_trig_weight_mumi = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, muTrigSFindex);
+					SelDone = true;
+				} else if (mupl_isL3 && mumi_isL3) {
+					double T1_ = tnp_weight_trg_pbpb_mc(Reco_mupl_pt, Reco_mupl_eta, 3, muTrigSFindex);
+					double T2_ = tnp_weight_trg_pbpb_mc(Reco_mumi_pt, Reco_mumi_eta, 3, muTrigSFindex);
+					double T1 = tnp_weight_trg_pbpb_mc(Reco_mupl_pt, Reco_mupl_eta, 2, muTrigSFindex);
+					double T2 = tnp_weight_trg_pbpb_mc(Reco_mumi_pt, Reco_mumi_eta, 2, muTrigSFindex);
+					double den_ = T1_ * T2 + (T1 - T1_) * T2_;
+					double num_ = T1_ * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, muTrigSFindex) * T2 * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, muTrigSFindex) + (T1 * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, muTrigSFindex) - T1_ * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, muTrigSFindex)) * T2_ * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, muTrigSFindex);
+
+					tnp_trig_weight_mupl = num_ / den_;
+					tnp_trig_weight_mumi = 1;
+					if (den_ <= 0 || num_ <= 0) {
+						cout << "ERROR wrong calculation" << endl;
+						continue;
+					}
+
+					SelDone = true;
+				}
+				if (SelDone == false) {
+					cout << "ERROR :: No muon filter combination selected !!!!" << endl;
+					continue;
+				}
+				if ((tnp_trig_weight_mupl == -1 || tnp_trig_weight_mumi == -1)) {
+					cout << "ERROR :: No trigger muon tnp scale factors selected !!!!" << endl;
+					continue;
+				}
+				muTrigSF = tnp_trig_weight_mupl * tnp_trig_weight_mumi;
+
+				// product of the total scale factors
+				weight *= muTrkSF * muIdSF * muTrigSF;
 
 				hCS->FillWeighted(allGood, weight, muplPvecBoostedCS.CosTheta(), muplPvecBoostedCS.Phi() * 180 / TMath::Pi());
 				hHX->FillWeighted(allGood, weight, muplPvecBoosted.CosTheta(), muplPvecBoosted.Phi() * 180 / TMath::Pi());

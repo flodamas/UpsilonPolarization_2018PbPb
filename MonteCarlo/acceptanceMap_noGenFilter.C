@@ -34,8 +34,6 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
-	Int_t centMin = 0, centMax = 90;
-
 	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
 
 	/// OniaTree variables, quite old version
@@ -278,7 +276,7 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	hCS->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
 	hCS->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
-	canvasCS->SaveAs(Form("NoFilterAcceptanceMaps/%dS/CS_cent%dto%d_pt%dto%dGeV.png", iState, centMin, centMax, ptMin, ptMax), "RECREATE");
+	canvasCS->SaveAs(Form("NoFilterAcceptanceMaps/%dS/CS_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
 
 	auto* canvasHX = new TCanvas("canvasHX", "", 700, 600);
 	hHX->Draw("COLZ");
@@ -293,5 +291,5 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	hHX->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
 	hHX->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
-	canvasHX->SaveAs(Form("NoFilterAcceptanceMaps/%dS/HX_cent%dto%d_pt%dto%dGeV.png", iState, centMin, centMax, ptMin, ptMax), "RECREATE");
+	canvasHX->SaveAs(Form("NoFilterAcceptanceMaps/%dS/HX_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
 }

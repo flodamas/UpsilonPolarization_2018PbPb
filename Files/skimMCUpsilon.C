@@ -12,20 +12,13 @@
 #include <fstream>
 #include <cmath>
 
+#include "../Tools/Parameters/AnalysisParameters.h"
+
 #include "../Tools/Parameters/CentralityValues.h"
 
 void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_GlbAndTrk_twoSampleMerged.root", const char* outputFileName = "MCUpsilonSkimmedWeightedDataset.root") {
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
-
-	// ******** Select Upsilon mass region bits ******** //
-	// 2018
-	// Bit1: HLT_HIL1DoubleMuOpen_v1       (Double muon inclusive)
-	// Bit13: HLT_HIL3MuONHitQ10_L2MuO_MAXdR3p5_M1to5_v1  (J/psi region)
-	// Bit14: HLT_HIL3Mu2p5NHitQ10_L2Mu2_M7toinf_v1 (Upsilon + high masses)
-	const Int_t NTriggers = 3;
-	const Int_t Bits[NTriggers] = {1, 13, 14};
-	Int_t SelectedBit = 2; //(This will be used in the loop for HLTrigger and Reco_QQ_Trig)
 
 	/// OniaTree variables
 
@@ -43,6 +36,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	Short_t Reco_QQ_mumi_idx[1000];
 	Short_t Reco_QQ_whichGen[1000];
 
+	ULong64_t Reco_mu_trig[1000];
 	Int_t Reco_mu_SelectionType[1000];
 	//(parameters for quality cuts)
 	Float_t Reco_QQ_VtxProb[1000];
@@ -65,6 +59,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	OniaTree->SetBranchAddress("Reco_QQ_mumi_idx", Reco_QQ_mumi_idx);
 	OniaTree->SetBranchAddress("Reco_QQ_whichGen", Reco_QQ_whichGen);
 
+	OniaTree->SetBranchAddress("Reco_mu_trig", Reco_mu_trig);
 	OniaTree->SetBranchAddress("Reco_mu_SelectionType", Reco_mu_SelectionType);
 
 	OniaTree->SetBranchAddress("Reco_QQ_VtxProb", &Reco_QQ_VtxProb);
@@ -122,7 +117,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 
 		if (Centrality >= 2 * 90) continue; // discard events with centrality > 90% in 2018 data
 
-		if (!((HLTriggers & (ULong64_t)(1 << (Bits[SelectedBit] - 1))) == (ULong64_t)(1 << (Bits[SelectedBit] - 1)))) continue; // must fire the upsilon HLT path
+		if (!((HLTriggers & (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1))) == (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1)))) continue; // must fire the upsilon HLT path
 
 		// get N_coll from HF
 		Int_t hiBin = GetHiBinFromhiHF(SumET_HF);
@@ -133,7 +128,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
 			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
 
-			//	if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (Bits[SelectedBit] - 1))) == (ULong64_t)(1 << (Bits[SelectedBit] - 1)))) continue; // dimuon matching
+			//	if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1))) == (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1)))) continue; // dimuon matching
 
 			if (Reco_QQ_sign[iQQ] != 0) continue; // only opposite-sign muon pairs
 

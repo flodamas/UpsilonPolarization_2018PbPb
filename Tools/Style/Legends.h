@@ -1,9 +1,9 @@
 TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax) {
-	TPaveText* text = new TPaveText(0.18, 0.9, 0.5, 0.65, "NDCNB");
+	TPaveText* text = new TPaveText(0.17, 0.9, 0.4, 0.65, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	text->AddText(Form("Centrality %d-%d%%", centMin, centMax));
-	text->AddText("|#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV");
+	text->AddText("p_{T}^{#mu} > 3.5 GeV");
 	text->AddText("|y^{#mu#mu}| < 2.4");
 	text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
 
