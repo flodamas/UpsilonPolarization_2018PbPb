@@ -56,23 +56,7 @@ TPaveText* SymCoreDoubleCBParamsText(RooRealVar mean, RooRealVar sigma, RooRealV
 	auto* text = new TPaveText(0.35, 0.45, 0.75, 0.05, "NDCNB");
 	text->SetBorderSize(0);
 
-	text->AddText("Double-sided CB (symmetric Gaussian core)");
-	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
-	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
-	text->AddText(Form("#alpha = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));
-	text->AddText(Form("n = %.3f #pm %.3f", order.getVal(), order.getError()));
-	text->AddText(Form("#alpha' = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
-	text->AddText(Form("n' = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
-
-	text->SetAllWith(" ", "align", 12);
-	return text;
-}
-
-TPaveText* ExtendedCBParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR) {
-	auto* text = new TPaveText(0.35, 0.4, 0.7, 0.05, "NDCNB");
-	text->SetBorderSize(0);
-
-	text->AddText("Extended Crystal Ball");
+	text->AddText("Symmetric double-sided CB");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
 	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
 	text->AddText(Form("#alpha = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));

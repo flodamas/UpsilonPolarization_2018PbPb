@@ -23,8 +23,8 @@ void fitMCSignalShape_twoCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe 
 	extraText = "      Simulation Internal";
 
 	Int_t centMin = 0, centMax = 90;
-	Float_t massMin = 8.5, massMax = 10.5;
-	Int_t nBins = 80;
+	Float_t massMin = 9, massMax = 10.;
+	Int_t nBins = 100;
 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
@@ -73,9 +73,9 @@ void fitMCSignalShape_twoCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe 
 	RooAddPdf signal("signal", "sum of two CBs PDF", RooArgList(CB_1, CB_2), RooArgList(normFraction), kTRUE);
 
 	// fit
-	bool doWeightedError = false;
+	bool doWeightedError = true;
 
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), SumW2Error(doWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors"
+	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!doWeightedError), NumCPU(4), Range(massMin, massMax), AsymptoticError(doWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 
 	fitResult->Print("v");
 
@@ -109,10 +109,10 @@ void fitMCSignalShape_twoCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe 
 
 	TString outputName = Form("twoCB_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 
-	canvas->SaveAs(Form("../MonteCarlo/Figures/%s.png", outputName.Data()), "RECREATE");
+	canvas->SaveAs(Form("../MonteCarlo/SignalShapeFits/%s.png", outputName.Data()), "RECREATE");
 
 	// save signal shape parameters in a txt file to be read for data fit
-	SaveMCSignalParameters(RooArgSet(alphaPar, orderPar, resFraction, normFraction), outputName.Data());
+	SaveMCSignalTailParameters(RooArgSet(alphaPar, orderPar, resFraction, normFraction), outputName.Data());
 
 	file->Close();
 }

@@ -101,12 +101,14 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 
 			if (fabs(gen_QQ_LV->Rapidity()) > 2.4) continue; // upsilon within acceptance
 
+			if (fabs(gen_QQ_LV->Rapidity()) < 1.2) continue; // upsilon within forward acceptance
+
 			// single-muon acceptance cuts
 			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
 
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
-			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > 3.5) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > 3.5);
+			withinAcceptance = (1.2 < fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > 3.) && (1.2 < fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > 3.);
 
 			// Transformations and rotations
 
@@ -212,10 +214,6 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 			TVector3 beam1PvecBoosted(beam14MomBoosted.Px(), beam14MomBoosted.Py(), beam14MomBoosted.Pz());
 			TVector3 beam2PvecBoosted(beam24MomBoosted.Px(), beam24MomBoosted.Py(), beam24MomBoosted.Pz());
 
-			// upsPvecLab.SetX(-1);
-			// upsPvecLab.SetY(0);
-			// upsPvecLab.SetZ(0);
-
 			beam1PvecBoosted.RotateZ(-upsPvecLab.Phi());
 			beam1PvecBoosted.RotateY(-upsPvecLab.Theta());
 			beam2PvecBoosted.RotateZ(-upsPvecLab.Phi());
@@ -230,9 +228,6 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 			double delta = 0; //(define and initialize the angle between z_HX and z_CS)
 
 			// // (The math for caculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
-			// if(beam1PvecBoosted.Pz()>0) delta = Angle_B1ZHX + Angle_B1miB2/2.;
-			// else if(beam1PvecBoosted.Pz()<0) delta = Angle_B1ZHX - Angle_B1miB2/2.;
-			// else cout <<  "beam1PvecBoosted.Pz() = 0?" << endl;
 			if (Angle_B1ZHX > Angle_B2ZHX)
 				delta = Angle_B2ZHX + Angle_B1miB2 / 2.;
 			else if (Angle_B1ZHX < Angle_B2ZHX)
@@ -268,28 +263,28 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 
 	CMS_lumi(canvasCS, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
-	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", iState));
+	legend->DrawLatexNDC(.48, .88, Form("1.2 < |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
+	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3 GeV", iState));
 
 	gPad->Update();
 
 	hCS->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
 	hCS->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
-	canvasCS->SaveAs(Form("NoFilterAcceptanceMaps/%dS/CS_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
+	canvasCS->SaveAs(Form("AcceptanceMaps/%dS/CS_pt%dto%dGeV_forward.png", iState, ptMin, ptMax), "RECREATE");
 
 	auto* canvasHX = new TCanvas("canvasHX", "", 700, 600);
 	hHX->Draw("COLZ");
 
 	CMS_lumi(canvasHX, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
-	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", iState));
+	legend->DrawLatexNDC(.48, .88, Form("1.2 < |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
+	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3 GeV", iState));
 
 	gPad->Update();
 
 	hHX->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
 	hHX->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
-	canvasHX->SaveAs(Form("NoFilterAcceptanceMaps/%dS/HX_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
+	canvasHX->SaveAs(Form("AcceptanceMaps/%dS/HX_pt%dto%dGeV_forward.png", iState, ptMin, ptMax), "RECREATE");
 }

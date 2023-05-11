@@ -24,8 +24,8 @@
 
 #include "../Tools/Parameters/MuonScaleFactors.h"
 
-void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, Int_t muTrkSFindex = 0, Int_t muIdSFindex = 0, Int_t muTrigSFindex = 0) {
-	const char* filename = Form("../Files/OniaTree_Y%dS_miniAOD_HydjetEmbeddedMC.root", iState);
+void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
+	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -44,9 +44,9 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 	/// OniaTree variables
 
 	Float_t Gen_weight;
-	Float_t SumET_HF;
 
 	TClonesArray* Gen_QQ_4mom = nullptr;
+	TClonesArray* Gen_mu_4mom = nullptr;
 
 	ULong64_t HLTriggers;
 	ULong64_t Reco_QQ_trig[1000];
@@ -58,6 +58,9 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 	Short_t Reco_QQ_mupl_idx[1000];
 	Short_t Reco_QQ_mumi_idx[1000];
 	Short_t Gen_QQ_whichRec[1000];
+
+	Short_t Gen_QQ_mupl_idx[1000];
+	Short_t Gen_QQ_mumi_idx[1000];
 
 	ULong64_t Reco_mu_trig[1000];
 	Int_t Reco_mu_SelectionType[1000];
@@ -72,14 +75,17 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 
 	// event variables
 	OniaTree->SetBranchAddress("Gen_weight", &Gen_weight);
-	OniaTree->SetBranchAddress("SumET_HF", &SumET_HF);
-	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
+	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 
 	// gen-level variables
 	OniaTree->SetBranchAddress("Gen_QQ_size", &Gen_QQ_size);
 	OniaTree->SetBranchAddress("Gen_QQ_4mom", &Gen_QQ_4mom);
 	OniaTree->SetBranchAddress("Gen_QQ_whichRec", Gen_QQ_whichRec);
+
+	OniaTree->SetBranchAddress("Gen_mu_4mom", &Gen_mu_4mom);
+	OniaTree->SetBranchAddress("Gen_QQ_mupl_idx", Gen_QQ_mupl_idx);
+	OniaTree->SetBranchAddress("Gen_QQ_mumi_idx", Gen_QQ_mumi_idx);
 
 	OniaTree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
 	OniaTree->SetBranchAddress("Reco_QQ_4mom", &CloneArr_QQ);
@@ -108,9 +114,9 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 	double beam1_E = beam1_p;
 	double beam2_p = -beam1_p;
 	double beam2_E = beam1_E;
-	//double delta = 0; //(Angle between ZHX(Z-axis in the Helicity frame) and ZCS(Z-axis in the Collins-Soper frame))
+	double delta = 0; //(Angle between ZHX(Z-axis in the Helicity frame) and ZCS(Z-axis in the Collins-Soper frame))
 
-	// (cos theta, phi) 2D distribution maps for CS and HX frames
+	/// (cos theta, phi) 2D distribution maps for CS and HX frames
 
 	Int_t nCosThetaBins = 20;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
@@ -124,16 +130,69 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 	//Double_t phiBinning[] = {-TMath::Pi(), -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 180};
 	//	nPhiBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
 
-	TEfficiency* hCS = new TEfficiency("hCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);acc #times efficiency", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX = new TEfficiency("hHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);acc #times efficiency", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	const char* titleCS = Form(";cos #theta_{CS}; #varphi_{CS} (#circ);#varUpsilon(%dS) total efficiency", iState);
 
+	const char* titleHX = Form(";cos #theta_{HX}; #varphi_{HX} (#circ);#varUpsilon(%dS) total efficiency", iState);
+
+	// we want to estimate the uncertainties from scale factors at the same time
+	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
+
+	// for a given type of muon scale factor (i.e., tracking, muId, trigger) we need to compute the efficiency with up and down variations, for stat and syst uncertainties
+
+	int indexNominal = 0;
+	int indexSystUp = -1, indexSystDown = -2;
+	int indexStatUp = +1, indexStatDown = +2;
+
+	double dimuWeight_nominal = 0;
+	double dimuWeight_trk_systUp, dimuWeight_trk_systDown, dimuWeight_trk_statUp, dimuWeight_trk_statDown;
+	double dimuWeight_muId_systUp, dimuWeight_muId_systDown, dimuWeight_muId_statUp, dimuWeight_muId_statDown;
+	double dimuWeight_trig_systUp, dimuWeight_trig_systDown, dimuWeight_trig_statUp, dimuWeight_trig_statDown;
+
+	// Collins-Soper
+	TEfficiency* hCS_nominal = new TEfficiency("hCS_nominal", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+	TEfficiency* hCS_trk_systUp = new TEfficiency("hCS_trk_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_trk_systDown = new TEfficiency("hCS_trk_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_trk_statUp = new TEfficiency("hCS_trk_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_trk_statDown = new TEfficiency("hCS_trk_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+	TEfficiency* hCS_muId_systUp = new TEfficiency("hCS_muId_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_muId_systDown = new TEfficiency("hCS_muId_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_muId_statUp = new TEfficiency("hCS_muId_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_muId_statDown = new TEfficiency("hCS_muId_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+	TEfficiency* hCS_trig_systUp = new TEfficiency("hCS_trig_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_trig_systDown = new TEfficiency("hCS_trig_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_trig_statUp = new TEfficiency("hCS_trig_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_trig_statDown = new TEfficiency("hCS_trig_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+	// Helicity
+	TEfficiency* hHX_nominal = new TEfficiency("hHX_nominal", titleHX, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+	TEfficiency* hHX_trk_systUp = new TEfficiency("hHX_trk_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_trk_systDown = new TEfficiency("hHX_trk_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_trk_statUp = new TEfficiency("hHX_trk_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_trk_statDown = new TEfficiency("hHX_trk_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+	TEfficiency* hHX_muId_systUp = new TEfficiency("hHX_muId_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_muId_systDown = new TEfficiency("hHX_muId_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_muId_statUp = new TEfficiency("hHX_muId_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_muId_statDown = new TEfficiency("hHX_muId_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+	TEfficiency* hHX_trig_systUp = new TEfficiency("hHX_trig_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_trig_systDown = new TEfficiency("hHX_trig_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_trig_statUp = new TEfficiency("hHX_trig_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_trig_statDown = new TEfficiency("hHX_trig_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
 
-	double weight, muTrkSF, muIdSF, muTrigSF;
-	double tnp_trig_weight_mupl = -1, tnp_trig_weight_mumi = -1;
-	Bool_t allGood, firesTrigger, isRecoMatched, goodVertexProba, withinAcceptance, trackerAndGlobalMuons, hybridSoftMuons;
+	double eventWeight, totalWeight;
+	double muplTrigSF_nominal = -1, mumiTrigSF_nominal = -1;
+	double muplTrigSF_systUp = -1, mumiTrigSF_systUp = -1, muplTrigSF_systDown = -1, mumiTrigSF_systDown = -1;
+	double muplTrigSF_statUp = -1, mumiTrigSF_statUp = -1, muplTrigSF_statDown = -1, mumiTrigSF_statDown = -1;
 
-	bool muPlusMatchesL2 = false, muPlusMatchesL3 = false, muMinusMatchesL2 = false, muMinusMatchesL3 = false;
+	Bool_t allGood, firesTrigger, isRecoMatched, dimuonMatching, goodVertexProba, passHLTFilterMuons, trackerAndGlobalMuons, hybridSoftMuons;
 
 	Long64_t totEntries = OniaTree->GetEntries();
 
@@ -151,18 +210,32 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 
 		firesTrigger = ((HLTriggers & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)));
 
-		// get N_coll from HF
-		Int_t hiBin = GetHiBinFromhiHF(SumET_HF);
-
-		weight = Gen_weight * FindNcoll(hiBin);
+		eventWeight = Gen_weight * FindNcoll(Centrality);
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
 			genLorentzVector = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
 
+			// fiducial region
 			if (genLorentzVector->Pt() < ptMin || genLorentzVector->Pt() > ptMax) continue; // pt bin of interest
 
-			if (fabs(genLorentzVector->Rapidity()) > 2.4) continue; // upsilon within acceptance
+			if (fabs(genLorentzVector->Rapidity()) > 2.4) continue;
+
+			// single-muon acceptance
+
+			// positive muon first
+			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+
+			if (genLorentzVector->Pt() < 3.5) continue;
+
+			if (fabs(genLorentzVector->Eta()) > 2.4) continue;
+
+			// then negative muon
+			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
+
+			if (genLorentzVector->Pt() < 3.5) continue;
+
+			if (fabs(genLorentzVector->Eta()) > 2.4) continue;
 
 			// go to reco level
 			Int_t iReco = Gen_QQ_whichRec[iGen];
@@ -174,7 +247,7 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 			isRecoMatched = iReco > -1;
 
 			if (isRecoMatched) {
-				//	if (!((Reco_QQ_trig[iReco] & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)))) continue; // dimuon matching
+				dimuonMatching = (Reco_QQ_trig[iReco] & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1));
 
 				goodVertexProba = Reco_QQ_VtxProb[iReco] > 0.01;
 
@@ -182,20 +255,23 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 				int iMuPlus = Reco_QQ_mupl_idx[iReco];
 				int iMuMinus = Reco_QQ_mumi_idx[iReco];
 
+				// HLT filters
+				bool mupl_L2Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, L2FilterBit))) == ((ULong64_t)pow(2, L2FilterBit)));
+				bool mupl_L3Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, L3FilterBit))) == ((ULong64_t)pow(2, L3FilterBit)));
+				bool mumi_L2Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, L2FilterBit))) == ((ULong64_t)pow(2, L2FilterBit)));
+				bool mumi_L3Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, L3FilterBit))) == ((ULong64_t)pow(2, L3FilterBit)));
+
+				passHLTFilterMuons = (mupl_L2Filter && mumi_L3Filter) || (mupl_L3Filter && mumi_L2Filter) || (mupl_L3Filter && mumi_L3Filter);
+
 				// global AND tracker muons
 				trackerAndGlobalMuons = (Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8) && (Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8);
 
 				// passing hybrid-soft Id
 				hybridSoftMuons = (Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.) && (Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.);
 
-				// acceptance
-				TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
+				allGood = firesTrigger && isRecoMatched && dimuonMatching && goodVertexProba && passHLTFilterMuons && trackerAndGlobalMuons && hybridSoftMuons;
 
-				TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
-
-				withinAcceptance = (fabs(Reco_mupl_4mom->Eta()) < 2.4) && (Reco_mupl_4mom->Pt() > 3.5) && (fabs(Reco_mumi_4mom->Eta()) < 2.4) && (Reco_mumi_4mom->Pt() > 3.5);
-
-				// Transformations and rotations
+				/// Transformations and rotations
 
 				TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iReco);
 
@@ -209,6 +285,8 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 				Reco_QQ_E = Reco_QQ_4mom->Energy();
 				Reco_QQ_m = Reco_QQ_4mom->M();
 
+				TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
+
 				Reco_mupl_phi = Reco_mupl_4mom->Phi();
 				Reco_mupl_costheta = Reco_mupl_4mom->CosTheta();
 				Reco_mupl_pt = Reco_mupl_4mom->Pt();
@@ -218,6 +296,8 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 				Reco_mupl_py = Reco_mupl_4mom->Py();
 				Reco_mupl_pz = Reco_mupl_4mom->Pz();
 				Reco_mupl_E = Reco_mupl_4mom->Energy();
+
+				TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
 				Reco_mumi_phi = Reco_mumi_4mom->Phi();
 				Reco_mumi_costheta = Reco_mumi_4mom->CosTheta();
@@ -246,11 +326,6 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 				TVector3 beam2PvecLab(0, 0, beam2_p);
 				TLorentzVector beam24MomLab(beam2PvecLab, beam2_E);
 
-				// cout << "<<In the lab frame>>" << endl;
-				// cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
-				// cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
-				// cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
-
 				// ******** Transform variables of muons from the lab frame to the upsilon's rest frame ******** //
 				TLorentzVector ups4MomBoosted(upsPvecLab, Reco_QQ_E);
 				TLorentzVector mupl4MomBoosted(muplPvecLab, Reco_mupl_E);
@@ -272,12 +347,6 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 				mumiPvecBoosted.RotateZ(-upsPvecLab.Phi());
 				mumiPvecBoosted.RotateY(-upsPvecLab.Theta());
 
-				// ******** Print out momentums of daughter muons in the upsilon's rest frame after coordinate rotation ******** //
-				// cout << endl;
-				// cout << "<<Rotated the quarkonium rest frame>>" << endl;
-				// cout << "mu+: p = (" << muplPvecBoosted.Px() << ", " << muplPvecBoosted.Py()  << ", " << muplPvecBoosted.Pz() << ")" << endl;
-				// cout << "mu-: p = (" << mumiPvecBoosted.Px() << ", " << mumiPvecBoosted.Py()  << ", " << mumiPvecBoosted.Pz() << ")" << endl;
-
 				TLorentzVector mupl4MomBoostedRot(muplPvecBoosted, mupl4MomBoosted.E());
 
 				// ******** HX to CS (rotation from HX frame to CS frame) ******** //
@@ -290,20 +359,12 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 				TLorentzVector beam14MomBoosted(beam1PvecLab, beam1_E);
 				TLorentzVector beam24MomBoosted(beam2PvecLab, beam2_E);
 
-				// ups4MomLab.SetX(-1);
-				// ups4MomLab.SetY(0);
-				// ups4MomLab.SetZ(0);
-
 				beam14MomBoosted.Boost(-ups4MomLab.BoostVector());
 				beam24MomBoosted.Boost(-ups4MomLab.BoostVector());
 
 				// ******** Rotate the coordinate ******** //
 				TVector3 beam1PvecBoosted(beam14MomBoosted.Px(), beam14MomBoosted.Py(), beam14MomBoosted.Pz());
 				TVector3 beam2PvecBoosted(beam24MomBoosted.Px(), beam24MomBoosted.Py(), beam24MomBoosted.Pz());
-
-				// upsPvecLab.SetX(-1);
-				// upsPvecLab.SetY(0);
-				// upsPvecLab.SetZ(0);
 
 				beam1PvecBoosted.RotateZ(-upsPvecLab.Phi());
 				beam1PvecBoosted.RotateY(-upsPvecLab.Theta());
@@ -316,12 +377,10 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 				double Angle_B2ZHX = beam2PvecBoosted.Angle(-ZHXunitVec);        //(angle between beam2 and -z_HX =(-beam2 and z_HX) )
 				double Angle_B1miB2 = beam1PvecBoosted.Angle(-beam2PvecBoosted); //(angle between beam1 and -beam2)
 
-				double delta = 0; //(define and initialize the angle between z_HX and z_CS)
+				delta = 0; //(define and initialize the angle between z_HX and z_CS)
 
-				// // (The math for caculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
-				// if(beam1PvecBoosted.Pz()>0) delta = Angle_B1ZHX + Angle_B1miB2/2.;
-				// else if(beam1PvecBoosted.Pz()<0) delta = Angle_B1ZHX - Angle_B1miB2/2.;
-				// else cout <<  "beam1PvecBoosted.Pz() = 0?" << endl;
+				// (The math for calculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
+
 				if (Angle_B1ZHX > Angle_B2ZHX)
 					delta = Angle_B2ZHX + Angle_B1miB2 / 2.;
 				else if (Angle_B1ZHX < Angle_B2ZHX)
@@ -337,107 +396,139 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30, I
 				muplPvecBoostedCS.RotateY(delta);
 				mumiPvecBoostedCS.RotateY(delta);
 
-				allGood = firesTrigger && isRecoMatched && goodVertexProba && trackerAndGlobalMuons && hybridSoftMuons && withinAcceptance;
-
 				/// muon scale factors
-				muTrkSF = tnp_weight_trk_pbpb(Reco_mupl_eta, muTrkSFindex) * tnp_weight_trk_pbpb(Reco_mumi_eta, muTrkSFindex);
 
-				muIdSF = tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, muIdSFindex) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, muIdSFindex);
-
-				// muon trigger SF is more tricky, need to know which muon passed which trigger filter
-				bool mupl_L2Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, L2FilterBit))) == ((ULong64_t)pow(2, L2FilterBit)));
-				bool mupl_L3Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, L3FilterBit))) == ((ULong64_t)pow(2, L3FilterBit)));
-				bool mumi_L2Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, L2FilterBit))) == ((ULong64_t)pow(2, L2FilterBit)));
-				bool mumi_L3Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, L3FilterBit))) == ((ULong64_t)pow(2, L3FilterBit)));
-				if (mupl_L2Filter == false || mumi_L2Filter == false) {
-					cout << "TnP ERROR !!!! ::: No matched L2 filter2 " << endl;
-					cout << endl;
-				}
-
+				// muon trigger SF is tricky, need to know which muon passed which trigger filter
 				bool mupl_isL2 = (mupl_L2Filter && !mupl_L3Filter);
 				bool mupl_isL3 = (mupl_L2Filter && mupl_L3Filter);
 				bool mumi_isL2 = (mumi_L2Filter && !mumi_L3Filter);
 				bool mumi_isL3 = (mumi_L2Filter && mumi_L3Filter);
-				bool SelDone = false;
 
 				if (mupl_isL2 && mumi_isL3) {
-					tnp_trig_weight_mupl = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, muTrigSFindex);
-					tnp_trig_weight_mumi = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, muTrigSFindex);
-					SelDone = true;
-				} else if (mupl_isL3 && mumi_isL2) {
-					tnp_trig_weight_mupl = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, muTrigSFindex);
-					tnp_trig_weight_mumi = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, muTrigSFindex);
-					SelDone = true;
-				} else if (mupl_isL3 && mumi_isL3) {
-					double T1_ = tnp_weight_trg_pbpb_mc(Reco_mupl_pt, Reco_mupl_eta, 3, muTrigSFindex);
-					double T2_ = tnp_weight_trg_pbpb_mc(Reco_mumi_pt, Reco_mumi_eta, 3, muTrigSFindex);
-					double T1 = tnp_weight_trg_pbpb_mc(Reco_mupl_pt, Reco_mupl_eta, 2, muTrigSFindex);
-					double T2 = tnp_weight_trg_pbpb_mc(Reco_mumi_pt, Reco_mumi_eta, 2, muTrigSFindex);
-					double den_ = T1_ * T2 + (T1 - T1_) * T2_;
-					double num_ = T1_ * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, muTrigSFindex) * T2 * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, muTrigSFindex) + (T1 * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, muTrigSFindex) - T1_ * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, muTrigSFindex)) * T2_ * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, muTrigSFindex);
+					muplTrigSF_nominal = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexNominal);
+					muplTrigSF_systUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexSystUp);
+					muplTrigSF_systDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexSystDown);
+					muplTrigSF_statUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexStatUp);
+					muplTrigSF_statDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexStatDown);
 
-					tnp_trig_weight_mupl = num_ / den_;
-					tnp_trig_weight_mumi = 1;
+					mumiTrigSF_nominal = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexNominal);
+					mumiTrigSF_systUp = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexSystUp);
+					mumiTrigSF_systDown = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexSystDown);
+					mumiTrigSF_statUp = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexStatUp);
+					mumiTrigSF_statDown = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexStatDown);
+				}
+
+				else if (mupl_isL3 && mumi_isL2) {
+					muplTrigSF_nominal = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexNominal);
+					muplTrigSF_systUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexSystUp);
+					muplTrigSF_systDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexSystDown);
+					muplTrigSF_statUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexStatUp);
+					muplTrigSF_statDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexStatDown);
+
+					mumiTrigSF_nominal = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexNominal);
+					mumiTrigSF_systUp = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexSystUp);
+					mumiTrigSF_systDown = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexSystDown);
+					mumiTrigSF_statUp = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexStatUp);
+					mumiTrigSF_statDown = tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexStatDown);
+				}
+
+				else if (mupl_isL3 && mumi_isL3) {
+					double T1_ = tnp_weight_trg_pbpb_mc(Reco_mupl_pt, Reco_mupl_eta, 3, indexNominal);
+					double T2_ = tnp_weight_trg_pbpb_mc(Reco_mumi_pt, Reco_mumi_eta, 3, indexNominal);
+					double T1 = tnp_weight_trg_pbpb_mc(Reco_mupl_pt, Reco_mupl_eta, 2, indexNominal);
+					double T2 = tnp_weight_trg_pbpb_mc(Reco_mumi_pt, Reco_mumi_eta, 2, indexNominal);
+					double den_ = T1_ * T2 + (T1 - T1_) * T2_;
+					double num_ = T1_ * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexNominal) * T2 * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexNominal) + (T1 * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexNominal) - T1_ * tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexNominal)) * T2_ * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexNominal);
+
+					muplTrigSF_nominal = num_ / den_;
+					mumiTrigSF_nominal = 1;
 					if (den_ <= 0 || num_ <= 0) {
 						cout << "ERROR wrong calculation" << endl;
 						continue;
 					}
-
-					SelDone = true;
 				}
-				if (SelDone == false) {
-					cout << "ERROR :: No muon filter combination selected !!!!" << endl;
-					continue;
-				}
-				if ((tnp_trig_weight_mupl == -1 || tnp_trig_weight_mumi == -1)) {
-					cout << "ERROR :: No trigger muon tnp scale factors selected !!!!" << endl;
-					continue;
-				}
-				muTrigSF = tnp_trig_weight_mupl * tnp_trig_weight_mumi;
 
-				// product of the total scale factors
-				weight *= muTrkSF * muIdSF * muTrigSF;
+				// dimuon efficiency weight = product of the total scale factors
+				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * muplTrigSF_nominal * mumiTrigSF_nominal;
 
-				hCS->FillWeighted(allGood, weight, muplPvecBoostedCS.CosTheta(), muplPvecBoostedCS.Phi() * 180 / TMath::Pi());
-				hHX->FillWeighted(allGood, weight, muplPvecBoosted.CosTheta(), muplPvecBoosted.Phi() * 180 / TMath::Pi());
+				totalWeight = eventWeight * dimuWeight_nominal;
+				hCS_nominal->FillWeighted(allGood, totalWeight, muplPvecBoostedCS.CosTheta(), muplPvecBoostedCS.Phi() * 180 / TMath::Pi());
+				hHX_nominal->FillWeighted(allGood, totalWeight, muplPvecBoosted.CosTheta(), muplPvecBoosted.Phi() * 180 / TMath::Pi());
+
+				/// variations for muon tracking SF (keeping the nominal efficiency for muon Id and trigger)
+
+				// tracking, syst up
+				dimuWeight_trk_systUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexSystUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexSystUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * muplTrigSF_nominal * mumiTrigSF_nominal;
+
+				totalWeight = eventWeight * dimuWeight_trk_systUp;
+				hCS_trk_systUp->FillWeighted(allGood, totalWeight, muplPvecBoostedCS.CosTheta(), muplPvecBoostedCS.Phi() * 180 / TMath::Pi());
+				hHX_trk_systUp->FillWeighted(allGood, totalWeight, muplPvecBoosted.CosTheta(), muplPvecBoosted.Phi() * 180 / TMath::Pi());
+
+				// tracking, syst down
+				dimuWeight_trk_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexSystDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexSystDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * muplTrigSF_nominal * mumiTrigSF_nominal;
+
+				totalWeight = eventWeight * dimuWeight_trk_systDown;
+				hCS_trk_systDown->FillWeighted(allGood, totalWeight, muplPvecBoostedCS.CosTheta(), muplPvecBoostedCS.Phi() * 180 / TMath::Pi());
+				hHX_trk_systDown->FillWeighted(allGood, totalWeight, muplPvecBoosted.CosTheta(), muplPvecBoosted.Phi() * 180 / TMath::Pi());
+
+				// tracking, stat up
+				dimuWeight_trk_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * muplTrigSF_nominal * mumiTrigSF_nominal;
+
+				totalWeight = eventWeight * dimuWeight_trk_statUp;
+				hCS_trk_statUp->FillWeighted(allGood, totalWeight, muplPvecBoostedCS.CosTheta(), muplPvecBoostedCS.Phi() * 180 / TMath::Pi());
+				hHX_trk_statUp->FillWeighted(allGood, totalWeight, muplPvecBoosted.CosTheta(), muplPvecBoosted.Phi() * 180 / TMath::Pi());
+
+				// tracking, stat down
+				dimuWeight_trk_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * muplTrigSF_nominal * mumiTrigSF_nominal;
+
+				totalWeight = eventWeight * dimuWeight_trk_statDown;
+				hCS_trk_statDown->FillWeighted(allGood, totalWeight, muplPvecBoostedCS.CosTheta(), muplPvecBoostedCS.Phi() * 180 / TMath::Pi());
+				hHX_trk_statDown->FillWeighted(allGood, totalWeight, muplPvecBoosted.CosTheta(), muplPvecBoosted.Phi() * 180 / TMath::Pi());
 			}
-		}
+		} // end of gen upsilon loop
 	}
+
+	cout << endl;
+
+	// Print the nominal results
 
 	gStyle->SetPadLeftMargin(.15);
 	//gStyle->SetTitleYOffset(.9);
 	gStyle->SetPadRightMargin(0.18);
 	gStyle->SetPalette(kRainBow);
+	gStyle->SetNumberContours(256);
 
 	TLatex* legend = new TLatex();
 	legend->SetTextAlign(22);
-	legend->SetTextSize(0.05);
+	legend->SetTextSize(0.042);
 
 	auto* canvasCS = new TCanvas("canvasCS", "", 700, 600);
-	hCS->Draw("COLZ");
+	hCS_nominal->Draw("COLZ");
 
-	CMS_lumi(canvasCS, Form("#varUpsilon(%dS) Hydjet-embedded PbPb MC", iState));
+	CMS_lumi(canvasCS, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
 
-	legend->DrawLatexNDC(.5, .88, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV", centMin, centMax, ptMin, ptMax));
+	legend->DrawLatexNDC(.5, .88, Form("cent. %d-%d%%, |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", centMin, centMax, ptMin, ptMax));
 
 	gPad->Update();
 
-	hCS->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 240);
-	hCS->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 0.9);
+	hCS_nominal->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 240);
+	hCS_nominal->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
 	canvasCS->SaveAs(Form("EfficiencyMaps/%dS/CS_cent%dto%d_pt%dto%dGeV.png", iState, centMin, centMax, ptMin, ptMax), "RECREATE");
 
 	auto* canvasHX = new TCanvas("canvasHX", "", 700, 600);
-	hHX->Draw("COLZ");
+	hHX_nominal->Draw("COLZ");
 
-	CMS_lumi(canvasHX, Form("#varUpsilon(%dS) Hydjet-embedded PbPb MC", iState));
+	CMS_lumi(canvasHX, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
 
-	legend->DrawLatexNDC(.5, .88, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV", centMin, centMax, ptMin, ptMax));
+	legend->DrawLatexNDC(.5, .88, Form("cent. %d-%d%%, |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", centMin, centMax, ptMin, ptMax));
 
 	gPad->Update();
 
-	hHX->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 240);
-	hHX->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 0.9);
+	hHX_nominal->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 240);
+	hHX_nominal->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
 	canvasHX->SaveAs(Form("EfficiencyMaps/%dS/HX_cent%dto%d_pt%dto%dGeV.png", iState, centMin, centMax, ptMin, ptMax), "RECREATE");
+
+	// Compute the systematics in this macro since we know the binning
 }

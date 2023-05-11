@@ -6,7 +6,7 @@
 
 #include "../Tools/Shortcuts.h"
 
-RooArgSet fitMCSignalShape_asymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+void fitMCSignalShape_asymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	const char* filename = "../Files/MCUpsilonSkimmedWeightedDataset.root";
 
 	TFile* file = TFile::Open(filename, "READ");
@@ -21,8 +21,8 @@ RooArgSet fitMCSignalShape_asymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_
 	extraText = "      Simulation Internal";
 
 	Int_t centMin = 0, centMax = 90;
-	Float_t massMin = 9, massMax = 10;
-	Int_t nBins = 80;
+	Float_t massMin = 8.5, massMax = 10.5;
+	Int_t nBins = 75;
 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
@@ -66,7 +66,7 @@ RooArgSet fitMCSignalShape_asymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_
 
 	bool doWeightedError = true;
 
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors"
+	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!doWeightedError), NumCPU(4), Range(massMin, massMax), AsymptoticError(doWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors"
 
 	fitResult->Print("v");
 
@@ -95,16 +95,14 @@ RooArgSet fitMCSignalShape_asymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_
 	pad1->Draw();
 	pad2->Draw();
 
-	TString outputName = Form("asymDoubleCB_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
+	TString outputName = Form("asymDSCB_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 
-	canvas->SaveAs(Form("../MonteCarlo/Figures/%s.png", outputName.Data()), "RECREATE");
+	canvas->SaveAs(Form("../MonteCarlo/SignalShapeFits/%s.png", outputName.Data()), "RECREATE");
 
-	// save signal shape parameters in a txt file to be read for data fit... as RooConstVar objects
+	// save signal shape parameters in a txt file to be read for data fit
 	RooArgSet tailParams(alphaInf, orderInf, alphaSup, orderSup);
 
-	SaveMCSignalParameters(tailParams, outputName.Data());
+	SaveMCSignalTailParameters(tailParams, outputName.Data());
 
 	file->Close();
-
-	return tailParams; // in case we are fitting the MC shape "on-the-fly" to get the tail parameters for fit of data
 }

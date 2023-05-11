@@ -16,11 +16,7 @@
 
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
 
-void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_GlbAndTrk_HLTFilterBit14.root", const char* outputFileName = "upsilonSkimmedDataset.root") {
-	// ******** Open OniaTree file ******** //
-	// (To get the file, type the command below on the CERN server)
-	// (xrdcp root://cms-xrd-global.cern.ch//store/user/fdamas//UpsilonPolarizationPbPb/MC/UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/Upsilon1S_pThat-2_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_UpsilonEmbeddedMC_2018PbPb_oniatree_10_3_2/220912_133418/0001/Oniatree_MC_numEvent1000_1342.root .)
-
+void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root", const char* outputFileName = "upsilonSkimmedDataset.root") {
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
@@ -106,11 +102,11 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_GlbAndT
 
 		if (Centrality >= 2 * 90) continue; // discard events with centrality >= 90% in 2018 data
 
-		if (!((HLTriggers & (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1))) == (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1)))) continue; // must fire the upsilon HLT path
+		if (!((HLTriggers & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
 
 		// loop over reconstructed dimuon candidates
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
-			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1))) == (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1)))) continue; // dimuon matching
+			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)))) continue; // dimuon matching
 
 			if (Reco_QQ_sign[iQQ] != 0) continue; // only opposite-sign muon pairs
 
@@ -172,11 +168,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_GlbAndT
 
 			TVector3 beam2PvecLab(0, 0, beam2_p);
 			TLorentzVector beam24MomLab(beam2PvecLab, beam2_E);
-
-			// cout << "<<In the lab frame>>" << endl;
-			// cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
-			// cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
-			// cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
 
 			// ******** Transform variables of muons from the lab frame to the upsilon's rest frame ******** //
 			TLorentzVector ups4MomBoosted(upsPvecLab, Reco_QQ_E);
@@ -275,12 +266,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_GlbAndT
 				delta = Angle_B1ZHX + Angle_B1miB2 / 2.;
 			else
 				cout << "beam1PvecBoosted.Pz() = 0?" << endl;
-
-			// ******** Print out the angles ******** //
-			// cout << endl;
-			// cout << "angle between ZHX and b1: " << Angle_B1ZHX << endl;
-			// cout << "angle between b1 and -b2: " << Angle_B1miB2 << " (half: " << (Angle_B1miB2)/2. << ")"<< endl;
-			// cout << "angle between ZHX and ZCS: " << delta << " (" << delta*180./M_PI << "deg)" << endl;
 
 			// ******** Rotate the coordinate along the y-axis by the angle between z_HX and z_CS ******** //
 			TVector3 muplPvecBoostedCS(muplPvecBoosted.Px(), muplPvecBoosted.Py(), muplPvecBoosted.Pz());
