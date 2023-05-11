@@ -101,14 +101,12 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 
 			if (fabs(gen_QQ_LV->Rapidity()) > 2.4) continue; // upsilon within acceptance
 
-			if (fabs(gen_QQ_LV->Rapidity()) < 1.2) continue; // upsilon within forward acceptance
-
 			// single-muon acceptance cuts
 			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
 
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
-			withinAcceptance = (1.2 < fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > 3.) && (1.2 < fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > 3.);
+			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > 3.5) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > 3.5);
 
 			// Transformations and rotations
 
@@ -159,11 +157,6 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 			TVector3 beam2PvecLab(0, 0, beam2_p);
 			TLorentzVector beam24MomLab(beam2PvecLab, beam2_E);
 
-			// cout << "<<In the lab frame>>" << endl;
-			// cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
-			// cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
-			// cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
-
 			// ******** Transform variables of muons from the lab frame to the upsilon's rest frame ******** //
 			TLorentzVector ups4MomBoosted(upsPvecLab, Gen_QQ_E);
 			TLorentzVector mupl4MomBoosted(muplPvecLab, Gen_mupl_E);
@@ -185,12 +178,6 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 			mumiPvecBoosted.RotateZ(-upsPvecLab.Phi());
 			mumiPvecBoosted.RotateY(-upsPvecLab.Theta());
 
-			// ******** Print out momentums of daughter muons in the upsilon's rest frame after coordinate rotation ******** //
-			// cout << endl;
-			// cout << "<<Rotated the quarkonium rest frame>>" << endl;
-			// cout << "mu+: p = (" << muplPvecBoosted.Px() << ", " << muplPvecBoosted.Py()  << ", " << muplPvecBoosted.Pz() << ")" << endl;
-			// cout << "mu-: p = (" << mumiPvecBoosted.Px() << ", " << mumiPvecBoosted.Py()  << ", " << mumiPvecBoosted.Pz() << ")" << endl;
-
 			TLorentzVector mupl4MomBoostedRot(muplPvecBoosted, mupl4MomBoosted.E());
 
 			// ******** HX to CS (rotation from HX frame to CS frame) ******** //
@@ -202,10 +189,6 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 			// ******** Transform variables of beams from the lab frame to the upsilon's rest frame ******** //
 			TLorentzVector beam14MomBoosted(beam1PvecLab, beam1_E);
 			TLorentzVector beam24MomBoosted(beam2PvecLab, beam2_E);
-
-			// ups4MomLab.SetX(-1);
-			// ups4MomLab.SetY(0);
-			// ups4MomLab.SetZ(0);
 
 			beam14MomBoosted.Boost(-ups4MomLab.BoostVector());
 			beam24MomBoosted.Boost(-ups4MomLab.BoostVector());
@@ -263,8 +246,8 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 
 	CMS_lumi(canvasCS, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
-	legend->DrawLatexNDC(.48, .88, Form("1.2 < |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3 GeV", iState));
+	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
+	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", iState));
 
 	gPad->Update();
 
@@ -278,8 +261,8 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 
 	CMS_lumi(canvasHX, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
-	legend->DrawLatexNDC(.48, .88, Form("1.2 < |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3 GeV", iState));
+	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
+	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", iState));
 
 	gPad->Update();
 
