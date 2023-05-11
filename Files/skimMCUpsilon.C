@@ -16,14 +16,13 @@
 
 #include "../Tools/Parameters/CentralityValues.h"
 
-void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_GlbAndTrk_twoSampleMerged.root", const char* outputFileName = "MCUpsilonSkimmedWeightedDataset.root") {
+void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB_miniAOD.root", const char* outputFileName = "MCUpsilonSkimmedWeightedDataset.root") {
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
 	/// OniaTree variables
 
 	Float_t Gen_weight;
-	Float_t SumET_HF;
 
 	ULong64_t HLTriggers;
 	ULong64_t Reco_QQ_trig[1000];
@@ -36,7 +35,6 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	Short_t Reco_QQ_mumi_idx[1000];
 	Short_t Reco_QQ_whichGen[1000];
 
-	ULong64_t Reco_mu_trig[1000];
 	Int_t Reco_mu_SelectionType[1000];
 	//(parameters for quality cuts)
 	Float_t Reco_QQ_VtxProb[1000];
@@ -46,7 +44,6 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	Float_t Reco_mu_dz[1000];
 
 	OniaTree->SetBranchAddress("Gen_weight", &Gen_weight);
-	OniaTree->SetBranchAddress("SumET_HF", &SumET_HF);
 
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 	OniaTree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
@@ -59,7 +56,6 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	OniaTree->SetBranchAddress("Reco_QQ_mumi_idx", Reco_QQ_mumi_idx);
 	OniaTree->SetBranchAddress("Reco_QQ_whichGen", Reco_QQ_whichGen);
 
-	OniaTree->SetBranchAddress("Reco_mu_trig", Reco_mu_trig);
 	OniaTree->SetBranchAddress("Reco_mu_SelectionType", Reco_mu_SelectionType);
 
 	OniaTree->SetBranchAddress("Reco_QQ_VtxProb", &Reco_QQ_VtxProb);
@@ -80,7 +76,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	//RooRealVar nCollVar("nColl", "estimated number of binary nucleon-nucleon scatterings", 0, 2200);
 	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight)", 0, 10000);
 
-	Float_t lowMassCut = 8, highMassCut = 12;
+	Float_t lowMassCut = 8, highMassCut = 11;
 	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
 	RooRealVar yVar("rapidity", "dimuon rapidity", -2.4, 2.4);
 	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
@@ -105,6 +101,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	double delta = 0; //(Angle between ZHX(Z-axis in the Helicity frame) and ZCS(Z-axis in the Collins-Soper frame))
 
 	Long64_t totEntries = OniaTree->GetEntries();
+	Long64_t nRecoCand = 0;
 
 	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
 		if (iEvent % 10000 == 0) {
@@ -117,18 +114,15 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 
 		if (Centrality >= 2 * 90) continue; // discard events with centrality > 90% in 2018 data
 
-		if (!((HLTriggers & (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1))) == (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1)))) continue; // must fire the upsilon HLT path
+		if (!((HLTriggers & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
 
-		// get N_coll from HF
-		Int_t hiBin = GetHiBinFromhiHF(SumET_HF);
-
-		nColl = FindNcoll(hiBin);
+		nColl = FindNcoll(Centrality);
 
 		// loop over reconstructed dimuon candidates
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
 			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
 
-			//	if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1))) == (ULong64_t)(1 << (Bits[UpsilonHLTBit] - 1)))) continue; // dimuon matching
+			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)))) continue; // dimuon matching
 
 			if (Reco_QQ_sign[iQQ] != 0) continue; // only opposite-sign muon pairs
 
@@ -144,14 +138,6 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
 			int iMuMinus = Reco_QQ_mumi_idx[iQQ];
 
-			// global AND tracker muons
-			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
-			if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
-
-			// passing hybrid-soft Id
-			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
-			if (!((Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.))) continue;
-
 			// acceptance
 
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
@@ -163,6 +149,14 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 
 			if (fabs(Reco_mumi_4mom->Eta()) > 2.4) continue;
 			if (Reco_mumi_4mom->Pt() < 3.5) continue;
+
+			// global AND tracker muons
+			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
+			if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
+
+			// passing hybrid-soft Id
+			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
+			if (!((Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.))) continue;
 
 			// ******** Store kinematics of upsilon and muons (Lab Frame) into variables ******** //
 			Reco_QQ_phi = Reco_QQ_4mom->Phi();
@@ -196,7 +190,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 			Reco_mumi_E = Reco_mumi_4mom->Energy();
 
 			// ******** Construct 4-momentum vector of upsilon and muons (Lab Frame) ******** //
-			// (documetation of TVector3 and TLorentzVector: https://root.cern.ch/root/html534/guides/users-guide/PhysicsVectors.html#lorentz-boost)
+			// (documentation of TVector3 and TLorentzVector: https://root.cern.ch/root/html534/guides/users-guide/PhysicsVectors.html#lorentz-boost)
 			TVector3 upsPvecLab(Reco_QQ_px, Reco_QQ_py, Reco_QQ_pz);
 			TLorentzVector ups4MomLab(upsPvecLab, Reco_QQ_E);
 
@@ -212,11 +206,6 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 			TVector3 beam2PvecLab(0, 0, beam2_p);
 			TLorentzVector beam24MomLab(beam2PvecLab, beam2_E);
 
-			// cout << "<<In the lab frame>>" << endl;
-			// cout << "ups: p = (" << upsPvecLab.Px() << ", " << upsPvecLab.Py()  << ", " << upsPvecLab.Pz() << ")" << endl;
-			// cout << "mu+: p = (" << muplPvecLab.Px() << ", " << muplPvecLab.Py()  << ", " << muplPvecLab.Pz() << ")" << endl;
-			// cout << "mu-: p = (" << mumiPvecLab.Px() << ", " << mumiPvecLab.Py()  << ", " << mumiPvecLab.Pz() << ")" << endl;
-
 			// ******** Transform variables of muons from the lab frame to the upsilon's rest frame ******** //
 			TLorentzVector ups4MomBoosted(upsPvecLab, Reco_QQ_E);
 			TLorentzVector mupl4MomBoosted(muplPvecLab, Reco_mupl_E);
@@ -228,13 +217,6 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 			mupl4MomBoosted.Boost(-ups4MomLab.BoostVector());
 			mumi4MomBoosted.Boost(-ups4MomLab.BoostVector());
 
-			// ******** Print out momentums of upsilon and daughter muons in the upsilon's rest frame ******** //
-			// cout << endl;
-			// cout << "<<Boosted to the quarkonium rest frame>>" << endl;
-			// cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
-			// cout << "mu+: p = (" << mupl4MomBoosted.Px() << ", " << mupl4MomBoosted.Py()  << ", " << mupl4MomBoosted.Pz() << ")" << endl;
-			// cout << "mu-: p = (" << mumi4MomBoosted.Px() << ", " << mumi4MomBoosted.Py()  << ", " << mumi4MomBoosted.Pz() << ")" << endl;
-
 			// ******** Rotate the coordinate ******** //
 			TVector3 muplPvecBoosted(mupl4MomBoosted.Px(), mupl4MomBoosted.Py(), mupl4MomBoosted.Pz());
 			TVector3 mumiPvecBoosted(mumi4MomBoosted.Px(), mumi4MomBoosted.Py(), mumi4MomBoosted.Pz());
@@ -244,12 +226,6 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 			muplPvecBoosted.RotateY(-upsPvecLab.Theta());
 			mumiPvecBoosted.RotateZ(-upsPvecLab.Phi());
 			mumiPvecBoosted.RotateY(-upsPvecLab.Theta());
-
-			// ******** Print out momentums of daughter muons in the upsilon's rest frame after coordinate rotation ******** //
-			// cout << endl;
-			// cout << "<<Rotated the quarkonium rest frame>>" << endl;
-			// cout << "mu+: p = (" << muplPvecBoosted.Px() << ", " << muplPvecBoosted.Py()  << ", " << muplPvecBoosted.Pz() << ")" << endl;
-			// cout << "mu-: p = (" << mumiPvecBoosted.Px() << ", " << mumiPvecBoosted.Py()  << ", " << mumiPvecBoosted.Pz() << ")" << endl;
 
 			TLorentzVector mupl4MomBoostedRot(muplPvecBoosted, mupl4MomBoosted.E());
 
@@ -263,38 +239,17 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 			TLorentzVector beam14MomBoosted(beam1PvecLab, beam1_E);
 			TLorentzVector beam24MomBoosted(beam2PvecLab, beam2_E);
 
-			// ups4MomLab.SetX(-1);
-			// ups4MomLab.SetY(0);
-			// ups4MomLab.SetZ(0);
-
 			beam14MomBoosted.Boost(-ups4MomLab.BoostVector());
 			beam24MomBoosted.Boost(-ups4MomLab.BoostVector());
 
-			// ******** Print out momentums of two beams in the upsilon's rest frame ******** //
-			// cout << endl;
-			// cout << "<<Boosted to the quarkonium rest frame>>" << endl;
-			// cout << "ups: p = (" << ups4MomBoosted.Px() << ", " << ups4MomBoosted.Py()  << ", " << ups4MomBoosted.Pz() << ")" << endl;
-			// cout << "beam1: p = (" << beam14MomBoosted.Px() << ", " << beam14MomBoosted.Py()  << ", " << beam14MomBoosted.Pz() << ")" << endl;
-			// cout << "beam2: p = (" << beam24MomBoosted.Px() << ", " << beam24MomBoosted.Py()  << ", " << beam24MomBoosted.Pz() << ")" << endl;
-
-			// ******** Rotate the coordinate ******** //
+			// ******** Rotate the coordinates ******** //
 			TVector3 beam1PvecBoosted(beam14MomBoosted.Px(), beam14MomBoosted.Py(), beam14MomBoosted.Pz());
 			TVector3 beam2PvecBoosted(beam24MomBoosted.Px(), beam24MomBoosted.Py(), beam24MomBoosted.Pz());
-
-			// upsPvecLab.SetX(-1);
-			// upsPvecLab.SetY(0);
-			// upsPvecLab.SetZ(0);
 
 			beam1PvecBoosted.RotateZ(-upsPvecLab.Phi());
 			beam1PvecBoosted.RotateY(-upsPvecLab.Theta());
 			beam2PvecBoosted.RotateZ(-upsPvecLab.Phi());
 			beam2PvecBoosted.RotateY(-upsPvecLab.Theta());
-
-			// ******** Print out momentums of daughter muons in the upsilon's rest frame after coordinate rotation ******** //
-			// cout << endl;
-			// cout << "<<Rotated the quarkonium rest frame>>" << endl;
-			// cout << "beam1: p = (" << beam1PvecBoosted.Px() << ", " << beam1PvecBoosted.Py()  << ", " << beam1PvecBoosted.Pz() << ")" << endl;
-			// cout << "beam2: p = (" << beam2PvecBoosted.Px() << ", " << beam2PvecBoosted.Py()  << ", " << beam2PvecBoosted.Pz() << ")" << endl;
 
 			// ******** Calculate the angle between z_HX and z_CS ******** //
 			TVector3 ZHXunitVec(0, 0, 1);                                    //(define z_HX unit vector)
@@ -302,24 +257,15 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 			double Angle_B2ZHX = beam2PvecBoosted.Angle(-ZHXunitVec);        //(angle between beam2 and -z_HX =(-beam2 and z_HX) )
 			double Angle_B1miB2 = beam1PvecBoosted.Angle(-beam2PvecBoosted); //(angle between beam1 and -beam2)
 
-			double delta = 0; //(define and initialize the angle between z_HX and z_CS)
+			delta = 0; //(define and initialize the angle between z_HX and z_CS)
 
-			// // (The math for caculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
-			// if(beam1PvecBoosted.Pz()>0) delta = Angle_B1ZHX + Angle_B1miB2/2.;
-			// else if(beam1PvecBoosted.Pz()<0) delta = Angle_B1ZHX - Angle_B1miB2/2.;
-			// else cout <<  "beam1PvecBoosted.Pz() = 0?" << endl;
+			// (The math for calculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
 			if (Angle_B1ZHX > Angle_B2ZHX)
 				delta = Angle_B2ZHX + Angle_B1miB2 / 2.;
 			else if (Angle_B1ZHX < Angle_B2ZHX)
 				delta = Angle_B1ZHX + Angle_B1miB2 / 2.;
 			else
 				cout << "beam1PvecBoosted.Pz() = 0?" << endl;
-
-			// ******** Print out the angles ******** //
-			// cout << endl;
-			// cout << "angle between ZHX and b1: " << Angle_B1ZHX << endl;
-			// cout << "angle between b1 and -b2: " << Angle_B1miB2 << " (half: " << (Angle_B1miB2)/2. << ")"<< endl;
-			// cout << "angle between ZHX and ZCS: " << delta << " (" << delta*180./M_PI << "deg)" << endl;
 
 			// ******** Rotate the coordinate along the y-axis by the angle between z_HX and z_CS ******** //
 			TVector3 muplPvecBoostedCS(muplPvecBoosted.Px(), muplPvecBoosted.Py(), muplPvecBoosted.Pz());
@@ -349,6 +295,8 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 			phiHXVar = muplPvecBoosted.Phi() * 180 / TMath::Pi();
 
 			dataset.add(RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), weight);
+
+			nRecoCand++;
 		}
 	}
 
@@ -357,6 +305,9 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_miniAOD_2018PbPb_Gl
 	dataset.Write();
 
 	file.Close();
+
+	cout << endl
+	     << "Number of reconstructed upsilons = " << nRecoCand << endl;
 
 	return;
 }

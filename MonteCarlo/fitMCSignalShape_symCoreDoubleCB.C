@@ -24,7 +24,7 @@ void fitMCSignalShape_symCoreDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t 
 
 	Int_t centMin = 0, centMax = 90;
 	Float_t massMin = 8.5, massMax = 10.5;
-	Int_t nBins = 80;
+	Int_t nBins = 75;
 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
@@ -67,7 +67,7 @@ void fitMCSignalShape_symCoreDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t 
 
 	bool doWeightedError = true;
 
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
+	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!doWeightedError), NumCPU(4), Range(massMin, massMax), AsymptoticError(doWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 
 	fitResult->Print("v");
 
@@ -96,16 +96,14 @@ void fitMCSignalShape_symCoreDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t 
 	pad1->Draw();
 	pad2->Draw();
 
-	TString outputName = Form("symCoreDoubleCB_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
+	TString outputName = Form("symCoreDSCB_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 
-	canvas->SaveAs(Form("../MonteCarlo/Figures/%s.png", outputName.Data()), "RECREATE");
+	canvas->SaveAs(Form("../MonteCarlo/SignalShapeFits/%s.png", outputName.Data()), "RECREATE");
 
-	// save signal shape parameters in a txt file to be read for data fit... as RooConstVar objects
+	// save signal shape parameters in a txt file to be read for data fit
 	RooArgSet tailParams(alphaInf, orderInf, alphaSup, orderSup);
 
-	SaveMCSignalParameters(tailParams, outputName.Data());
+	SaveMCSignalTailParameters(tailParams, outputName.Data());
 
 	file->Close();
-
-	return tailParams; // in case we are fitting the MC shape "on-the-fly" to get the tail parameters for fit of data
 }
