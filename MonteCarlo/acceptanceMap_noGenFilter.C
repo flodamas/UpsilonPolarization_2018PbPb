@@ -254,7 +254,7 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	hCS->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
 	hCS->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
-	canvasCS->SaveAs(Form("AcceptanceMaps/%dS/CS_pt%dto%dGeV_forward.png", iState, ptMin, ptMax), "RECREATE");
+	canvasCS->SaveAs(Form("AcceptanceMaps/%dS/CS_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
 
 	auto* canvasHX = new TCanvas("canvasHX", "", 700, 600);
 	hHX->Draw("COLZ");
@@ -269,5 +269,5 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	hHX->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
 	hHX->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
-	canvasHX->SaveAs(Form("AcceptanceMaps/%dS/HX_pt%dto%dGeV_forward.png", iState, ptMin, ptMax), "RECREATE");
+	canvasHX->SaveAs(Form("AcceptanceMaps/%dS/HX_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
 }
