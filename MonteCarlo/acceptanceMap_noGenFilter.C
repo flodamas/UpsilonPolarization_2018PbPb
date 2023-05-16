@@ -75,8 +75,8 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	//Double_t phiBinning[] = {-TMath::Pi(), -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 180};
 	//	nPhiBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
 
-	TEfficiency* hCS = new TEfficiency("hCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX = new TEfficiency("hHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS = new TEfficiency(Form("CS_pt%dto%dGeV", ptMin, ptMax), ";cos #theta_{CS}; #varphi_{CS} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX = new TEfficiency(Form("HX_pt%dto%dGeV", ptMin, ptMax), ";cos #theta_{HX}; #varphi_{HX} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
@@ -210,7 +210,7 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 
 			double delta = 0; //(define and initialize the angle between z_HX and z_CS)
 
-			// // (The math for caculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
+			// Maths for calculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
 			if (Angle_B1ZHX > Angle_B2ZHX)
 				delta = Angle_B2ZHX + Angle_B1miB2 / 2.;
 			else if (Angle_B1ZHX < Angle_B2ZHX)
@@ -270,4 +270,16 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	hHX->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
 	canvasHX->SaveAs(Form("AcceptanceMaps/%dS/HX_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
+
+	/// save the results in a file for later usage (in particular for the polarization extraction)
+	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", iState);
+	TFile outputFile(outputFileName, "RECREATE");
+
+	hCS->Write();
+	hHX->Write();
+
+	outputFile.Close();
+
+	cout << endl
+	     << "Acceptance maps saved in " << outputFileName << endl;
 }
