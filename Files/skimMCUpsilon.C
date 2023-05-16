@@ -12,7 +12,7 @@
 #include <fstream>
 #include <cmath>
 
-#include "../Tools/Parameters/AnalysisParameters.h"
+#include "../AnalysisParameters.h"
 
 #include "../Tools/Parameters/CentralityValues.h"
 
@@ -78,7 +78,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB
 
 	Float_t lowMassCut = 8, highMassCut = 11;
 	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
-	RooRealVar yVar("rapidity", "dimuon rapidity", -2.4, 2.4);
+	RooRealVar yVar("rapidity", "dimuon absolute rapidity", gRapidityMin, gRapidityMax);
 	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
 
 	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
@@ -112,9 +112,9 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB
 
 		// event selection
 
-		if (Centrality >= 2 * 90) continue; // discard events with centrality > 90% in 2018 data
+		if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality > 90% in 2018 data
 
-		if (!((HLTriggers & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
+		if (!((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
 
 		nColl = FindNcoll(Centrality);
 
@@ -122,7 +122,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
 			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
 
-			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (UpsilonHLTBit - 1))) == (ULong64_t)(1 << (UpsilonHLTBit - 1)))) continue; // dimuon matching
+			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
 
 			if (Reco_QQ_sign[iQQ] != 0) continue; // only opposite-sign muon pairs
 
@@ -132,7 +132,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB
 
 			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
-			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue;
+			if (fabs(Reco_QQ_4mom->Rapidity()) < gRapidityMin || fabs(Reco_QQ_4mom->Rapidity()) > gRapidityMax) continue;
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
@@ -282,7 +282,7 @@ void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB
 
 			eventWeightVar = weight;
 			massVar = Reco_QQ_4mom->M();
-			yVar = Reco_QQ_4mom->Rapidity();
+			yVar = fabs(Reco_QQ_4mom->Rapidity());
 			ptVar = Reco_QQ_4mom->Pt();
 
 			cosThetaLabVar = Reco_mupl_4mom->CosTheta();
