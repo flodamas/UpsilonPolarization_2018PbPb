@@ -18,12 +18,11 @@
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
+#include "../AnalysisParameters.h"
+
 #include "../ReferenceFrameTransform/Transformations.h"
 
-// (cos theta, phi) acceptance maps based on Y events generated without any cuts
-// MC file available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/OniaTree_Ups1SMM_5p02TeV_TuneCUETP8M1_nofilter_pp502Fall15-MCRUN2_71_V1-v1_GENONLY.root
-
-void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
+void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -59,20 +58,18 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	//	Double_t cosThetaBinning[] = {-1, -0.8, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1};
 	//	nCosThetaBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
 
-	Int_t nPhiBins = 23;
-	Float_t phiMin = -180, phiMax = 280;
+	Int_t nPhiBins = 21;
+	Float_t phiMin = -180, phiMax = 240;
 
 	//Double_t phiBinning[] = {-TMath::Pi(), -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 180};
 	//	nPhiBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
 
-	TEfficiency* hCS = new TEfficiency(Form("CS_pt%dto%dGeV", ptMin, ptMax), ";cos #theta_{CS}; #varphi_{CS} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX = new TEfficiency(Form("HX_pt%dto%dGeV", ptMin, ptMax), ";cos #theta_{HX}; #varphi_{HX} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TH2F* hCS = new TH2F("hCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);# gen QQ", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TH2F* hHX = new TH2F("hHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);# gen QQ", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 	TLorentzVector* gen_mupl_LV = new TLorentzVector();
-
-	Bool_t withinAcceptance;
 
 	Long64_t totEntries = OniaTree->GetEntries();
 
@@ -87,31 +84,29 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
 			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
 
-			if (gen_QQ_LV->Pt() < ptMin || gen_QQ_LV->Pt() > ptMax) continue; // pt bin of interest
+			// kinematic region of interest
+			if (gen_QQ_LV->Pt() < ptMin || gen_QQ_LV->Pt() > ptMax) continue;
 
-			if (fabs(gen_QQ_LV->Rapidity()) > 2.4) continue; // upsilon within acceptance
+			if (fabs(gen_QQ_LV->Rapidity()) > 2.4) continue;
 
-			// single-muon acceptance cuts
 			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
 
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
-			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > 3.5) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > 3.5);
-
+			// get positive muon's coordinates in the studied reference frames
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
-
-			hCS->Fill(withinAcceptance, muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi());
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 
-			hHX->Fill(withinAcceptance, muplPvecBoosted.CosTheta(), muplPvecBoosted.Phi() * 180 / TMath::Pi());
+			hCS->Fill(muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi());
+			hHX->Fill(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi());
 		}
 	}
 
 	gStyle->SetPadLeftMargin(.15);
 	//gStyle->SetTitleYOffset(.9);
 	gStyle->SetPadRightMargin(0.18);
-	gStyle->SetPalette(kCividis);
+	gStyle->SetPalette(kRainBow);
 	gStyle->SetNumberContours(256);
 
 	TLatex* legend = new TLatex();
@@ -124,14 +119,12 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	CMS_lumi(canvasCS, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
 	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", iState));
 
 	gPad->Update();
 
-	hCS->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
-	hCS->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
+	hCS->GetYaxis()->SetRangeUser(-190, 240);
 
-	canvasCS->SaveAs(Form("AcceptanceMaps/%dS/CS_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
+	canvasCS->SaveAs(Form("GenMaps/CS_pt%dto%dGeV.png", ptMin, ptMax), "RECREATE");
 
 	auto* canvasHX = new TCanvas("canvasHX", "", 700, 600);
 	hHX->Draw("COLZ");
@@ -139,24 +132,10 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	CMS_lumi(canvasHX, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
 	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", iState));
 
 	gPad->Update();
 
-	hHX->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
-	hHX->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
+	hHX->GetYaxis()->SetRangeUser(-190, 240);
 
-	canvasHX->SaveAs(Form("AcceptanceMaps/%dS/HX_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
-
-	/// save the results in a file for later usage (in particular for the polarization extraction)
-	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", iState);
-	TFile outputFile(outputFileName, "RECREATE");
-
-	hCS->Write();
-	hHX->Write();
-
-	outputFile.Close();
-
-	cout << endl
-	     << "Acceptance maps saved in " << outputFileName << endl;
+	canvasHX->SaveAs(Form("GenMaps/HX_pt%dto%dGeV.png", ptMin, ptMax), "RECREATE");
 }

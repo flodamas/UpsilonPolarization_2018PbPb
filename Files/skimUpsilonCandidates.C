@@ -14,6 +14,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../ReferenceFrameTransform/Transformations.h"
+
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
 
 void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root", const char* outputFileName = "upsilonSkimmedDataset.root") {
@@ -59,8 +61,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
-	double Reco_QQ_E, Reco_mupl_E, Reco_mumi_E;
-
 	/// RooDataSet output: one entry = one dimuon candidate!
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 
@@ -79,14 +79,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
 
 	RooDataSet dataset("dataset", "skimmed dataset", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
-
-	// ******** Set beam energy for the Collins-Soper reference frame ******** //
-	double sqrt_S_NN = 5.02;                 //(Center of mass Energy per nucleon pair in TeV)
-	double beam1_p = sqrt_S_NN * 1000. / 2.; //(in GeV) (Note. sqrt_S_NN = sqrt(2*E1*E2+2*p1*p2) = 2E1 when two beams have the same E)
-	double beam1_E = beam1_p;
-	double beam2_p = -beam1_p;
-	double beam2_E = beam1_E;
-	double delta = 0; //(Angle between ZHX(Z-axis in the Helicity frame) and ZCS(Z-axis in the Collins-Soper frame))
 
 	Long64_t totEntries = OniaTree->GetEntries();
 
@@ -144,99 +136,10 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 			if (fabs(Reco_mumi_4mom->Eta()) > 2.4) continue;
 			if (Reco_mumi_4mom->Pt() < 3.5) continue;
 
-			// ******** Store kinematics of upsilon and muons (Lab Frame) into variables ******** //
+			// get positive muon's coordinates in the studied reference frames
+			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
-			Reco_QQ_E = Reco_QQ_4mom->Energy();
-
-			Reco_mupl_E = Reco_mupl_4mom->Energy();
-
-			Reco_mumi_E = Reco_mumi_4mom->Energy();
-
-			// ******** Construct 4-momentum vector of upsilon and muons (Lab Frame) ******** //
-			// (documetation of TVector3 and TLorentzVector: https://root.cern.ch/root/html534/guides/users-guide/PhysicsVectors.html#lorentz-boost)
-			TVector3 upsPvecLab(Reco_QQ_4mom->Px(), Reco_QQ_4mom->Py(), Reco_QQ_4mom->Pz());
-			TLorentzVector ups4MomLab(upsPvecLab, Reco_QQ_E);
-
-			TVector3 muplPvecLab(Reco_mupl_4mom->Px(), Reco_mupl_4mom->Py(), Reco_mupl_4mom->Pz());
-			TLorentzVector mupl4MomLab(muplPvecLab, Reco_mupl_E);
-
-			TVector3 mumiPvecLab(Reco_mumi_4mom->Px(), Reco_mumi_4mom->Py(), Reco_mumi_4mom->Pz());
-			TLorentzVector mumi4MomLab(mumiPvecLab, Reco_mumi_E);
-
-			TVector3 beam1PvecLab(0, 0, beam1_p);
-			TLorentzVector beam14MomLab(beam1PvecLab, beam1_E);
-
-			TVector3 beam2PvecLab(0, 0, beam2_p);
-			TLorentzVector beam24MomLab(beam2PvecLab, beam2_E);
-
-			// ******** Transform variables of muons from the lab frame to the upsilon's rest frame ******** //
-			TLorentzVector ups4MomBoosted(upsPvecLab, Reco_QQ_E);
-			TLorentzVector mupl4MomBoosted(muplPvecLab, Reco_mupl_E);
-			TLorentzVector mumi4MomBoosted(mumiPvecLab, Reco_mumi_E);
-
-			//(Note. TLorentzVector.BoostVector() gives beta(=px/E,py/E,pz/E) of the parents)
-			//(TLorentzVector.Boost() boosts from the rod frame to the lab frame, so plug in -beta to get lab to rod)
-			ups4MomBoosted.Boost(-ups4MomLab.BoostVector());
-			mupl4MomBoosted.Boost(-ups4MomLab.BoostVector());
-			mumi4MomBoosted.Boost(-ups4MomLab.BoostVector());
-
-			// ******** Rotate the coordinate ******** //
-			TVector3 muplPvecBoosted(mupl4MomBoosted.Px(), mupl4MomBoosted.Py(), mupl4MomBoosted.Pz());
-			TVector3 mumiPvecBoosted(mumi4MomBoosted.Px(), mumi4MomBoosted.Py(), mumi4MomBoosted.Pz());
-
-			//(Note. TVector3.Rotate() rotates the vectors, not the coordinates, so should rotate -phi and -theta)
-			muplPvecBoosted.RotateZ(-upsPvecLab.Phi());
-			muplPvecBoosted.RotateY(-upsPvecLab.Theta());
-			mumiPvecBoosted.RotateZ(-upsPvecLab.Phi());
-			mumiPvecBoosted.RotateY(-upsPvecLab.Theta());
-
-			TLorentzVector mupl4MomBoostedRot(muplPvecBoosted, mupl4MomBoosted.E());
-
-			// ******** HX to CS (rotation from HX frame to CS frame) ******** //
-			// (1. Boost two beams to upsilon's rest frame)
-			// (2. Rotate the coordinate)
-			// (3. Get angle between two beams(b1 and -b2), and between b1 and ZHX in the upsilon's rest frame)
-			// (4. Calculate delta (angle btw ZHX and ZCS))
-
-			// ******** Transform variables of beams from the lab frame to the upsilon's rest frame ******** //
-			TLorentzVector beam14MomBoosted(beam1PvecLab, beam1_E);
-			TLorentzVector beam24MomBoosted(beam2PvecLab, beam2_E);
-
-			beam14MomBoosted.Boost(-ups4MomLab.BoostVector());
-			beam24MomBoosted.Boost(-ups4MomLab.BoostVector());
-
-			// ******** Rotate the coordinate ******** //
-			TVector3 beam1PvecBoosted(beam14MomBoosted.Px(), beam14MomBoosted.Py(), beam14MomBoosted.Pz());
-			TVector3 beam2PvecBoosted(beam24MomBoosted.Px(), beam24MomBoosted.Py(), beam24MomBoosted.Pz());
-
-			beam1PvecBoosted.RotateZ(-upsPvecLab.Phi());
-			beam1PvecBoosted.RotateY(-upsPvecLab.Theta());
-			beam2PvecBoosted.RotateZ(-upsPvecLab.Phi());
-			beam2PvecBoosted.RotateY(-upsPvecLab.Theta());
-
-			// ******** Calculate the angle between z_HX and z_CS ******** //
-			TVector3 ZHXunitVec(0, 0, 1);                                    //(define z_HX unit vector)
-			double Angle_B1ZHX = beam1PvecBoosted.Angle(ZHXunitVec);         //(angle between beam1 and z_HX)
-			double Angle_B2ZHX = beam2PvecBoosted.Angle(-ZHXunitVec);        //(angle between beam2 and -z_HX =(-beam2 and z_HX) )
-			double Angle_B1miB2 = beam1PvecBoosted.Angle(-beam2PvecBoosted); //(angle between beam1 and -beam2)
-
-			delta = 0; // reset the angle between z_HX and z_CS
-
-			// // (The math for caculating the angle between z_HX and z_CS is different depending on the sign of the beam1's z-coordinate)
-			if (Angle_B1ZHX > Angle_B2ZHX)
-				delta = Angle_B2ZHX + Angle_B1miB2 / 2.;
-			else if (Angle_B1ZHX < Angle_B2ZHX)
-				delta = Angle_B1ZHX + Angle_B1miB2 / 2.;
-			else
-				cout << "beam1PvecBoosted.Pz() = 0?" << endl;
-
-			// ******** Rotate the coordinate along the y-axis by the angle between z_HX and z_CS ******** //
-			TVector3 muplPvecBoostedCS(muplPvecBoosted.Px(), muplPvecBoosted.Py(), muplPvecBoosted.Pz());
-			TVector3 mumiPvecBoostedCS(mumiPvecBoosted.Px(), mumiPvecBoosted.Py(), mumiPvecBoosted.Pz());
-
-			ZHXunitVec.RotateY(delta);
-			muplPvecBoostedCS.RotateY(delta);
-			mumiPvecBoostedCS.RotateY(delta);
+			TVector3 muPlus_HX = MuPlusVector_Helicity(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
 			// fill the dataset
 
@@ -249,11 +152,11 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 			cosThetaLabVar = Reco_mupl_4mom->CosTheta();
 			phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
 
-			cosThetaCSVar = muplPvecBoostedCS.CosTheta();
-			phiCSVar = muplPvecBoostedCS.Phi() * 180 / TMath::Pi();
+			cosThetaCSVar = muPlus_CS.CosTheta();
+			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
 
-			cosThetaHXVar = muplPvecBoosted.CosTheta();
-			phiHXVar = muplPvecBoosted.Phi() * 180 / TMath::Pi();
+			cosThetaHXVar = muPlus_HX.CosTheta();
+			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
 
 			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
 
