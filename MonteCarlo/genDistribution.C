@@ -24,8 +24,8 @@
 
 void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	
-	// const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
-	const char* filename = Form("../Files/OniaTree_Ups%dSMM_5p02TeV_TuneCUETP8M1_nofilter_pp502Fall15-MCRUN2_71_V1-v1_GENONLY.root", iState);
+	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
+	// const char* filename = Form("../Files/OniaTree_Ups%dSMM_5p02TeV_TuneCUETP8M1_nofilter_pp502Fall15-MCRUN2_71_V1-v1_GENONLY.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -36,7 +36,8 @@ void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	// writeExtraText = true; // if extra text
 	// extraText = "       Internal";
-
+	
+	// (It's for the label of "Private work". To put CMS Internal again, comment out below, and uncomment above two lines)
 	writeExtraText = false; // if extra text
 
 	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
