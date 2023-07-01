@@ -30,7 +30,7 @@ void makeHXCSNtuples(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	// Read the MC file
 	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
-	TFile* file = TFile::Open(filename, "READ");
+	TFile* file = TFile::Open(filename, "Update");
 	if (!file) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
 		return;
@@ -60,7 +60,7 @@ void makeHXCSNtuples(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	// Create a Ntuple to store kinematics of Upsilon and daughter muons
 	gROOT->cd();
-]	TString varlist = "upsM:upsRapLab:upsPtLab:muplCosThetaHX:muplPhiHX:muplCosThetaCS:muplPhiCS";
+	TString varlist = "upsM:upsRapLab:upsPtLab:muplCosThetaHX:muplPhiHX:muplCosThetaCS:muplPhiCS";
 	TNtuple* HXCSNTuple = new TNtuple("HXCSNTuple", "Upsilon and muons in the HX and CS ntuple", varlist);
 
 	// Start the event loop for the reference frame transformations and fill a Ntuple 
@@ -103,8 +103,9 @@ void makeHXCSNtuples(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	}
 
 	// Create a file and store the ntuple
-	const char* outfilename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter_HXCS.root", iState);
-	TFile* outfile = new TFile(outfilename, "RECREATE", "Y 1S in HX and CS");  	
+	// const char* outfilename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter_HXCS.root", iState);
+	// TFile* outfile = new TFile(outfilename, "RECREATE", "Y 1S in HX and CS");  	
+  	file->cd();
   	HXCSNTuple -> Write();
   	file -> Close();
 
