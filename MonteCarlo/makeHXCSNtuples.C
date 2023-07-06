@@ -60,7 +60,7 @@ void makeHXCSNtuples(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	// Create a Ntuple to store kinematics of Upsilon and daughter muons
 	gROOT->cd();
-	TString varlist = "upsM:upsRapLab:upsPtLab:muplCosThetaHX:muplPhiHX:muplCosThetaCS:muplPhiCS";
+	TString varlist = "upsM:upsRapLab:upsPtLab:muplPtLab:muplEtaLab:mumiPtLab:mumiEtaLab:muplCosThetaHX:muplPhiHX:muplCosThetaCS:muplPhiCS";
 	TNtuple* HXCSNTuple = new TNtuple("HXCSNTuple", "Upsilon and muons in the HX and CS ntuple", varlist);
 
 	// Start the event loop for the reference frame transformations and fill a Ntuple 
@@ -92,6 +92,11 @@ void makeHXCSNtuples(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 				static_cast<float>(gen_QQ_LV->M()),
 			    static_cast<float>(gen_QQ_LV->Rapidity()),
 			    static_cast<float>(gen_QQ_LV->Pt()),
+
+			    static_cast<float>(gen_mupl_LV->Pt()),
+			    static_cast<float>(gen_mupl_LV->Eta()),
+			    static_cast<float>(gen_mumi_LV->Pt()),
+			    static_cast<float>(gen_mumi_LV->Eta()),
 
 			    static_cast<float>(muPlus_HX.CosTheta()),
 			    static_cast<float>((muPlus_HX.Phi())*180/TMath::Pi()),
