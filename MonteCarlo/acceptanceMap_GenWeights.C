@@ -175,8 +175,8 @@ void acceptanceMap_GenWeights(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 3
 		hHXNum[idx] = new TH2F(hHXNumName, ";cos #theta_{HX}; #varphi_{HX} (#circ);Number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 		
 		// (apply weights, cuts and draw 2D graph on the phi-costheta phase space)
-		HXCSNTuple -> Draw(Form("muplPhiHX:muplCosThetaHX>>hHXNum%s", weightsLabel[idx]), Form("(1 + %f*pow(muplCosThetaHX, 2.0) + %f*(1- pow(muplCosThetaHX, 2.0))*cos(2*muplPhiHX) )*(%s&&%s)", weights[idx][0][0], weights[idx][0][1], SingleMuonAccCuts, DoubleMuonCuts), "COLZ");
-		// HXCSNTuple -> Draw(Form("muplPhiHX:muplCosThetaHX>>hHXNum%s", weightsLabel[idx]), "(1 + 0.88*pow(muplCosThetaHX, 2.0) -0.99*(1- pow(muplCosThetaHX, 2.0))*cos(2*muplPhiHX) )*((muplPtLab>3.5)&&(mumiPtLab>3.5)&&(abs(muplEtaLab)<2.4)&&(abs(mumiEtaLab)<2.4))", "COLZ");
+		HXCSNTuple -> Draw(Form("muplPhiHX:muplCosThetaHX>>hHXNum%s", weightsLabel[idx]), Form("(25000*(1 + %f*pow(muplCosThetaHX, 2.0) + %f*(1- pow(muplCosThetaHX, 2.0))*cos(2*muplPhiHX*%f/180)) )*(%s&&%s)", weights[idx][0][0], weights[idx][0][1], M_PI, SingleMuonAccCuts, DoubleMuonCuts), "COLZ");
+		// HXCSNTuple -> Draw(Form("muplPhiHX:muplCosThetaHX>>hHXNum%s", weightsLabel[idx]), "(1 + 0.88*pow(muplCosThetaHX, 2.0) -0.99*(1- pow(muplCosThetaHX, 2.0))*cos(2*muplPhiHX*M_PI/180) )*((muplPtLab>3.5)&&(mumiPtLab>3.5)&&(abs(muplEtaLab)<2.4)&&(abs(mumiEtaLab)<2.4))", "COLZ");
 		// Put text upper right conner of the plot
 		CMS_lumi(cHXNum[idx], Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
@@ -197,7 +197,7 @@ void acceptanceMap_GenWeights(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 3
 		cHXDen[idx] = new TCanvas(cHXDenName, cHXDenName, 700, 600);
 		hHXDen[idx] = new TH2F(hHXDenName, ";cos #theta_{HX}; #varphi_{HX} (#circ);Number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
-		HXCSNTuple -> Draw(Form("muplPhiHX:muplCosThetaHX>>hHXDen%s", weightsLabel[idx]), Form("(1+ %f*pow(muplCosThetaHX, 2.0)+ %f*(1- pow(muplCosThetaHX, 2.0)) * cos(2*muplPhiHX))*(%s)", weights[idx][0][0], weights[idx][0][1], DoubleMuonCuts), "COLZ");
+		HXCSNTuple -> Draw(Form("muplPhiHX:muplCosThetaHX>>hHXDen%s", weightsLabel[idx]), Form("(25000*(1+ %f*pow(muplCosThetaHX, 2.0)+ %f*(1- pow(muplCosThetaHX, 2.0)) * cos(2*muplPhiHX*%f/180)))*(%s)", weights[idx][0][0], weights[idx][0][1], M_PI, DoubleMuonCuts), "COLZ");
 		// Put text upper right conner of the plot
 		CMS_lumi(cHXDen[idx], Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
@@ -220,7 +220,7 @@ void acceptanceMap_GenWeights(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 3
 		hCSNum[idx] = new TH2F(hCSNumName, ";cos #theta_{CS}; #varphi_{CS} (#circ);Number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 		
 		// (apply weights, cuts and draw 2D graph on the phi-costheta phase space)
-		HXCSNTuple -> Draw(Form("muplPhiCS:muplCosThetaCS>>hCSNum%s", weightsLabel[idx]), Form("(1 + %f*pow(muplCosThetaCS, 2.0) + %f*(1- pow(muplCosThetaCS, 2.0)) * cos(2*muplPhiCS))*(%s&&%s)", weights[idx][1][0], weights[idx][1][1], SingleMuonAccCuts, DoubleMuonCuts), "COLZ");
+		HXCSNTuple -> Draw(Form("muplPhiCS:muplCosThetaCS>>hCSNum%s", weightsLabel[idx]), Form("(1 + %f*pow(muplCosThetaCS, 2.0) + %f*(1- pow(muplCosThetaCS, 2.0)) * cos(2*muplPhiCS*%f/180))*(%s&&%s)", weights[idx][1][0], weights[idx][1][1], M_PI, SingleMuonAccCuts, DoubleMuonCuts), "COLZ");
 		// Put text upper right conner of the plot
 		CMS_lumi(cCSNum[idx], Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
@@ -240,7 +240,7 @@ void acceptanceMap_GenWeights(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 3
 		cCSDen[idx] = new TCanvas(cCSDenName, cCSDenName, 700, 600);
 		hCSDen[idx] = new TH2F(hCSDenName, ";cos #theta_{CS}; #varphi_{CS} (#circ);Number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
-		HXCSNTuple -> Draw(Form("muplPhiCS:muplCosThetaCS>>hCSDen%s", weightsLabel[idx]), Form("(1+ %f*pow(muplCosThetaCS, 2.0)+ %f*(1- pow(muplCosThetaCS, 2.0)) * cos(2*muplPhiCS))*(%s)", weights[idx][1][0], weights[idx][1][1], DoubleMuonCuts), "COLZ");
+		HXCSNTuple -> Draw(Form("muplPhiCS:muplCosThetaCS>>hCSDen%s", weightsLabel[idx]), Form("(1+ %f*pow(muplCosThetaCS, 2.0)+ %f*(1- pow(muplCosThetaCS, 2.0)) * cos(2*muplPhiCS*%f/180))*(%s)", weights[idx][1][0], weights[idx][1][1], M_PI, DoubleMuonCuts), "COLZ");
 		// Put text upper right conner of the plot
 		CMS_lumi(cCSDen[idx], Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
 
@@ -311,12 +311,14 @@ void acceptanceMap_GenWeights(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 3
 	}
 
 	/// save the results in a file for later usage (in particular for the polarization extraction)
-	const char* outputFileName = Form("AcceptanceMaps/%dS/withWeights/AcceptanceResults_withWeights.root", iState);
+	const char* outputFileName = Form("AcceptanceMaps/%dS/withWeights/AcceptanceResults_withWeights_pt%dto%dGeV.root", iState, ptMin, ptMax);
 	TFile outputFile(outputFileName, "RECREATE");
 
 	for(int idx=0; idx<NumIdx; idx++){
 		hCSNum[idx] -> Write();
+		hCSDen[idx] -> Write();
 		hHXNum[idx] -> Write();
+		hHXDen[idx] -> Write();
 		hCSAccp[idx] -> Write();
 		hHXAccp[idx] -> Write();
 	}
