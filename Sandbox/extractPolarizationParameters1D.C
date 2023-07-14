@@ -98,8 +98,8 @@ void extractPolarizationParameters1D() {
 
 	/// (2D Angular distribution function)
 	TF2  *AngDisFunc = new TF2("AngDisFunc","[2]/(3+[0])*(1+[0]*x*x+[1]*(1-x*x)*(cos(2*y*[3]/180.)))", cosThetaMin, cosThetaMax, phiMin, phiMax); 
-	AngDisFunc -> FixParameter(0, weights[1][0][0]); // (parameter of lambda theta)
-	AngDisFunc -> FixParameter(1, weights[1][0][1]); // (parameter of lambda phi)
+	AngDisFunc -> FixParameter(0, weights[5][0][0]); // (parameter of lambda theta)
+	AngDisFunc -> FixParameter(1, weights[5][0][1]); // (parameter of lambda phi)
 	AngDisFunc -> FixParameter(2, 1e2); // (parameter of normalization)
 	AngDisFunc -> FixParameter(3, M_PI); // (additional factor since y(#phi) is in the unit of degree)
 	AngDisFunc -> SetParNames("lambda_theta", "lambda_phi", "NormFactor", "pi");
@@ -177,7 +177,7 @@ void extractPolarizationParameters1D() {
 	hAngDis1DPhi -> Draw();
 
 	/// Define 1D Fit function with the second order (Phi)
-	TF1  *FitFunc1DPhi = new TF1("FitFunc1DPhi","[2]*(1+[1]/2.*cos(2*x* [3]/180.))/(3+[0])", phiMin, phiMax);
+	TF1  *FitFunc1DPhi = new TF1("FitFunc1DPhi","[2]*(1+[1]*2.*cos(2*x* [3]/180.)/(3+[0]))", phiMin, phiMax);
 	FitFunc1DPhi -> FixParameter(0, FitFunc1DCos->GetParameter(0)); // parameter of lambda theta
 	FitFunc1DPhi -> SetParameter(1, 1); // parameter of lambda phi
 	FitFunc1DPhi -> SetParameter(2, hAngDis->GetEntries()); // parameter of normalization
