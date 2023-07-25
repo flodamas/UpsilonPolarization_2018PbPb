@@ -1,3 +1,7 @@
+#include "TPaveText.h"
+
+#include "RooRealVar.h"
+
 TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax) {
 	TPaveText* text = new TPaveText(0.17, 0.9, 0.4, 0.65, "NDCNB");
 	text->SetFillColor(4000);
@@ -79,6 +83,16 @@ TPaveText* TwoCBParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, 
 	text->AddText(Form("n = %.3f #pm %.3f", order.getVal(), order.getError()));
 	text->AddText(Form("#sigma_{2} / #sigma_{1} = %.3f #pm %.3f", sigmaFraction.getVal(), sigmaFraction.getError()));
 	text->AddText(Form("norm factor = %.3f #pm %.3f", normFraction.getVal(), normFraction.getError()));
+
+	text->SetAllWith(" ", "align", 12);
+	return text;
+}
+
+TPaveText* PolarParamsText(double lambThetaIn, double lambPhiIn, RooRealVar lambThetaFit, RooRealVar lambPhiFit, Bool_t isSecondOrder) {
+	auto* text = new TPaveText(0.35, 0.35, 0.75, 0.15, "NDCNB");
+	text->SetBorderSize(0);
+	text->AddText(isSecondOrder ? Form("#lambda_{#phi, 2D input} = %.3f", lambPhiIn) : Form("#lambda_{#theta, 2D input} = %.3f", lambThetaIn));
+	text->AddText(isSecondOrder ? Form("#lambda_{#phi, 1D fit} = %.3f #pm %.3f", lambPhiFit.getVal(), lambPhiFit.getError()) : Form("#lambda_{#theta, 1D fit} = %.3f #pm %.3f", lambThetaFit.getVal(), lambThetaFit.getError()) );
 
 	text->SetAllWith(" ", "align", 12);
 	return text;
