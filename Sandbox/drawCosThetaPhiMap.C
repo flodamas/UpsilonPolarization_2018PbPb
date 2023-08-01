@@ -17,7 +17,7 @@ void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, In
 
 	// (cos theta, phi) 2D distribution maps for CS and HX frames
 
-	Int_t nCosThetaBins = 20;
+	Int_t nCosThetaBins = 21;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
 
 	//	Double_t cosThetaBinning[] = {-1, -0.8, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1};
@@ -56,7 +56,7 @@ void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, In
 	gStyle->SetPadLeftMargin(.15);
 	gStyle->SetTitleYOffset(1.1);
 	gStyle->SetTitleOffset(1.4, "z");
-	gStyle->SetPadRightMargin(0.2);
+	gStyle->SetPadRightMargin(0.18);
 	gStyle->SetPalette(kRainBow);
 
 	/// Defind legend
@@ -66,7 +66,7 @@ void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, In
 
 
 	/// Draw and save the number of events(signal+background) plots in the 2D (costheta, phi) space in CS 
-	TCanvas* cCS = new TCanvas("cCS", "cCS", 700, 600);
+	TCanvas* cCS = new TCanvas("cCS", "cCS", 600, 600);
 	TH2* hCS= dynamic_cast<TH2*>(reducedDataset->createHistogram("hCS", *cosThetaCS, Binning(nCosThetaBins,cosThetaMin,cosThetaMax), YVar(*phiCS, Binning(nPhiBins,phiMin,phiMax))));
 	hCS -> SetTitle(";cos #theta_{CS}; #varphi_{CS} (#circ)");
 	hCS -> Draw("COLZ");
@@ -80,7 +80,7 @@ void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, In
 	cCS -> SaveAs(Form("frame_distrib/CS_cent%dto%d_pt%dto%dGeV.png", centMin, centMax, minPt, maxPt), "RECREATE");
 
 	/// Draw and save the number of events(signal+background) plots in the 2D (costheta, phi) space in HX 
-	TCanvas* cHX = new TCanvas("cHX", "cHX", 700, 600);
+	TCanvas* cHX = new TCanvas("cHX", "cHX", 600, 600);
 	TH2* hHX= dynamic_cast<TH2*>(reducedDataset->createHistogram("hHX", *cosThetaHX, Binning(nCosThetaBins,cosThetaMin,cosThetaMax), YVar(*phiHX, Binning(nPhiBins,phiMin,phiMax))));
 	hHX -> SetTitle(";cos #theta_{HX}; #varphi_{HX} (#circ)");
 	hHX -> Draw("COLZ");
