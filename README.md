@@ -1,4 +1,4 @@
-# UpsilonPolarization_2018PbPb (writing in progress)
+# UpsilonPolarization_2018PbPb
 	
 ## Data 
 
@@ -12,8 +12,9 @@
 **2.** 	Draw Cos&theta; vs &phi; map   <br>
   - Sandbox / rawCosThetaPhiMap.C
     - input: Files / upsilonSkimmedDataset.root
-    - output: 
-**3.** Acceptance & Efficiency correction
+    - output: Sandbox / frame_distrib / CosThetaPhiMap_pt%dto%GeV.root
+      
+**3.** Acceptance & Efficiency correction 
 1) Get acceptance correction map
    - MonteCarlo / acceptanceMap_noGenFilter.C
      - input: Files / OniaTree_Y%dS_GENONLY_NoFilter.root
@@ -34,8 +35,7 @@
     $\qquad$ (read by the function in /Tools/Shortcuts.h)
     - output: fit results
 
-
-**4.**  Extract polarization parameters
+**5.**  Extract polarization parameters
 
 
 ## MC
