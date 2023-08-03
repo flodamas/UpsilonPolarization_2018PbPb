@@ -9,7 +9,7 @@
     - input: OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root <br>
     - output: upsilonSkimmedDataset.root <br>
 
-**2.** 	Draw Costheta vs Phi map   <br>
+**2.** 	Draw Cos&theta; vs &phi; map   <br>
   - Sandbox > drawCosThetaPhiMap.C
 
 **3.** 	Extract signal in a given (pT, costheta, pi) bin  <br>
