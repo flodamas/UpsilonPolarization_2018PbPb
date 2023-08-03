@@ -13,7 +13,13 @@
   - Sandbox / rawCosThetaPhiMap.C
 
 **3.** Acceptance & Efficiency correction
-
+1) Get acceptance correction map
+   - MonteCarlo / acceptanceMap_noGenFilter.C
+     - input: Files/OniaTree_Y%dS_GENONLY_NoFilter.root
+     - output: MonteCarlo / acceptanceMaps / %S/ AcceptanceResults_pt%dto%dGeV.root 
+2) Get efficiency map
+3) Do Acceptance & Efficiency correction
+   
 **4.** 	Extract signal in a given (pT, costheta, pi) bin  <br>
 1) Get the tail parameters before fit from MC 
   - MonteCarlo / extractMCSignalTails_symCoreDSCB.C
