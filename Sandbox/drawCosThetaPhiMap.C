@@ -93,4 +93,16 @@ void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, In
 	CMS_lumi(cHX, "2018 PbPb miniAOD, DoubleMuon PD");
 	cHX -> SaveAs(Form("frame_distrib/HX_cent%dto%d_pt%dto%dGeV.png", centMin, centMax, minPt, maxPt), "RECREATE");
 
+	/// save the results in a file for later usage
+	const char* outputFileName = Form("frame_distrib/CosThetaPhiMap_pt%dto%dGeV.root", minPt, maxPt);
+	TFile outputFile(outputFileName, "RECREATE");
+
+	hHX->Write();
+	hCS->Write();
+
+	outputFile.Close();
+
+	cout << endl
+	     << "CosTheta-Phi maps saved in " << outputFileName << endl;
+
 }
