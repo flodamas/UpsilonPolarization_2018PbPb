@@ -12,7 +12,9 @@
 **2.** 	Draw Cos&theta; vs &phi; map   <br>
   - Sandbox / rawCosThetaPhiMap.C
 
-**3.** 	Extract signal in a given (pT, costheta, pi) bin  <br>
+**3.** Acceptance & Efficiency correction
+
+**4.** 	Extract signal in a given (pT, costheta, pi) bin  <br>
 1) Get the tail parameters before fit from MC 
   - MonteCarlo / extractMCSignalTails_symCoreDSCB.C
     - input: MCUpsilonSkimmedWeightedDataset.root
