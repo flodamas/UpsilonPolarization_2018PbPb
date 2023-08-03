@@ -20,7 +20,9 @@
 2) Fit data and extract the signal
   - SignalExtraction / nominalFit_hightPt.C <br>
   - SignalExtraction / nominalFit_lowPt.C <br>
-    - input: upsilonSkimmedDataset.root
+    - input: upsilonSkimmedDataset.root <br>
+    $\qquad$ MonteCarlo / SignalParameters.txt <br>
+    $\qquad$ (read by the function in /Tools/Shortcuts.h)
     - output: fit results
 
 
