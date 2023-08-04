@@ -32,9 +32,14 @@
 1) Get the tail parameters from MC before fit  
   - MonteCarlo / extractMCSignalTails_symCoreDSCB.C
     ```
-    - input: MCUpsilonSkimmedWeightedDataset.root
+    - input: Files/MCUpsilonSkimmedWeightedDataset.root
     - output: MonteCarlo/SignalParameters.txt
     ```
+  - MonteCarlo / drawTailParaPtDepend.C
+    ```
+    - input: MonteCarlo/SignalParameters/symCoreDSCB_cent%dto%d_pt%dto%d.txt
+    - output: MonteCarlo/SignalParameters/Alpha(n)_pT_dependence.png
+    ``` 
 2) Fit data and extract the signal
   - SignalExtraction / nominalFit_hightPt.C <br>
   - SignalExtraction / nominalFit_lowPt.C <br>
