@@ -1,6 +1,6 @@
 using namespace RooFit;
 
-void drawTailParaPtDepend(Bool_t isCSframe=kTRUE) {
+void drawTailParaPtDepend() {
 	
 	/// Define variables
 	RooRealVar alphaInf("alphaInf", "", 0.1, 10);
@@ -25,7 +25,7 @@ void drawTailParaPtDepend(Bool_t isCSframe=kTRUE) {
 
 	// Read tail parameters from the file depending on pT
 	for(int ievent = 0; ievent < nBins; ievent++){
-	const char* mcFileName = Form("../MonteCarlo/SignalParameters/symCoreDSCB_cent%dto%d_pt%dto%d_%s.txt", centMin, centMax, (int)ptCuts[ievent], (int)ptCuts[ievent+1], isCSframe? "CS":"HX");
+	const char* mcFileName = Form("../MonteCarlo/SignalParameters/symCoreDSCB_cent%dto%d_pt%dto%d.txt", centMin, centMax, (int)ptCuts[ievent], (int)ptCuts[ievent+1]);
 
 		if (fopen(mcFileName, "r")) {
 			cout << endl
@@ -84,7 +84,7 @@ void drawTailParaPtDepend(Bool_t isCSframe=kTRUE) {
 	lega -> AddEntry(haL->GetName(), "#alpha_{L}", "lPE");
 	lega -> Draw();
 
-	ca -> SaveAs(Form("./SignalParameters/Alpha_pT_dependence_%s.png", isCSframe? "CS":"HX"));
+	ca -> SaveAs("./SignalParameters/Alpha_pT_dependence.png");
 
 	/// n graph
 	TCanvas* cn = new TCanvas("cn", "cn", 600, 600);
@@ -108,5 +108,5 @@ void drawTailParaPtDepend(Bool_t isCSframe=kTRUE) {
 	legn -> AddEntry(hnL->GetName(), "n_{L}", "lPE");
 	legn -> Draw();
 
-	cn -> SaveAs(Form("./SignalParameters/n_pT_dependence_%s.png", isCSframe? "CS":"HX"));
+	cn -> SaveAs("./SignalParameters/n_pT_dependence.png");
 }
