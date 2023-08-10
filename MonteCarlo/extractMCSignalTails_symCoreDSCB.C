@@ -10,7 +10,7 @@
 
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
-RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe=kTRUE) {
+RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
 	/// open the MC skimmed file
 	const char* filename = "../Files/MCUpsilonSkimmedWeightedDataset.root";
 
@@ -26,16 +26,13 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 
 	// we only extract the tail parameters for a specific pt bin, they do not vary significantly with cos theta or phi within this pt bin
 	// Bool_t isCSframe = kTRUE;
-	// Bool_t isCSframe = kFALSE;
+	Bool_t isCSframe = kFALSE;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
 	Float_t phiMin = -180, phiMax = 180;
 
 	Float_t massMin = 8.5, massMax = 10.5;
 	Int_t nBins = 80;
 
-
-	// Float_t binMin = 8, binMax = 13;
-	// Int_t nBins = 80;
 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
@@ -68,7 +65,7 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 
 	fitResult->Print("v");
 
-	TString outputName = Form("symCoreDSCB_cent%dto%d_pt%dto%d_%s", centMin, centMax, ptMin, ptMax, isCSframe? "CS":"HX");
+	TString outputName = Form("symCoreDSCB_cent%dto%d_pt%dto%d", centMin, centMax, ptMin, ptMax);
 
 	// save signal shape parameters in a txt file to be read for data fit
 	RooArgSet* tailParams = new RooArgSet(alphaInf, orderInf, alphaSup, orderSup);
@@ -91,7 +88,6 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
 	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
-	// frame->addObject(FitResultText(nSignal_1S, significance, nSignal_2S, significance2S));
 	frame -> addObject(SymCoreDoubleCBParamsText(mean, sigma, alphaSup, orderSup, alphaInf, orderInf));
 	frame->Draw();
 
@@ -102,7 +98,7 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	canvas->cd();
 	pad1->Draw();
 	pad2->Draw();
-	canvas->SaveAs(Form("SignalParameters/MCfit_%s_%s_%dto%d.png", "symCoreDSCB", isCSframe? "CS":"HX", ptMin, ptMax), "RECREATE");
+	canvas->SaveAs(Form("SignalParameters/MCfit_%s_%dto%d.png", "symCoreDSCB", ptMin, ptMax), "RECREATE");
 
 	// file->Close();
 	return tailParams;
