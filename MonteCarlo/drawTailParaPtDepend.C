@@ -43,14 +43,14 @@ void drawTailParaPtDepend() {
 		orderSup.setConstant();
 
 		// Fill the histogram with the tail parameters read from the file
-		haH -> SetBinContent(ievent+1, alphaInf.getVal());
-		haH -> SetBinError(ievent+1, alphaInf.getError());
-		haL -> SetBinContent(ievent+1, alphaSup.getVal());
-		haL -> SetBinError(ievent+1, alphaSup.getError());
-		hnH -> SetBinContent(ievent+1, orderInf.getVal());
-		hnH -> SetBinError(ievent+1, orderInf.getError());
-		hnL -> SetBinContent(ievent+1, orderSup.getVal());
-		hnL -> SetBinError(ievent+1, orderSup.getError());
+		haH -> SetBinContent(ievent+1, alphaSup.getVal());
+		haH -> SetBinError(ievent+1, alphaSup.getError());
+		haL -> SetBinContent(ievent+1, alphaInf.getVal());
+		haL -> SetBinError(ievent+1, alphaInf.getError());
+		hnH -> SetBinContent(ievent+1, orderSup.getVal());
+		hnH -> SetBinError(ievent+1, orderSup.getError());
+		hnL -> SetBinContent(ievent+1, orderInf.getVal());
+		hnL -> SetBinError(ievent+1, orderInf.getError());
 
 		cout << endl
 	     << "Tail parameters fixed to the following MC signal values:" << endl;
