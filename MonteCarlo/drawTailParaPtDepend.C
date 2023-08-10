@@ -1,6 +1,6 @@
 using namespace RooFit;
 
-void drawTailParaPtDepend() {
+void drawTailParaPtDepend(Bool_t isCSframe=kTRUE) {
 	
 	/// Define variables
 	RooRealVar alphaInf("alphaInf", "", 0.1, 10);
@@ -13,7 +13,7 @@ void drawTailParaPtDepend() {
 
 	Int_t centMin = 0;
 	Int_t centMax = 90; 
-	const Float_t ptCuts[8] = {0, 2, 4, 6, 8, 12, 16, 20};
+	const Float_t ptCuts[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
 	Int_t arrayLength = sizeof(ptCuts)/sizeof(Int_t);
 	Int_t nBins = arrayLength -1 ;
 
@@ -25,7 +25,7 @@ void drawTailParaPtDepend() {
 
 	// Read tail parameters from the file depending on pT
 	for(int ievent = 0; ievent < nBins; ievent++){
-	const char* mcFileName = Form("../MonteCarlo/SignalParameters/symCoreDSCB_cent%dto%d_pt%dto%d.txt", centMin, centMax, (int)ptCuts[ievent], (int)ptCuts[ievent+1]);
+	const char* mcFileName = Form("../MonteCarlo/SignalParameters/symCoreDSCB_cent%dto%d_pt%dto%d_%s.txt", centMin, centMax, (int)ptCuts[ievent], (int)ptCuts[ievent+1], isCSframe? "CS":"HX");
 
 		if (fopen(mcFileName, "r")) {
 			cout << endl
@@ -77,14 +77,14 @@ void drawTailParaPtDepend() {
 	haL -> Draw("SAME P");
 
 	/// Legend
-	TLegend *lega = new TLegend(0.6, 0.6, 0.8, 0.8);
+	TLegend *lega = new TLegend(0.2, 0.65, 0.4, 0.85);
 	lega -> SetBorderSize(0);
 	lega -> SetTextSize(0.04);
 	lega -> AddEntry(haH->GetName(), "#alpha_{H}", "lPE");
 	lega -> AddEntry(haL->GetName(), "#alpha_{L}", "lPE");
 	lega -> Draw();
 
-	ca -> SaveAs("./SignalParameters/Alpha_pT_dependence.png");
+	ca -> SaveAs(Form("./SignalParameters/Alpha_pT_dependence_%s.png", isCSframe? "CS":"HX"));
 
 	/// n graph
 	TCanvas* cn = new TCanvas("cn", "cn", 600, 600);
@@ -101,12 +101,12 @@ void drawTailParaPtDepend() {
 	hnL -> Draw("SAME P");
 	
 	/// Legend
-	TLegend *legn = new TLegend(0.6, 0.6, 0.8, 0.8);
+	TLegend *legn = new TLegend(0.8, 0.65, 0.95, 0.85);
 	legn -> SetBorderSize(0);
 	legn -> SetTextSize(0.04);
 	legn -> AddEntry(hnH->GetName(), "n_{H}", "lPE");
 	legn -> AddEntry(hnL->GetName(), "n_{L}", "lPE");
 	legn -> Draw();
 
-	cn -> SaveAs("./SignalParameters/n_pT_dependence.png");
+	cn -> SaveAs(Form("./SignalParameters/n_pT_dependence_%s.png", isCSframe? "CS":"HX"));
 }
