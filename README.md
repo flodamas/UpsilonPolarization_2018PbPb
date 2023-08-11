@@ -28,7 +28,7 @@
 2) Get efficiency map
 3) Do Acceptance & Efficiency correction
    
-**4.** 	Extract signal in a given (pT, costheta, pi) bin  <br>
+**4.** 	Extract signal in a given ($p_{T}$, cos&theta;, &phi;) bin  <br>
 1) Get the tail parameters from MC before fit  
   - MonteCarlo / extractMCSignalTails_symCoreDSCB.C
     ```
