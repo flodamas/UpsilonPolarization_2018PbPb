@@ -88,7 +88,7 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
 	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
-	frame -> addObject(SymCoreDoubleCBParamsText(mean, sigma, alphaSup, orderSup, alphaInf, orderInf));
+	frame->addObject(SymCoreDoubleCBParamsText(mean, sigma, alphaInf, orderInf, alphaSup, orderSup));
 	frame->Draw();
 
 	canvas->cd();
