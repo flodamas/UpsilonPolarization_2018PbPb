@@ -1,9 +1,9 @@
-#include "../Tools/Style/tdrStyle.C"
-#include "../Tools/Style/CMS_lumi.C"
+//#include "../Tools/Style/tdrStyle.C"
+//#include "../Tools/Style/CMS_lumi.C"
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
-#include "../Tools/Shortcuts.h"
+#include "../Tools/FitShortcuts.h"
 
 #include "../Tools/Parameters/PhysicsConstants.h"
 
@@ -30,9 +30,6 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	}
 
 	cout << "File " << filename << " opened" << endl;
-
-	writeExtraText = true; // if extra text
-	extraText = "      Internal";
 
 	Float_t binMin = 8, binMax = 13;
 	Int_t nBins = 80;
@@ -138,17 +135,19 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
 
-	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 
-	frame->addObject(FitResultText(nSignal_1S, significance, nSignal_2S, significance2S));
+	//frame->addObject(FitResultText(nSignal_1S, significance, nSignal_2S, significance2S));
 
 	frame->Draw();
+	frame->GetYaxis()->SetMaxDigits(3);
+
 	gPad->RedrawAxis();
 
-	frame->SetMaximum(nEntries / 15);
+	//frame->SetMaximum(nEntries / 15);
 	//frame->SetMinimum(0.8);
 
-	CMS_lumi(pad1, "2018 PbPb miniAOD, DoubleMuon PD");
+	//	CMS_lumi(pad1, "2018 PbPb miniAOD, DoubleMuon PD");
 
 	// pull distribution
 	canvas->cd();

@@ -1,16 +1,15 @@
-#include "../Tools/Style/tdrStyle.C"
-#include "../Tools/Style/CMS_lumi.C"
+
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
-#include "../Tools/Shortcuts.h"
+#include "../Tools/FitShortcuts.h"
 
 #include "../Tools/Parameters/PhysicsConstants.h"
 
-void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	Int_t centMin = 0, centMax = 90;
+#include "../AnalysisParameters.h"
 
-	TString fitModelName = Form("symCoreDSCB_expo_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", centMin, centMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
+void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+	TString fitModelName = Form("symCoreDSCB_expo_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 
 	// get the tail parameters of the signal shape first in case the MC fit is needed
 	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
@@ -18,7 +17,7 @@ void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTR
 	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
 	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
 
-	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, "symCoreDSCB", centMin, centMax, ptMin, ptMax);
+	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, "symCoreDSCB", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
 
 	const char* filename = "../Files/upsilonSkimmedDataset.root";
 	TFile* f = TFile::Open(filename, "READ");
@@ -29,12 +28,6 @@ void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTR
 
 	cout << "File " << filename << " opened" << endl;
 
-	writeExtraText = true; // if extra text
-	extraText = "      Internal";
-
-	Float_t binMin = 8, binMax = 13;
-	Int_t nBins = 80;
-
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
@@ -43,7 +36,7 @@ void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTR
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, centMin, centMax, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar* massVar = wspace->var("mass");
 
@@ -55,11 +48,11 @@ void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTR
 	pad1->Draw();
 	pad1->cd();
 
-	RooPlot* frame = massVar->frame(Title(" "), Range(binMin, binMax));
+	RooPlot* frame = massVar->frame(Title(" "), Range(MassBinMin, MassBinMax));
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 
 	//frame->SetYTitle(Form("Candidates / (%d MeV)", (int)1000 * (binMax - binMin) / nBins));
-	massDataset->plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
+	massDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	/// fitting model
 
@@ -68,7 +61,7 @@ void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTR
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.3, 9.6);
-	RooRealVar sigma_1S("sigma_1S", "", .05, .15);
+	RooRealVar sigma_1S("sigma_1S", "", .03, .15);
 
 	RooCrystalBall signal_1S("signal_1S", "", *massVar, mean_1S, sigma_1S, *alphaInf, *orderInf, *alphaSup, *orderSup);
 	RooRealVar nSignal_1S("nSignal_1S", "N 1S", 0, nEntries);
@@ -99,7 +92,7 @@ void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTR
 
 	RooAddPdf fitModel("fitModel", "", RooArgList(signal_1S, signal_2S, signal_3S, bkgPDF), RooArgList(nSignal_1S, nSignal_2S, nSignal_3S, nBkg));
 
-	auto* fitResult = fitModel.fitTo(*massDataset, Save(), Extended(kTRUE), PrintLevel(-1), Minos(kTRUE), NumCPU(3), Range(binMin, binMax));
+	auto* fitResult = fitModel.fitTo(*massDataset, Save(), Extended(kTRUE), PrintLevel(-1), Minos(kTRUE), NumCPU(NCPUs), Range(MassBinMin, MassBinMax));
 
 	fitResult->Print("v");
 
@@ -133,19 +126,19 @@ void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTR
 	fitModel.plotOn(frame, Components(signal_3S), LineColor(kRed));
 	fitModel.plotOn(frame, LineColor(kBlue));
 
-	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
+	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax));
 
-	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	frame->addObject(RefFrameText(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 
 	frame->addObject(FitResultText(nSignal_1S, significance, nSignal_2S, significance2S));
 
 	frame->Draw();
 	gPad->RedrawAxis();
 
-	//frame->SetMaximum(nEntries / 10);
+	frame->SetMaximum(nEntries / 15);
 	//frame->SetMinimum(0.8);
 
-	CMS_lumi(pad1, "2018 PbPb miniAOD, DoubleMuon PD");
+	CMS_lumi(pad1, lumi_PbPb);
 
 	// pull distribution
 	canvas->cd();

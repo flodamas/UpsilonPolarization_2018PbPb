@@ -18,7 +18,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void skimMCUpsilon(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB_miniAOD.root", const char* outputFileName = "MCUpsilonSkimmedWeightedDataset.root") {
+void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB_miniAOD.root", const char* outputFileName = "MCUpsilonSkimmedWeightedDataset.root") {
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 

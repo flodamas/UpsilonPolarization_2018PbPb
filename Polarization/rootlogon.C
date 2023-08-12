@@ -52,7 +52,7 @@ void rootlogon() {
 	tdrStyle->SetMarkerStyle(1);
 
 	// For the fit/function:
-	tdrStyle->SetOptFit(1);
+	tdrStyle->SetOptFit(0);
 	tdrStyle->SetFitFormat("5.4g");
 	tdrStyle->SetFuncColor(2);
 	tdrStyle->SetFuncStyle(1);
@@ -61,7 +61,7 @@ void rootlogon() {
 	// For the legend
 	tdrStyle->SetLegendBorderSize(0);
 	tdrStyle->SetLegendFont(42);
-	tdrStyle->SetLegendTextSize(.055);
+	tdrStyle->SetLegendTextSize(.05);
 	tdrStyle->SetFillStyle(0);
 
 	// For the date:
@@ -86,9 +86,9 @@ void rootlogon() {
 
 	// Margins:
 	tdrStyle->SetPadTopMargin(0.06);
-	tdrStyle->SetPadBottomMargin(0.2);
-	tdrStyle->SetPadLeftMargin(0.12);
-	tdrStyle->SetPadRightMargin(0.025);
+	tdrStyle->SetPadBottomMargin(0.13);
+	tdrStyle->SetPadLeftMargin(0.14);
+	tdrStyle->SetPadRightMargin(0.03);
 
 	// For the Global title:
 
@@ -113,8 +113,8 @@ void rootlogon() {
 	tdrStyle->SetTitleSize(0.06, "XYZ");
 	// tdrStyle->SetTitleXSize(Float_t size = 0.02); // Another way to set the
 	// size? tdrStyle->SetTitleYSize(Float_t size = 0.02);
-	tdrStyle->SetTitleXOffset(1.05);
-	tdrStyle->SetTitleYOffset(1.);
+	tdrStyle->SetTitleXOffset(1.0);
+	tdrStyle->SetTitleYOffset(1.1);
 	// tdrStyle->SetTitleOffset(1.1, "Y"); // Another way to set the Offset
 
 	// For the axis labels:
@@ -157,7 +157,7 @@ void rootlogon() {
 	tdrStyle->SetHatchesSpacing(0.05);
 
 	tdrStyle->SetTextFont(42);
-	tdrStyle->SetTextSize(0.055);
+	tdrStyle->SetTextSize(0.05);
 
 	tdrStyle->cd();
 }

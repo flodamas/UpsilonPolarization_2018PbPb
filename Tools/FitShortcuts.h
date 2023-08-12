@@ -1,6 +1,6 @@
 
 // reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
-RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -8,10 +8,10 @@ RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int
 
 	// not cutting in CS and HF variables at the same time!!! Either you're analyzing CS or HX frame, but not both at once
 
-	Float_t minCosThetaCS, maxCosThetaCS;
-	Int_t minPhiCS, maxPhiCS;
-	Float_t minCosThetaHX, maxCosThetaHX;
-	Int_t minPhiHX, maxPhiHX;
+	double minCosThetaCS, maxCosThetaCS;
+	double minPhiCS, maxPhiCS;
+	double minCosThetaHX, maxCosThetaHX;
+	double minPhiHX, maxPhiHX;
 
 	if (isCSframe) {
 		minCosThetaCS = cosThetaMin;
@@ -35,10 +35,10 @@ RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int
 		maxPhiHX = phiMax;
 	}
 
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %d && phiCS < %d)&& (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %d && phiHX < %d)", 2 * centMin, 2 * centMax, ptMin, ptMax, minCosThetaCS, maxCosThetaCS, minPhiCS, maxPhiCS, minCosThetaHX, maxCosThetaHX, minPhiHX, maxPhiHX);
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %f && phiCS < %f)&& (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %f && phiHX < %f)", 2 * centMin, 2 * centMax, ptMin, ptMax, minCosThetaCS, maxCosThetaCS, minPhiCS, maxPhiCS, minCosThetaHX, maxCosThetaHX, minPhiHX, maxPhiHX);
 
 	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
-	massDataset->SetName("massDataset");
+	massDataset->SetName(kinematicCut); // just to make it unique
 
 	wspace->import(*massDataset);
 

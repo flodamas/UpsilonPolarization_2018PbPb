@@ -4,7 +4,7 @@
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
-#include "../Tools/Shortcuts.h"
+#include "../Tools/FitShortcuts.h"
 
 void fitMCSignalShape_asymDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	const char* filename = "../Files/MCUpsilonSkimmedWeightedDataset.root";
