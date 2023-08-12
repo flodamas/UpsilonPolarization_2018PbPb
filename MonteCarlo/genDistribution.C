@@ -18,12 +18,14 @@
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
-#include "../AnalysisParameters.h"
+#include "../Tools/Parameters/AnalysisParameters.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
 void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
+	
 	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
+	// const char* filename = Form("../Files/OniaTree_Ups%dSMM_5p02TeV_TuneCUETP8M1_nofilter_pp502Fall15-MCRUN2_71_V1-v1_GENONLY.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -32,8 +34,11 @@ void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	cout << "File " << filename << " opened" << endl;
 
-	writeExtraText = true; // if extra text
-	extraText = "       Internal";
+	// writeExtraText = true; // if extra text
+	// extraText = "       Internal";
+	
+	// (It's for the label of "Private work". To put CMS Internal again, comment out below, and uncomment above two lines)
+	writeExtraText = false; // if extra text
 
 	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
 
@@ -64,9 +69,15 @@ void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	//Double_t phiBinning[] = {-TMath::Pi(), -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 180};
 	//	nPhiBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
 
+<<<<<<< HEAD
 	TH2F* hCS = new TH2F("hCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);number of generated #varUpsilon's", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 	TH2F* hHX = new TH2F("hHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);number of generated #varUpsilon's", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 	TH2F* hLab = new TH2F("hLab", ";cos #theta_{lab}; #varphi_{lab} (#circ);number of generated #varUpsilon's", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+=======
+	TH2F* hLab = new TH2F("hLab", ";cos #theta_{Lab}; #varphi_{Lab} (#circ);number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TH2F* hCS = new TH2F("hCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TH2F* hHX = new TH2F("hHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+>>>>>>> 2615ffe59d7c40ab33257be1946816f55a43c353
 
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
@@ -99,6 +110,7 @@ void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 
+			hLab->Fill(gen_mupl_LV->CosTheta(), (gen_mupl_LV->Phi())*180/TMath::Pi());
 			hCS->Fill(muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi());
 			hHX->Fill(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi());
 			hLab->Fill(gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
@@ -115,7 +127,28 @@ void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	legend->SetTextAlign(22);
 	legend->SetTextSize(0.05);
 
+
+
+	auto* canvasLab = new TCanvas("canvasLab", "", 700, 600);
+	canvasLab-> SetRightMargin(0.2);
+
+	hLab->GetZaxis()->SetTitleOffset(1.2);
+	hLab->Draw("COLZ");
+
+	CMS_lumi(canvasLab, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
+
+	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
+
+	gPad->Update();
+
+	hLab->GetYaxis()->SetRangeUser(-190, 240);
+
+	canvasLab->SaveAs(Form("GenMaps/Lab_pt%dto%dGeV.png", ptMin, ptMax), "RECREATE");
+
+
+
 	auto* canvasCS = new TCanvas("canvasCS", "", 700, 600);
+	canvasCS-> SetRightMargin(0.18);
 	hCS->Draw("COLZ");
 
 	CMS_lumi(canvasCS, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
@@ -128,7 +161,10 @@ void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	canvasCS->SaveAs(Form("GenMaps/CS_pt%dto%dGeV.png", ptMin, ptMax), "RECREATE");
 
+
+
 	auto* canvasHX = new TCanvas("canvasHX", "", 700, 600);
+	canvasHX-> SetRightMargin(0.18);
 	hHX->Draw("COLZ");
 
 	CMS_lumi(canvasHX, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
