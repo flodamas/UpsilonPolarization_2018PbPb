@@ -6,6 +6,8 @@
 
 #include "../Tools/Shortcuts.h"
 
+#include "../AnalysisParameters.h"
+
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
 void fitMCSignalShape_symCoreDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
@@ -22,7 +24,6 @@ void fitMCSignalShape_symCoreDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t 
 	writeExtraText = true; // if extra text
 	extraText = "      Simulation Internal";
 
-	Int_t centMin = 0, centMax = 90;
 	Float_t massMin = 8.5, massMax = 10.5;
 	Int_t nBins = 75;
 
@@ -34,7 +35,7 @@ void fitMCSignalShape_symCoreDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t 
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, centMin, centMax, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar* massVar = wspace->var("mass");
 
@@ -65,18 +66,16 @@ void fitMCSignalShape_symCoreDoubleCB(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t 
 	cout << endl
 	     << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF with a symmetric Gaussian core and asymmetric tail distributions..." << endl;
 
-	bool doWeightedError = true;
-
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!doWeightedError), NumCPU(4), Range(massMin, massMax), AsymptoticError(doWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
+	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 
 	fitResult->Print("v");
 
 	signal.plotOn(frame, LineColor(kBlue));
 
 	// add legends
-	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
+	frame->addObject(KinematicsText(centMin, centMax));
 
-	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	frame->addObject(RefFrameText(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 
 	frame->addObject(SymCoreDoubleCBParamsText(mean, sigma, alphaInf, orderInf, alphaSup, orderSup));
 

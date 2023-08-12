@@ -64,8 +64,9 @@ void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	//Double_t phiBinning[] = {-TMath::Pi(), -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 180};
 	//	nPhiBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
 
-	TH2F* hCS = new TH2F("hCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);# gen QQ", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TH2F* hHX = new TH2F("hHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);# gen QQ", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TH2F* hCS = new TH2F("hCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);number of generated #varUpsilon's", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TH2F* hHX = new TH2F("hHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);number of generated #varUpsilon's", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TH2F* hLab = new TH2F("hLab", ";cos #theta_{lab}; #varphi_{lab} (#circ);number of generated #varUpsilon's", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
@@ -100,6 +101,7 @@ void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 			hCS->Fill(muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi());
 			hHX->Fill(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi());
+			hLab->Fill(gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
 		}
 	}
 
@@ -138,4 +140,17 @@ void genDistribution(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	hHX->GetYaxis()->SetRangeUser(-190, 240);
 
 	canvasHX->SaveAs(Form("GenMaps/HX_pt%dto%dGeV.png", ptMin, ptMax), "RECREATE");
+
+	auto* canvasLab = new TCanvas("canvasLab", "", 700, 600);
+	hLab->Draw("COLZ");
+
+	CMS_lumi(canvasLab, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
+
+	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
+
+	gPad->Update();
+
+	hLab->GetYaxis()->SetRangeUser(-190, 240);
+
+	canvasLab->SaveAs(Form("GenMaps/Lab_pt%dto%dGeV.png", ptMin, ptMax), "RECREATE");
 }

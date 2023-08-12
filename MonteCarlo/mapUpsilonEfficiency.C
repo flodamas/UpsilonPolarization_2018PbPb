@@ -95,7 +95,26 @@ TH2D* RelSystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficienc
 	return hTotalSyst;
 }
 
-void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
+void DrawEfficiencyMap(TEfficiency* effMap, int iState = 1) {
+	TCanvas* canvas = new TCanvas(effMap->GetName(), "", 700, 600);
+	effMap->Draw("COLZ");
+
+	CMS_lumi(canvas, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
+
+	TLatex legend;
+	legend.SetTextAlign(22);
+	legend.SetTextSize(0.042);
+	legend.DrawLatexNDC(.5, .88, Form("cent. %d-%d%%, |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", gCentralityBinMin, gCentralityBinMax, gPtMin, gPtMax));
+
+	gPad->Update();
+
+	effMap->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 240);
+	effMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
+
+	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effMap->GetName()), "RECREATE");
+}
+
+void mapUpsilonEfficiency(Int_t iState = 1) {
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -175,21 +194,22 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	/// (cos theta, phi) 2D distribution maps for CS and HX frames
 
-	Int_t nCosThetaBins = 20;
-	Float_t cosThetaMin = -1, cosThetaMax = 1;
-
-	//	Double_t cosThetaBinning[] = {-1, -0.8, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1};
-	//	nCosThetaBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
-
-	Int_t nPhiBins = 21;
-	Float_t phiMin = -180, phiMax = 240;
-
-	//Double_t phiBinning[] = {-TMath::Pi(), -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 180};
-	//	nPhiBins = sizeof(cosThetaBinning) / sizeof(Double_t) - 1;
-
 	const char* titleCS = Form(";cos #theta_{CS}; #varphi_{CS} (#circ);#varUpsilon(%dS) total efficiency", iState);
 
 	const char* titleHX = Form(";cos #theta_{HX}; #varphi_{HX} (#circ);#varUpsilon(%dS) total efficiency", iState);
+
+	// granular binning for acceptance studies
+
+	Int_t nCosThetaBins = 20;
+	Float_t cosThetaMin = -1, cosThetaMax = 1;
+
+	Int_t nPhiBins = 23;
+	Float_t phiMin = -180, phiMax = 280;
+
+	TEfficiency* hGranularCS = new TEfficiency(Form("GranularCS_pt%dto%d", gPtMin, gPtMax), titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hGranularHX = new TEfficiency(Form("GranularHX_pt%dto%d", gPtMin, gPtMax), titleHX, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+	// actual analysis binning (defined in AnalysisParameters.h)
 
 	// we want to estimate the uncertainties from scale factors at the same time
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
@@ -206,40 +226,40 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	double dimuWeight_trig_systUp, dimuWeight_trig_systDown, dimuWeight_trig_statUp, dimuWeight_trig_statDown;
 
 	// Collins-Soper
-	TEfficiency* hCS_nominal = new TEfficiency(Form("NominalEff_CS_pt%dto%d", ptMin, ptMax), titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_nominal = new TEfficiency(Form("NominalEff_CS_pt%dto%d", gPtMin, gPtMax), titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
 
-	TEfficiency* hCS_trk_systUp = new TEfficiency("hCS_trk_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS_trk_systDown = new TEfficiency("hCS_trk_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS_trk_statUp = new TEfficiency("hCS_trk_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS_trk_statDown = new TEfficiency("hCS_trk_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_trk_systUp = new TEfficiency("hCS_trk_systUp", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hCS_trk_systDown = new TEfficiency("hCS_trk_systDown", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hCS_trk_statUp = new TEfficiency("hCS_trk_statUp", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hCS_trk_statDown = new TEfficiency("hCS_trk_statDown", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
 
-	TEfficiency* hCS_muId_systUp = new TEfficiency("hCS_muId_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS_muId_systDown = new TEfficiency("hCS_muId_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS_muId_statUp = new TEfficiency("hCS_muId_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS_muId_statDown = new TEfficiency("hCS_muId_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_muId_systUp = new TEfficiency("hCS_muId_systUp", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hCS_muId_systDown = new TEfficiency("hCS_muId_systDown", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hCS_muId_statUp = new TEfficiency("hCS_muId_statUp", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hCS_muId_statDown = new TEfficiency("hCS_muId_statDown", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
 
-	TEfficiency* hCS_trig_systUp = new TEfficiency("hCS_trig_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS_trig_systDown = new TEfficiency("hCS_trig_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS_trig_statUp = new TEfficiency("hCS_trig_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS_trig_statDown = new TEfficiency("hCS_trig_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hCS_trig_systUp = new TEfficiency("hCS_trig_systUp", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hCS_trig_systDown = new TEfficiency("hCS_trig_systDown", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hCS_trig_statUp = new TEfficiency("hCS_trig_statUp", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hCS_trig_statDown = new TEfficiency("hCS_trig_statDown", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
 
 	// Helicity
-	TEfficiency* hHX_nominal = new TEfficiency(Form("NominalEff_HX_pt%dto%d", ptMin, ptMax), titleHX, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_nominal = new TEfficiency(Form("NominalEff_HX_pt%dto%d", gPtMin, gPtMax), titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 
-	TEfficiency* hHX_trk_systUp = new TEfficiency("hHX_trk_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX_trk_systDown = new TEfficiency("hHX_trk_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX_trk_statUp = new TEfficiency("hHX_trk_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX_trk_statDown = new TEfficiency("hHX_trk_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_trk_systUp = new TEfficiency("hHX_trk_systUp", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hHX_trk_systDown = new TEfficiency("hHX_trk_systDown", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hHX_trk_statUp = new TEfficiency("hHX_trk_statUp", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hHX_trk_statDown = new TEfficiency("hHX_trk_statDown", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 
-	TEfficiency* hHX_muId_systUp = new TEfficiency("hHX_muId_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX_muId_systDown = new TEfficiency("hHX_muId_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX_muId_statUp = new TEfficiency("hHX_muId_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX_muId_statDown = new TEfficiency("hHX_muId_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_muId_systUp = new TEfficiency("hHX_muId_systUp", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hHX_muId_systDown = new TEfficiency("hHX_muId_systDown", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hHX_muId_statUp = new TEfficiency("hHX_muId_statUp", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hHX_muId_statDown = new TEfficiency("hHX_muId_statDown", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 
-	TEfficiency* hHX_trig_systUp = new TEfficiency("hHX_trig_systUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX_trig_systDown = new TEfficiency("hHX_trig_systDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX_trig_statUp = new TEfficiency("hHX_trig_statUp", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX_trig_statDown = new TEfficiency("hHX_trig_statDown", titleCS, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	TEfficiency* hHX_trig_systUp = new TEfficiency("hHX_trig_systUp", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hHX_trig_systDown = new TEfficiency("hHX_trig_systDown", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hHX_trig_statUp = new TEfficiency("hHX_trig_statUp", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hHX_trig_statDown = new TEfficiency("hHX_trig_statDown", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
@@ -272,7 +292,7 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 			genLorentzVector = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
 
 			// fiducial region
-			if (genLorentzVector->Pt() < ptMin || genLorentzVector->Pt() > ptMax) continue; // pt bin of interest
+			if (genLorentzVector->Pt() < gPtMin || genLorentzVector->Pt() > gPtMax) continue; // pt bin of interest
 
 			if (fabs(genLorentzVector->Rapidity()) < gRapidityMin || fabs(genLorentzVector->Rapidity()) > gRapidityMax) continue;
 
@@ -397,6 +417,9 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 				hCS_nominal->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_nominal->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
+				hGranularCS->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
+				hGranularHX->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+
 				/// variations for muon tracking SF (keeping the nominal efficiency for muon Id and trigger)
 
 				// tracking, syst up
@@ -492,49 +515,20 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	cout << endl;
 
-	/// display the nominal results
-
 	gStyle->SetPadLeftMargin(.15);
 	gStyle->SetPadRightMargin(0.18);
 	gStyle->SetPalette(kRainBow);
 	gStyle->SetNumberContours(256);
 
-	const char* legendText = Form("cent. %d-%d%%, |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
+	/// display the nominal results
 
-	TLatex* legend = new TLatex(.5, .88, legendText);
-	legend->SetTextAlign(22);
-	legend->SetTextSize(0.042);
+	DrawEfficiencyMap(hGranularCS, iState);
 
-	// Collins-Soper
+	DrawEfficiencyMap(hGranularHX, iState);
 
-	auto* canvasCS = new TCanvas("canvasCS", "", 700, 600);
-	hCS_nominal->Draw("COLZ");
+	DrawEfficiencyMap(hCS_nominal, iState);
 
-	CMS_lumi(canvasCS, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
-
-	legend->DrawLatexNDC(.5, .88, legendText);
-
-	gPad->Update();
-
-	hCS_nominal->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 240);
-	hCS_nominal->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
-
-	canvasCS->SaveAs(Form("EfficiencyMaps/%dS/NominalEff_CS_pt%dto%d.png", iState, ptMin, ptMax), "RECREATE");
-
-	// Helicity
-	auto* canvasHX = new TCanvas("canvasHX", "", 700, 600);
-	hHX_nominal->Draw("COLZ");
-
-	CMS_lumi(canvasHX, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
-
-	legend->DrawLatexNDC(.5, .88, legendText);
-
-	gPad->Update();
-
-	hHX_nominal->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 240);
-	hHX_nominal->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
-
-	canvasHX->SaveAs(Form("EfficiencyMaps/%dS/NominalEff_HX_pt%dto%d.png", iState, ptMin, ptMax), "RECREATE");
+	DrawEfficiencyMap(hHX_nominal, iState);
 
 	/// compute the systematics in this macro since we have all the ingredients for that
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
@@ -544,9 +538,15 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	gStyle->SetPadRightMargin(0.19);
 	gStyle->SetTitleOffset(1.3, "Z");
 
+	const char* legendText = Form("cent. %d-%d%%, |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", gCentralityBinMin, gCentralityBinMax, gPtMin, gPtMax);
+
+	TLatex* legend = new TLatex(.5, .88, legendText);
+	legend->SetTextAlign(22);
+	legend->SetTextSize(0.042);
+
 	// Collins-Soper
 	auto* hSystCS = RelSystEffHist(hCS_nominal, hCS_trk_systUp, hCS_trk_systDown, hCS_muId_systUp, hCS_muId_systDown, hCS_trig_systUp, hCS_trig_systDown, hCS_trk_statUp, hCS_trk_statDown, hCS_muId_statUp, hCS_muId_statDown, hCS_trig_statUp, hCS_trig_statDown);
-	hSystCS->SetName(Form("RelatSystEff_CS_pt%dto%d", ptMin, ptMax));
+	hSystCS->SetName(Form("RelatSystEff_CS_pt%dto%d", gPtMin, gPtMax));
 	hSystCS->SetTitle(";cos #theta_{CS}; #varphi_{CS} (#circ);Relative efficiency uncertainty");
 
 	auto* canvasCSsyst = new TCanvas("canvasCSsyst", "", 700, 600);
@@ -560,11 +560,11 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	hSystCS->GetYaxis()->SetRangeUser(-190, 240);
 
-	canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelSystEff_CS_pt%dto%d.png", iState, ptMin, ptMax), "RECREATE");
+	canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS_pt%dto%d.png", iState, gPtMin, gPtMax), "RECREATE");
 
 	// Helicity
 	auto* hSystHX = RelSystEffHist(hHX_nominal, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown);
-	hSystHX->SetName(Form("RelatSystEff_HX_pt%dto%d", ptMin, ptMax));
+	hSystHX->SetName(Form("RelatSystEff_HX_pt%dto%d", gPtMin, gPtMax));
 	hSystHX->SetTitle(";cos #theta_{HX}; #varphi_{HX} (#circ);Relative efficiency uncertainty");
 
 	auto* canvasHXsyst = new TCanvas("canvasHXsyst", "", 700, 600);
@@ -578,7 +578,7 @@ void mapUpsilonEfficiency(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	hSystHX->GetYaxis()->SetRangeUser(-190, 240);
 
-	canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelSystEff_HX_pt%dto%d.png", iState, ptMin, ptMax), "RECREATE");
+	canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX_pt%dto%d.png", iState, gPtMin, gPtMax), "RECREATE");
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
 	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults.root", iState);

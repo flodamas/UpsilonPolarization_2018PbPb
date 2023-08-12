@@ -1,20 +1,23 @@
 TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax) {
-	TPaveText* text = new TPaveText(0.17, 0.9, 0.4, 0.65, "NDCNB");
+	//TPaveText* text = new TPaveText(0.17, 0.9, 0.4, 0.7, "NDCNB");
+	TPaveText* text = new TPaveText(0.6, 0.85, 0.92, 0.55, "NDCNB");
+
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	text->AddText(Form("Centrality %d-%d%%", centMin, centMax));
-	text->AddText("p_{T}^{#mu} > 3.5 GeV");
+	text->AddText("p_{T}^{#mu} > 3.5 GeV/c");
 	text->AddText("|y^{#mu#mu}| < 2.4");
-	text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
+	text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
 
-	text->SetAllWith("", "align", 12);
+	text->SetAllWith("", "align", 32);
 	return text;
 }
 
-TPaveText* RefFrameText(Bool_t isCSframe, Float_t cosThetaMin, Float_t cosThetaMax, Int_t phiMin, Int_t phiMax) {
-	TPaveText* text = new TPaveText(0.6, 0.9, 0.95, 0.65, "NDCNB");
+TPaveText* RefFrameText(Int_t ptMin, Int_t ptMax, Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+	TPaveText* text = new TPaveText(0.6, 0.9, 0.95, 0.6, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
+	text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
 	text->AddText(isCSframe ? "Collins-Soper frame" : "Helicity frame");
 	text->AddText(Form("%.2f < cos #theta < %.2f", cosThetaMin, cosThetaMax));
 	text->AddText(Form("%d#circ < #varphi < %d#circ", phiMin, phiMax));
@@ -24,7 +27,7 @@ TPaveText* RefFrameText(Bool_t isCSframe, Float_t cosThetaMin, Float_t cosThetaM
 }
 
 TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S) {
-	TPaveText* text = new TPaveText(0.6, 0.6, 0.95, 0.3, "NDCNB");
+	TPaveText* text = new TPaveText(0.6, 0.55, 0.95, 0.25, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	text->AddText(Form("N(#varUpsilon(1S)) = %.0f^{ #plus%.0f}_{ %.0f}", n1S.getVal(), n1S.getErrorHi(), n1S.getErrorLo()));

@@ -31,13 +31,17 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	pullFrame->GetXaxis()->SetTickSize(0.1);
 	pullFrame->Draw();
 
-	pullFrame->SetMaximum(3.6);
-	pullFrame->SetMinimum(-3.6);
+	pullFrame->SetMaximum(2.6);
+	pullFrame->SetMinimum(-2.6);
+
+	TLine zeroLine(bottomPad->GetUxmin(), 0, bottomPad->GetUxmax(), 0);
+	zeroLine.SetLineStyle(kDashed);
+	zeroLine.Draw("SAME");
 
 	TLatex textChi2;
 	textChi2.SetTextAlign(12);
 	textChi2.SetTextSize(0.15);
-	textChi2.DrawLatexNDC(0.7, 0.85, Form("#chi^{2} / n_{d.o.f.} = %.1f", frame->chiSquare(nFitPars)));
+	textChi2.DrawLatexNDC(0.77, 0.12, Form("#chi^{2} / n_{d.o.f.} = %.1f", frame->chiSquare(nFitPars)));
 
 	return bottomPad;
 }
