@@ -7,8 +7,9 @@
 //
 // Global variables
 //
+Bool_t IsApprovedWork = 0;
 
-TString cmsText = "CMS";
+TString cmsText = IsApprovedWork ? "CMS":"Private Work";
 float cmsTextFont = 61; // default is helvetic-bold
 
 bool writeExtraText = true;
@@ -19,7 +20,8 @@ float extraTextFont = 52; // default is helvetica-italics
 // in unit of the top margin size
 float lumiTextSize = 0.6;
 float lumiTextOffset = 0.2;
-float cmsTextSize = 0.75;
+float cmsTextSize = 0.7; //"private work" text size
+// float cmsTextSize = 0.75; //"CMS" text size
 float cmsTextOffset = 0.1; // only used in outOfFrame version
 
 float relPosX = 0.045;
