@@ -1,6 +1,6 @@
 #include "../Tools/Style/tdrStyle.C"
 #include "../Tools/Style/CMS_lumi.C"
-#include "../Tools/Shortcuts.h"
+#include "../Tools/FitShortcuts.h"
 
 void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, Int_t centMax = 90,
 						const char* filename = "../Files/upsilonSkimmedDataset.root") {
@@ -54,16 +54,15 @@ void drawCosThetaPhiMap(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0, In
 
 	/// Set the plot style
 	gStyle->SetPadLeftMargin(.15);
-	gStyle->SetTitleYOffset(1.1);
-	gStyle->SetTitleOffset(1.4, "z");
+	gStyle->SetTitleYOffset(1.1);	
 	gStyle->SetPadRightMargin(0.18);
+	gStyle->SetTitleOffset(1.4, "z");
 	gStyle->SetPalette(kRainBow);
 
 	/// Defind legend
 	TLatex* legend = new TLatex();
 	legend->SetTextAlign(22);
 	legend->SetTextSize(0.05);
-
 
 	/// Draw and save the number of events(signal+background) plots in the 2D (costheta, phi) space in CS 
 	TCanvas* cCS = new TCanvas("cCS", "cCS", 600, 600);
