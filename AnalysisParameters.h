@@ -41,6 +41,16 @@ const double PhiBinningHX[NPhiBinsHX + 1] = {-180, -120, -60, 0, 60, 120, 180};
 const int gPtMin = 16;
 const int gPtMax = 30;
 
+// 16 < pt < 30 GeV, Lab
+const int NCosThetaBinsLab = 10;
+//const double CosThetaBinningLab[NCosThetaBinsLab + 1] = {-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6};
+const double CosThetaBinningLab[NCosThetaBinsLab + 1] = {-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1};
+
+const int NPhiBinsLab = 1; // 1D analysis
+const double PhiBinningLab[NPhiBinsLab + 1] = {-180, 180};
+
+
+
 // 16 < pt < 30 GeV, Collins-Soper
 const int NCosThetaBinsCS = 10;
 //const double CosThetaBinningCS[NCosThetaBinsCS + 1] = {-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6};
@@ -49,8 +59,16 @@ const double CosThetaBinningCS[NCosThetaBinsCS + 1] = {-1, -0.8, -0.6, -0.4, -0.
 const int NPhiBinsCS = 1; // 1D analysis
 const double PhiBinningCS[NPhiBinsCS + 1] = {-180, 180};
 
-/// Settings for invariant mass fits
 
+// 16 < pt < 30 GeV, Helicity
+const int NCosThetaBinsHX = 10;
+//const double CosThetaBinningHX[NCosThetaBinsHX + 1] = {-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6};
+const double CosThetaBinningHX[NCosThetaBinsHX + 1] = {-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1};
+
+const int NPhiBinsHX = 1; // 1D analysis
+const double PhiBinningHX[NPhiBinsHX + 1] = {-180, 180};
+
+/// Settings for invariant mass fits
 const int NCPUs = 2;
 
 const float MassBinMin = 8;
