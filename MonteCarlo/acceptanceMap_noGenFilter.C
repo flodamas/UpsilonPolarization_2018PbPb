@@ -1,17 +1,3 @@
-#include "TROOT.h"
-#include "TStyle.h"
-#include "TFile.h"
-#include "TNtuple.h"
-#include "TRandom3.h"
-#include "TVector3.h"
-#include "TRotation.h"
-#include "TLorentzVector.h"
-#include "TClonesArray.h"
-
-#include <iostream>
-#include <fstream>
-#include <cmath>
-
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
@@ -74,33 +60,29 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	OniaTree->SetBranchAddress("Gen_QQ_mumi_4mom", &Gen_QQ_mumi_4mom);
 	OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
 
-<<<<<<< HEAD
+
 	/// (cos theta, phi)  distribution maps for CS and HX frames
 
 	// granular binning for acceptance studies
 
-=======
+
 	// (cos theta, phi) 2D distribution maps for Lab, CS and HX frames
->>>>>>> 2615ffe59d7c40ab33257be1946816f55a43c353
+
 	Int_t nCosThetaBins = 20;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
 
 	Int_t nPhiBins = 23;
 	Float_t phiMin = -180, phiMax = 280;
 
+	TEfficiency* hGranularLab = new TEfficiency(Form("GranularLab_pt%dto%d", ptMin, ptMax), ";cos #theta_{Lab}; #varphi_{Lab} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 	TEfficiency* hGranularCS = new TEfficiency(Form("GranularCS_pt%dto%d", gPtMin, gPtMax), ";cos #theta_{CS}; #varphi_{CS} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 	TEfficiency* hGranularHX = new TEfficiency(Form("GranularHX_pt%dto%d", gPtMin, gPtMax), ";cos #theta_{HX}; #varphi_{HX} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
-<<<<<<< HEAD
+
 	// actual analysis binning (defined in AnalysisParameters.h)
+	TEfficiency* hAnalysisLab = new TEfficiency(Form("AnalysisLab_pt%dto%d", ptMin, ptMax), ";cos #theta_{Lab}; #varphi_{Lab} (#circ);acceptance", NCosThetaBinsLab, CosThetaBinningLab, NPhiBinsLab, PhiBinningLab);
 	TEfficiency* hAnalysisCS = new TEfficiency(Form("AnalysisCS_pt%dto%d", gPtMin, gPtMax), ";cos #theta_{CS}; #varphi_{CS} (#circ);acceptance", NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
 	TEfficiency* hAnalysisHX = new TEfficiency(Form("AnalysisHX_pt%dto%d", gPtMin, gPtMax), ";cos #theta_{HX}; #varphi_{HX} (#circ);acceptance", NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
-=======
-
-	TEfficiency* hLab = new TEfficiency(Form("Lab_pt%dto%dGeV", ptMin, ptMax), ";cos #theta_{Lab}; #varphi_{Lab} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hCS = new TEfficiency(Form("CS_pt%dto%dGeV", ptMin, ptMax), ";cos #theta_{CS}; #varphi_{CS} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	TEfficiency* hHX = new TEfficiency(Form("HX_pt%dto%dGeV", ptMin, ptMax), ";cos #theta_{HX}; #varphi_{HX} (#circ);acceptance", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
->>>>>>> 2615ffe59d7c40ab33257be1946816f55a43c353
 
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
@@ -132,9 +114,11 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 
 			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > 3.5) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > 3.5);
 
+			hGranularLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi()*180/TMath::Pi());
+			hAnalysisLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi()*180/TMath::Pi());
+
 			// Reference frame transformations
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
-<<<<<<< HEAD
 
 			hGranularCS->Fill(withinAcceptance, muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi());
 			hAnalysisCS->Fill(withinAcceptance, muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi());
@@ -143,13 +127,6 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 
 			hGranularHX->Fill(withinAcceptance, muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi());
 			hAnalysisHX->Fill(withinAcceptance, muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi());
-=======
-			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
-			
-			hLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi()*180/TMath::Pi());	
-			hCS->Fill(withinAcceptance, muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi());
-			hHX->Fill(withinAcceptance, muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi());
->>>>>>> 2615ffe59d7c40ab33257be1946816f55a43c353
 		}
 	}
 
@@ -159,84 +136,31 @@ void acceptanceMap_noGenFilter(Int_t iState = 1, Int_t ptMin = 0, Int_t ptMax = 
 	gStyle->SetPadRightMargin(0.18);
 	gStyle->SetPalette(kCividis);
 	gStyle->SetNumberContours(256);
-
-	DrawAcceptanceMap(hGranularCS, iState);
-
-<<<<<<< HEAD
-	DrawAcceptanceMap(hAnalysisCS, iState);
-=======
-
+	
 	// Draw and save the acceptance map for Lab frame
-	auto* canvasLab = new TCanvas("canvasLab", "", 700, 600);
-	hLab->Draw("COLZ");
-
-	CMS_lumi(canvasLab, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
-
-	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", iState));
-
-	gPad->Update();
-
-	hLab->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
-	hLab->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
-
-	canvasLab->SaveAs(Form("AcceptanceMaps/%dS/Lab_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
-
+	DrawAcceptanceMap(hGranularLab, iState);
+	DrawAcceptanceMap(hAnalysisLab, iState);
 
 	// Draw and save the acceptance map for CS frame
-	auto* canvasCS = new TCanvas("canvasCS", "", 700, 600);
-	hCS->Draw("COLZ");
->>>>>>> 2615ffe59d7c40ab33257be1946816f55a43c353
-
-	DrawAcceptanceMap(hGranularHX, iState);
-
-<<<<<<< HEAD
-	DrawAcceptanceMap(hAnalysisHX, iState);
-=======
-	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", iState));
-
-	gPad->Update();
-
-	hCS->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
-	hCS->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
-
-	canvasCS->SaveAs(Form("AcceptanceMaps/%dS/CS_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
-
+	DrawAcceptanceMap(hGranularCS, iState);
+	DrawAcceptanceMap(hAnalysisCS, iState);
 
 	// Draw and save the acceptance map for HX frame
-	auto* canvasHX = new TCanvas("canvasHX", "", 700, 600);
-	hHX->Draw("COLZ");
-
-	CMS_lumi(canvasHX, Form("#varUpsilon(%dS) Pythia 8 + EvtGen MC, no filter", iState));
-
-	legend->DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend->DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", iState));
-
-	gPad->Update();
-
-	hHX->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
-	hHX->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
-
-	canvasHX->SaveAs(Form("AcceptanceMaps/%dS/HX_pt%dto%dGeV.png", iState, ptMin, ptMax), "RECREATE");
->>>>>>> 2615ffe59d7c40ab33257be1946816f55a43c353
+	DrawAcceptanceMap(hGranularHX, iState);
+	DrawAcceptanceMap(hAnalysisHX, iState);
 
 
 	/// save the results in a file for later usage (in particular for the polarization extraction)
 	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", iState);
 	TFile outputFile(outputFileName, "RECREATE");
 
-<<<<<<< HEAD
+	hGranularLab->Write();
+	hAnalysisLab->Write();
 	hGranularCS->Write();
 	hAnalysisCS->Write();
 	hGranularHX->Write();
 	hAnalysisHX->Write();
-=======
-	hLab->Write();
-	hCS->Write();
-	hHX->Write();
 
->>>>>>> 2615ffe59d7c40ab33257be1946816f55a43c353
 	outputFile.Close();
 
 	cout << endl
