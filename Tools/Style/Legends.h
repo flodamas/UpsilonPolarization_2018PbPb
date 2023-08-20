@@ -4,7 +4,7 @@
 
 TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax) {
 	//TPaveText* text = new TPaveText(0.17, 0.9, 0.4, 0.7, "NDCNB");
-	TPaveText* text = new TPaveText(0.6, 0.85, 0.92, 0.55, "NDCNB");
+	TPaveText* text = new TPaveText(0.65, 0.90, 0.95, 0.60, "NDCNB");
 
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
@@ -17,11 +17,11 @@ TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax
 	return text;
 }
 
-TPaveText* RefFrameText(Int_t ptMin, Int_t ptMax, Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	TPaveText* text = new TPaveText(0.6, 0.9, 0.95, 0.6, "NDCNB");
+TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+	TPaveText* text = new TPaveText(0.63, 0.5, 0.95, 0.3, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
-	text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
+	// text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
 	text->AddText(isCSframe ? "Collins-Soper frame" : "Helicity frame");
 	text->AddText(Form("%.2f < cos #theta < %.2f", cosThetaMin, cosThetaMax));
 	text->AddText(Form("%d#circ < #varphi < %d#circ", phiMin, phiMax));
@@ -43,33 +43,51 @@ TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float
 }
 
 TPaveText* AsymDoubleCBParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar sigmaR, RooRealVar alphaR, RooRealVar orderR) {
-	auto* text = new TPaveText(0.35, 0.45, 0.75, 0.05, "NDCNB");
+	auto* text = new TPaveText(0.15, 0.8, 0.50, 0.33, "NDCNB");
 	text->SetBorderSize(0);
 
 	text->AddText("Asymmetrical double-sided CB");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
-	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
-	text->AddText(Form("#alpha = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));
-	text->AddText(Form("n = %.3f #pm %.3f", order.getVal(), order.getError()));
-	text->AddText(Form("#sigma' = %.2f #pm %.2f MeV", 1000 * sigmaR.getVal(), 1000 * sigmaR.getError()));
-	text->AddText(Form("#alpha' = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
-	text->AddText(Form("n' = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
+	text->AddText(Form("#sigma_{L} = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
+	text->AddText(Form("#alpha_{L} = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));
+	text->AddText(Form("n_{L} = %.3f #pm %.3f", order.getVal(), order.getError()));
+	text->AddText(Form("#sigma_{H} = %.2f #pm %.2f MeV", 1000 * sigmaR.getVal(), 1000 * sigmaR.getError()));
+	text->AddText(Form("#alpha_{H} = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
+	text->AddText(Form("n_{H} = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
 
 	text->SetAllWith(" ", "align", 12);
 	return text;
 }
 
 TPaveText* SymCoreDoubleCBParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR) {
-	auto* text = new TPaveText(0.35, 0.45, 0.75, 0.05, "NDCNB");
+	auto* text = new TPaveText(0.15, 0.8, 0.50, 0.35, "NDCNB");
 	text->SetBorderSize(0);
 
 	text->AddText("Symmetric double-sided CB");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
 	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
-	text->AddText(Form("#alpha = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));
-	text->AddText(Form("n = %.3f #pm %.3f", order.getVal(), order.getError()));
-	text->AddText(Form("#alpha' = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
-	text->AddText(Form("n' = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
+	text->AddText(Form("#alpha_{L} = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));
+	text->AddText(Form("n_{L}= %.3f #pm %.3f", order.getVal(), order.getError()));
+	text->AddText(Form("#alpha_{H} = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
+	text->AddText(Form("n_{H} = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
+
+	text->SetAllWith(" ", "align", 12);
+	return text;
+}
+
+TPaveText* SymCoreDoubleCBGaussParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR, RooRealVar sigmaG, RooRealVar fraction) {
+	auto* text = new TPaveText(0.15, 0.8, 0.50, 0.31, "NDCNB");
+	text->SetBorderSize(0);
+
+	text->AddText("Symmetric DSCB + Gaussian");
+	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
+	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
+	text->AddText(Form("#alpha_{L} = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));
+	text->AddText(Form("n_{L}= %.3f #pm %.3f", order.getVal(), order.getError()));
+	text->AddText(Form("#alpha_{H} = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
+	text->AddText(Form("n_{H} = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
+	text->AddText(Form("#sigma_{g} = %.2f #pm %.2f MeV", 1000*sigmaG.getVal(), 1000*sigmaG.getError()));
+	text->AddText(Form("Normfrac = %.2f #pm %.2f", fraction.getVal(), fraction.getError()));
 
 	text->SetAllWith(" ", "align", 12);
 	return text;
@@ -100,3 +118,13 @@ TPaveText* PolarParamsText(double lambThetaIn, double lambPhiIn, RooRealVar lamb
 	text->SetAllWith(" ", "align", 12);
 	return text;
 }
+
+
+// TPaveText* AICtestText(){
+
+
+
+
+
+// 	return text;
+// }
