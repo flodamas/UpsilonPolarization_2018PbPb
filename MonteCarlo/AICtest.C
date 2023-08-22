@@ -1,10 +1,8 @@
 #include "../Tools/Style/tdrStyle.C"
 #include "../Tools/Style/CMS_lumi.C"
 
-#include "../Tools/Style/FitDistributions.h"
-#include "../Tools/Style/Legends.h"
-
 #include "../Tools/FitShortcuts.h"
+#include "../Tools/DrawFitGraph.h"
 
 using namespace RooFit;
 
@@ -78,9 +76,9 @@ void AICtest(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax
 	// wspace -> Print();
 
 	/// choose function 1 and function 2 among 
-	/// symDSCB, AsymDSCB, symDSCBGauss
+	/// SymDSCB, AsymDSCB, SymDSCBGauss, Hypatia
 
-	/// The order of pdfs could be swapped
+	/// The order of pdfs could be swapped at the end
 	TString pdf1 = "AsymDSCB";
 	TString pdf2 = "SymDSCBGauss";
 	TString pdfName[2];
@@ -92,28 +90,31 @@ void AICtest(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax
 	if(pdf1=="SymDSCB" || pdf2 =="SymDSCB"){
 		pdfName[idx] = "SymDSCB";
 		fitResult[idx] = SymDSCBfit(massVar, wspace, massDataset, massMin, massMax);	
-		drawFitGraph(massVar, wspace, massDataset, pdfName[idx], fitResult[idx], massMin, massMax, nBins);
+		DrawFitGraph(massVar, wspace, massDataset, pdfName[idx], fitResult[idx], massMin, massMax, nBins);
 		idx++;
 	}
 	
 	if(pdf1=="AsymDSCB" || pdf2 =="AsymDSCB"){
 		pdfName[idx] = "AsymDSCB";
 		fitResult[idx] = AsymDSCBfit(massVar, wspace, massDataset, massMin, massMax);	
-		drawFitGraph(massVar, wspace, massDataset, pdfName[idx], fitResult[idx], massMin, massMax, nBins);
+		DrawFitGraph(massVar, wspace, massDataset, pdfName[idx], fitResult[idx], massMin, massMax, nBins);
 		idx++;
 	}
 
 	if(pdf1=="SymDSCBGauss" || pdf2 =="SymDSCBGauss"){
 		pdfName[idx] = "SymDSCBGauss";
 		fitResult[idx] = SymDSCBGaussfit(massVar, wspace, massDataset, massMin, massMax);	
-		drawFitGraph(massVar, wspace, massDataset, pdfName[idx], fitResult[idx], massMin, massMax, nBins);
+		DrawFitGraph(massVar, wspace, massDataset, pdfName[idx], fitResult[idx], massMin, massMax, nBins);
 		idx++;
 	}
 
-	// fitResult[0] -> Print("v");
-	// fitResult[1] -> Print("v");
+	if(pdf1=="Hypatia" || pdf2 =="Hypatia"){
+		pdfName[idx] = "Hypatia";
+		fitResult[idx] = Hypatiafit(massVar, wspace, massDataset, massMin, massMax);	
+		DrawFitGraph(massVar, wspace, massDataset, pdfName[idx], fitResult[idx], massMin, massMax, nBins);
+		idx++;
+	}
 
-	wspace -> Print();
 	// // /// calculate AIC values
 	// // Double_t AIC_SymDSCB = calculateAIC(fitResult_SymDSCB);
 	// // // Double_t AIC_AsymDSCB = calculateAIC(fitResult_AsymDSCB);
