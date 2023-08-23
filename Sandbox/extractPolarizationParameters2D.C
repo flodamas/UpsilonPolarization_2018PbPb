@@ -96,8 +96,8 @@ void extractPolarizationParameters2D() {
 
 	/// Define variables 
 	RooRealVar costheta("costheta", "cos #theta", cosThetaMin, cosThetaMax);
-	RooRealVar phi("phi", "#phi", phiMin, phiMax);
-	RooRealVar norm("norm", "normalization factor", 0, 5);
+	RooRealVar phi("phi", "#varphi_{HX} (#circ)", phiMin, phiMax);
+	RooRealVar norm("norm", "normalization factor", 1e6, 9e5, 2e6);
 	RooRealVar lambTheta("lambTheta", "#lambda_{#theta}", 0, -1, 1);
 	RooRealVar lambPhi("lambPhi", "#lambda_{#phi}", 0, -1, 1);
 	RooRealVar pi("pi", "#pi", M_PI);
@@ -123,7 +123,7 @@ void extractPolarizationParameters2D() {
 	/// Write the function with the polarization parameters chosen above
 	RooGenericPdf AngDisFuncPdfData("AngDisFuncPdfData", "norm*(1.+lambThetaTest*costheta*costheta+lambPhiTest*(1.-costheta*costheta)*(cos(2.*phi*pi/180.)))/(3+lambThetaTest)", RooArgSet(costheta, phi, norm, lambThetaTest, lambPhiTest, pi)); 
 	/// Generate the data from the function
-	RooDataSet* IdealData = AngDisFuncPdfData.generate(RooArgSet(costheta, phi), 1e7);
+	RooDataSet* IdealData = AngDisFuncPdfData.generate(RooArgSet(costheta, phi), 1e6);
 
 	// /// Read GenOnly Nofilter file with HX and CS frames (Run "makeHXCSNtuple.C" to get this file)
 	// const char* filename = Form("./AcceptanceMaps/%dS/withWeights/AcceptanceResults_withWeights_pt%dto%dGeV.root", iState, ptMin, ptMax);
@@ -149,23 +149,25 @@ void extractPolarizationParameters2D() {
 
 
 	/// Define model function
-	RooGenericPdf AngDisFuncPdf("AngDisFuncPdf", "norm*(1.+lambTheta*costheta*costheta+lambPhi*(1.-costheta*costheta)*(cos(2.*phi*pi/180.)))/(3+lambTheta)", RooArgSet(costheta, phi, norm, lambTheta, lambPhi, pi)); 
+	RooGenericPdf AngDisFuncPdf("AngDisFuncPdf", "(1.+lambTheta*costheta*costheta+lambPhi*(1.-costheta*costheta)*(cos(2.*phi*pi/180.)))/(3+lambTheta)", RooArgSet(costheta, phi, lambTheta, lambPhi, pi)); 
 	AngDisFuncPdf.getVal(RooArgSet(costheta,phi)); // this line is needed for identifying axis variables (x, y)
 
+	RooAddPdf fitModel("fitModel", "", RooArgList(AngDisFuncPdf), RooArgList(norm));
+
 	/// Fit the model to the data
-	AngDisFuncPdf.fitTo(*IdealData) ;
+	fitModel.fitTo(*IdealData) ;
 
 	// Plot the x distribution of data(x,y) and f(x,y)
 	RooPlot* framex = costheta.frame();
 	IdealData->plotOn(framex);
-	AngDisFuncPdf.plotOn(framex);
+	fitModel.plotOn(framex);
 	TCanvas* cx = new TCanvas("cx", "cx", 700, 600);
 	framex->Draw();
 
 	// Plot the y distribution of data(x,y) and f(x,y)
 	RooPlot* framey = phi.frame();
 	IdealData->plotOn(framey);
-	AngDisFuncPdf.plotOn(framey);
+	fitModel.plotOn(framey);
 	TCanvas* cy = new TCanvas("cy", "cy", 700, 600);
 	framey -> Draw();
 
@@ -174,17 +176,24 @@ void extractPolarizationParameters2D() {
 	TH2* h2Ddata = dynamic_cast<TH2*>(IdealData->createHistogram("h2Ddata", costheta, Binning(nCosThetaBins,cosThetaMin,cosThetaMax), YVar(phi, Binning(nPhiBins,phiMin,phiMax))));
 
 	// Draw histogram
-	h2Ddata -> Draw("COLZ");
+	gStyle->SetPalette(kBird);
+	h2Ddata -> Draw("lego2");
 	// h2Ddata -> Draw("Surf"); //mesh 3D plot
 
-
+	h2Ddata -> GetXaxis() -> SetTitleOffset(1.2);
+	h2Ddata -> GetXaxis() -> SetLabelSize(0.038);
+	h2Ddata -> GetYaxis() -> SetTitleOffset(1.5);
+	h2Ddata -> GetYaxis() -> SetLabelSize(0.04);
+	h2Ddata -> GetZaxis() -> SetTitleOffset(1.2);
+	h2Ddata -> GetZaxis() -> SetLabelSize(0.04);
 	// Create histogram for the fit
-	TCanvas* c2Dfit = new TCanvas("c2Dfit", "c2Dfit", 700, 600);
-	TH2* h2Dfit = dynamic_cast<TH2*>(AngDisFuncPdf.createHistogram("h2Dfit", costheta, Binning(nCosThetaBins,cosThetaMin,cosThetaMax), YVar(phi, Binning(nPhiBins,phiMin,phiMax))));
+	// TCanvas* c2Dfit = new TCanvas("c2Dfit", "c2Dfit", 700, 600);
+	TH2* h2Dfit = dynamic_cast<TH2*>(fitModel.createHistogram("h2Dfit", costheta, Binning(nCosThetaBins,cosThetaMin,cosThetaMax), YVar(phi, Binning(nPhiBins,phiMin,phiMax))));
 
 	// Draw histogram
-	h2Dfit -> Draw("COLZ");
-	// h2Dfit -> Draw("Surf"); //mesh 3D plot
+	// h2Dfit -> Draw("COLZ");
+	h2Dfit -> SetLineColorAlpha(kRed, 0.7);
+	h2Dfit -> Draw("Surf same"); //mesh 3D plot
 
 	auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> duration = end - start;
