@@ -35,11 +35,11 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	pullFrame->GetXaxis()->SetTickSize(0.1);
 	pullFrame->Draw();
 
-	// pullFrame->SetMaximum(2.6);
-	// pullFrame->SetMinimum(-2.6);
+	pullFrame->SetMaximum(2.6);
+	pullFrame->SetMinimum(-2.6);
 
-	pullFrame->SetMaximum(5.5);
-	pullFrame->SetMinimum(-5.5);
+	// pullFrame->SetMaximum(5.5);
+	// pullFrame->SetMinimum(-5.5);
 
 	TLine zeroLine(bottomPad->GetUxmin(), 0, bottomPad->GetUxmax(), 0);
 	zeroLine.SetLineStyle(kDashed);
@@ -106,5 +106,9 @@ TH2* GetPullDistribution2D(TH2* h2Ddata, TH2* h2Dfit) {
 }
 
 void SaveMCSignalTailParameters(RooArgSet* params, const char* outputName) {
+	params -> writeToFile(Form("../MonteCarlo/SignalParameters/%s.txt", outputName));
+}
+
+void SaveMCSignalParameters(RooArgSet* params, const char* outputName) {
 	params -> writeToFile(Form("../MonteCarlo/SignalParameters/%s.txt", outputName));
 }
