@@ -81,9 +81,9 @@ RooArgSet* extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centM
 	TString outputName = Form("symCoreDSCB_Gaus_cent%dto%d_pt%dto%d", centMin, centMax, ptMin, ptMax);
 
 	// save signal shape parameters in a txt file to be read for data fit
-	RooArgSet* tailParams = new RooArgSet(alphaInf, orderInf, alphaSup, orderSup);
+	RooArgSet* Params = new RooArgSet(sigma, alphaInf, orderInf, alphaSup, orderSup, sigma_gauss, normFraction);
 
-	SaveMCSignalTailParameters(tailParams, outputName.Data()); // so that we don't have to refit later
+	SaveMCSignalParameters(Params, outputName.Data()); // so that we don't have to refit later
 
 	/// draw the fit to see if the fit is reasonable (we can comment it (lines 79-105) out if drawing is not necessary)
 	auto* canvas = new TCanvas("canvas", "", 600, 600);
@@ -114,5 +114,5 @@ RooArgSet* extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centM
 	canvas->SaveAs(Form("SignalParameters/MCfit_%s_%dto%d.png", "DSCB_Gauss", ptMin, ptMax), "RECREATE");
 
 	// file->Close();
-	return tailParams;
+	return Params;
 }
