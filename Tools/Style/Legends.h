@@ -82,10 +82,10 @@ TPaveText* SymCoreDoubleCBDataParamsText(RooRealVar mean, RooRealVar sigma, RooR
 	text->AddText("Symmetric double-sided CB");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
 	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
-	text->AddText(Form("#alpha_{L} = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));
-	text->AddText(Form("n_{L}= %.3f #pm %.3f", order.getVal(), order.getError()));
-	text->AddText(Form("#alpha_{H} = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
-	text->AddText(Form("n_{H} = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
+	text->AddText(Form("#alpha_{L} = %.3f (fixed)", alpha.getVal()));
+	text->AddText(Form("n_{L}= %.3f (fixed)", order.getVal()));
+	text->AddText(Form("#alpha_{H} = %.3f (fixed)", alphaR.getVal()));
+	text->AddText(Form("n_{H} = %.3f (fixed)", orderR.getVal()));
 	text->AddText(Form("#mu_{err} = %.3f #pm %.3f", turnon.getVal(), turnon.getError()));
 
 	text->SetAllWith(" ", "align", 12);
@@ -117,10 +117,10 @@ TPaveText* SymCoreDoubleCBGaussDataParamsText(RooRealVar mean, RooRealVar sigma,
 	text->AddText("Symmetric DSCB + Gaussian");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
 	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
-	text->AddText(Form("#alpha_{L} = %.3f #pm %.3f", alpha.getVal(), alpha.getError()));
-	text->AddText(Form("n_{L}= %.3f #pm %.3f", order.getVal(), order.getError()));
-	text->AddText(Form("#alpha_{H} = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
-	text->AddText(Form("n_{H} = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
+	text->AddText(Form("#alpha_{L} = %.3f (fixed)", alpha.getVal()));
+	text->AddText(Form("n_{L}= %.3f (fixed)", order.getVal()));
+	text->AddText(Form("#alpha_{H} = %.3f (fixed)", alphaR.getVal()));
+	text->AddText(Form("n_{H} = %.3f (fixed)", orderR.getVal()));
 	text->AddText(Form("#sigma_{g} = %.2f #pm %.2f MeV", 1000*sigmaG.getVal(), 1000*sigmaG.getError()));
 	text->AddText(Form("Normfrac = %.2f #pm %.2f", fraction.getVal(), fraction.getError()));
 	text->AddText(Form("#mu_{err} = %.3f #pm %.3f", turnon.getVal(), turnon.getError()));
