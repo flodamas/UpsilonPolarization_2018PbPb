@@ -30,14 +30,15 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 	return text;
 }
 
-TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S) {
-	TPaveText* text = new TPaveText(0.7, 0.63, 0.95, 0.4, "NDCNB");
+TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S, RooRealVar nBkg) {
+	TPaveText* text = new TPaveText(0.7, 0.63, 0.95, 0.36, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	text->AddText(Form("N(#varUpsilon(1S)) = %.0f^{ #plus%.0f}_{ %.0f}", n1S.getVal(), n1S.getErrorHi(), n1S.getErrorLo()));
 	text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif1S));
 	text->AddText(Form("N(#varUpsilon(2S)) = %.0f^{ #plus%.0f}_{ %.0f}", n2S.getVal(), n2S.getErrorHi(), n2S.getErrorLo()));
 	text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif2S));
+	text->AddText(Form("N(bkg) = %.0f^{ #plus%.0f}_{ %.0f}", nBkg.getVal(), nBkg.getErrorHi(), nBkg.getErrorLo()));
 	text->SetAllWith("", "align", 32);
 	return text;
 }
@@ -75,11 +76,11 @@ TPaveText* SymCoreDoubleCBParamsText(RooRealVar mean, RooRealVar sigma, RooRealV
 	return text;
 }
 
-TPaveText* SymCoreDoubleCBDataParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR, RooRealVar turnon) {
-	auto* text = new TPaveText(0.15, 0.53, 0.42, 0.1, "NDCNB");
+TPaveText* SymCoreDoubleCBDataParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR, RooRealVar turnon, RooRealVar err_sigma, RooRealVar exp_lambda) {
+	auto* text = new TPaveText(0.15, 0.53, 0.46, 0.1, "NDCNB");
 	text->SetBorderSize(0);
 
-	text->AddText("Symmetric double-sided CB");
+	text->AddText("DSCB          ");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
 	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
 	text->AddText(Form("#alpha_{L} = %.3f (fixed)", alpha.getVal()));
@@ -87,13 +88,15 @@ TPaveText* SymCoreDoubleCBDataParamsText(RooRealVar mean, RooRealVar sigma, RooR
 	text->AddText(Form("#alpha_{H} = %.3f (fixed)", alphaR.getVal()));
 	text->AddText(Form("n_{H} = %.3f (fixed)", orderR.getVal()));
 	text->AddText(Form("#mu_{err} = %.3f #pm %.3f", turnon.getVal(), turnon.getError()));
+	text->AddText(Form("#sigma_{err} = %.3f #pm %.3f", err_sigma.getVal(), err_sigma.getError()));
+	text->AddText(Form("#lambda_{exp} = %.3f #pm %.3f", exp_lambda.getVal(), exp_lambda.getError()));
 
 	text->SetAllWith(" ", "align", 12);
 	return text;
 }
 
-TPaveText* SymCoreDoubleCBGaussParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR, RooRealVar sigmaG, RooRealVar fraction) {
-	auto* text = new TPaveText(0.15, 0.56, 0.42, 0.07, "NDCNB");
+TPaveText* SymCoreDoubleCBGaussParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR, RooRealVar sigmaG, RooRealVar fraction/*, RooRealVar ratio_sigma*/) {
+	auto* text = new TPaveText(0.15, 0.56, 0.48, 0.07, "NDCNB");
 	text->SetBorderSize(0);
 
 	text->AddText("Symmetric DSCB + Gaussian");
@@ -105,38 +108,45 @@ TPaveText* SymCoreDoubleCBGaussParamsText(RooRealVar mean, RooRealVar sigma, Roo
 	text->AddText(Form("n_{H} = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
 	text->AddText(Form("#sigma_{g} = %.2f #pm %.2f MeV", 1000*sigmaG.getVal(), 1000*sigmaG.getError()));
 	text->AddText(Form("Normfrac = %.2f #pm %.2f", fraction.getVal(), fraction.getError()));
+	// text->AddText(Form("#frac{#sigma_{DSCB}}{#sigma_{g}} = %.2f ", ratio_sigma.getVal()));
 
 	text->SetAllWith(" ", "align", 12);
 	return text;
 }
 
-TPaveText* SymCoreDoubleCBGaussDataParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR, RooRealVar sigmaG, RooRealVar fraction, RooRealVar turnon) {
-	auto* text = new TPaveText(0.15, 0.56, 0.42, 0.07, "NDCNB");
+TPaveText* SymCoreDoubleCBGaussDataParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR, RooRealVar sigmaG, RooRealVar fraction, RooRealVar turnon, RooRealVar err_sigma, RooRealVar exp_lambda) {
+	auto* text = new TPaveText(0.15, 0.56, 0.48, 0.07, "NDCNB");
 	text->SetBorderSize(0);
 
 	text->AddText("Symmetric DSCB + Gaussian");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
-	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
+	// text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000*sigma.getError()));
+	text->AddText(Form("#sigma = %.2f MeV (fixed)", 1000 * sigma.getVal()));
 	text->AddText(Form("#alpha_{L} = %.3f (fixed)", alpha.getVal()));
 	text->AddText(Form("n_{L}= %.3f (fixed)", order.getVal()));
 	text->AddText(Form("#alpha_{H} = %.3f (fixed)", alphaR.getVal()));
 	text->AddText(Form("n_{H} = %.3f (fixed)", orderR.getVal()));
-	text->AddText(Form("#sigma_{g} = %.2f #pm %.2f MeV", 1000*sigmaG.getVal(), 1000*sigmaG.getError()));
-	text->AddText(Form("Normfrac = %.2f #pm %.2f", fraction.getVal(), fraction.getError()));
+	// text->AddText(Form("#sigma_{g} = %.2f #pm %.2f MeV", 1000*sigmaG.getVal(), 1000*sigmaG.getError()));
+	// text->AddText(Form("#sigma_{g} = %.2f MeV", 1000*sigmaG.getVal()));
+	text->AddText(Form("#sigma_{g} = %.2f MeV (fixed)", 1000*sigmaG.getVal()));
+	text->AddText(Form("Frac_{DSCB, g} = %.2f #pm %.2f", fraction.getVal(), fraction.getError()));
+	// text->AddText(Form("Frac_{DSCB, g} = %.2f (fixed)", fraction.getVal()));
 	text->AddText(Form("#mu_{err} = %.3f #pm %.3f", turnon.getVal(), turnon.getError()));
+	text->AddText(Form("#sigma_{err} = %.3f #pm %.3f", err_sigma.getVal(), err_sigma.getError()));
+	text->AddText(Form("#lambda_{exp} = %.3f #pm %.3f", exp_lambda.getVal(), exp_lambda.getError()));
 
 	text->SetAllWith(" ", "align", 12);
 	return text;
 }
 
 TPaveText* HypatiaParamsText(RooRealVar mean, RooRealVar lambda, RooRealVar zeta, RooRealVar beta, RooRealVar sigma, RooRealVar alphaL, RooRealVar orderL, RooRealVar alphaR, RooRealVar orderR) {
-	auto* text = new TPaveText(0.15, 0.8, 0.50, 0.29, "NDCNB");
+	auto* text = new TPaveText(0.15, 0.56, 0.45, 0.07, "NDCNB");
 	text->SetBorderSize(0);
 
 	text->AddText("Hypatia");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
 	text->AddText(Form("#lambda = %.3f #pm %.3f GeV", lambda.getVal(), lambda.getError()));
-	text->AddText(Form("#zeta = %.3f #pm %.3f GeV", zeta.getVal(), zeta.getError()));
+	text->AddText(Form("#zeta = %.3f GeV (fixed) ", zeta.getVal()));
 	text->AddText(Form("#beta = %.3f #pm %.3f GeV", beta.getVal(), beta.getError()));
 	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
 	text->AddText(Form("#alpha_{L} = %.3f #pm %.3f", alphaL.getVal(), alphaL.getError()));
