@@ -13,6 +13,10 @@ void DrawFitGraph(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDat
 	pad1->Draw();
 	pad1->cd();
 
+	// writeExtraText = true; // if extra text
+	writeExtraText = false;
+	// extraText = "      Simulation Internal";
+
 	/// define frame for the invariant mass plot with a fit
 	RooPlot* frame = massVar -> frame(Title(" "), Range(massMin, massMax));
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
@@ -24,6 +28,7 @@ void DrawFitGraph(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDat
 	if(pdfName=="SymDSCB") signal = wspace -> pdf("SymDSCB"); // symmetric core Double-sided Crystal Ball
 	else if(pdfName=="SymDSCBGauss") signal = wspace -> pdf("DSCBGauss"); // Double-sided Crystal Ball + Gaussian
 	else if(pdfName=="AsymDSCB") signal = wspace -> pdf("AsymDSCB"); // asymmetric core Double-sided Crystal Ball
+	else if(pdfName=="Hypatia") signal = wspace -> pdf("Hypatia"); // Hypatia 
 	else( "Error! can't find the pdf model..");
 
 	wspace -> Print();	
@@ -58,7 +63,7 @@ void DrawFitGraph(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDat
 	/// Get variables in the signal
 	RooArgSet* params = nullptr;
 	params = signal -> getVariables() ;
-	// cout << "params of " << pdfName << ": " << *params << endl;
+	cout << "params of " << pdfName << ": " << *params << endl;
 
 	/// texts on the plot
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
@@ -106,7 +111,6 @@ void DrawFitGraph(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDat
 		frame->addObject(HypatiaParamsText(*meanVar, *lambdaVar, *zetaVar, *betaVar, *sigmaVar, *alphaInfVar, *orderInfVar, *alphaSupVar, *orderSupVar));	
 	}
 	else("Error! can't find the pdf model..");
-
 	frame->Draw();
 
 	canvas->cd();
@@ -116,5 +120,5 @@ void DrawFitGraph(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDat
 	canvas->cd();
 	pad1->Draw();
 	pad2->Draw();
-	canvas->SaveAs(Form("SignalParameters/MCfit_%s_%dto%d.png", spdfName.c_str(), ptMin, ptMax), "RECREATE");
+	canvas->SaveAs(Form("SignalParameters/plots/MCfit_%s_%dto%d.png", spdfName.c_str(), ptMin, ptMax), "RECREATE");
 }
