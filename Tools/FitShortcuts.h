@@ -192,24 +192,24 @@ RooFitResult* Hypatiafit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* 
 	using namespace RooFit;
 
 	// fit
-	RooRealVar mean("meanHypatia", "", 9.457, 9., 10.);
+	RooRealVar mean("meanHypatia", "", 9.451, 9., 10.);
 	RooRealVar lambda("lambdaHypatia","lambda of hypatia PDF",-1.0, -20.0, -0.1);
 	RooRealVar zeta("zetaHypatia","zeta of hypatia PDF",0.01, 0.0, 1.0);
 	RooRealVar beta("betaHypatia","beta of hypatia PDF",-0.01, -20.0, 0.0);
-	RooRealVar sigma("sigmaHypathia","sigma of hypatia PDF",0.15, 0.1, 0.3);
+	RooRealVar sigma("sigmaHypatia","sigma of hypatia PDF",0.15, 0.1, 0.3);
 	RooRealVar alphaInf("alphaInfHypatia","al1s of hypatia PDF", 3.0 , 0.1, 5.0);
-	RooRealVar alphaSup("alphaSupHypatia","ar1s of hypatia PDF", 3.0 , 0.1, 10.0);
+	RooRealVar alphaSup("alphaSupHypatia","ar1s of hypatia PDF", 3.0 , 0.1, 7.0);
 	RooRealVar orderInf("orderInfHypatia","nl1s of hypatia PDF", 1.0 , 0.2, 14.718);
-	RooRealVar orderSup("orderSupHypatia","nr1s of hypatia PDF", 1.0 , 0.2, 14.718);
+	RooRealVar orderSup("orderSupHypatia","nr1s of hypatia PDF", 1.0 , 0.0, 14.718);
 
-	lambda.setVal(-1.76); 
-	// zeta.setVal(0); 
-	beta.setVal(-1.44); 
-	sigma.setVal(0.157); 
-	alphaInf.setVal(1.85); 
-	alphaSup.setVal(3.36); 
-	orderInf.setVal(1.04); 
-	orderSup.setVal(0.432); 
+	lambda.setVal(-1.729); 
+	zeta.setVal(0); 
+	beta.setVal(-1.59); 
+	sigma.setVal(0.158); 
+	alphaInf.setVal(1.769); 
+	alphaSup.setVal(5.398); 
+	orderInf.setVal(1.422); 
+	orderSup.setVal(0.012); 
 
 	zeta.setConstant(1);
 
@@ -220,7 +220,7 @@ RooFitResult* Hypatiafit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* 
 
 	bool doWeightedError = true;
 
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true)/*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError)); 
+	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true)/*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(8), Range(massMin, massMax), AsymptoticError(doWeightedError)); 
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 	wspace -> import(signal);
 
@@ -257,8 +257,15 @@ RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, 
 	return tailParams;
 }
 
-RooArgSet GetMCSignalParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
-	RooArgSet tailParams(*alphaInf, *orderInf, *alphaSup, *orderSup);
+RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, RooRealVar* normFraction, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+// RooArgSet GetMCSignalParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+// RooArgSet GetMCSignalParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooFormulaVar* ratio_sigma, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+// RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+
+	RooArgSet Params(*sigma, *alphaInf, *orderInf, *alphaSup, *orderSup, *sigma_gauss, *normFraction);
+	// RooArgSet Params(*alphaInf, *orderInf, *alphaSup, *orderSup, *sigma_gauss);
+	// RooArgSet Params(*alphaInf, *orderInf, *alphaSup, *orderSup, *ratio_sigma);
+	// RooArgSet Params(*sigma, *alphaInf, *orderInf, *alphaSup, *orderSup, *sigma_gauss);
 
 	// if the .txt file for this specific fit model exists, just read the tail parameters from it
 	const char* mcFileName = Form("../MonteCarlo/SignalParameters/%s_cent%dto%d_pt%dto%d.txt", signalShapeName.Data(), centMin, centMax, ptMin, ptMax);
@@ -266,21 +273,25 @@ RooArgSet GetMCSignalParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooR
 	if (fopen(mcFileName, "r")) {
 		cout << endl
 		     << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
-		tailParams.readFromFile(mcFileName);
+		Params.readFromFile(mcFileName);
 	} else {
 		cout << endl
 		     << mcFileName << " file does not seem to exist, you need to extract the signal tail paramaters from MC fit first!" << endl;
 	}
 
-	// fix the tail parameters
+	// fix the parameters
+	sigma -> setConstant();
 	alphaInf->setConstant();
 	orderInf->setConstant();
 	alphaSup->setConstant();
 	orderSup->setConstant();
+	sigma_gauss -> setConstant();
+	normFraction -> setConstant();
+	// ratio_sigma -> setConstant();
 
 	cout << endl
-	     << "Tail parameters fixed to the following MC signal values:" << endl;
-	tailParams.Print("v");
+	     << "Parameters fixed to the following MC signal values:" << endl;
+	Params.Print("v");
 
-	return tailParams;
+	return Params;
 }
