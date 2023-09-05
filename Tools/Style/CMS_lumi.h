@@ -7,9 +7,9 @@
 //
 // Global variables
 //
-Bool_t IsApprovedWork = 0;
+Bool_t IsApprovedWork = 1;
 
-TString cmsText = IsApprovedWork ? "CMS":"Private Work";
+TString cmsText = IsApprovedWork ? "CMS" : "Private Work";
 float cmsTextFont = 61; // default is helvetic-bold
 
 bool writeExtraText = true;
