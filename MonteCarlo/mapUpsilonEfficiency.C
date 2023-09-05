@@ -21,7 +21,7 @@
 #include "../AnalysisParameters.h"
 
 #include "../Tools/Parameters/CentralityValues.h"
-
+#include "../Tools/Parameters/EfficiencyWeights.h"
 #include "../Tools/Parameters/MuonScaleFactors.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
@@ -136,6 +136,7 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 	TClonesArray* Gen_QQ_4mom = nullptr;
 	TClonesArray* Gen_mu_4mom = nullptr;
 
+	Float_t zVtx;
 	ULong64_t HLTriggers;
 	ULong64_t Reco_QQ_trig[1000];
 	Int_t Centrality;
@@ -165,6 +166,7 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 	OniaTree->SetBranchAddress("Gen_weight", &Gen_weight);
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
+	OniaTree->SetBranchAddress("zVtx", &zVtx);
 
 	// gen-level variables
 	OniaTree->SetBranchAddress("Gen_QQ_size", &Gen_QQ_size);
@@ -285,7 +287,7 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 
 		firesTrigger = ((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)));
 
-		eventWeight = Gen_weight * FindNcoll(Centrality);
+		eventWeight = Gen_weight * FindNcoll(Centrality) * Get_zPV_weight(zVtx);
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
