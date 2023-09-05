@@ -27,7 +27,7 @@ TH1D* VertexZDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_Hydje
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 
-	auto histo = new TH1D("histo", ";vertex z (cm);Self-normalized distribution", 40, -20, 20);
+	auto histo = new TH1D("histo", ";vertex z (cm);Self-normalized distribution", 2 * 40, -20, 20); // 0.5 cm wide bins
 	histo->SetDirectory(0);
 
 	Long64_t totEntries = OniaTree->GetEntries();
@@ -58,31 +58,13 @@ void compareVertexZPosition() {
 	//extraText = "      Internal";
 
 	auto canvas = new TCanvas("canvas", "", 600, 650);
-	/*
-	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
-	pad1->SetBottomMargin(0.03);
-	pad1->Draw();
-	pad1->cd();
-*/
+
 	auto distribMC = VertexZDistribution("OniaTree_Y1S_pThat2_HydjetDrumMB_miniAOD.root");
 	distribMC->SetLineColor(kRed + 1);
 	distribMC->SetMarkerColor(kRed + 1);
 
-	//distribMC->Draw("HIST");
-
 	auto distribData = VertexZDistribution("OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root");
 	distribData->SetLineColor(kAzure + 1);
-	//distribData->Draw("HIST SAME");
-
-	/*
-	canvas->cd();
-	TPad* pad2 = new TPad("pad2", "pad2", 0, 0.0, 1, .3);
-	pad2->SetTopMargin(0.015);
-	pad2->SetBottomMargin(0.3);
-	pad2->SetTicks(1, 1);
-	pad2->Draw();
-	pad2->cd();
-*/
 
 	auto ratioPlot = new TRatioPlot(distribData, distribMC);
 	//ratioPlot->SetTicks(1, 1);
@@ -96,23 +78,11 @@ void compareVertexZPosition() {
 	ratioPlot->GetLowYaxis()->SetNdivisions(505);
 	ratioPlot->GetLowerRefYaxis()->SetTitle("Data / MC");
 	ratioPlot->SetUpTopMargin(.08);
-	ratioPlot->SetLeftMargin(.17);
+	ratioPlot->SetLeftMargin(.18);
 	ratioPlot->SetRightMargin(.025);
 	ratioPlot->SetLowBottomMargin(.4);
-	/*auto cloneData = (TH1D*)distribData->Clone("cloneData");
-	cloneData->Divide(distribMC);
-	cloneData->SetLineColor(kBlack);
-	cloneData->GetYaxis()->SetTitle("Data / MC");
-	cloneData->Draw("APZ");
-
-	TLine unityLine(pad2->GetUxmin(), 1, pad2->GetUxmax(), 1);
-	unityLine.SetLineStyle(kDashed);
-	unityLine.Draw("SAME");
-
-	canvas->cd();
-	pad1->Draw();
-	pad2->Draw();
-*/
+	ratioPlot->GetLowerRefGraph()->SetMinimum(0.2);
+	ratioPlot->GetLowerRefGraph()->SetMaximum(1.8);
 
 	ratioPlot->GetUpperPad()->cd();
 	TLegend* legend = new TLegend(.72, .85, .92, .65);
@@ -129,4 +99,11 @@ void compareVertexZPosition() {
 	gPad->Update();
 
 	canvas->SaveAs("plots/zVertexPosition.pdf", "RECREATE");
+
+	// print the data / MC factors
+	auto ratioGraph = ratioPlot->GetLowerRefGraph();
+
+	auto yValues = ratioGraph->GetY();
+
+	for (int i = 0; i < ratioGraph->GetN(); i++) cout << yValues[i] << ", ";
 }
