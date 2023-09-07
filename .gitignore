@@ -36,3 +36,6 @@
 *.root
 *.png
 .DS_Store
+
+# To not overwrite someone else's settings every time we git pull modifications
+AnalysisParameters.h

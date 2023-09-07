@@ -15,6 +15,7 @@
 #include "../AnalysisParameters.h"
 
 #include "../Tools/Parameters/CentralityValues.h"
+#include "../Tools/Parameters/EfficiencyWeights.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
@@ -25,6 +26,8 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	/// OniaTree variables
 
 	Float_t Gen_weight;
+
+	Float_t zVtx;
 
 	ULong64_t HLTriggers;
 	ULong64_t Reco_QQ_trig[1000];
@@ -46,7 +49,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	Float_t Reco_mu_dz[1000];
 
 	OniaTree->SetBranchAddress("Gen_weight", &Gen_weight);
-
+	OniaTree->SetBranchAddress("zVtx", &zVtx);
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 	OniaTree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
@@ -75,7 +78,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 	Float_t lowMassCut = 8, highMassCut = 11;
 	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
-	RooRealVar yVar("rapidity", "dimuon absolute rapidity", gRapidityMin, gRapidityMax);
+	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4); // cut when reducing the dataset at a later stage
 	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
 
 	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
@@ -103,6 +106,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 		OniaTree->GetEntry(iEvent);
 
 		// event selection
+		if (fabs(zVtx) >= 20) continue;
 
 		if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality > 90% in 2018 data
 
@@ -156,7 +160,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
 			// fill the dataset
-			weight = nColl * Gen_weight;
+			weight = nColl * Gen_weight * Get_zPV_weight(zVtx);
 
 			centVar = Centrality;
 
