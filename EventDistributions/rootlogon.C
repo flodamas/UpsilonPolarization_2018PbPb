@@ -7,8 +7,6 @@ void fixOverlay() { gPad->RedrawAxis(); }
 void rootlogon() {
 	TStyle* tdrStyle = new TStyle("tdrStyle", "Style for P-TDR");
 
-	gROOT->ProcessLine(".L ../Tools/CustomRoofitPDFs/ErrorFuncTimesExp.cxx");
-
 	// For the canvas:
 	tdrStyle->SetCanvasBorderMode(0);
 	tdrStyle->SetCanvasColor(kWhite);
@@ -52,11 +50,11 @@ void rootlogon() {
 	tdrStyle->SetMarkerStyle(1);
 
 	// For the fit/function:
-	tdrStyle->SetOptFit(1);
+	tdrStyle->SetOptFit(0);
 	tdrStyle->SetFitFormat("5.4g");
-	tdrStyle->SetFuncColor(2);
+	tdrStyle->SetFuncColor(kOrange + 1);
 	tdrStyle->SetFuncStyle(1);
-	tdrStyle->SetFuncWidth(1);
+	tdrStyle->SetFuncWidth(2);
 
 	// For the legend
 	tdrStyle->SetLegendBorderSize(0);
@@ -87,7 +85,7 @@ void rootlogon() {
 	// Margins:
 	tdrStyle->SetPadTopMargin(0.06);
 	tdrStyle->SetPadBottomMargin(0.2);
-	tdrStyle->SetPadLeftMargin(0.14);
+	tdrStyle->SetPadLeftMargin(0.16);
 	tdrStyle->SetPadRightMargin(0.025);
 
 	// For the Global title:
@@ -110,19 +108,19 @@ void rootlogon() {
 
 	tdrStyle->SetTitleColor(1, "XYZ");
 	tdrStyle->SetTitleFont(42, "XYZ");
-	tdrStyle->SetTitleSize(0.06, "XYZ");
+	tdrStyle->SetTitleSize(0.075, "XYZ");
 	// tdrStyle->SetTitleXSize(Float_t size = 0.02); // Another way to set the
 	// size? tdrStyle->SetTitleYSize(Float_t size = 0.02);
 	tdrStyle->SetTitleXOffset(1.);
-	tdrStyle->SetTitleYOffset(1.45);
+	tdrStyle->SetTitleYOffset(1.);
 	// tdrStyle->SetTitleOffset(1.1, "Y"); // Another way to set the Offset
 
 	// For the axis labels:
 
 	tdrStyle->SetLabelColor(1, "XYZ");
 	tdrStyle->SetLabelFont(42, "XYZ");
-	tdrStyle->SetLabelOffset(0.007, "XYZ");
-	tdrStyle->SetLabelSize(0.05, "XYZ");
+	tdrStyle->SetLabelOffset(0.01, "XYZ");
+	tdrStyle->SetLabelSize(0.06, "XYZ");
 
 	// For the axis:
 

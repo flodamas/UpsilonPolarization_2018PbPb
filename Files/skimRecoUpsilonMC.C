@@ -69,12 +69,20 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
+	/// Count the number of reconstructed Y(1S) events on the fly (for reweighting of the MC reco pT spectra)
+
+	TH1D* hReco1S_absy0to1p2 = new TH1D("hReco1S_absy0to1p2", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T}", NPtBins, gPtBinning);
+	hReco1S_absy0to1p2->Sumw2(); //  sum the squares of weights for accurate error computation
+
+	TH1D* hReco1S_absy1p2to2p4 = new TH1D("hReco1S_absy1p2to2p4", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T}", NPtBins, gPtBinning);
+	hReco1S_absy1p2to2p4->Sumw2(); //  sum the squares of weights for accurate error computation
+
 	/// RooDataSet output: one entry = one dimuon candidate!
 
 	// weighting by event directly on the fly
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 	//RooRealVar nCollVar("nColl", "estimated number of binary nucleon-nucleon scatterings", 0, 2200);
-	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight)", 0, 10000);
+	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight x Data/MC vertex z position)", 0, 10000);
 
 	Float_t lowMassCut = 8, highMassCut = 11;
 	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
@@ -106,7 +114,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 		OniaTree->GetEntry(iEvent);
 
 		// event selection
-		if (fabs(zVtx) >= 20) continue;
+		if (fabs(zVtx) >= 20) continue; // note that this cut is only applied to the reco MC but not for the efficiency estimate
 
 		if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality > 90% in 2018 data
 
@@ -128,7 +136,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
-			if (fabs(Reco_QQ_4mom->Rapidity()) < gRapidityMin || fabs(Reco_QQ_4mom->Rapidity()) > gRapidityMax) continue;
+			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue;
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
@@ -162,6 +170,8 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 			// fill the dataset
 			weight = nColl * Gen_weight * Get_zPV_weight(zVtx);
 
+			if (weight == 0) weight = 1; // for whatever reason
+
 			centVar = Centrality;
 
 			eventWeightVar = weight;
@@ -180,13 +190,28 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 			dataset.add(RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), weight);
 
+			// fill the graphs for reco events
+
 			nRecoCand++;
+
+			if (fabs(Reco_QQ_4mom->Rapidity()) < 1.2)
+				hReco1S_absy0to1p2->Fill(Reco_QQ_4mom->Pt(), weight);
+			else
+				hReco1S_absy1p2to2p4->Fill(Reco_QQ_4mom->Pt(), weight);
 		}
 	}
+
+	// self-normalize the reco distributions
+	hReco1S_absy0to1p2->Scale(1. / hReco1S_absy0to1p2->Integral(), "width");
+	hReco1S_absy1p2to2p4->Scale(1. / hReco1S_absy1p2to2p4->Integral(), "width");
 
 	TFile file(outputFileName, "RECREATE");
 
 	dataset.Write();
+
+	hReco1S_absy0to1p2->Write();
+
+	hReco1S_absy1p2to2p4->Write();
 
 	file.Close();
 

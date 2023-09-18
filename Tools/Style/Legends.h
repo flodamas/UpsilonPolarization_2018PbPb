@@ -3,14 +3,14 @@
 #include "RooRealVar.h"
 
 TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax) {
-	TPaveText* text = new TPaveText(0.15, 0.9, 0.4, 0.6, "NDCNB");
+	TPaveText* text = new TPaveText(0.17, 0.9, 0.45, 0.6, "NDCNB");
 	// TPaveText* text = new TPaveText(0.65, 0.90, 0.95, 0.60, "NDCNB");
 
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
-	text->AddText(Form("Centrality %d-%d%%", centMin, centMax));
+	text->AddText(Form("Centrality %d#minus%d%%", centMin, centMax));
 	text->AddText("p_{T}^{#mu} > 3.5 GeV/c");
-	text->AddText("|y^{#mu#mu}| < 2.4");
+	text->AddText(Form("%1.1f < |y^{#mu#mu}| < %1.1f", gRapidityMin, gRapidityMax));
 	text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
 
 	text->SetAllWith("", "align", 12);
@@ -30,15 +30,15 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 	return text;
 }
 
-TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S, RooRealVar nBkg) {
-	TPaveText* text = new TPaveText(0.7, 0.63, 0.95, 0.36, "NDCNB");
+TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S /*, RooRealVar nBkg*/) {
+	TPaveText* text = new TPaveText(0.6, 0.85, 0.95, 0.5, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	text->AddText(Form("N(#varUpsilon(1S)) = %.0f^{ #plus%.0f}_{ %.0f}", n1S.getVal(), n1S.getErrorHi(), n1S.getErrorLo()));
 	text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif1S));
 	text->AddText(Form("N(#varUpsilon(2S)) = %.0f^{ #plus%.0f}_{ %.0f}", n2S.getVal(), n2S.getErrorHi(), n2S.getErrorLo()));
 	text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif2S));
-	text->AddText(Form("N(bkg) = %.0f^{ #plus%.0f}_{ %.0f}", nBkg.getVal(), nBkg.getErrorHi(), nBkg.getErrorLo()));
+	//	text->AddText(Form("N(bkg) = %.0f^{ #plus%.0f}_{ %.0f}", nBkg.getVal(), nBkg.getErrorHi(), nBkg.getErrorLo()));
 	text->SetAllWith("", "align", 32);
 	return text;
 }
@@ -96,7 +96,7 @@ TPaveText* SymCoreDoubleCBDataParamsText(RooRealVar mean, RooRealVar sigma, RooR
 }
 
 TPaveText* SymCoreDoubleCBGaussParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR, RooRealVar sigmaG, RooRealVar fraction /*, RooRealVar ratio_sigma*/) {
-	auto* text = new TPaveText(0.15, 0.56, 0.48, 0.07, "NDCNB");
+	auto* text = new TPaveText(0.6, 0.85, 0.93, 0.25, "NDCNB");
 	text->SetBorderSize(0);
 
 	text->AddText("Symmetric DSCB + Gaussian");
@@ -106,11 +106,11 @@ TPaveText* SymCoreDoubleCBGaussParamsText(RooRealVar mean, RooRealVar sigma, Roo
 	text->AddText(Form("n_{L}= %.3f #pm %.3f", order.getVal(), order.getError()));
 	text->AddText(Form("#alpha_{H} = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
 	text->AddText(Form("n_{H} = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
-	text->AddText(Form("#sigma_{g} = %.2f #pm %.2f MeV", 1000 * sigmaG.getVal(), 1000 * sigmaG.getError()));
-	text->AddText(Form("Normfrac = %.2f #pm %.2f", fraction.getVal(), fraction.getError()));
+	text->AddText(Form("#sigma_{Gauss} = %.2f #pm %.2f MeV", 1000 * sigmaG.getVal(), 1000 * sigmaG.getError()));
+	text->AddText(Form("Norm frac = %.2f #pm %.2f", fraction.getVal(), fraction.getError()));
 	// text->AddText(Form("#frac{#sigma_{DSCB}}{#sigma_{g}} = %.2f ", ratio_sigma.getVal()));
 
-	text->SetAllWith(" ", "align", 12);
+	text->SetAllWith(" ", "align", 32);
 	return text;
 }
 

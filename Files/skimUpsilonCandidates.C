@@ -18,7 +18,7 @@
 
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
 
-void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root", const char* outputFileName = "upsilonSkimmedDataset.root") {
+void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root", const char* outputFileName = "UpsilonSkimmedDataset.root") {
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
@@ -64,9 +64,9 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	/// RooDataSet output: one entry = one dimuon candidate!
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 
-	Float_t lowMassCut = 7, highMassCut = 15; // large invariant mass window to ease the integration for RooFit
+	Float_t lowMassCut = 6, highMassCut = 15; // large invariant mass window to ease the integration for RooFit
 	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
-	RooRealVar yVar("rapidity", "dimuon absolute rapidity", gRapidityMin, gRapidityMax);
+	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4);
 	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
 
 	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
@@ -108,7 +108,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
-			if (fabs(Reco_QQ_4mom->Rapidity()) < gRapidityMin || fabs(Reco_QQ_4mom->Rapidity()) > gRapidityMax) continue;
+			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue; // cut on the dimuon rapidity when reducing the dataset later
 
 			//if (Reco_QQ_4mom->Pt() > 50) continue;
 

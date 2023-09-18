@@ -1,17 +1,3 @@
-#include "TROOT.h"
-#include "TStyle.h"
-#include "TFile.h"
-#include "TNtuple.h"
-#include "TRandom3.h"
-#include "TVector3.h"
-#include "TRotation.h"
-#include "TLorentzVector.h"
-#include "TClonesArray.h"
-
-#include <iostream>
-#include <fstream>
-#include <cmath>
-
 #include "../AnalysisParameters.h"
 
 TH1D* VertexZDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB_miniAOD.root") {
@@ -57,13 +43,22 @@ void compareVertexZPosition() {
 	writeExtraText = true; // if extra text
 	//extraText = "      Internal";
 
-	auto canvas = new TCanvas("canvas", "", 600, 650);
+	gStyle->SetLabelSize(0.045, "XYZ");
+	gStyle->SetTitleSize(0.055, "XYZ");
+
+	gStyle->SetTitleXOffset(1.);
+	gStyle->SetTitleYOffset(1.5);
+
+	auto canvas = new TCanvas("canvas", "", 700, 700);
 
 	auto distribMC = VertexZDistribution("OniaTree_Y1S_pThat2_HydjetDrumMB_miniAOD.root");
 	distribMC->SetLineColor(kRed + 1);
 	distribMC->SetMarkerColor(kRed + 1);
+	distribMC->SetLineWidth(2);
 
 	auto distribData = VertexZDistribution("OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root");
+	distribData->SetMarkerColor(kAzure + 1);
+	distribData->SetLineWidth(2);
 	distribData->SetLineColor(kAzure + 1);
 
 	auto ratioPlot = new TRatioPlot(distribData, distribMC);
@@ -72,26 +67,37 @@ void compareVertexZPosition() {
 
 	std::vector<double> lines = {-3, -2, -1, -0.5, 0, 0.5, 1, 1.5, 2, 3};
 	ratioPlot->SetGridlines(lines);
-	ratioPlot->SetGraphDrawOpt("APZ");
+	ratioPlot->SetGraphDrawOpt("PZ");
 	ratioPlot->Draw("APZ");
 
 	ratioPlot->GetLowYaxis()->SetNdivisions(505);
 	ratioPlot->GetLowerRefYaxis()->SetTitle("Data / MC");
 	ratioPlot->SetUpTopMargin(.08);
-	ratioPlot->SetLeftMargin(.18);
-	ratioPlot->SetRightMargin(.025);
+	ratioPlot->SetLeftMargin(.16);
+	ratioPlot->SetRightMargin(.02);
 	ratioPlot->SetLowBottomMargin(.4);
 	ratioPlot->GetLowerRefGraph()->SetMinimum(0.2);
 	ratioPlot->GetLowerRefGraph()->SetMaximum(1.8);
+	ratioPlot->GetLowerRefGraph()->SetLineWidth(2);
 
 	ratioPlot->GetUpperPad()->cd();
-	TLegend* legend = new TLegend(.72, .85, .92, .65);
-	legend->SetTextSize(.07);
+	((TH1D*)ratioPlot->GetUpperRefObject())->SetMaximum(0.054);
 
-	legend->AddEntry(distribData, "Data", "l");
-	legend->AddEntry(distribMC, "MC", "lep");
+	TLegend* legendData = new TLegend(.2, .85, .45, .6);
+	legendData->SetTextSize(.065);
 
-	legend->Draw();
+	legendData->AddEntry(distribData, "Data", "l");
+	legendData->AddEntry((TObject*)0, Form("#mu = %.2f cm", distribData->GetMean()), " ");
+	legendData->AddEntry((TObject*)0, Form("#sigma = %.2f cm", distribData->GetStdDev()), " ");
+	legendData->Draw();
+
+	TLegend* legendMC = new TLegend(.65, .85, .9, .6);
+	legendMC->SetTextSize(.065);
+	legendMC->AddEntry(distribMC, "MC", "lep");
+	legendMC->AddEntry((TObject*)0, Form("#mu = %.2f cm", distribMC->GetMean()), " ");
+	legendMC->AddEntry((TObject*)0, Form("#sigma = %.2f cm", distribMC->GetStdDev()), " ");
+
+	legendMC->Draw();
 
 	canvas->cd();
 	CMS_lumi(canvas, lumi_PbPb);

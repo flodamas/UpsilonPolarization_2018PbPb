@@ -1,10 +1,9 @@
-#include "../Tools/Style/tdrStyle.C"
-#include "../Tools/Style/CMS_lumi.C"
+//#include "../Tools/Style/tdrStyle.C"
+//#include "../Tools/Style/CMS_lumi.C"
+#include "../Tools/FitShortcuts.h"
 
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
-
-#include "../Tools/FitShortcuts.h"
 
 // #include "../Tools/Parameters/PhysicsConstants.h"
 
@@ -33,7 +32,6 @@ RooArgSet* extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centM
 	Float_t massMin = 8.5, massMax = 10.5;
 	Int_t nBins = 80;
 
-
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
@@ -42,7 +40,7 @@ RooArgSet* extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centM
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, centMin, centMax, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar* massVar = wspace->var("mass");
 
@@ -54,36 +52,33 @@ RooArgSet* extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centM
 	RooRealVar orderInf("orderInf", "", 1.5, 0.1, 10);
 	RooRealVar alphaSup("alphaSup", "", 1.5, 0.1, 10);
 	RooRealVar orderSup("orderSup", "", 3, 0.1, 40);
-	
+
 	/// (Gaussian variable (used the same mean as DSCB))
 	RooRealVar sigma_gauss("sigma_gauss", "", 0.11, .05, .3);
 
 	RooRealVar normFraction("normFraction", "", 0.6, 0.01, 1);
 
-
 	RooCrystalBall DSCB("DSCB", "", *massVar, mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
-	RooGaussian gauss("gauss","gauss", *massVar, mean, sigma_gauss);
+	RooGaussian gauss("gauss", "gauss", *massVar, mean, sigma_gauss);
 
 	// RooCBShape CB_1("CB_1", "", *massVar, mean, sigma_1, alphaPar, orderPar);
-	RooAddPdf signal("signal", "sum of DSCB and CB PDF", RooArgList(DSCB, gauss), RooArgList(normFraction), kTRUE);
+	RooAddPdf signal("signal", "sum of DSCB and Gaussian PDF", RooArgList(DSCB, gauss), RooArgList(normFraction), kTRUE);
 
-	
 	cout << endl
 	     << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << endl;
 
-	bool doWeightedError = true;
-
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true)/*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError)); 
+	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(false), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(DoMCWeightedError), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 
 	fitResult->Print("v");
 
-	TString outputName = Form("symCoreDSCB_Gaus_cent%dto%d_pt%dto%d", centMin, centMax, ptMin, ptMax);
+	//TString outputName = Form("symCoreDSCB_Gaus_cent%dto%d_pt%dto%d", centMin, centMax, ptMin, ptMax);
+	const char* outputName = GetSignalFitName("DSCB_Gauss", ptMin, ptMax);
 
 	// save signal shape parameters in a txt file to be read for data fit
 	RooArgSet* Params = new RooArgSet(sigma, alphaInf, orderInf, alphaSup, orderSup, sigma_gauss, normFraction);
 
-	SaveMCSignalParameters(Params, outputName.Data()); // so that we don't have to refit later
+	SaveMCSignalParameters(Params, outputName); // so that we don't have to refit later
 
 	/// draw the fit to see if the fit is reasonable (we can comment it (lines 79-105) out if drawing is not necessary)
 	auto* canvas = new TCanvas("canvas", "", 600, 600);
@@ -92,15 +87,17 @@ RooArgSet* extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centM
 	pad1->Draw();
 	pad1->cd();
 
-	RooPlot* frame = massVar -> frame(Title(" "), Range(massMin, massMax));
+	RooPlot* frame = massVar->frame(Title(" "), Range(massMin, massMax));
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 	// frame->SetYTitle(Form("Candidates / (%d MeV)", (int)1000 * (binMax - binMin) / nBins));
-	massDataset -> plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
+	massDataset->plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
+
+	signal.plotOn(frame, Components("gauss"), LineColor(kRed));
 
 	signal.plotOn(frame, LineColor(kBlue));
 
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
-	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 	frame->addObject(SymCoreDoubleCBGaussParamsText(mean, sigma, alphaInf, orderInf, alphaSup, orderSup, sigma_gauss, normFraction));
 	frame->Draw();
 
@@ -111,7 +108,7 @@ RooArgSet* extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centM
 	canvas->cd();
 	pad1->Draw();
 	pad2->Draw();
-	canvas->SaveAs(Form("SignalParameters/MCfit_%s_%dto%d.png", "DSCB_Gauss", ptMin, ptMax), "RECREATE");
+	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
 
 	// file->Close();
 	return Params;

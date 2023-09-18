@@ -12,8 +12,12 @@ const int gL3FilterBit = 20;
 const int gCentralityBinMin = 0;
 const int gCentralityBinMax = 90;
 
-const float gRapidityMin = 0;
+const float gRapidityMin = 1.2;
 const float gRapidityMax = 2.4;
+
+const int NPtBins = 10;
+
+const float gPtBinning[NPtBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 30}; // can afford to split 8-12 bin into two for the MC pt spectrum reweighting
 
 /// cos theta and phi binning, specific to each pt interval
 
@@ -49,8 +53,6 @@ const double CosThetaBinningLab[NCosThetaBinsLab + 1] = {-1, -0.8, -0.6, -0.4, -
 const int NPhiBinsLab = 1; // 1D analysis
 const double PhiBinningLab[NPhiBinsLab + 1] = {-180, 180};
 
-
-
 // 16 < pt < 30 GeV, Collins-Soper
 const int NCosThetaBinsCS = 10;
 //const double CosThetaBinningCS[NCosThetaBinsCS + 1] = {-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6};
@@ -58,7 +60,6 @@ const double CosThetaBinningCS[NCosThetaBinsCS + 1] = {-1, -0.8, -0.6, -0.4, -0.
 
 const int NPhiBinsCS = 1; // 1D analysis
 const double PhiBinningCS[NPhiBinsCS + 1] = {-180, 180};
-
 
 // 16 < pt < 30 GeV, Helicity
 const int NCosThetaBinsHX = 10;
@@ -69,11 +70,11 @@ const int NPhiBinsHX = 1; // 1D analysis
 const double PhiBinningHX[NPhiBinsHX + 1] = {-180, 180};
 
 /// Settings for invariant mass fits
-const int NCPUs = 2;
+const int NCPUs = 3;
 
-const float MassBinMin = 8;
+const float MassBinMin = 7;
 const float MassBinMax = 13;
-const int NMassBins = 80;
+const int NMassBins = 100;
 
 // MC signal shape
 bool DoMCWeightedError = true;
