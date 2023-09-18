@@ -1,12 +1,7 @@
-#include "../Tools/Style/tdrStyle.C"
-#include "../Tools/Style/CMS_lumi.C"
+#include "../Tools/FitShortcuts.h"
 
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
-
-#include "../Tools/Shortcuts.h"
-
-#include "../Tools/Parameters/PhysicsConstants.h"
 
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
@@ -33,7 +28,6 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	Float_t massMin = 8.5, massMax = 10.5;
 	Int_t nBins = 80;
 
-
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
@@ -42,7 +36,7 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, centMin, centMax, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar* massVar = wspace->var("mass");
 
@@ -59,18 +53,16 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	cout << endl
 	     << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << endl;
 
-	bool doWeightedError = true;
-
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true)/*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
+	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 
 	fitResult->Print("v");
 
-	TString outputName = Form("symCoreDSCB_cent%dto%d_pt%dto%d", centMin, centMax, ptMin, ptMax);
+	const char* outputName = GetSignalFitName("SymDSCB", ptMin, ptMax);
 
 	// save signal shape parameters in a txt file to be read for data fit
 	RooArgSet* tailParams = new RooArgSet(alphaInf, orderInf, alphaSup, orderSup);
 
-	SaveMCSignalTailParameters(tailParams, outputName.Data()); // so that we don't have to refit later
+	SaveMCSignalTailParameters(tailParams, outputName); // so that we don't have to refit later
 
 	/// draw the fit to see if the fit is reasonable (we can comment it (lines 79-105) out if drawing is not necessary)
 	auto* canvas = new TCanvas("canvas", "", 600, 600);
@@ -79,15 +71,15 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	pad1->Draw();
 	pad1->cd();
 
-	RooPlot* frame = massVar -> frame(Title(" "), Range(massMin, massMax));
+	RooPlot* frame = massVar->frame(Title(" "), Range(massMin, massMax));
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 	// frame->SetYTitle(Form("Candidates / (%d MeV)", (int)1000 * (binMax - binMin) / nBins));
-	massDataset -> plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
+	massDataset->plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
 
 	signal.plotOn(frame, LineColor(kBlue));
 
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
-	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 	frame->addObject(SymCoreDoubleCBParamsText(mean, sigma, alphaInf, orderInf, alphaSup, orderSup));
 	frame->Draw();
 
@@ -98,7 +90,7 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	canvas->cd();
 	pad1->Draw();
 	pad2->Draw();
-	canvas->SaveAs(Form("SignalParameters/MCfit_%s_%dto%d.png", "symCoreDSCB", ptMin, ptMax), "RECREATE");
+	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
 
 	// file->Close();
 	return tailParams;
