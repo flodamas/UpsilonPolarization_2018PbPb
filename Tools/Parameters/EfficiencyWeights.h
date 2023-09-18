@@ -14,28 +14,36 @@ Float_t Get_zPV_weight(Float_t zpos) {
 
 // in form of a fit function (how to deal with parameters uncertainties TBD)
 
-TF1* PtWeightFunc_absy0to1p2 = new TF1("PtWeightFunc_absy0to1p2", "([0] + [1]*x*x) / ( x - [2])^3", gPtBinning[0], gPtBinning[NPtBins]);
-PtWeightFunc_absy0to1p2->SetParameter(0, 41.1);
-PtWeightFunc_absy0to1p2->SetParError(0, 13.5);
-PtWeightFunc_absy0to1p2->SetParameter(1, 14.1);
-PtWeightFunc_absy0to1p2->SetParError(1, 0.8);
-PtWeightFunc_absy0to1p2->SetParameter(2, -2.1);
-PtWeightFunc_absy0to1p2->SetParError(2, 0.2);
+Double_t PtWeight_absy0to1p2(Float_t pT) {
+	TF1* PtWeightFunc_absy0to1p2 = new TF1("PtWeightFunc_absy0to1p2", "([0] + [1]*x*x) / ( x - [2])^3", gPtBinning[0], gPtBinning[NPtBins]);
+	PtWeightFunc_absy0to1p2->SetParameter(0, 41.1);
+	PtWeightFunc_absy0to1p2->SetParError(0, 13.5);
+	PtWeightFunc_absy0to1p2->SetParameter(1, 14.1);
+	PtWeightFunc_absy0to1p2->SetParError(1, 0.8);
+	PtWeightFunc_absy0to1p2->SetParameter(2, -2.1);
+	PtWeightFunc_absy0to1p2->SetParError(2, 0.2);
 
-TF1* PtWeightFunc_absy1p2to2p4 = new TF1("PtWeightFunc_absy1p2to2p4", "([0] + [1]*x*x) / ( x - [2])^3", gPtBinning[0], gPtBinning[NPtBins]);
-PtWeightFunc_absy1p2to2p4->SetParameter(0, 40.9);
-PtWeightFunc_absy1p2to2p4->SetParError(0, 23.4);
-PtWeightFunc_absy1p2to2p4->SetParameter(1, 12.1);
-PtWeightFunc_absy1p2to2p4->SetParError(1, 1.4);
-PtWeightFunc_absy1p2to2p4->SetParameter(2, -2.2);
-PtWeightFunc_absy1p2to2p4->SetParError(2, 0.4);
+	return PtWeightFunc_absy0to1p2->Eval(pT);
+}
+
+Double_t PtWeight_absy1p2to2p4(Float_t pT) {
+	TF1* PtWeightFunc_absy1p2to2p4 = new TF1("PtWeightFunc_absy1p2to2p4", "([0] + [1]*x*x) / ( x - [2])^3", gPtBinning[0], gPtBinning[NPtBins]);
+	PtWeightFunc_absy1p2to2p4->SetParameter(0, 40.9);
+	PtWeightFunc_absy1p2to2p4->SetParError(0, 23.4);
+	PtWeightFunc_absy1p2to2p4->SetParameter(1, 12.1);
+	PtWeightFunc_absy1p2to2p4->SetParError(1, 1.4);
+	PtWeightFunc_absy1p2to2p4->SetParameter(2, -2.2);
+	PtWeightFunc_absy1p2to2p4->SetParError(2, 0.4);
+
+	return PtWeightFunc_absy1p2to2p4->Eval(pT);
+}
 
 Float_t Get_RecoPtWeight(Float_t absY, Float_t pT) {
-	if (fabs(absy) < 1.2)
-		return PtWeightFunc_absy0to1p2->Eval(pT);
+	if (fabs(absY) < 1.2)
+		return PtWeight_absy0to1p2(pT);
 
-	else if (fabs(absy) > 1.2 && fabs(absy) < 2.4)
-		return PtWeightFunc_absy1p2to2p4->Eval(pT);
+	else if (fabs(absY) > 1.2 && fabs(absY) < 2.4)
+		return PtWeight_absy1p2to2p4(pT);
 
 	else
 		return 0.; // for safety

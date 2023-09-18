@@ -12,13 +12,13 @@
 #include <fstream>
 #include <cmath>
 
-#include "../Tools/Style/tdrStyle.C"
-#include "../Tools/Style/CMS_lumi.C"
+//#include "../Tools/Style/tdrStyle.C"
+//#include "../Tools/Style/CMS_lumi.C"
+
+#include "../AnalysisParameters.h"
 
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
-
-#include "../AnalysisParameters.h"
 
 #include "../Tools/Parameters/CentralityValues.h"
 #include "../Tools/Parameters/EfficiencyWeights.h"
@@ -265,8 +265,9 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
+	TLorentzVector* recoLorentzVector = new TLorentzVector();
 
-	double eventWeight, totalWeight;
+	double eventWeight, dimuonPtWeight, totalWeight;
 	double dimuTrigWeight_nominal = -1, dimuTrigWeight_systUp = -1, dimuTrigWeight_systDown = -1, dimuTrigWeight_statUp = -1, dimuTrigWeight_statDown = -1;
 
 	Bool_t allGood, firesTrigger, isRecoMatched, dimuonMatching, goodVertexProba, passHLTFilterMuons, trackerAndGlobalMuons, hybridSoftMuons;
@@ -324,6 +325,10 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 			isRecoMatched = iReco > -1;
 
 			if (isRecoMatched) {
+				recoLorentzVector = (TLorentzVector*)CloneArr_QQ->At(iReco);
+
+				dimuonPtWeight = Get_RecoPtWeight(recoLorentzVector->Rapidity(), recoLorentzVector->Pt());
+
 				dimuonMatching = (Reco_QQ_trig[iReco] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1));
 
 				goodVertexProba = Reco_QQ_VtxProb[iReco] > 0.01;
@@ -358,11 +363,11 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				double Reco_mumi_eta = Reco_mumi_LV->Eta();
 				double Reco_mumi_pt = Reco_mumi_LV->Pt();
 
-				TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*(TLorentzVector*)CloneArr_QQ->At(iReco), *Reco_mupl_LV);
+				TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
 				double cosThetaCS = muPlus_CS.CosTheta();
 				double phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
 
-				TVector3 muPlus_HX = MuPlusVector_Helicity(*(TLorentzVector*)CloneArr_QQ->At(iReco), *Reco_mupl_LV);
+				TVector3 muPlus_HX = MuPlusVector_Helicity(*recoLorentzVector, *Reco_mupl_LV);
 				double cosThetaHX = muPlus_HX.CosTheta();
 				double phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
 
@@ -415,7 +420,7 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				// dimuon efficiency weight = product of the total scale factors
 				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
-				totalWeight = eventWeight * dimuWeight_nominal;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_nominal;
 				hCS_nominal->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_nominal->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
@@ -427,28 +432,28 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				// tracking, syst up
 				dimuWeight_trk_systUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexSystUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexSystUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
-				totalWeight = eventWeight * dimuWeight_trk_systUp;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trk_systUp;
 				hCS_trk_systUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trk_systUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
 				// tracking, syst down
 				dimuWeight_trk_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexSystDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexSystDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
-				totalWeight = eventWeight * dimuWeight_trk_systDown;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trk_systDown;
 				hCS_trk_systDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trk_systDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
 				// tracking, stat up
 				dimuWeight_trk_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
-				totalWeight = eventWeight * dimuWeight_trk_statUp;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trk_statUp;
 				hCS_trk_statUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trk_statUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
 				// tracking, stat down
 				dimuWeight_trk_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
-				totalWeight = eventWeight * dimuWeight_trk_statDown;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trk_statDown;
 				hCS_trk_statDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trk_statDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
@@ -457,28 +462,28 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				// Id, syst up
 				dimuWeight_muId_systUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexSystUp) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexSystUp) * dimuTrigWeight_nominal;
 
-				totalWeight = eventWeight * dimuWeight_muId_systUp;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_muId_systUp;
 				hCS_muId_systUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_muId_systUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
 				// Id, syst down
 				dimuWeight_muId_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexSystDown) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexSystDown) * dimuTrigWeight_nominal;
 
-				totalWeight = eventWeight * dimuWeight_muId_systDown;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_muId_systDown;
 				hCS_muId_systDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_muId_systDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
 				// Id, stat up
 				dimuWeight_muId_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexStatUp) * dimuTrigWeight_nominal;
 
-				totalWeight = eventWeight * dimuWeight_muId_statUp;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_muId_statUp;
 				hCS_muId_statUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_muId_statUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
 				// Id, stat down
 				dimuWeight_muId_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexStatDown) * dimuTrigWeight_nominal;
 
-				totalWeight = eventWeight * dimuWeight_muId_statDown;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_muId_statDown;
 				hCS_muId_statDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_muId_statDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
@@ -487,28 +492,28 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				// trigger, syst up
 				dimuWeight_trig_systUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_systUp;
 
-				totalWeight = eventWeight * dimuWeight_trig_systUp;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trig_systUp;
 				hCS_trig_systUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trig_systUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
 				// trigger, syst down
 				dimuWeight_trig_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_systDown;
 
-				totalWeight = eventWeight * dimuWeight_trig_systDown;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trig_systDown;
 				hCS_trig_systDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trig_systDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
 				// trigger, stat up
 				dimuWeight_trig_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_statUp;
 
-				totalWeight = eventWeight * dimuWeight_trig_statUp;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trig_statUp;
 				hCS_trig_statUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trig_statUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
 				// trigger, stat down
 				dimuWeight_trig_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_statDown;
 
-				totalWeight = eventWeight * dimuWeight_trig_statDown;
+				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trig_statDown;
 				hCS_trig_statDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trig_statDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 			}
