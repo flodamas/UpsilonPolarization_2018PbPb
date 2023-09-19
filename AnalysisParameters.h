@@ -8,11 +8,15 @@ const int gUpsilonHLTBit = 14;
 const int gL2FilterBit = 19;
 const int gL3FilterBit = 20;
 
+// One state at a time, patience is the key!
+
+const int gUpsilonState = 1;
+
 /// Kinematic intervals
 const int gCentralityBinMin = 0;
 const int gCentralityBinMax = 90;
 
-const float gRapidityMin = 1.2;
+const float gRapidityMin = 0.0;
 const float gRapidityMax = 2.4;
 
 const int NPtBins = 10;
@@ -20,6 +24,14 @@ const int NPtBins = 10;
 const float gPtBinning[NPtBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 30}; // can afford to split 8-12 bin into two for the MC pt spectrum reweighting
 
 /// cos theta and phi binning, specific to each pt interval
+
+const int NCosThetaBins = 20;
+const float gCosThetaMin = -1;
+const float gCosThetaMax = 1;
+
+const int NPhiBins = 18;
+const float gPhiMin = -180;
+const float gPhiMax = 180;
 
 // select one and comment out the others!!
 /*
