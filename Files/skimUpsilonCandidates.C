@@ -1,17 +1,3 @@
-#include "TROOT.h"
-#include "TStyle.h"
-#include "TFile.h"
-#include "TNtuple.h"
-#include "TRandom3.h"
-#include "TVector3.h"
-#include "TRotation.h"
-#include "TLorentzVector.h"
-#include "TClonesArray.h"
-
-#include <iostream>
-#include <fstream>
-#include <cmath>
-
 #include "../AnalysisParameters.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
@@ -71,6 +57,8 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
 	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", -180, 180, "#circ");
+	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
+	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
 
 	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
 	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
@@ -78,7 +66,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
 	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
 
-	RooDataSet dataset("dataset", "skimmed dataset", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
+	RooDataSet dataset("dataset", "skimmed dataset", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
 
 	Long64_t totEntries = OniaTree->GetEntries();
 
@@ -151,6 +139,8 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			cosThetaLabVar = Reco_mupl_4mom->CosTheta();
 			phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
+			etaLabMuplVar = Reco_mupl_4mom->PseudoRapidity();
+			etaLabMumiVar = Reco_mumi_4mom->PseudoRapidity();
 
 			cosThetaCSVar = muPlus_CS.CosTheta();
 			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
@@ -158,7 +148,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 			cosThetaHXVar = muPlus_HX.CosTheta();
 			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
 
-			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
+			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
 
 		} // end of reco QQ loop
 	}   // enf of event loop
