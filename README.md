@@ -26,7 +26,12 @@
     - output: MonteCarlo/acceptanceMaps/%S/AcceptanceResults_pt%dto%dGeV.root 
     ```
 2) Get efficiency map
-3) Do Acceptance & Efficiency correction
+  - MonteCarlo / mapUpsilonEfficiency.C
+    ```
+    - input: Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root
+    - output: MonteCarlo/EfficiencyMaps/%S/EfficiencyResults.root 
+    ```
+4) Do Acceptance & Efficiency correction
    
 **4.** 	Extract signal in a given ($p_{T}$, cos&theta;, &phi;) bin  <br>
 1) Get the tail parameters from MC before fit  

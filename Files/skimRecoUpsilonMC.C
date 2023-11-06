@@ -1,16 +1,3 @@
-#include "TROOT.h"
-#include "TStyle.h"
-#include "TFile.h"
-#include "TNtuple.h"
-#include "TRandom3.h"
-#include "TVector3.h"
-#include "TRotation.h"
-#include "TLorentzVector.h"
-#include "TClonesArray.h"
-
-#include <iostream>
-#include <fstream>
-#include <cmath>
 
 #include "../AnalysisParameters.h"
 
@@ -91,6 +78,8 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
 	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", -180, 180, "#circ");
+	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
+	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
 
 	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
 	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
@@ -98,7 +87,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
 	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
 
-	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"));
+	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"));
 
 	// loop variables
 	Float_t nColl, weight = 0;
@@ -181,6 +170,8 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 			cosThetaLabVar = Reco_mupl_4mom->CosTheta();
 			phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
+			etaLabMuplVar = Reco_mupl_4mom->PseudoRapidity();
+			etaLabMumiVar = Reco_mumi_4mom->PseudoRapidity();
 
 			cosThetaCSVar = muPlus_CS.CosTheta();
 			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
@@ -188,7 +179,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 			cosThetaHXVar = muPlus_HX.CosTheta();
 			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
 
-			dataset.add(RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), weight);
+			dataset.add(RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), weight);
 
 			// fill the graphs for reco events
 
