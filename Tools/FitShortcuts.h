@@ -92,6 +92,40 @@ RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int
 	return massDataset;
 }
 
+// reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
+RooDataSet* ReducedWeightedMassDatasetCS(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+	if (allDataset == nullptr) {
+		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		return nullptr;
+	}
+
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %f && phiCS < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
+	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
+	massDataset->SetName(kinematicCut); // just to make it unique
+
+	wspace->import(*massDataset);
+
+	return massDataset;
+}
+
+// reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
+RooDataSet* ReducedWeightedMassDatasetHX(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+	if (allDataset == nullptr) {
+		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		return nullptr;
+	}
+
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %f && phiHX < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
+	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
+	massDataset->SetName(kinematicCut); // just to make it unique
+
+	wspace->import(*massDataset);
+
+	return massDataset;
+}
+
 RooFitResult* SymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
 	using namespace RooFit;
 
