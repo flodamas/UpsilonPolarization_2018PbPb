@@ -19,9 +19,11 @@ const int gCentralityBinMax = 90;
 const float gRapidityMin = 0.0;
 const float gRapidityMax = 2.4;
 
-const int NPtBins = 10;
+const int NPtBins = 7;
+const float gPtBinning[NPtBins + 1] = {0, 2, 4, 6, 8, 12, 16, 30};
 
-const float gPtBinning[NPtBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 30}; // can afford to split 8-12 bin into two for the MC pt spectrum reweighting
+const int NPtFineBins = 10;
+const float gPtFineBinning[NPtFineBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 30}; // can afford to split bins into two for the MC pt spectrum reweighting
 
 /// cos theta and phi binning, specific to each pt interval
 
