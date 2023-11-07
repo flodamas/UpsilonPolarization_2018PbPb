@@ -7,6 +7,8 @@
 #include "TRotation.h"
 #include "TLorentzVector.h"
 #include "TClonesArray.h"
+#include "TEfficiency.h"
+#include "TCanvas.h"
 
 #include <iostream>
 #include <fstream>
