@@ -1,4 +1,10 @@
-#include "../AnalysisParameters.h"
+#include "TEfficiency.h"
+#include "TCanvas.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TClonesArray.h"
+
+// #include "../AnalysisParameters.h"
 
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
