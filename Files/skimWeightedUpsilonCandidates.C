@@ -7,6 +7,10 @@
 #include "TRotation.h"
 #include "TLorentzVector.h"
 #include "TClonesArray.h"
+#include "TEfficiency.h"
+
+#include "RooRealVar.h"
+#include "RooDataSet.h"
 
 #include <iostream>
 #include <fstream>

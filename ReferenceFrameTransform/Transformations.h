@@ -1,4 +1,6 @@
 /// Helping functions returning the positive muon's coordinates in a given reference frame based on the TLorentzVectors in the lab frame
+#include "TVector3.h"
+#include "TLorentzVector.h"
 
 // Lab to Helicity
 TVector3 MuPlusVector_Helicity(const TLorentzVector QQLV_Lab, const TLorentzVector MuPlusLV_Lab) {
