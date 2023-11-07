@@ -1,4 +1,6 @@
 // Data / MC factors for the z position of the primary vertex (to account for the distribution shift)
+#include "TF1.h"
+
 
 const Int_t nBins_zPV = 2 * 40;
 

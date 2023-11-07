@@ -2,6 +2,12 @@
 #include "RooArgSet.h"
 #include "RooAbsRealLValue.h"
 #include "RooHist.h"
+#include "TPad.h"
+#include "TAxis.h"
+#include "TLine.h"
+#include "TLatex.h"
+#include "TH2.h"
+
 
 // create the pull distribution from the frame where the fit is performed
 TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
