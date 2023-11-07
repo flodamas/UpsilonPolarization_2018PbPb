@@ -1,6 +1,7 @@
 #include "TPaveText.h"
 
 #include "RooRealVar.h"
+#include "../../AnalysisParameters.h"
 
 TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax) {
 	TPaveText* text = new TPaveText(0.17, 0.9, 0.45, 0.6, "NDCNB");
