@@ -1,18 +1,4 @@
-#include "TROOT.h"
-#include "TStyle.h"
-#include "TFile.h"
-#include "TNtuple.h"
-#include "TRandom3.h"
-#include "TVector3.h"
-#include "TRotation.h"
-#include "TLorentzVector.h"
-#include "TClonesArray.h"
-#include "TEfficiency.h"
-#include "TCanvas.h"
-
-#include <iostream>
-#include <fstream>
-#include <cmath>
+#include "../Tools/BasicHeaders.h"
 
 // #include "../Tools/Style/tdrStyle.C"
 // #include "../Tools/Style/CMS_lumi.C"
@@ -91,6 +77,61 @@ TH2D* RelSystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficienc
 			hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, (nominalEff == 0) ? 0 : finalSystEff / nominalEff);
 
 			//cout << "Efficiency in global bin " << globalBin << " = " << nominalEff << " +/- " << finalSystEff << endl;
+		}
+	}
+
+	return hTotalSyst;
+}
+
+// return the 3D map of the relative systematic efficiency uncertainty
+TH3D* RelSystEffHist3D(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency* hTrk_systDown, TEfficiency* hMuId_systUp, TEfficiency* hMuId_systDown, TEfficiency* hTrig_systUp, TEfficiency* hTrig_systDown, TEfficiency* hTrk_statUp, TEfficiency* hTrk_statDown, TEfficiency* hMuId_statUp, TEfficiency* hMuId_statDown, TEfficiency* hTrig_statUp, TEfficiency* hTrig_statDown) {
+	// clone one of the input efficiency map, to make sure we get the correct binning
+	TH3D* hTotalSyst = (TH3D*)hNominal->GetCopyPassedHisto(); // will rename it outside this function
+
+	// useful loop variables
+	int globalBin;
+	double nominalEff;
+	double trk_systEff, muId_systEff, trig_systEff, systEffSquared;
+	double trk_statEff, muId_statEff, trig_statEff, statEffSquared;
+	double finalSystEff;
+
+	for (int iCosThetaBin = 1; iCosThetaBin <= hTotalSyst->GetNbinsX(); iCosThetaBin++) {
+		for (int iPhiBin = 1; iPhiBin <= hTotalSyst->GetNbinsY(); iPhiBin++) {
+			for (int ipTBin = 1; ipTBin <= hTotalSyst->GetNbinsZ(); ipTBin++) {
+				globalBin = hNominal->GetGlobalBin(iCosThetaBin, iPhiBin, ipTBin); // to run though the efficiency maps
+
+				nominalEff = hNominal->GetEfficiency(globalBin);
+
+				// compute the systematic uncertainties associated to the variation of the muon SF uncertainties
+
+				// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
+
+				// from muon SF systematics
+				trk_systEff = max(abs(hTrk_systUp->GetEfficiency(globalBin) - nominalEff), abs(hTrk_systDown->GetEfficiency(globalBin) - nominalEff));
+
+				muId_systEff = max(abs(hMuId_systUp->GetEfficiency(globalBin) - nominalEff), abs(hMuId_systDown->GetEfficiency(globalBin) - nominalEff));
+
+				trig_systEff = max(abs(hTrig_systUp->GetEfficiency(globalBin) - nominalEff), abs(hTrig_systDown->GetEfficiency(globalBin) - nominalEff));
+
+				systEffSquared = trk_systEff * trk_systEff + muId_systEff * muId_systEff + trig_systEff * trig_systEff;
+
+				// from muon SF statistical uncertainties
+				trk_statEff = max(abs(hTrk_statUp->GetEfficiency(globalBin) - nominalEff), abs(hTrk_statDown->GetEfficiency(globalBin) - nominalEff));
+
+				muId_statEff = max(abs(hMuId_statUp->GetEfficiency(globalBin) - nominalEff), abs(hMuId_statDown->GetEfficiency(globalBin) - nominalEff));
+
+				trig_statEff = max(abs(hTrig_statUp->GetEfficiency(globalBin) - nominalEff), abs(hTrig_statDown->GetEfficiency(globalBin) - nominalEff));
+
+				statEffSquared = trk_statEff * trk_statEff + muId_statEff * muId_statEff + trig_statEff * trig_statEff;
+
+				finalSystEff = sqrt(systEffSquared + statEffSquared);
+
+				// store the RELATIVE SYSTEMATIC UNCERTAINTIES (not in % though) with respect to the nominal efficiency, more useful at the end
+				hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, ipTBin, (nominalEff == 0) ? 0 : finalSystEff / nominalEff);
+				cout << "hTotalSyst Bincontent: " << iCosThetaBin << ", " << iPhiBin << ", " << ipTBin << ", " << hTotalSyst->GetBinContent(iCosThetaBin, iPhiBin, ipTBin) << endl ;
+
+				//cout << "Efficiency in global bin " << globalBin << " = " << nominalEff << " +/- " << finalSystEff << endl;
+			}
 		}
 	}
 
@@ -197,10 +238,14 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
 	/// (cos theta, phi) 2D distribution maps for CS and HX frames
-
 	const char* titleCS = Form(";cos #theta_{CS}; #varphi_{CS} (#circ);#varUpsilon(%dS) total efficiency", iState);
-
 	const char* titleHX = Form(";cos #theta_{HX}; #varphi_{HX} (#circ);#varUpsilon(%dS) total efficiency", iState);
+
+	/// (cos theta, phi, pT) 3D distribution matrices for CS and HX frames
+	const char* titleCS3D = Form(";cos #theta_{CS}; #varphi_{CS} (#circ);p_{T} (GeV/c);#varUpsilon(%dS) total efficiency", iState);
+	const char* titleHX3D = Form(";cos #theta_{HX}; #varphi_{HX} (#circ);p_{T} (GeV/c);#varUpsilon(%dS) total efficiency", iState);
+
+
 
 	// granular binning for acceptance studies
 
@@ -229,6 +274,11 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 	double dimuWeight_muId_systUp, dimuWeight_muId_systDown, dimuWeight_muId_statUp, dimuWeight_muId_statDown;
 	double dimuWeight_trig_systUp, dimuWeight_trig_systDown, dimuWeight_trig_statUp, dimuWeight_trig_statDown;
 
+	// // can we afford (cos theta, phi, pT) 3D maps for acceptance?
+	// TEfficiency* effMatrixCS = new TEfficiency("effMatrixCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);p_{T} (GeV/c);efficiency", NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]); // pT bins 2 GeV wide
+	// TEfficiency* effMatrixHX = new TEfficiency("effMatrixHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);p_{T} (GeV/c);efficiency", NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+
+
 	// Collins-Soper
 	TEfficiency* hCS_nominal = new TEfficiency(Form("NominalEff_CS_pt%dto%d", gPtMin, gPtMax), titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
 
@@ -247,6 +297,24 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 	TEfficiency* hCS_trig_statUp = new TEfficiency("hCS_trig_statUp", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
 	TEfficiency* hCS_trig_statDown = new TEfficiency("hCS_trig_statDown", titleCS, NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
 
+	// Collins-Soper 3D
+	TEfficiency* hCS_nominal_3D = new TEfficiency(Form("NominalEff_CS_pt%dto%d_3D", gPtMin, gPtMax), titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+
+	TEfficiency* hCS_trk_systUp_3D = new TEfficiency("hCS_trk_systUp_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hCS_trk_systDown_3D = new TEfficiency("hCS_trk_systDown_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hCS_trk_statUp_3D = new TEfficiency("hCS_trk_statUp_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hCS_trk_statDown_3D = new TEfficiency("hCS_trk_statDown_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+
+	TEfficiency* hCS_muId_systUp_3D = new TEfficiency("hCS_muId_systUp_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hCS_muId_systDown_3D = new TEfficiency("hCS_muId_systDown_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hCS_muId_statUp_3D = new TEfficiency("hCS_muId_statUp_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hCS_muId_statDown_3D = new TEfficiency("hCS_muId_statDown_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+
+	TEfficiency* hCS_trig_systUp_3D = new TEfficiency("hCS_trig_systUp_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hCS_trig_systDown_3D = new TEfficiency("hCS_trig_systDown_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hCS_trig_statUp_3D = new TEfficiency("hCS_trig_statUp_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hCS_trig_statDown_3D = new TEfficiency("hCS_trig_statDown_3D", titleCS3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+
 	// Helicity
 	TEfficiency* hHX_nominal = new TEfficiency(Form("NominalEff_HX_pt%dto%d", gPtMin, gPtMax), titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 
@@ -264,6 +332,25 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 	TEfficiency* hHX_trig_systDown = new TEfficiency("hHX_trig_systDown", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 	TEfficiency* hHX_trig_statUp = new TEfficiency("hHX_trig_statUp", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 	TEfficiency* hHX_trig_statDown = new TEfficiency("hHX_trig_statDown", titleHX, NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+
+	// Helicity 3D
+	TEfficiency* hHX_nominal_3D = new TEfficiency(Form("NominalEff_HX_pt%dto%d_3D", gPtMin, gPtMax), titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+
+	TEfficiency* hHX_trk_systUp_3D = new TEfficiency("hHX_trk_systUp_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hHX_trk_systDown_3D = new TEfficiency("hHX_trk_systDown_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hHX_trk_statUp_3D = new TEfficiency("hHX_trk_statUp_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hHX_trk_statDown_3D = new TEfficiency("hHX_trk_statDown_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+
+	TEfficiency* hHX_muId_systUp_3D = new TEfficiency("hHX_muId_systUp_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hHX_muId_systDown_3D = new TEfficiency("hHX_muId_systDown_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hHX_muId_statUp_3D = new TEfficiency("hHX_muId_statUp_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hHX_muId_statDown_3D = new TEfficiency("hHX_muId_statDown_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+
+	TEfficiency* hHX_trig_systUp_3D = new TEfficiency("hHX_trig_systUp_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hHX_trig_systDown_3D = new TEfficiency("hHX_trig_systDown_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hHX_trig_statUp_3D = new TEfficiency("hHX_trig_statUp_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* hHX_trig_statDown_3D = new TEfficiency("hHX_trig_statDown_3D", titleHX3D, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
@@ -355,8 +442,10 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 
 				allGood = firesTrigger && isRecoMatched && dimuonMatching && goodVertexProba && passHLTFilterMuons && trackerAndGlobalMuons && hybridSoftMuons;
 
-				// get muon coordinates
+				TLorentzVector* Reco_QQ_LV = (TLorentzVector*)CloneArr_QQ->At(iReco);
+				double Reco_QQ_pt = Reco_QQ_LV->Pt();
 
+				// get muon coordinates
 				TLorentzVector* Reco_mupl_LV = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 				double Reco_mupl_eta = Reco_mupl_LV->Eta();
 				double Reco_mupl_pt = Reco_mupl_LV->Pt();
@@ -425,6 +514,8 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_nominal;
 				hCS_nominal->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_nominal->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_nominal_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_nominal_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
 
 				hGranularCS->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hGranularHX->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
@@ -437,6 +528,8 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trk_systUp;
 				hCS_trk_systUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trk_systUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_trk_systUp_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_trk_systUp_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
 
 				// tracking, syst down
 				dimuWeight_trk_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexSystDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexSystDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
@@ -444,6 +537,8 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trk_systDown;
 				hCS_trk_systDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trk_systDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_trk_systDown_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_trk_systDown_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
 
 				// tracking, stat up
 				dimuWeight_trk_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
@@ -452,12 +547,17 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				hCS_trk_statUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trk_statUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
 
+				hCS_trk_statUp_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_trk_statUp_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
+
 				// tracking, stat down
 				dimuWeight_trk_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trk_statDown;
 				hCS_trk_statDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trk_statDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_trk_statDown_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_trk_statDown_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
 
 				/// variations for muon Id SF (keeping the nominal efficiency for tracking and trigger)
 
@@ -467,6 +567,9 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_muId_systUp;
 				hCS_muId_systUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_muId_systUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_muId_systUp_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_muId_systUp_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
+
 
 				// Id, syst down
 				dimuWeight_muId_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexSystDown) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexSystDown) * dimuTrigWeight_nominal;
@@ -474,6 +577,9 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_muId_systDown;
 				hCS_muId_systDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_muId_systDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_muId_systDown_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_muId_systDown_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
+
 
 				// Id, stat up
 				dimuWeight_muId_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexStatUp) * dimuTrigWeight_nominal;
@@ -481,6 +587,8 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_muId_statUp;
 				hCS_muId_statUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_muId_statUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_muId_statUp_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_muId_statUp_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
 
 				// Id, stat down
 				dimuWeight_muId_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexStatDown) * dimuTrigWeight_nominal;
@@ -488,6 +596,9 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_muId_statDown;
 				hCS_muId_statDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_muId_statDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_muId_statDown_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_muId_statDown_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
+
 
 				/// variations for trigger SF (keeping the nominal efficiency for tracking and muon Id)
 
@@ -497,6 +608,8 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trig_systUp;
 				hCS_trig_systUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trig_systUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_trig_systUp_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_trig_systUp_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
 
 				// trigger, syst down
 				dimuWeight_trig_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_systDown;
@@ -504,6 +617,8 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trig_systDown;
 				hCS_trig_systDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trig_systDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_trig_systDown_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_trig_systDown_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
 
 				// trigger, stat up
 				dimuWeight_trig_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_statUp;
@@ -511,6 +626,8 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trig_statUp;
 				hCS_trig_statUp->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trig_statUp->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_trig_statUp_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_trig_statUp_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
 
 				// trigger, stat down
 				dimuWeight_trig_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_statDown;
@@ -518,6 +635,9 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 				totalWeight = eventWeight * dimuonPtWeight * dimuWeight_trig_statDown;
 				hCS_trig_statDown->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS);
 				hHX_trig_statDown->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX);
+				hCS_trig_statDown_3D->FillWeighted(allGood, totalWeight, cosThetaCS, phiCS, Reco_QQ_pt);
+				hHX_trig_statDown_3D->FillWeighted(allGood, totalWeight, cosThetaHX, phiHX, Reco_QQ_pt);
+
 			}
 		} // end of gen upsilon loop
 	}
@@ -558,6 +678,10 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 	hSystCS->SetName(Form("RelatSystEff_CS_pt%dto%d", gPtMin, gPtMax));
 	hSystCS->SetTitle(";cos #theta_{CS}; #varphi_{CS} (#circ);Relative efficiency uncertainty");
 
+	auto* effMatrixCS = RelSystEffHist3D(hCS_nominal_3D, hCS_trk_systUp_3D, hCS_trk_systDown_3D, hCS_muId_systUp_3D, hCS_muId_systDown_3D, hCS_trig_systUp_3D, hCS_trig_systDown_3D, hCS_trk_statUp_3D, hCS_trk_statDown_3D, hCS_muId_statUp_3D, hCS_muId_statDown_3D, hCS_trig_statUp_3D, hCS_trig_statDown_3D);
+	effMatrixCS->SetName("effMatrixCS");
+	effMatrixCS->SetTitle(";cos #theta_{CS}; #varphi_{CS} (#circ);p_{T} (GeV/c);Relative efficiency uncertainty");
+
 	auto* canvasCSsyst = new TCanvas("canvasCSsyst", "", 700, 600);
 	hSystCS->Draw("COLZ");
 
@@ -576,6 +700,10 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 	hSystHX->SetName(Form("RelatSystEff_HX_pt%dto%d", gPtMin, gPtMax));
 	hSystHX->SetTitle(";cos #theta_{HX}; #varphi_{HX} (#circ);Relative efficiency uncertainty");
 
+	auto* effMatrixHX = RelSystEffHist3D(hHX_nominal_3D, hHX_trk_systUp_3D, hHX_trk_systDown_3D, hHX_muId_systUp_3D, hHX_muId_systDown_3D, hHX_trig_systUp_3D, hHX_trig_systDown_3D, hHX_trk_statUp_3D, hHX_trk_statDown_3D, hHX_muId_statUp_3D, hHX_muId_statDown_3D, hHX_trig_statUp_3D, hHX_trig_statDown_3D);
+	effMatrixHX->SetName("effMatrixHX");
+	effMatrixHX->SetTitle(";cos #theta_{HX}; #varphi_{HX} (#circ);p_{T} (GeV/c);Relative efficiency uncertainty");
+
 	auto* canvasHXsyst = new TCanvas("canvasHXsyst", "", 700, 600);
 	hSystHX->Draw("COLZ");
 
@@ -590,13 +718,16 @@ void mapUpsilonEfficiency(Int_t iState = 1) {
 	canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX_pt%dto%d.png", iState, gPtMin, gPtMax), "RECREATE");
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
-	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults.root", iState);
-	TFile outputFile(outputFileName, "UPDATE");
+	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults_pt%dto%d.root", iState, gPtMin, gPtMax);
+	// TFile outputFile(outputFileName, "UPDATE");
+	TFile outputFile(outputFileName, "RECREATE");
 
 	hCS_nominal->Write();
 	hHX_nominal->Write();
 	hSystCS->Write();
 	hSystHX->Write();
+	effMatrixCS->Write();
+	effMatrixHX->Write();
 	outputFile.Close();
 
 	cout << endl

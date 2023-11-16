@@ -47,6 +47,42 @@ RooDataSet* ReducedDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t c
 }
 
 // reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
+RooDataSet* ReducedWeightedDatasetCS(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, Double_t massMin = 8, Double_t massMax = 14, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+	if (allDataset == nullptr) {
+		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		return nullptr;
+	}
+
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (mass > %f && mass < %f) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %f && phiCS < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, massMin, massMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("centrality")), *(wspace->var("mass")), *(wspace->var("rapidity")), *(wspace->var("pt")), *(wspace->var("cosThetaCS")), *(wspace->var("phiCS"))), kinematicCut);
+
+	// RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
+	reducedDataset->SetName(kinematicCut); // just to make it unique
+
+	wspace->import(*reducedDataset);
+
+	return reducedDataset;
+}
+
+// reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
+RooDataSet* ReducedWeightedDatasetHX(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30,  Double_t massMin = 8, Double_t massMax = 14, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+	if (allDataset == nullptr) {
+		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		return nullptr;
+	}
+
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (mass > %f && mass < %f) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %f && phiHX < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, massMin, massMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("centrality")), *(wspace->var("mass")), *(wspace->var("rapidity")), *(wspace->var("pt")), *(wspace->var("cosThetaHX")), *(wspace->var("phiHX"))), kinematicCut);
+
+	// RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
+	reducedDataset->SetName(kinematicCut); // just to make it unique
+
+	wspace->import(*reducedDataset);
+
+	return reducedDataset;
+}
+
+// reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
 RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
