@@ -108,7 +108,9 @@ RooArgSet* extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centM
 	canvas->cd();
 	pad1->Draw();
 	pad2->Draw();
-	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
+
+	const char* outputName2 = GetSignalFitName("DSCB_Gauss", ptMin, ptMax);
+	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName2), "RECREATE");
 
 	// file->Close();
 	return Params;
