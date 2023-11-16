@@ -1,3 +1,7 @@
+// when the header is included several times, to avoid the redefinition error 
+#ifndef Analysis_Parameters_GUARD
+#define Analysis_Parameters_GUARD
+
 #include "Tools/Style/tdrStyle.C"
 #include "Tools/Style/CMS_lumi.C"
 
@@ -56,7 +60,7 @@ const int NPhiBinsHX = 6;
 const double PhiBinningHX[NPhiBinsHX + 1] = {-180, -120, -60, 0, 60, 120, 180};
 */
 
-const int gPtMin = 16;
+const int gPtMin = 0;
 const int gPtMax = 30;
 
 // 16 < pt < 30 GeV, Lab
@@ -94,3 +98,6 @@ const int NMassBins = 100;
 bool DoMCWeightedError = true;
 
 bool DoAsymptoticError = true;
+
+
+#endif

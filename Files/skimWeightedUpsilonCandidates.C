@@ -1,20 +1,4 @@
-#include "TROOT.h"
-#include "TStyle.h"
-#include "TFile.h"
-#include "TNtuple.h"
-#include "TRandom3.h"
-#include "TVector3.h"
-#include "TRotation.h"
-#include "TLorentzVector.h"
-#include "TClonesArray.h"
-#include "TEfficiency.h"
-
-#include "RooRealVar.h"
-#include "RooDataSet.h"
-
-#include <iostream>
-#include <fstream>
-#include <cmath>
+#include "../Tools/BasicHeaders.h"
 
 #include "../AnalysisParameters.h"
 
@@ -34,6 +18,17 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 
 	auto* accMapCS = (TEfficiency*)acceptanceFile->Get("AccMatrixCS");
 	auto* accMapHX = (TEfficiency*)acceptanceFile->Get("AccMatrixHX");
+
+	// efficiency maps
+	TFile* efficiencyFile = TFile::Open("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults_pt0to30.root", "READ");
+	if (!efficiencyFile) {
+		cout << "Efficiency file not found. Check the directory of the file." << endl;
+		return;
+	}
+
+	auto* effMapCS = (TH3D*)efficiencyFile->Get("effMatrixCS");
+	auto* effMapHX = (TH3D*)efficiencyFile->Get("effMatrixHX");
+
 
 	// Oniatree
 	TFile* infile = TFile::Open(inputFileName, "READ");
@@ -167,17 +162,21 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
 			// get the corresponding weights
-			int binCS = accMapCS->FindFixBin(muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
+			int accBinCS = accMapCS->FindFixBin(muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
+			double acceptanceCS = accMapCS->GetEfficiency(accBinCS);
 
-			double acceptanceCS = accMapCS->GetEfficiency(binCS);
+			int effBinCS = effMapCS->FindFixBin(muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
+			double efficiencyCS = effMapCS->GetBinContent(effBinCS);
 
-			weightCS = (acceptanceCS == 0) ? 0 : 1 / acceptanceCS; // IMPORTANT!
+			weightCS = ((acceptanceCS == 0) || (efficiencyCS == 0)) ? 0 : 1 / (acceptanceCS * efficiencyCS); // IMPORTANT!
 
-			int binHX = accMapHX->FindFixBin(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
+			int accBinHX = accMapHX->FindFixBin(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
+			double acceptanceHX = accMapHX->GetEfficiency(accBinHX);
 
-			double acceptanceHX = accMapHX->GetEfficiency(binHX);
+			int effBinHX = effMapHX->FindFixBin(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
+			double efficiencyHX = effMapHX->GetBinContent(effBinHX);
 
-			weightHX = (acceptanceHX == 0) ? 0 : 1 / acceptanceHX; // IMPORTANT!
+			weightHX = ((acceptanceHX == 0) || (efficiencyHX == 0)) ? 0 : 1 / (acceptanceHX * efficiencyHX); // IMPORTANT!
 
 			// fill the datasets
 

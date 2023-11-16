@@ -1,8 +1,4 @@
-#include "TEfficiency.h"
-#include "TCanvas.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TClonesArray.h"
+#include "../Tools/BasicHeaders.h"
 
 // #include "../AnalysisParameters.h"
 
