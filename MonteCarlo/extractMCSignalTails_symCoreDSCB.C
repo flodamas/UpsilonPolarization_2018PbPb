@@ -41,12 +41,12 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	RooRealVar* massVar = wspace->var("mass");
 
 	// fit
-	RooRealVar mean("mean", "", 9., 10.);
-	RooRealVar sigma("sigma", "", .05, .15);
-	RooRealVar alphaInf("alphaInf", "", 0.1, 10);
-	RooRealVar orderInf("orderInf", "", 0.1, 10);
-	RooRealVar alphaSup("alphaSup", "", 0.1, 10);
-	RooRealVar orderSup("orderSup", "", 0.1, 100);
+	RooRealVar mean("mean", "", 9.4, 9., 10.);
+	RooRealVar sigma("sigma", "", 0.09, .05, .15);
+	RooRealVar alphaInf("alphaInf", "", 1.1, 0.1, 10);
+	RooRealVar orderInf("orderInf", "", 4.9, 0.1, 10);
+	RooRealVar alphaSup("alphaSup", "", 1.7, 0.1, 10);
+	RooRealVar orderSup("orderSup", "", 17.5, 0.1, 100);
 
 	RooCrystalBall signal("CB", "", *massVar, mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 
@@ -95,3 +95,14 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	// file->Close();
 	return tailParams;
 }
+
+
+void scanExtractMCSignalTails_symCoreDSCB(){
+
+	Int_t PtEdges[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
+	Int_t NumPtEle = sizeof(PtEdges)/sizeof(Int_t);
+	for(Int_t idx =0; idx < NumPtEle-1; idx++){
+		extractMCSignalTails_symCoreDSCB(0, 90, PtEdges[idx], PtEdges[idx+1]);
+	}
+}
+

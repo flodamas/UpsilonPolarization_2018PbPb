@@ -113,3 +113,12 @@ RooArgSet* extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centM
 	// file->Close();
 	return Params;
 }
+
+void scanExtractMCSignalTails_symCoreDSCB_Gauss(){
+
+	Int_t PtEdges[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
+	Int_t NumPtEle = sizeof(PtEdges)/sizeof(Int_t);
+	for(Int_t idx =0; idx < NumPtEle-1; idx++){
+		extractMCSignalTails_symCoreDSCB_Gauss(0, 90, PtEdges[idx], PtEdges[idx+1]);
+	}
+}
