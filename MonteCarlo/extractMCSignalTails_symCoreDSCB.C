@@ -46,7 +46,7 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	RooRealVar alphaInf("alphaInf", "", 0.1, 10);
 	RooRealVar orderInf("orderInf", "", 0.1, 10);
 	RooRealVar alphaSup("alphaSup", "", 0.1, 10);
-	RooRealVar orderSup("orderSup", "", 0.1, 40);
+	RooRealVar orderSup("orderSup", "", 0.1, 100);
 
 	RooCrystalBall signal("CB", "", *massVar, mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 

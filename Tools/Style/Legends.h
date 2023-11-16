@@ -1,7 +1,7 @@
 #include "TPaveText.h"
 
 #include "RooRealVar.h"
-#include "../../AnalysisParameters.h"
+//#include "../../AnalysisParameters.h"
 
 TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax) {
 	TPaveText* text = new TPaveText(0.17, 0.9, 0.45, 0.6, "NDCNB");
@@ -35,10 +35,18 @@ TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float
 	TPaveText* text = new TPaveText(0.6, 0.85, 0.95, 0.5, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
-	text->AddText(Form("N(#varUpsilon(1S)) = %.0f^{ #plus%.0f}_{ %.0f}", n1S.getVal(), n1S.getErrorHi(), n1S.getErrorLo()));
-	text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif1S));
-	text->AddText(Form("N(#varUpsilon(2S)) = %.0f^{ #plus%.0f}_{ %.0f}", n2S.getVal(), n2S.getErrorHi(), n2S.getErrorLo()));
-	text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif2S));
+	if (DoAsymptoticError) {
+		text->AddText(Form("N(#varUpsilon(1S)) = %.0f #pm %.0f", n1S.getVal(), n1S.getError()));
+		text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif1S));
+		text->AddText(Form("N(#varUpsilon(2S)) = %.0f #pm %.0f", n2S.getVal(), n2S.getError()));
+		text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif2S));
+	} else { // assuming Minos is ON, print asymmetric errors
+		text->AddText(Form("N(#varUpsilon(1S)) = %.0f^{ #plus%.0f}_{ %.0f}", n1S.getVal(), n1S.getErrorHi(), n1S.getErrorLo()));
+		text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif1S));
+		text->AddText(Form("N(#varUpsilon(2S)) = %.0f^{ #plus%.0f}_{ %.0f}", n2S.getVal(), n2S.getErrorHi(), n2S.getErrorLo()));
+		text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif2S));
+	}
+
 	//	text->AddText(Form("N(bkg) = %.0f^{ #plus%.0f}_{ %.0f}", nBkg.getVal(), nBkg.getErrorHi(), nBkg.getErrorLo()));
 	text->SetAllWith("", "align", 32);
 	return text;
