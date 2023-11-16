@@ -90,5 +90,7 @@ const float MassBinMin = 7;
 const float MassBinMax = 13;
 const int NMassBins = 100;
 
-// MC signal shape
+// error estimate
 bool DoMCWeightedError = true;
+
+bool DoAsymptoticError = true;
