@@ -1,5 +1,7 @@
 //#include "../Tools/Style/tdrStyle.C"
 //#include "../Tools/Style/CMS_lumi.C"
+#include "../Tools/BasicHeaders.h"
+
 #include "../Tools/FitShortcuts.h"
 
 #include "../Tools/Style/FitDistributions.h"
@@ -10,17 +12,18 @@
 #include "../Tools/CustomRoofitPDFs/ErrorFuncTimesExp.h"
 
 void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	const char* fitModelName = GetFitModelName("symCoreDSCB", ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
-
 	// get the tail parameters of the signal shape first in case the MC fit is needed
 	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
 	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
 	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
 	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
 
-	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, "symCoreDSCB", ptMin, ptMax);
+	const char* signalShapeName = "symDSCB";
+	const char* refFrameName = isCSframe ? "CS":"HX" ;
 
-	const char* filename = "../Files/UpsilonSkimmedDataset.root";
+	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, signalShapeName, ptMin, ptMax);
+
+	const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root";
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -29,17 +32,18 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	cout << "File " << filename << " opened" << endl;
 
+	Float_t binMin = 7, binMax = 13;
 	Int_t nBins = 80;
 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
+	RooDataSet* allDataset = (RooDataSet*)f->Get(Form("dataset%s", refFrameName));
 
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* massDataset = isCSframe ? ReducedWeightedMassDatasetCS(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax):ReducedWeightedMassDatasetHX(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar* massVar = wspace->var("mass");
 
@@ -134,7 +138,10 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 
-	//frame->addObject(FitResultText(nSignal_1S, significance, nSignal_2S, significance2S));
+	frame->addObject(FitResultText(nSignal_1S, significance, nSignal_2S, significance2S));
+
+	frame->addObject(SymCoreDoubleCBParamsText(mean_1S, sigma_1S, *alphaInf, *orderInf, *alphaSup, *orderSup));
+
 
 	frame->Draw();
 	frame->GetYaxis()->SetMaxDigits(3);
@@ -157,5 +164,6 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	pad1->Draw();
 	pad2->Draw();
 
+	const char* fitModelName = GetFitModelName("symCoreDSCB", ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 	canvas->SaveAs(Form("FitPlots/%s.png", fitModelName), "RECREATE");
 }
