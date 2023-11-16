@@ -167,13 +167,13 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
 			// get the corresponding weights
-			int binCS = accMapCS->FindFixBin(muPlus_CS.CosTheta(), muPlus_CS.CosTheta() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
+			int binCS = accMapCS->FindFixBin(muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
 
 			double acceptanceCS = accMapCS->GetEfficiency(binCS);
 
 			weightCS = (acceptanceCS == 0) ? 0 : 1 / acceptanceCS; // IMPORTANT!
 
-			int binHX = accMapHX->FindFixBin(muPlus_HX.CosTheta(), muPlus_HX.CosTheta() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
+			int binHX = accMapHX->FindFixBin(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
 
 			double acceptanceHX = accMapHX->GetEfficiency(binHX);
 
