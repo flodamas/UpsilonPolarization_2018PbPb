@@ -20,15 +20,14 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 	auto* accMapHX = (TEfficiency*)acceptanceFile->Get("AccMatrixHX");
 
 	// efficiency maps
-	TFile* efficiencyFile = TFile::Open("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults_pt0to30.root", "READ");
+	TFile* efficiencyFile = TFile::Open("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults.root", "READ");
 	if (!efficiencyFile) {
 		cout << "Efficiency file not found. Check the directory of the file." << endl;
 		return;
 	}
 
-	auto* effMapCS = (TH3D*)efficiencyFile->Get("effMatrixCS");
-	auto* effMapHX = (TH3D*)efficiencyFile->Get("effMatrixHX");
-
+	auto* effMapCS = (TEfficiency*)efficiencyFile->Get("NominalEff_CS");
+	auto* effMapHX = (TEfficiency*)efficiencyFile->Get("NominalEff_HX");
 
 	// Oniatree
 	TFile* infile = TFile::Open(inputFileName, "READ");
@@ -86,14 +85,14 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
 	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
 
-	RooRealVar dimuonWeightCSVar("dimuonWeightCS", "1 / (acc x eff) weight in the CS frame", 0, 100000);
+	RooRealVar dimuonWeightCSVar("dimuonWeightCS", "1 / (acc x eff) weight in the CS frame", 0, 1000000);
 
 	RooDataSet datasetCS("datasetCS", "skimmed weighted dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, dimuonWeightCSVar), RooFit::WeightVar("dimuonWeightCS"));
 
 	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
 	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
 
-	RooRealVar dimuonWeightHXVar("dimuonWeightHX", "1 / (acc x eff) weight in the HX frame", 0, 100000);
+	RooRealVar dimuonWeightHXVar("dimuonWeightHX", "1 / (acc x eff) weight in the HX frame", 0, 1000000);
 
 	RooDataSet datasetHX("datasetHX", "skimmed weighted dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, dimuonWeightHXVar), RooFit::WeightVar("dimuonWeightHX"));
 
@@ -166,7 +165,7 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 			double acceptanceCS = accMapCS->GetEfficiency(accBinCS);
 
 			int effBinCS = effMapCS->FindFixBin(muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
-			double efficiencyCS = effMapCS->GetBinContent(effBinCS);
+			double efficiencyCS = effMapCS->GetEfficiency(effBinCS);
 
 			weightCS = ((acceptanceCS == 0) || (efficiencyCS == 0)) ? 0 : 1 / (acceptanceCS * efficiencyCS); // IMPORTANT!
 
@@ -174,7 +173,7 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 			double acceptanceHX = accMapHX->GetEfficiency(accBinHX);
 
 			int effBinHX = effMapHX->FindFixBin(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
-			double efficiencyHX = effMapHX->GetBinContent(effBinHX);
+			double efficiencyHX = effMapHX->GetEfficiency(effBinHX);
 
 			weightHX = ((acceptanceHX == 0) || (efficiencyHX == 0)) ? 0 : 1 / (acceptanceHX * efficiencyHX); // IMPORTANT!
 
