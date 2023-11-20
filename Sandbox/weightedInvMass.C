@@ -12,8 +12,6 @@
 void weightedInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	const char* signalShapeName = "SymDSCB";
 
-	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
-
 	// get the tail parameters of the signal shape first in case the MC fit is needed
 	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
 	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
@@ -162,5 +160,7 @@ void weightedInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE
 	pad1->Draw();
 	pad2->Draw();
 
-	canvas->SaveAs(Form("mass_distrib/accWeighted_%s.png", fitModelName), "RECREATE");
+	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
+	canvas->SaveAs(Form("mass_distrib/weightedEvents_%s.png", fitModelName), "RECREATE");
 }
