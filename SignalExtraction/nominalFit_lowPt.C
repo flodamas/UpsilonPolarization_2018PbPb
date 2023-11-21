@@ -167,3 +167,14 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	const char* fitModelName = GetFitModelName("symCoreDSCB", ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 	canvas->SaveAs(Form("FitPlots/%s.png", fitModelName), "RECREATE");
 }
+
+void scanNominalFit_lowPt(){
+
+	Int_t ptEdges[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
+	Double_t cosThetaEdges[11] = {-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1};
+	Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+	Int_t numPhiEle = sizeof(phiEdges)/sizeof(Int_t);
+	for(Int_t idx =0; idx < numPhiEle-1; idx++){
+		nominalFit_lowPt(ptEdges[0], ptEdges[1], kFALSE, cosThetaEdges[4], cosThetaEdges[5], phiEdges[idx], phiEdges[idx+1]);
+	}
+}
