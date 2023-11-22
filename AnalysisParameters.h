@@ -1,4 +1,4 @@
-// when the header is included several times, to avoid the redefinition error 
+// when the header is included several times, to avoid the redefinition error
 #ifndef Analysis_Parameters_GUARD
 #define Analysis_Parameters_GUARD
 
@@ -6,6 +6,8 @@
 #include "Tools/Style/CMS_lumi.C"
 
 /// Definition of all global parameters to be used within this analysis framework
+
+const char* gCMSLumiText = "2018 PbPb data (1.61 nb^{-1}, 5.02 TeV)";
 
 // CANNOT BE CHANGED!
 const int gUpsilonHLTBit = 14;
@@ -98,6 +100,5 @@ const int NMassBins = 100;
 bool DoMCWeightedError = true;
 
 bool DoAsymptoticError = true;
-
 
 #endif
