@@ -32,8 +32,6 @@ void weightedInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
-	Int_t nBins = 80;
-
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
