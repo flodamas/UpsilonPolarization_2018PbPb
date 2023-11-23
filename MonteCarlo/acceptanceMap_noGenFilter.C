@@ -11,7 +11,7 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax) {
 	TCanvas* canvas = new TCanvas(accMap->GetName(), "", 700, 600);
 	accMap->Draw("COLZ");
 
-	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 MC, no gen filter", gUpsilonState));
+	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 MC", gUpsilonState));
 
 	TLatex legend;
 	legend.SetTextAlign(22);
@@ -42,9 +42,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 	cout << "File " << filename << " opened" << endl;
 
 	// Put the text, "CMS Internal", on the right top of the plot
-	// writeExtraText = true; // if extra text
-	// extraText = "       Internal";
-	writeExtraText = false;
+	writeExtraText = true; // if extra text
+	extraText = "       Internal";
 
 	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
 
