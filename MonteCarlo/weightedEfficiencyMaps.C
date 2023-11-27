@@ -342,7 +342,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2) {
 
 		firesTrigger = ((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)));
 
-		eventWeight = Gen_weight * FindNcoll(Centrality) * Get_zPV_weight(zVtx);
+		eventWeight = Gen_weight * FindNcoll(Centrality); // * Get_zPV_weight(zVtx);
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
