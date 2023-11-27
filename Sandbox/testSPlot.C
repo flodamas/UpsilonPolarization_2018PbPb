@@ -3,15 +3,15 @@
 #include "../AnalysisParameters.h"
 
 #include "../Tools/FitShortcuts.h"
-#include "../Tools/Parameters/PhysicsConstants.h"
-#include "../Tools/CustomRoofitPDFs/ErrorFuncTimesExp.h"
+
+#include "../Tools/RooFitPDFs/InvariantMassModels.h"
 
 #include "../Tools/Style/Legends.h"
 
 #include "RooStats/SPlot.h"
 
 // reduce the whole dataset (N dimensions)
-RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30) {
+RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -19,9 +19,9 @@ RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace*
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
 
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass")), *(wspace->var("cosThetaCS"))), kinematicCut);
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var("cosThetaCS"))), kinematicCut);
 
-	wspace->import(*reducedDataset, RooFit::Rename("(inv mass, cos theta CS) dataset"));
+	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta CS) dataset"));
 
 	return reducedDataset;
 }
@@ -50,8 +50,8 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	RooDataSet* allDatasetCS = (RooDataSet*)f->Get("datasetCS");
 
 	// import the dataset to a workspace
-	RooWorkspace* wspace = new RooWorkspace("workspace");
-	wspace->import(*allDatasetCS);
+	RooWorkspace wspace("workspace");
+	wspace.import(*allDatasetCS);
 
 	auto* data = InvMassCosThetaWeightedDataset(allDatasetCS, wspace, ptMin, ptMax);
 
@@ -59,9 +59,9 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	data->Print();
 
 	// read variables in the reduced dataset in the workspace
-	RooRealVar* invMass = wspace->var("mass");
+	RooRealVar* invMass = wspace.var("mass");
 
-	RooRealVar* cosThetaCS = wspace->var("cosThetaCS");
+	RooRealVar* cosThetaCS = wspace.var("cosThetaCS");
 
 	Long64_t nEntries = data->sumEntries();
 
@@ -80,30 +80,15 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 
 	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, signalShapeName, ptMin, ptMax);
 
-	// Y(1S) signal shape
-	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.3, 9.6);
-	RooRealVar sigma_1S("sigma_1S", "", .01, .15);
+	auto signalModel = NominalSignalModel(wspace, alphaInf, orderInf, alphaSup, orderSup, nEntries);
 
-	RooCrystalBall signal_1S("signal_1S", "", *invMass, mean_1S, sigma_1S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar yield1S("yield1S", "N 1S", nEntries / 5, 0, nEntries);
+	RooAbsPdf* signalPDF_1S = wspace.pdf("signalPDF_1S");
+	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
+	RooAbsPdf* signalPDF_3S = wspace.pdf("signalPDF_3S");
 
-	// Y(2S) signal shape, mass scaling for mean and widths
-	RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
-
-	RooFormulaVar mean_2S("mean_2S", "massScaling_2S*mean_1S", RooArgSet(massScaling_2S, mean_1S));
-	RooFormulaVar sigma_2S("sigma_2S", "massScaling_2S*sigma_1S", RooArgSet(massScaling_2S, sigma_1S));
-
-	RooCrystalBall signal_2S("signal_2S", "", *invMass, mean_2S, sigma_2S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar yield2S("yield2S", "N 2S", nEntries / 10, 0, nEntries / 2);
-
-	// Y(3S) signal shape, mass scaling for mean and widths
-	RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
-
-	RooFormulaVar mean_3S("mean_3S", "massScaling_3S*mean_1S", RooArgSet(massScaling_3S, mean_1S));
-	RooFormulaVar sigma_3S("sigma_3S", "massScaling_3S*sigma_1S", RooArgSet(massScaling_3S, sigma_1S));
-
-	RooCrystalBall signal_3S("signal_3S", "", *invMass, mean_3S, sigma_3S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar yield3S("yield3S", "N 3S", nEntries / 20, 0, nEntries / 2);
+	RooRealVar yield1S = *(wspace.var("yield1S"));
+	RooRealVar yield2S = *(wspace.var("yield2S"));
+	RooRealVar yield3S = *(wspace.var("yield3S"));
 
 	// background: error function x exponential
 	RooRealVar err_mu("err_mu", "err_mu", 0, 10);
@@ -113,7 +98,7 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	ErrorFuncTimesExp bkgPDF("bkgPDF", "", *invMass, err_mu, err_sigma, exp_lambda);
 	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
 
-	RooAddPdf* invMassModel = new RooAddPdf("invMassModel", "", RooArgList(signal_1S, signal_2S, signal_3S, bkgPDF), RooArgList(yield1S, yield2S, yield3S, yieldBkg));
+	RooAddPdf* invMassModel = new RooAddPdf("invMassModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), RooArgList(yield1S, yield2S, yield3S, yieldBkg));
 
 	/// SPlot time!
 
@@ -142,7 +127,7 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 
 	// import this new dataset with sWeights
 	std::cout << "import new dataset with sWeights" << std::endl;
-	wspace->import(*data, Rename("dataWithSWeights"));
+	wspace.import(*data, Rename("dataWithSWeights"));
 
 	/// Draw the cos theta distribution with and without sWeights
 
@@ -150,7 +135,7 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 
 	RooPlot* frame = cosThetaCS->frame(Title(" "), Range(cosThetaMin, cosThetaMax));
 	frame->SetXTitle("cos #theta_{CS}");
-	data->plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), Name("data"));
+	data->plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), Name("data"), DataError(RooAbsData::SumW2));
 
 	// create weighted data sets
 	RooDataSet data_weight1S{data->GetName(), data->GetTitle(), data, *data->get(), nullptr, "yield1S_sw"};
@@ -180,13 +165,12 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	auto* massCanvas = new TCanvas("massCanvas", "", 650, 600);
 
 	RooPlot* massFrame = invMass->frame(Title(" "), Range(MassBinMin, MassBinMax));
-	//frame->SetYTitle(Form("Candidates / (%d MeV)", (int)1000 * (binMax - binMin) / nBins));
 	data->plotOn(massFrame, Binning(NMassBins), DrawOption("P0Z"));
 
 	invMassModel->plotOn(massFrame, Components(bkgPDF), LineColor(kGray + 2), LineStyle(kDashed));
-	invMassModel->plotOn(massFrame, Components(signal_1S), LineColor(kRed));
-	invMassModel->plotOn(massFrame, Components(signal_2S), LineColor(kRed));
-	invMassModel->plotOn(massFrame, Components(signal_3S), LineColor(kRed));
+	invMassModel->plotOn(massFrame, Components(*signalPDF_1S), LineColor(kRed));
+	invMassModel->plotOn(massFrame, Components(*signalPDF_2S), LineColor(kRed));
+	invMassModel->plotOn(massFrame, Components(*signalPDF_3S), LineColor(kRed));
 	invMassModel->plotOn(massFrame, LineColor(kBlue));
 
 	massFrame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));

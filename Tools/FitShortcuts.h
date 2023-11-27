@@ -54,10 +54,11 @@ RooDataSet* ReducedWeightedDatasetCS(RooDataSet* allDataset, RooWorkspace* wspac
 	}
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (mass > %f && mass < %f) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %f && phiCS < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, massMin, massMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
 	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("centrality")), *(wspace->var("mass")), *(wspace->var("rapidity")), *(wspace->var("pt")), *(wspace->var("cosThetaCS")), *(wspace->var("phiCS"))), kinematicCut);
 
 	// RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
-	reducedDataset->SetName(kinematicCut); // just to make it unique
+	reducedDataset->SetName("ReducedWeightedDatasetCS");
 
 	wspace->import(*reducedDataset);
 
@@ -72,10 +73,10 @@ RooDataSet* ReducedWeightedDatasetHX(RooDataSet* allDataset, RooWorkspace* wspac
 	}
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (mass > %f && mass < %f) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %f && phiHX < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, massMin, massMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
 	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("centrality")), *(wspace->var("mass")), *(wspace->var("rapidity")), *(wspace->var("pt")), *(wspace->var("cosThetaHX")), *(wspace->var("phiHX"))), kinematicCut);
 
-	// RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
-	reducedDataset->SetName(kinematicCut); // just to make it unique
+	reducedDataset->SetName("ReducedWeightedDatasetHX");
 
 	wspace->import(*reducedDataset);
 
@@ -129,7 +130,7 @@ RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int
 }
 
 // reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
-RooDataSet* ReducedWeightedMassDatasetCS(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+RooDataSet* ReducedWeightedMassDatasetCS(RooDataSet* allDataset, RooWorkspace wspace, Int_t ptMin = 0, Int_t ptMax = 30, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -137,16 +138,16 @@ RooDataSet* ReducedWeightedMassDatasetCS(RooDataSet* allDataset, RooWorkspace* w
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %f && phiCS < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
-	massDataset->SetName(kinematicCut); // just to make it unique
+	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
+	massDataset->SetName("ReducedWeightedMassDatasetCS");
 
-	wspace->import(*massDataset);
+	wspace.import(*massDataset);
 
 	return massDataset;
 }
 
 // reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
-RooDataSet* ReducedWeightedMassDatasetHX(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+RooDataSet* ReducedWeightedMassDatasetHX(RooDataSet* allDataset, RooWorkspace wspace, Int_t ptMin = 0, Int_t ptMax = 30, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -154,10 +155,10 @@ RooDataSet* ReducedWeightedMassDatasetHX(RooDataSet* allDataset, RooWorkspace* w
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %f && phiHX < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
-	massDataset->SetName(kinematicCut); // just to make it unique
+	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
+	massDataset->SetName("ReducedWeightedMassDatasetHX");
 
-	wspace->import(*massDataset);
+	wspace.import(*massDataset);
 
 	return massDataset;
 }
@@ -381,17 +382,25 @@ RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooReal
 	return Params;
 }
 
-Double_t ComputeSignalSignificance(RooWorkspace* wspace, Double_t mean, Double_t width, Int_t iState = 1) {
-	RooRealVar* mass = wspace->var("mass");
+Double_t ComputeSignalSignificance(RooWorkspace& wspace, Int_t iState = 1) {
+	RooRealVar mass = *wspace.var("mass");
 
-	auto* signalPDF = wspace->pdf(Form("signalPDF_%dS", iState));
+	auto* signalPDF = wspace.pdf(Form("signalPDF_%dS", iState));
+
+	RooRealVar mean1S = *(wspace.var("mean_1S"));
+	RooFormulaVar mean2S = *(RooFormulaVar*)(wspace.function("mean_2S"));
+	double mean = (iState == 1) ? mean1S.getVal() : mean2S.getVal();
+
+	RooRealVar sigma1S = *(wspace.var("sigma_1S"));
+	RooFormulaVar sigma2S = *(RooFormulaVar*)(wspace.function("sigma_2S"));
+	double width = (iState == 1) ? sigma1S.getVal() : sigma2S.getVal();
 
 	// mass window for integral
-	mass->setRange("integral", mean - 3 * width, mean + 3 * width);
+	mass.setRange("integral", mean - 3 * width, mean + 3 * width);
 
-	Double_t signalYield = (signalPDF->createIntegral(*mass, RooFit::NormSet(*mass), RooFit::Range("integral")))->getVal() * wspace->var(Form("nSignal_%dS", iState))->getVal();
+	Double_t signalYield = (signalPDF->createIntegral(mass, RooFit::NormSet(mass), RooFit::Range("integral")))->getVal() * wspace.var(Form("yield%dS", iState))->getVal();
 
-	Double_t bkgYield = (wspace->pdf("bkgPDF")->createIntegral(*mass, RooFit::NormSet(*mass), RooFit::Range("integral")))->getVal() * wspace->var("nBkg")->getVal();
+	Double_t bkgYield = (wspace.pdf("bkgPDF")->createIntegral(mass, RooFit::NormSet(mass), RooFit::Range("integral")))->getVal() * wspace.var("yieldBkg")->getVal();
 
 	return signalYield / sqrt(signalYield + bkgYield);
 }
