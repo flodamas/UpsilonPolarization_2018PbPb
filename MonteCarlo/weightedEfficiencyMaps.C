@@ -165,10 +165,12 @@ TEfficiency* MyEfficiencyMap(const char* name, bool isCS = true) {
 	return effMap;
 }
 
+// (cos theta, phi, pT) 3D maps for final efficiency correction, variable size binning for the stats
+
 TEfficiency* MyEfficiencyMap3D(const char* name, bool isCS = true) {
 	const char* title = (isCS) ? Form(";cos #theta_{CS}; #varphi_{CS} (#circ);#varUpsilon(%dS) total efficiency", gUpsilonState) : Form(";cos #theta_{HX}; #varphi_{HX} (#circ); p_{T} (GeV/c);#varUpsilon(%dS) total efficiency", gUpsilonState);
 
-	TEfficiency* effMap = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* effMap = new TEfficiency(name, title, NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning);
 
 	return effMap;
 }

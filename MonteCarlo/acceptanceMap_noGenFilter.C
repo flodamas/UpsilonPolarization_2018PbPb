@@ -60,10 +60,10 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 	OniaTree->SetBranchAddress("Gen_QQ_mumi_4mom", &Gen_QQ_mumi_4mom);
 	OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
 
-	// can we afford (cos theta, phi, pT) 3D maps for acceptance?
-	TEfficiency* accMatrixCS = new TEfficiency("AccMatrixCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);p_{T} (GeV/c);acceptance", NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]); // pT bins 2 GeV wide
+	// (cos theta, phi, pT) 3D maps for final acceptance correction, variable size binning for the stats
+	TEfficiency* accMatrixCS = new TEfficiency("AccMatrixCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);p_{T} (GeV/c);acceptance", NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning);
 
-	TEfficiency* accMatrixHX = new TEfficiency("AccMatrixHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);p_{T} (GeV/c);acceptance", NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax, gPtBinning[NPtBins] / 2, gPtBinning[0], gPtBinning[NPtBins]);
+	TEfficiency* accMatrixHX = new TEfficiency("AccMatrixHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);p_{T} (GeV/c);acceptance", NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning);
 
 	// (cos theta, phi) 2D distribution maps for Lab, CS and HX frames
 
@@ -113,7 +113,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 
 			accMatrixHX->Fill(withinAcceptance, muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi(), gen_QQ_LV->Pt());
 
-			if (gen_QQ_LV->Pt() < ptMin || gen_QQ_LV->Pt() > ptMax) continue; // pt bin of interest
+			if (gen_QQ_LV->Pt() < ptMin || gen_QQ_LV->Pt() > ptMax) continue; // pt bin of interest for the other distributions
 
 			hGranularCS->Fill(withinAcceptance, muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi());
 			hAnalysisCS->Fill(withinAcceptance, muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi());
@@ -145,7 +145,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 	DrawAcceptanceMap(hGranularHX, ptMin, ptMax);
 	DrawAcceptanceMap(hAnalysisHX, ptMin, ptMax);
 
-	/// save the results in a file for later usage (in particular for the polarization extraction)
+	/// save the results in a file for later usage
 	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", gUpsilonState);
 	TFile outputFile(outputFileName, "RECREATE");
 

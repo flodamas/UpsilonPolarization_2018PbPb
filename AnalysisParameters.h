@@ -25,11 +25,19 @@ const int gCentralityBinMax = 90;
 const float gRapidityMin = 0.0;
 const float gRapidityMax = 2.4;
 
+// pT binning for the final results!
 const int NPtBins = 7;
-const float gPtBinning[NPtBins + 1] = {0, 2, 4, 6, 8, 12, 16, 30};
+const double gPtBinning[NPtBins + 1] = {0, 2, 4, 6, 8, 12, 16, 30};
 
 const int NPtFineBins = 10;
-const float gPtFineBinning[NPtFineBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 30}; // can afford to split bins into two for the MC pt spectrum reweighting
+const double gPtFineBinning[NPtFineBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 30}; // can afford to split bins into two for the MC pt spectrum reweighting
+
+// fine binning for (cos theta, phi) correction maps, same binning regardless of the reference frame
+const int NCosThetaFineBins = 20;
+const double gCosThetaFineBinning[NCosThetaFineBins + 1] = {-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1};
+
+const int NPhiFineBins = 18; // i.e. 20 degrees wide bins
+const double gPhiFineBinning[NCosThetaFineBins + 1] = {-180, -160, -140, -120, -100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100, 120, 140, 160, 180};
 
 /// cos theta and phi binning, specific to each pt interval
 
