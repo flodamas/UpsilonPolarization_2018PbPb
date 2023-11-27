@@ -83,14 +83,14 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 	// separate into two datasets (easier for entry weighting) and forget about lab variables
 
 	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
-	RooRealVar phiCSVar("phiCS", "absolute phi angle in the Collins-Soper frame", 0, 180, "#circ");
+	RooRealVar phiCSVar("phiCS", "absolute phi angle in the Collins-Soper frame", -180, 180, "#circ");
 
 	RooRealVar dimuonWeightCSVar("dimuonWeightCS", "1 / (acc x eff) weight in the CS frame", 0, 1000000);
 
 	RooDataSet datasetCS("datasetCS", "skimmed weighted dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, dimuonWeightCSVar), RooFit::WeightVar("dimuonWeightCS"));
 
 	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
-	RooRealVar phiHXVar("phiHX", "absolute phi angle in the helicity frame", 0, 180, "#circ");
+	RooRealVar phiHXVar("phiHX", "absolute phi angle in the helicity frame", -180, 180, "#circ");
 
 	RooRealVar dimuonWeightHXVar("dimuonWeightHX", "1 / (acc x eff) weight in the HX frame", 0, 1000000);
 
@@ -187,14 +187,14 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 
 			// Collins-Soper
 			cosThetaCSVar = muPlus_CS.CosTheta();
-			phiCSVar = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
+			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
 
 			dimuonWeightCSVar = weightCS;
 			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, dimuonWeightCSVar), weightCS);
 
 			// Helicity
 			cosThetaHXVar = muPlus_HX.CosTheta();
-			phiHXVar = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
+			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
 
 			dimuonWeightHXVar = weightHX;
 
