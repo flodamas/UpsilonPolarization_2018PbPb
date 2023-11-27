@@ -7,8 +7,6 @@ void fixOverlay() { gPad->RedrawAxis(); }
 void rootlogon() {
 	TStyle* tdrStyle = new TStyle("tdrStyle", "Style for P-TDR");
 
-	gROOT->ProcessLine(".L ../Tools/CustomRoofitPDFs/ExtendedCrystalBall.cxx");
-
 	// For the canvas:
 	tdrStyle->SetCanvasBorderMode(0);
 	tdrStyle->SetCanvasColor(kWhite);

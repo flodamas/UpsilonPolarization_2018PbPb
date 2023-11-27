@@ -7,7 +7,7 @@ void fixOverlay() { gPad->RedrawAxis(); }
 void rootlogon() {
 	TStyle* tdrStyle = new TStyle("tdrStyle", "Style for P-TDR");
 
-	gROOT->ProcessLine(".L ../Tools/CustomRoofitPDFs/ErrorFuncTimesExp.cxx");
+	gROOT->ProcessLine(".L ../Tools/RooFitPDFs/ErrorFuncTimesExp.cxx");
 
 	// For the canvas:
 	tdrStyle->SetCanvasBorderMode(0);
