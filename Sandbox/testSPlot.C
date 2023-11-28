@@ -100,6 +100,40 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 
 	RooAddPdf* invMassModel = new RooAddPdf("invMassModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), RooArgList(yield1S, yield2S, yield3S, yieldBkg));
 
+	auto* fitResult = invMassModel->fitTo(*data, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
+
+	fitResult->Print("v");
+
+	/// Draw the invariant mass distribution, to check the fit
+	auto* massCanvas = new TCanvas("massCanvas", "", 650, 600);
+
+	RooPlot* massFrame = invMass->frame(Title(" "), Range(MassBinMin, MassBinMax));
+	data->plotOn(massFrame, Binning(NMassBins), DrawOption("P0Z"));
+
+	invMassModel->plotOn(massFrame, Components(bkgPDF), LineColor(kGray + 2), LineStyle(kDashed));
+	invMassModel->plotOn(massFrame, Components(*signalPDF_1S), LineColor(kRed));
+	invMassModel->plotOn(massFrame, Components(*signalPDF_2S), LineColor(kRed));
+	invMassModel->plotOn(massFrame, Components(*signalPDF_3S), LineColor(kRed));
+	invMassModel->plotOn(massFrame, LineColor(kBlue));
+
+	massFrame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+
+	massFrame->addObject(FitResultText(yield1S, 0, yield2S, 0));
+
+	massFrame->Draw();
+	massFrame->GetYaxis()->SetMaxDigits(3);
+
+	gPad->RedrawAxis();
+
+	massCanvas->SaveAs(Form("sPlotTests/invMassFit_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+
+	// fix all model variables except the yields for the sPlot
+	wspace.var("mean_1S")->setConstant();
+	wspace.var("sigma_1S")->setConstant();
+	err_mu.setConstant();
+	err_sigma.setConstant();
+	exp_lambda.setConstant();
+
 	/// SPlot time!
 
 	// yields from invariant mass distribution fit as sWeights
@@ -160,7 +194,7 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 
 	CMS_lumi(canvas, gCMSLumiText);
 	canvas->SaveAs(Form("sPlotTests/cosThetaCS_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
-
+	/*
 	/// Draw the invariant mass distribution, to check the fit
 	auto* massCanvas = new TCanvas("massCanvas", "", 650, 600);
 
@@ -183,4 +217,5 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	gPad->RedrawAxis();
 
 	massCanvas->SaveAs(Form("sPlotTests/invMassFit_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	*/
 }
