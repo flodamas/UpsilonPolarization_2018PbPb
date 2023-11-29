@@ -5,6 +5,7 @@
 #include "../Tools/FitShortcuts.h"
 
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
+#include "../Tools/Style/FitDistributions.h"
 
 #include "../Tools/Style/Legends.h"
 
@@ -105,10 +106,16 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	fitResult->Print("v");
 
 	/// Draw the invariant mass distribution, to check the fit
-	auto* massCanvas = new TCanvas("massCanvas", "", 650, 600);
+	auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
+	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
+	pad1->SetBottomMargin(0.03);
+	pad1->Draw();
+	pad1->cd();
 
 	RooPlot* massFrame = invMass->frame(Title(" "), Range(MassBinMin, MassBinMax));
-	data->plotOn(massFrame, Binning(NMassBins), DrawOption("P0Z"));
+	massFrame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
+
+	data->plotOn(massFrame, Binning(NMassBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
 
 	invMassModel->plotOn(massFrame, Components(bkgPDF), LineColor(kGray + 2), LineStyle(kDashed));
 	invMassModel->plotOn(massFrame, Components(*signalPDF_1S), LineColor(kRed));
@@ -118,6 +125,8 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 
 	massFrame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
+	//	massFrame->addObject(FitResultText(yield1S, ComputeSignalSignificance(wspace, 1), yield2S, ComputeSignalSignificance(wspace, 2)));
+
 	massFrame->addObject(FitResultText(yield1S, 0, yield2S, 0));
 
 	massFrame->Draw();
@@ -125,14 +134,16 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 
 	gPad->RedrawAxis();
 
-	massCanvas->SaveAs(Form("sPlotTests/invMassFit_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	// pull distribution
+	massCanvas->cd();
 
-	// fix all model variables except the yields for the sPlot
-	wspace.var("mean_1S")->setConstant();
-	wspace.var("sigma_1S")->setConstant();
-	err_mu.setConstant();
-	err_sigma.setConstant();
-	exp_lambda.setConstant();
+	TPad* pad2 = GetPadPullDistribution(massFrame, fitResult->floatParsFinal().getSize());
+
+	massCanvas->cd();
+	pad1->Draw();
+	pad2->Draw();
+
+	massCanvas->SaveAs(Form("sPlotTests/invMassFit_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	/// SPlot time!
 
@@ -174,8 +185,17 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	// create weighted data sets
 	RooDataSet data_weight1S{data->GetName(), data->GetTitle(), data, *data->get(), nullptr, "yield1S_sw"};
 
-	data_weight1S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("dataWithSWeights"));
+	data_weight1S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("data1S"));
+
+	RooDataSet data_weight2S{data->GetName(), data->GetTitle(), data, *data->get(), nullptr, "yield2S_sw"};
+
+	data_weight2S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kGreen + 2), DataError(RooAbsData::SumW2), Name("data2S"));
+
 	frame->Draw();
+
+	gPad->RedrawAxis();
+
+	frame->SetMaximum(nEntries / 30);
 
 	TLatex text;
 	text.SetTextAlign(22);
@@ -183,11 +203,12 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	text.DrawLatexNDC(.55, .85, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 	//text.DrawLatexNDC(.48, .8, Form("%.0f < m_{#mu#mu} < %.0f GeV/c^{2}", massMin, massMax));
 
-	TLegend legend(.25, .8, .5, .65);
+	TLegend legend(.3, .8, .5, .6);
 	legend.SetTextSize(.05);
 
-	legend.AddEntry(frame->findObject("data"), "efficiency-corrected dimuon events", "lp");
-	legend.AddEntry(frame->findObject("dataWithSWeights"), "with #varUpsilon(1S) yield sWeights", "lp");
+	legend.AddEntry(frame->findObject("data"), "corrected dimuon events", "lp");
+	legend.AddEntry(frame->findObject("data1S"), "with #varUpsilon(1S) yield sWeights", "lp");
+	legend.AddEntry(frame->findObject("data2S"), "with #varUpsilon(2S) yield sWeights", "lp");
 	legend.DrawClone();
 
 	gPad->Update();
