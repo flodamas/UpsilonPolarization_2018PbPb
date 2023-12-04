@@ -57,3 +57,14 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, RooRealVar* alphaInf, RooReal
 
 	return signalModel;
 }
+
+RooArgList ChebychevCoefList(int order = 1) {
+	RooArgList coefList;
+
+	for (int i = 0; i <= order; i++) {
+		RooRealVar* coef = new RooRealVar(Form("ChebychevCoef_%d", i), " ", 0.1, -10, 10);
+		coefList.addOwned(*coef);
+	}
+
+	return coefList;
+}
