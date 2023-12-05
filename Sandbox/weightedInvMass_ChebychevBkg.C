@@ -1,9 +1,9 @@
 //#include "../AnalysisParameters.h"
 
 #include "../Tools/FitShortcuts.h"
+#include "../Tools/Style/Legends.h"
 
 #include "../Tools/Style/FitDistributions.h"
-#include "../Tools/Style/Legends.h"
 
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 
@@ -56,9 +56,9 @@ void weightedInvMass_ChebychevBkg(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCS
 	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
 	RooAbsPdf* signalPDF_3S = wspace.pdf("signalPDF_3S");
 
-	RooRealVar yield1S = *(wspace.var("yield1S"));
-	RooRealVar yield2S = *(wspace.var("yield2S"));
-	RooRealVar yield3S = *(wspace.var("yield3S"));
+	RooRealVar* yield1S = wspace.var("yield1S");
+	RooRealVar* yield2S = wspace.var("yield2S");
+	RooRealVar* yield3S = wspace.var("yield3S");
 
 	// background: Chebychev polynomial
 
@@ -70,52 +70,17 @@ void weightedInvMass_ChebychevBkg(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCS
 
 	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
 
-	RooAddPdf fitModel("fitModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF}, RooArgList(yield1S, yield2S, yield3S, yieldBkg));
+	RooAddPdf fitModel("fitModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF}, {*yield1S, *yield2S, *yield3S, yieldBkg});
 
 	auto* fitResult = fitModel.fitTo(*massDataset, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
 
 	fitResult->Print("v");
 
-	wspace.import(fitModel);
+	wspace.import(fitModel, RecycleConflictNodes());
 
 	// draw
-	auto* canvas = new TCanvas("canvas", "", 600, 600);
-	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
-	pad1->SetBottomMargin(0.03);
-	pad1->Draw();
-	pad1->cd();
 
-	RooPlot* frame = massVar.frame(Title(" "), Range(MassBinMin, MassBinMax));
-	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
-	massDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
-
-	fitModel.plotOn(frame, Components(bkgPDF), LineColor(kGray + 2), LineStyle(kDashed));
-	fitModel.plotOn(frame, Components(*signalPDF_1S), LineColor(kRed));
-	fitModel.plotOn(frame, Components(*signalPDF_2S), LineColor(kRed));
-	fitModel.plotOn(frame, Components(*signalPDF_3S), LineColor(kRed));
-	fitModel.plotOn(frame, LineColor(kBlue));
-
-	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-
-	//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
-
-	frame->addObject(FitResultText(yield1S, ComputeSignalSignificance(wspace, 1), yield2S, ComputeSignalSignificance(wspace, 2)));
-
-	frame->Draw();
-	frame->GetYaxis()->SetMaxDigits(3);
-
-	gPad->RedrawAxis();
-
-	// pull distribution
-	canvas->cd();
-
-	TPad* pad2 = GetPadPullDistribution(frame, fitResult->floatParsFinal().getSize());
-
-	//canvas->Modified();
-	//canvas->Update();
-	canvas->cd();
-	pad1->Draw();
-	pad2->Draw();
+	TCanvas* canvas = DrawMassFitDistributions(wspace, massDataset, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
 
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 

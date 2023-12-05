@@ -28,7 +28,7 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, RooRealVar* alphaInf, RooReal
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.3, 9.6);
-	RooRealVar sigma_1S("sigma_1S", "", .01, .15);
+	RooRealVar sigma_1S("sigma_1S", "", .01, .13);
 
 	RooCrystalBall signalPDF_1S("signalPDF_1S", "", mass, mean_1S, sigma_1S, *alphaInf, *orderInf, *alphaSup, *orderSup);
 	RooRealVar yield1S("yield1S", "N 1S", yieldMax / 5, 0, yieldMax);
