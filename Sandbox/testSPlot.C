@@ -3,11 +3,10 @@
 #include "../AnalysisParameters.h"
 
 #include "../Tools/FitShortcuts.h"
+#include "../Tools/Style/Legends.h"
 
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/Style/FitDistributions.h"
-
-#include "../Tools/Style/Legends.h"
 
 #include "RooStats/SPlot.h"
 
@@ -87,69 +86,38 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
 	RooAbsPdf* signalPDF_3S = wspace.pdf("signalPDF_3S");
 
-	RooRealVar yield1S = *(wspace.var("yield1S"));
-	RooRealVar yield2S = *(wspace.var("yield2S"));
-	RooRealVar yield3S = *(wspace.var("yield3S"));
+	RooRealVar* yield1S = wspace.var("yield1S");
+	RooRealVar* yield2S = wspace.var("yield2S");
+	RooRealVar* yield3S = wspace.var("yield3S");
 
-	// background: error function x exponential
-	RooRealVar err_mu("err_mu", "err_mu", 0, 10);
-	RooRealVar err_sigma("err_sigma", "err_sigma", 0, 10);
-	RooRealVar exp_lambda("exp_lambda", "m_lambda", 0, 10);
+	// background: Chebychev polynomial
 
-	ErrorFuncTimesExp bkgPDF("bkgPDF", "", *invMass, err_mu, err_sigma, exp_lambda);
+	int order = 3;
+
+	RooArgList coefList = ChebychevCoefList(order);
+
+	RooChebychev bkgPDF("bkgPDF", " ", *invMass, coefList);
+
 	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
 
-	RooAddPdf* invMassModel = new RooAddPdf("invMassModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), RooArgList(yield1S, yield2S, yield3S, yieldBkg));
+	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
 
 	auto* fitResult = invMassModel->fitTo(*data, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
 
 	fitResult->Print("v");
 
+	wspace.import(*invMassModel, RecycleConflictNodes());
+
 	/// Draw the invariant mass distribution, to check the fit
-	auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
-	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
-	pad1->SetBottomMargin(0.03);
-	pad1->Draw();
-	pad1->cd();
+	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
 
-	RooPlot* massFrame = invMass->frame(Title(" "), Range(MassBinMin, MassBinMax));
-	massFrame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
-
-	data->plotOn(massFrame, Binning(NMassBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
-
-	invMassModel->plotOn(massFrame, Components(bkgPDF), LineColor(kGray + 2), LineStyle(kDashed));
-	invMassModel->plotOn(massFrame, Components(*signalPDF_1S), LineColor(kRed));
-	invMassModel->plotOn(massFrame, Components(*signalPDF_2S), LineColor(kRed));
-	invMassModel->plotOn(massFrame, Components(*signalPDF_3S), LineColor(kRed));
-	invMassModel->plotOn(massFrame, LineColor(kBlue));
-
-	massFrame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-
-	//	massFrame->addObject(FitResultText(yield1S, ComputeSignalSignificance(wspace, 1), yield2S, ComputeSignalSignificance(wspace, 2)));
-
-	massFrame->addObject(FitResultText(yield1S, 0, yield2S, 0));
-
-	massFrame->Draw();
-	massFrame->GetYaxis()->SetMaxDigits(3);
-
-	gPad->RedrawAxis();
-
-	// pull distribution
-	massCanvas->cd();
-
-	TPad* pad2 = GetPadPullDistribution(massFrame, fitResult->floatParsFinal().getSize());
-
-	massCanvas->cd();
-	pad1->Draw();
-	pad2->Draw();
-
-	massCanvas->SaveAs(Form("sPlotTests/invMassFit_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	massCanvas->SaveAs(Form("sPlotTests/invMassFit_ChebychevBkg_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	/// SPlot time!
 
 	// yields from invariant mass distribution fit as sWeights
 	// see https://root.cern/doc/master/classRooStats_1_1SPlot.html#a5b30f5b1b2a3723bbebef17ffb6507b2 constructor for the arguments
-	RooStats::SPlot sData{"sData", "", *data, invMassModel, RooArgList(yield1S, yield2S, yield3S, yieldBkg), RooArgSet(), true, false, "dataWithSWeights", Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError), NumCPU(NCPUs)};
+	RooStats::SPlot sData{"sData", "", *data, invMassModel, RooArgList(*yield1S, *yield2S, *yield3S, yieldBkg), RooArgSet(), true, false, "dataWithSWeights", Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError), NumCPU(NCPUs)};
 
 	std::cout << "\n\nThe dataset after creating sWeights:\n";
 	data->Print();
@@ -159,11 +127,11 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 	std::cout << "\n\n------------------------------------------\n\nCheck SWeights:" << std::endl;
 
 	std::cout << std::endl
-	          << "Yield of Y(1S) is\t" << yield1S.getVal() << ".  From sWeights it is "
+	          << "Yield of Y(1S) is\t" << yield1S->getVal() << ".  From sWeights it is "
 	          << sData.GetYieldFromSWeight("yield1S") << std::endl;
 
 	std::cout << std::endl
-	          << "Yield of Y(2S) is\t" << yield2S.getVal() << ".  From sWeights it is "
+	          << "Yield of Y(2S) is\t" << yield2S->getVal() << ".  From sWeights it is "
 	          << sData.GetYieldFromSWeight("yield2S") << std::endl;
 
 	std::cout << "Yield of background is\t" << yieldBkg.getVal() << ".  From sWeights it is "
@@ -215,28 +183,4 @@ void testSPlot(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Fil
 
 	CMS_lumi(canvas, gCMSLumiText);
 	canvas->SaveAs(Form("sPlotTests/cosThetaCS_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
-	/*
-	/// Draw the invariant mass distribution, to check the fit
-	auto* massCanvas = new TCanvas("massCanvas", "", 650, 600);
-
-	RooPlot* massFrame = invMass->frame(Title(" "), Range(MassBinMin, MassBinMax));
-	data->plotOn(massFrame, Binning(NMassBins), DrawOption("P0Z"));
-
-	invMassModel->plotOn(massFrame, Components(bkgPDF), LineColor(kGray + 2), LineStyle(kDashed));
-	invMassModel->plotOn(massFrame, Components(*signalPDF_1S), LineColor(kRed));
-	invMassModel->plotOn(massFrame, Components(*signalPDF_2S), LineColor(kRed));
-	invMassModel->plotOn(massFrame, Components(*signalPDF_3S), LineColor(kRed));
-	invMassModel->plotOn(massFrame, LineColor(kBlue));
-
-	massFrame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-
-	massFrame->addObject(FitResultText(yield1S, 0, yield2S, 0));
-
-	massFrame->Draw();
-	massFrame->GetYaxis()->SetMaxDigits(3);
-
-	gPad->RedrawAxis();
-
-	massCanvas->SaveAs(Form("sPlotTests/invMassFit_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
-	*/
 }
