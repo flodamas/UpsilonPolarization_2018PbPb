@@ -10,14 +10,14 @@ void nRecoSpectra() {
 	Double_t nSignal1S_absy0to1p2[] = {797, 1680, 1606, 1348, 2506, 2265, 1831, 1344, 1321, 832};
 	Double_t statSignal1S_absy0to1p2[] = {75, 88, 85, 96, 80, 113, 103, 72, 60, 38};
 
-	TH1D* hRawData_absy0to1p2 = new TH1D("hRawData_absy0to1p2", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T} (GeV/c)^{-1}", NPtBins, gPtBinning);
+	TH1D* hRawData_absy0to1p2 = new TH1D("hRawData_absy0to1p2", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T} (GeV/c)^{-1}", NPtFineBins, gPtFineBinning);
 
 	Double_t nSignal1S_absy1p2to2p4[] = {889, 1980, 2909, 1562, 2232, 1964, 1261, 709, 746, 514};
 	Double_t statSignal1S_absy1p2to2p4[] = {71, 123, 197, 140, 62, 95, 89, 65, 48, 35};
 
-	TH1D* hRawData_absy1p2to2p4 = new TH1D("hRawData_absy1p2to2p4", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T} (GeV/c)^{-1}", NPtBins, gPtBinning);
+	TH1D* hRawData_absy1p2to2p4 = new TH1D("hRawData_absy1p2to2p4", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T} (GeV/c)^{-1}", NPtFineBins, gPtFineBinning);
 
-	for (int i = 0; i < NPtBins; i++) {
+	for (int i = 0; i < NPtFineBins; i++) {
 		hRawData_absy0to1p2->SetBinContent(i + 1, nSignal1S_absy0to1p2[i]);
 		hRawData_absy0to1p2->SetBinError(i + 1, statSignal1S_absy0to1p2[i]);
 
@@ -119,7 +119,7 @@ void nRecoSpectra() {
 
 	// fit the ratio
 
-	TF1* fitFunc = new TF1("fitFunc", "([0]  + [1]*x*x) / ( x - [2])^3", gPtBinning[0], gPtBinning[NPtBins]);
+	TF1* fitFunc = new TF1("fitFunc", "([0]  + [1]*x*x) / ( x - [2])^3", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
 
 	//TF1* fitFunc = new TF1("fitFunc", "([0]  + [1]*x +[2]*x*x) / ( x - [3])^2", gPtBinning[0], gPtBinning[NPtBins]);
 
@@ -128,9 +128,9 @@ void nRecoSpectra() {
 
 	// legend with fit result info
 
-	TLegend* fitLegend = new TLegend(.32, .88, .62, .65);
+	TLegend* fitLegend = new TLegend(.35, .88, .65, .65);
 	fitLegend->SetTextSize(.09);
-	fitLegend->AddEntry(fitFunc, Form("#frac{A + B p_{T}^{2}}{(p_{T} - C)^{3}}  fit (#chi^{2} / d.o.f = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
+	fitLegend->AddEntry(fitFunc, Form("#frac{A + B p_{T}^{2}}{(p_{T} - C)^{3}}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
 
 	fitLegend->Draw();
 
@@ -153,7 +153,7 @@ void nRecoSpectra() {
 
 	pad2->Draw();
 
-	CMS_lumi(canvas, lumi_PbPb);
+	CMS_lumi(canvas, gCMSLumiText);
 
 	canvas->SaveAs("plots/recoPtSpectra_absy1p2to2p4.pdf", "RECREATE");
 	/*
