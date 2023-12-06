@@ -4,6 +4,7 @@
 
 #include "../Tools/Parameters/CentralityValues.h"
 #include "../Tools/Parameters/EfficiencyWeights.h"
+#include "../Tools/Parameters/MuonScaleFactors.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
@@ -59,10 +60,10 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 	/// Count the number of reconstructed Y(1S) events on the fly (for reweighting of the MC reco pT spectra)
 
-	TH1D* hReco1S_absy0to1p2 = new TH1D("hReco1S_absy0to1p2", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T}", NPtBins, gPtBinning);
+	TH1D* hReco1S_absy0to1p2 = new TH1D("hReco1S_absy0to1p2", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T}", NPtFineBins, gPtFineBinning);
 	hReco1S_absy0to1p2->Sumw2(); //  sum the squares of weights for accurate error computation
 
-	TH1D* hReco1S_absy1p2to2p4 = new TH1D("hReco1S_absy1p2to2p4", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T}", NPtBins, gPtBinning);
+	TH1D* hReco1S_absy1p2to2p4 = new TH1D("hReco1S_absy1p2to2p4", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T}", NPtFineBins, gPtFineBinning);
 	hReco1S_absy1p2to2p4->Sumw2(); //  sum the squares of weights for accurate error computation
 
 	/// RooDataSet output: one entry = one dimuon candidate!
@@ -70,7 +71,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	// weighting by event directly on the fly
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 	//RooRealVar nCollVar("nColl", "estimated number of binary nucleon-nucleon scatterings", 0, 2200);
-	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight x Data/MC vertex z position)", 0, 10000);
+	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight)", 0, 100000);
 
 	Float_t lowMassCut = 8, highMassCut = 11;
 	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
@@ -158,9 +159,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
 			// fill the dataset
-			weight = nColl * Gen_weight * Get_zPV_weight(zVtx);
-
-			if (weight == 0) weight = 1; // for whatever reason
+			weight = nColl * Gen_weight * tnp_weight_trk_pbpb(Reco_mupl_4mom->Eta(), 0) * tnp_weight_trk_pbpb(Reco_mumi_4mom->Eta(), 0) * tnp_weight_muid_pbpb(Reco_mupl_4mom->Pt(), Reco_mupl_4mom->Eta(), 0) * tnp_weight_muid_pbpb(Reco_mumi_4mom->Pt(), Reco_mumi_4mom->Eta(), 0);
 
 			centVar = Centrality;
 
