@@ -1,8 +1,8 @@
 #include "../Tools/BasicHeaders.h"
 
-// #include "../AnalysisParameters.h"
+#include "../AnalysisParameters.h"
 
-#include "../Tools/Style/FitDistributions.h"
+//#include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
@@ -76,6 +76,11 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 	TEfficiency* hAnalysisCS = new TEfficiency(Form("AnalysisCS_pt%dto%d", ptMin, ptMax), ";cos #theta_{CS}; #varphi_{CS} (#circ);acceptance", NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
 	TEfficiency* hAnalysisHX = new TEfficiency(Form("AnalysisHX_pt%dto%d", ptMin, ptMax), ";cos #theta_{HX}; #varphi_{HX} (#circ);acceptance", NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 
+	// vs cos theta, for investigation
+	TEfficiency* hAccCS1D = new TEfficiency(Form("AccCosThetaCS_pt%dto%d", ptMin, ptMax), ";cos #theta_{CS}; acceptance", NCosThetaBins, gCosThetaMin, gCosThetaMax);
+
+	TEfficiency* hAccHX1D = new TEfficiency(Form("AccCosThetaHX_pt%dto%d", ptMin, ptMax), ";cos #theta_{HX}; acceptance", NCosThetaBins, gCosThetaMin, gCosThetaMax);
+
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 	TLorentzVector* gen_mupl_LV = new TLorentzVector();
@@ -123,6 +128,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 
 				hGranularLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
 				hAnalysisLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
+
+				hAccCS1D->Fill(withinAcceptance, muPlus_CS.CosTheta());
+				hAccHX1D->Fill(withinAcceptance, muPlus_HX.CosTheta());
 			}
 		}
 	}
@@ -159,6 +167,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 	hAnalysisCS->Write();
 	hGranularHX->Write();
 	hAnalysisHX->Write();
+
+	hAccCS1D->Write();
+	hAccHX1D->Write();
 
 	outputFile.Close();
 
