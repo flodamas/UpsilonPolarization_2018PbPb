@@ -74,12 +74,6 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	Long64_t nEntries = data->sumEntries();
 
-	// copy for sPlot
-	RooDataSet dataForsPlot = RooDataSet(*data, "dataForsPlot");
-
-	RooWorkspace wsPlot("wsPlot");
-	wsPlot.import(dataForsPlot);
-
 	/// Invariant mass model
 
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
@@ -116,8 +110,73 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
 
 	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
+	wspace.import(*invMassModel, RecycleConflictNodes());
+
+	/// "Standard" procedure: extract the yields per bin
+
+	TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
+
+	Float_t cosThetaStep = ((cosThetaMax - cosThetaMin) / nCosThetaBins);
+
+	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
+		Float_t cosThetaVal = cosThetaMin + iCosTheta * cosThetaStep;
+
+		cout << "Invariant mass fit for cos theta = [" << cosThetaVal << ", " << cosThetaVal + cosThetaStep << "]" << endl;
+
+		RooDataSet* reducedDataset = InvMassDataset(allDataset, wspace, ptMin, ptMax, cosThetaVal, cosThetaVal + cosThetaStep);
+
+		auto* fitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
+
+		fitResult->Print("v");
+
+		// save the invariant mass distribution fit for further checks
+		// one pad for the invariant mass data distribution with fit components, one for the pull distribution
+		TCanvas* massCanvas = new TCanvas("massCanvas", "", 600, 600);
+		TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
+		pad1->SetBottomMargin(0.03);
+		pad1->Draw();
+		pad1->cd();
+
+		RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
+
+		frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+
+		//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+
+		frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
+
+		frame->Draw();
+
+		gPad->RedrawAxis();
+
+		// pull distribution
+		massCanvas->cd();
+
+		TPad* pad2 = GetPadPullDistribution(frame, fitResult->floatParsFinal().getSize());
+
+		//canvas->Modified();
+		//canvas->Update();
+		massCanvas->cd();
+		pad1->Draw();
+		pad2->Draw();
+
+		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, true, cosThetaVal, cosThetaVal + cosThetaStep, 0, 180);
+
+		massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
+
+		standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
+		standardCorrectedHist.SetBinError(iCosTheta + 1, yield1S->getError());
+	}
+
+	RooDataHist correctedHist("correctedHist", " ", cosThetaCS, Import(standardCorrectedHist));
 
 	/// SPlot time!
+
+	// copy for sPlot
+	RooDataSet dataForsPlot = RooDataSet(*data, "dataForsPlot");
+
+	RooWorkspace wsPlot("wsPlot");
+	wsPlot.import(dataForsPlot);
 
 	// yields from invariant mass distribution fit as sWeights
 	// see https://root.cern/doc/master/classRooStats_1_1SPlot.html#a5b30f5b1b2a3723bbebef17ffb6507b2 constructor for the arguments
@@ -144,29 +203,6 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	// create weighted data sets
 	RooDataSet data_weight1S{dataForsPlot.GetName(), dataForsPlot.GetTitle(), &dataForsPlot, *dataForsPlot.get(), nullptr, "yield1S_sw"};
-
-	/// "Standard" procedure: extract the yields per bin
-
-	TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
-
-	Float_t cosThetaStep = ((cosThetaMax - cosThetaMin) / nCosThetaBins);
-
-	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
-		Float_t cosThetaVal = cosThetaMin + iCosTheta * cosThetaStep;
-
-		cout << "Invariant mass fit for cos theta = [" << cosThetaVal << ", " << cosThetaVal + cosThetaStep << "]" << endl;
-
-		RooDataSet* reducedDataset = InvMassDataset(allDataset, wspace, ptMin, ptMax, cosThetaVal, cosThetaVal + cosThetaStep);
-
-		auto* fitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
-
-		fitResult->Print("v");
-
-		standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
-		standardCorrectedHist.SetBinError(iCosTheta + 1, yield1S->getError());
-	}
-
-	RooDataHist correctedHist("correctedHist", " ", cosThetaCS, Import(standardCorrectedHist));
 
 	/// Draw the cos theta distributions
 
