@@ -14,7 +14,7 @@ using namespace RooFit;
 RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet* dataset) {
 	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
-	dataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
+	dataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
 
 	auto* fitModel = wspace.pdf("fitModel");
 	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(kGray + 2), LineStyle(kDashed));
