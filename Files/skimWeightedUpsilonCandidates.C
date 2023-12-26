@@ -27,7 +27,9 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 	}
 
 	auto* effMapCS = (TEfficiency*)efficiencyFile->Get("NominalEff_CS");
+	auto* systEffCS = (TH3D*)efficiencyFile->Get("RelatSystEff_CS");
 	auto* effMapHX = (TEfficiency*)efficiencyFile->Get("NominalEff_HX");
+	auto* systEffHX = (TH3D*)efficiencyFile->Get("RelatSystEff_HX");
 
 	// Oniatree
 	TFile* infile = TFile::Open(inputFileName, "READ");
@@ -87,19 +89,20 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 
 	RooRealVar dimuonWeightCSVar("dimuonWeightCS", "1 / (acc x eff) weight in the CS frame", 0, 1000000);
 
-	RooDataSet datasetCS("datasetCS", "skimmed weighted dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, dimuonWeightCSVar), RooFit::WeightVar("dimuonWeightCS"));
+	RooDataSet datasetCS("datasetCS", "skimmed weighted dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, dimuonWeightCSVar), RooFit::WeightVar("dimuonWeightCS"), RooFit::StoreAsymError(RooArgSet(dimuonWeightCSVar)));
 
 	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
 	RooRealVar phiHXVar("phiHX", "absolute phi angle in the helicity frame", 0, 180, "#circ");
 
 	RooRealVar dimuonWeightHXVar("dimuonWeightHX", "1 / (acc x eff) weight in the HX frame", 0, 1000000);
 
-	RooDataSet datasetHX("datasetHX", "skimmed weighted dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, dimuonWeightHXVar), RooFit::WeightVar("dimuonWeightHX"));
+	RooDataSet datasetHX("datasetHX", "skimmed weighted dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, dimuonWeightHXVar), RooFit::WeightVar("dimuonWeightHX"), RooFit::StoreAsymError(RooArgSet(dimuonWeightHXVar)));
 
 	// loop variables
 	Long64_t totEntries = OniaTree->GetEntries();
 
 	Double_t weightCS = 0, weightHX = 0;
+	Double_t errorWeightLowCS = 0, errorWeightHighCS = 0, errorWeightLowHX = 0, errorWeightHighHX = 0;
 
 	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
 		if (iEvent % 10000 == 0) {
@@ -169,6 +172,11 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 
 			weightCS = ((acceptanceCS == 0) || (efficiencyCS == 0)) ? 0 : 1 / (acceptanceCS * efficiencyCS); // IMPORTANT!
 
+			// propagate both scale factor uncertainties and efficiency stat errors to the weight
+			errorWeightLowCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorUp(effBinCS) / efficiencyCS);
+
+			errorWeightHighCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorLow(effBinCS) / efficiencyCS);
+
 			int accBinHX = accMapHX->FindFixBin(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
 			double acceptanceHX = accMapHX->GetEfficiency(accBinHX);
 
@@ -176,6 +184,10 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 			double efficiencyHX = effMapHX->GetEfficiency(effBinHX);
 
 			weightHX = ((acceptanceHX == 0) || (efficiencyHX == 0)) ? 0 : 1 / (acceptanceHX * efficiencyHX); // IMPORTANT!
+
+			errorWeightLowHX = weightHX * TMath::Hypot(systEffHX->GetBinContent(effBinHX), effMapHX->GetEfficiencyErrorUp(effBinHX) / efficiencyHX);
+
+			errorWeightHighHX = weightHX * TMath::Hypot(systEffHX->GetBinContent(effBinHX), effMapHX->GetEfficiencyErrorLow(effBinHX) / efficiencyHX);
 
 			// fill the datasets
 
@@ -190,15 +202,19 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 			phiCSVar = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
 
 			dimuonWeightCSVar = weightCS;
-			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, dimuonWeightCSVar), weightCS);
+
+			dimuonWeightCSVar.setAsymError(errorWeightLowCS, errorWeightHighCS);
+
+			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, dimuonWeightCSVar), weightCS, errorWeightLowCS, errorWeightHighCS);
 
 			// Helicity
 			cosThetaHXVar = muPlus_HX.CosTheta();
 			phiHXVar = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
 
 			dimuonWeightHXVar = weightHX;
+			dimuonWeightHXVar.setAsymError(errorWeightLowHX, errorWeightHighHX);
 
-			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, dimuonWeightHXVar), weightHX);
+			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, dimuonWeightHXVar), weightHX, errorWeightLowHX, errorWeightHighHX);
 
 		} // end of reco QQ loop
 	}   // enf of event loop
