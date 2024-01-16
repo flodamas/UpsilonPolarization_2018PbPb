@@ -156,7 +156,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	/// save the results in a file for later usage
 	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", gUpsilonState);
-	TFile outputFile(outputFileName, "RECREATE");
+	TFile outputFile(outputFileName, "UPDATE");
 
 	accMatrixCS->Write();
 	accMatrixHX->Write();

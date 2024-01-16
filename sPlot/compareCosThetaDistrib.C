@@ -154,14 +154,14 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 	// to be corrected for acceptance x efficiency
 	RooDataSet sWeightedRawDataset = sWeightedCosThetaDataset(ptMin, ptMax, "../Files/UpsilonSkimmedDataset.root", "dataset");
 
-	Int_t nCosThetaBins = 20;
+	Int_t nCosThetaBins = 10;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
 
 	RooRealVar cosThetaCS("cosThetaCS", "cos theta in the Collins-Soper frame", cosThetaMin, cosThetaMax);
 
-	RooRealVar correctionCSVar("correctionCSVar", "1 / (acc x eff) weight in the CS frame", -1000000, 1000000);
+	RooRealVar correctionCSVar("correctionCS", "1 / (acc x eff) weight in the CS frame", -1000000, 1000000);
 
-	RooDataSet correctedAfterDataset("correctedAfterDataset", " ", RooArgSet(cosThetaCS, correctionCSVar), RooFit::WeightVar("correctionCS"));
+	RooDataSet correctedAfterDataset("correctedAfterDataset", " ", RooArgSet(cosThetaCS, correctionCSVar), RooFit::WeightVar("correctionCS"), RooFit::StoreAsymError(RooArgSet(correctionCSVar)));
 
 	// acceptance maps
 	TFile* acceptanceFile = TFile::Open("../MonteCarlo/AcceptanceMaps/1S/AcceptanceResults.root", "READ");
@@ -180,9 +180,13 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 	}
 
 	auto* effMapCS = (TEfficiency*)efficiencyFile->Get("NominalEff_CS");
+	auto* systEffCS = (TH3D*)efficiencyFile->Get("RelatSystEff_CS");
+	auto* effMapHX = (TEfficiency*)efficiencyFile->Get("NominalEff_HX");
+	auto* systEffHX = (TH3D*)efficiencyFile->Get("RelatSystEff_HX");
 
 	// run over the sWeighted dataset and fill a new one with corrected data
 	Double_t weightCS = 0;
+	Double_t errorWeightLowCS = 0, errorWeightHighCS = 0;
 
 	// Retrieve and parse event buffer before loop
 	RooArgSet* obs = (RooArgSet*)sWeightedRawDataset.get();
@@ -206,9 +210,16 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 
 		//		weightCS = (efficiencyCS == 0) ? 0 : sWeightedRawDataset.weight() / (efficiencyCS); // IMPORTANT!
 
+		// propagate both scale factor uncertainties and efficiency stat errors to the weight
+		errorWeightLowCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorUp(effBinCS) / efficiencyCS);
+
+		errorWeightHighCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorLow(effBinCS) / efficiencyCS);
+
 		correctionCSVar = weightCS;
 
-		correctedAfterDataset.add(RooArgSet(*tempCosThetaCS, correctionCSVar), weightCS);
+		correctionCSVar.setAsymError(errorWeightLowCS, errorWeightHighCS);
+
+		correctedAfterDataset.add(RooArgSet(*tempCosThetaCS, correctionCSVar), weightCS, errorWeightLowCS, errorWeightHighCS);
 	}
 
 	/// Last check: extract the raw yields for each cos theta bins, correct for acceptance times efficiency, and plot the resulting distribution
@@ -317,7 +328,7 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	correctedBeforeDataset.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("dataBefore"));
 
-	correctedAfterDataset.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kBlue), DataError(RooAbsData::SumW2), Name("dataAfter"));
+	correctedAfterDataset.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kAzure + 2), DataError(RooAbsData::SumW2), Name("dataAfter"));
 
 	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kGreen + 2), Name("corrected"));
 
@@ -335,11 +346,11 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 	text.DrawLatexNDC(.55, .85, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 	//text.DrawLatexNDC(.48, .8, Form("%.0f < m_{#mu#mu} < %.0f GeV/c^{2}", massMin, massMax));
 
-	TLegend legend(.3, .8, .5, .65);
+	TLegend legend(.3, .8, .55, .65);
 	legend.SetTextSize(.05);
 	//legend.SetHeader("sWeighted data, efficiency-corrected");
-	legend.AddEntry(frame->findObject("dataBefore"), "3D correction + sPlot", "lp");
-	legend.AddEntry(frame->findObject("dataAfter"), "sPlot + 3D correction", "lp");
+	legend.AddEntry(frame->findObject("dataBefore"), "2D correction + sPlot", "lp");
+	legend.AddEntry(frame->findObject("dataAfter"), "sPlot + 2D correction", "lp");
 	legend.AddEntry(frame->findObject("corrected"), "raw yield + 1D correction", "lp");
 
 	legend.DrawClone();
