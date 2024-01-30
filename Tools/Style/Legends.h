@@ -1,3 +1,7 @@
+// when the header is included several times, to avoid the redefinition error
+#ifndef LEGENDS
+#define LEGENDS
+
 #include "TPaveText.h"
 
 #include "RooRealVar.h"
@@ -193,3 +197,5 @@ TPaveText* PolarParamsText(double lambThetaIn, double lambPhiIn, RooRealVar lamb
 	text->SetAllWith(" ", "align", 12);
 	return text;
 }
+
+#endif
