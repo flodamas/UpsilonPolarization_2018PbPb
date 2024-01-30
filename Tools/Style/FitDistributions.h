@@ -8,6 +8,8 @@
 #include "TLatex.h"
 #include "TH2.h"
 
+#include "Legends.h"
+
 using namespace RooFit;
 
 // make and draw the invariant mass distribution with fit results

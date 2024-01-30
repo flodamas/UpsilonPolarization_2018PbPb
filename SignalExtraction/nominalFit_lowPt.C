@@ -9,7 +9,7 @@
 
 #include "../Tools/Parameters/PhysicsConstants.h"
 
-#include "../Tools/CustomRoofitPDFs/ErrorFuncTimesExp.h"
+#include "../Tools/RooFitPDFs/ErrorFuncTimesExp.h"
 
 void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	// get the tail parameters of the signal shape first in case the MC fit is needed
@@ -43,7 +43,7 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
-	RooDataSet* massDataset = isCSframe ? ReducedWeightedMassDatasetCS(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax):ReducedWeightedMassDatasetHX(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* massDataset = isCSframe ? ReducedWeightedMassDatasetCS(allDataset, *wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax):ReducedWeightedMassDatasetHX(allDataset, *wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar* massVar = wspace->var("mass");
 
@@ -166,6 +166,18 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	const char* fitModelName = GetFitModelName("symCoreDSCB", ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 	canvas->SaveAs(Form("FitPlots/%s.png", fitModelName), "RECREATE");
+
+
+	// wspace->import(fitModel); 
+	// wspace->Print();
+
+	// SaveFitResults(*wspace, fitModelName);
+
+	// TFile outputfile(Form("FitResults/%s.root", fitModelName),"RECREATE");
+	// // outputfile.cd();
+
+	// wspace->Write();
+	// outputfile.Close();
 }
 
 void scanNominalFit_lowPt(){
