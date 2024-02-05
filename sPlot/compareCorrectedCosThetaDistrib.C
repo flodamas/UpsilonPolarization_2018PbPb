@@ -56,6 +56,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
+		exit(1);
 	}
 
 	cout << "File " << filename << " opened" << endl;
@@ -74,7 +75,6 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	auto* data = InvMassCosThetaWeightedDataset(allDataset, wspace, ptMin, ptMax, refFrameName);
 
 	Long64_t nEntries = data->sumEntries();
-	wspace.Print();
 	/// Invariant mass model
 
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
