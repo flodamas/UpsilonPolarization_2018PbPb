@@ -162,6 +162,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, true, cosThetaVal, cosThetaVal + cosThetaStep, 0, 180);
 
+		gSystem->mkdir("InvMassFits");
 		massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
 
 		standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
@@ -240,5 +241,6 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	gPad->Update();
 
 	//CMS_lumi(canvas, gCMSLumiText);
+	gSystem->mkdir("1D", kTRUE);
 	canvas->SaveAs(Form("1D/compareCorrectedCosThetaCS_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 }
