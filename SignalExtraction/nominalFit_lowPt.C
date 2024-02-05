@@ -48,6 +48,7 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	RooRealVar* massVar = wspace->var("mass");
 
 	Long64_t nEntries = massDataset->sumEntries();
+	cout << "nEntries: "<< nEntries << endl;
 
 	auto* canvas = new TCanvas("canvas", "", 600, 600);
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
@@ -165,6 +166,7 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	pad2->Draw();
 
 	const char* fitModelName = GetFitModelName("symCoreDSCB", ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	gSystem->mkdir("FitPlots", kTRUE);
 	canvas->SaveAs(Form("FitPlots/%s.png", fitModelName), "RECREATE");
 
 
