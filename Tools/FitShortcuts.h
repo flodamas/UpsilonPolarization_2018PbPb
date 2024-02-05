@@ -328,6 +328,7 @@ RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, 
 	} else {
 		cout << endl
 		     << mcFileName << " file does not seem to exist, you need to extract the signal tail paramaters from MC fit first!" << endl;
+		exit(1);
 	}
 
 	// fix the tail parameters
