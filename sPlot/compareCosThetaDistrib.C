@@ -135,7 +135,7 @@ RooDataSet* InvMassRawDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_
 }
 
 // compare the resulting distributions before and after acc x eff correction
-void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
+void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") { //possibla refFrame names: CS or HX
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
