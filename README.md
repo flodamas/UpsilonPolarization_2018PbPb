@@ -8,7 +8,7 @@
     - headers: 1) AnalysisParameters.h
                2) ReferenceFrameTransformation/Transformations.h
     - input: OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root 
-    - output: upsilonSkimmedDataset.root
+    - output: UpsilonSkimmedDataset.root
     ```
     
 **2.**  Draw Cos&theta; vs &phi; map   <br>
@@ -26,17 +26,17 @@
     - output: MonteCarlo/acceptanceMaps/%S/AcceptanceResults.root 
     ```
   ii) Get efficiency map
-  - MonteCarlo/mapUpsilonEfficiency.C
+  - MonteCarlo/weightedEfficiencyMaps.C
     ```
     - input: Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root
-    - output: MonteCarlo/EfficiencyMaps/%S/EfficiencyResults_pt%dto%dGeV.root 
+    - output: MonteCarlo/EfficiencyMaps/%S/EfficiencyResults.root 
     ```
   iii) Do Acceptance & Efficiency correction
   - Files/skimWeightedUpsilonCandidates.C
     ```
     - inputs: 1) Files/OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root
           2) MonteCarlo/AcceptanceMaps/1S/AcceptanceResults.root
-          3) MonteCarlo/EfficiencyMaps/1S/EfficiencyResults_pt0to30.root
+          3) MonteCarlo/EfficiencyMaps/1S/EfficiencyResults.root
     - output: Files/WeightedUpsilonSkimmedDataset.root 
     ```
   iv) Get Upsilon yield 2D map after Acceptance & Efficiency correction
