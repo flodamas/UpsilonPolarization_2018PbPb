@@ -81,6 +81,7 @@ void drawCosThetaPhiMapWeightedDataset(Int_t ptMin = 0, Int_t ptMax = 30, const 
 	TH2* histoHX = DrawCosThetaPhiDistribution((RooDataSet*)f->Get("datasetHX"), wspace, "HX", ptMin, ptMax);
 
 	/// save the results in a file for later usage
+	gStyle->mkdir("frame_distrib", kTRUE);
 	TFile outputFile("frame_distrib/CorrectedDataCosThetaPhiMaps.root", "UPDATE");
 
 	//	histoHX->Write();

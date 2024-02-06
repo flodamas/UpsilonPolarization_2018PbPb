@@ -659,6 +659,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2) {
 	//canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX.png", gUpsilonState), "RECREATE");
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
+	gSystem->mkdir(Form("EfficiencyMaps/%dS", gUpsilonState), kTRUE);
 	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults.root", gUpsilonState);
 	TFile outputFile(outputFileName, "UPDATE");
 
