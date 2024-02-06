@@ -11,32 +11,35 @@
 #include "RooStats/SPlot.h"
 
 // reduce the whole dataset (N dimensions)
-RooDataSet sWeightedCosThetaDataset(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/UpsilonSkimmedDataset.root", const char* datasetName = "datasetCS") {
+RooDataSet sWeightedCosThetaDataset(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/UpsilonSkimmedDataset.root", const char* refFrameName = "CS") {
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
+		exit(1);
 	}
 
 	cout << "File " << filename << " opened" << endl;
 
+	const char* datasetName = Form("dataset%s", refFrameName);
+	if(strcmp(filename, "../Files/UpsilonSkimmedDataset.root")==0) datasetName = "dataset";
 	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	// import the dataset to a workspace
 	RooWorkspace wspace(Form("workspace_%s", datasetName));
 	wspace.import(*allDataset);
-
+	wspace.Print();
 	// read variables in the reduced dataset in the workspace
 	RooRealVar invMass = *wspace.var("mass");
 
-	RooRealVar cosThetaCS = *wspace.var("cosThetaCS");
+	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	RooRealVar phiCS = *wspace.var("phiCS");
+	RooRealVar phi = *wspace.var(Form("phi%s", refFrameName));
 
 	RooRealVar pt = *wspace.var("pt");
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
 
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(invMass, cosThetaCS, phiCS, pt), kinematicCut);
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(invMass, cosTheta, phi, pt), kinematicCut);
 
 	//	wspace.import(*reducedDataset);
 
@@ -116,13 +119,13 @@ RooDataSet sWeightedCosThetaDataset(Int_t ptMin = 0, Int_t ptMax = 30, const cha
 	return data_weight1S;
 }
 
-RooDataSet* InvMassRawDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1) {
+RooDataSet* InvMassRawDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS") {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
 	}
 
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax);
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosTheta%s > %f && cosTheta%s < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, cosThetaMin, refFrameName, cosThetaMax);
 
 	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
 
@@ -132,7 +135,7 @@ RooDataSet* InvMassRawDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_
 }
 
 // compare the resulting distributions before and after acc x eff correction
-void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
+void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -145,23 +148,23 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 	     << "************* sPlot of corrected data ************" << endl
 	     << endl;
 
-	RooDataSet correctedBeforeDataset = sWeightedCosThetaDataset(ptMin, ptMax, "../Files/WeightedUpsilonSkimmedDataset.root", "datasetCS");
+	RooDataSet correctedBeforeDataset = sWeightedCosThetaDataset(ptMin, ptMax, "../Files/WeightedUpsilonSkimmedDataset.root", refFrameName);
 
 	cout << endl
 	     << "************* sPlot of raw data ************" << endl
 	     << endl;
 
 	// to be corrected for acceptance x efficiency
-	RooDataSet sWeightedRawDataset = sWeightedCosThetaDataset(ptMin, ptMax, "../Files/UpsilonSkimmedDataset.root", "dataset");
+	RooDataSet sWeightedRawDataset = sWeightedCosThetaDataset(ptMin, ptMax, "../Files/UpsilonSkimmedDataset.root", refFrameName);
 
 	Int_t nCosThetaBins = 10;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
 
-	RooRealVar cosThetaCS("cosThetaCS", "cos theta in the Collins-Soper frame", cosThetaMin, cosThetaMax);
+	RooRealVar cosTheta(Form("cosTheta%s", refFrameName), Form("cos theta in the %s frame", refFrameName), cosThetaMin, cosThetaMax);
 
-	RooRealVar correctionCSVar("correctionCS", "1 / (acc x eff) weight in the CS frame", -1000000, 1000000);
+	RooRealVar correctionVar("correction", Form("1 / (acc x eff) weight in the %s frame", refFrameName), -1000000, 1000000);
 
-	RooDataSet correctedAfterDataset("correctedAfterDataset", " ", RooArgSet(cosThetaCS, correctionCSVar), RooFit::WeightVar("correctionCS"), RooFit::StoreAsymError(RooArgSet(correctionCSVar)));
+	RooDataSet correctedAfterDataset("correctedAfterDataset", " ", RooArgSet(cosTheta, correctionVar), RooFit::WeightVar("correction"), RooFit::StoreAsymError(RooArgSet(correctionVar)));
 
 	// acceptance maps
 	TFile* acceptanceFile = TFile::Open("../MonteCarlo/AcceptanceMaps/1S/AcceptanceResults.root", "READ");
@@ -170,7 +173,7 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 		return;
 	}
 
-	auto* accMapCS = (TEfficiency*)acceptanceFile->Get("AccMatrixCS");
+	auto* accMap = (TEfficiency*)acceptanceFile->Get(Form("AccMatrix%s", refFrameName));
 
 	// efficiency maps
 	TFile* efficiencyFile = TFile::Open("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults.root", "READ");
@@ -179,19 +182,18 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 		return;
 	}
 
-	auto* effMapCS = (TEfficiency*)efficiencyFile->Get("NominalEff_CS");
-	auto* systEffCS = (TH3D*)efficiencyFile->Get("RelatSystEff_CS");
-	auto* effMapHX = (TEfficiency*)efficiencyFile->Get("NominalEff_HX");
-	auto* systEffHX = (TH3D*)efficiencyFile->Get("RelatSystEff_HX");
+	auto* effMap = (TEfficiency*)efficiencyFile->Get(Form("NominalEff_%s", refFrameName));
+	auto* systEff = (TH3D*)efficiencyFile->Get(Form("RelatSystEff_%s", refFrameName));
 
 	// run over the sWeighted dataset and fill a new one with corrected data
-	Double_t weightCS = 0;
-	Double_t errorWeightLowCS = 0, errorWeightHighCS = 0;
+	Double_t weight = 0;
+	Double_t errorWeightLow = 0, errorWeightHigh = 0;
 
 	// Retrieve and parse event buffer before loop
 	RooArgSet* obs = (RooArgSet*)sWeightedRawDataset.get();
-	RooRealVar* tempCosThetaCS = (RooRealVar*)obs->find("cosThetaCS");
-	RooRealVar* tempPhiCS = (RooRealVar*)obs->find("phiCS");
+	cout << *obs << endl;
+	RooRealVar* tempCosTheta = (RooRealVar*)obs->find(Form("cosTheta%s", refFrameName));
+	RooRealVar* tempPhi = (RooRealVar*)obs->find(Form("phi%s", refFrameName));
 	RooRealVar* tempPt = (RooRealVar*)obs->find("pt");
 
 	for (int i = 0; i < sWeightedRawDataset.numEntries(); i++) {
@@ -200,26 +202,27 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 		//cout << tempCosThetaCS->getVal() << ": weight = " << sWeightedRawDataset.weight() << endl;
 
 		// get the corresponding weights
-		int accBinCS = accMapCS->FindFixBin(tempCosThetaCS->getVal(), tempPhiCS->getVal(), tempPt->getVal());
-		double acceptanceCS = accMapCS->GetEfficiency(accBinCS);
+		int accBin = accMap->FindFixBin(tempCosTheta->getVal(), tempPhi->getVal(), tempPt->getVal());
+		double acceptance = accMap->GetEfficiency(accBin);
 
-		int effBinCS = effMapCS->FindFixBin(tempCosThetaCS->getVal(), tempPhiCS->getVal(), tempPt->getVal());
-		double efficiencyCS = effMapCS->GetEfficiency(effBinCS);
+		int effBin = effMap->FindFixBin(tempCosTheta->getVal(), tempPhi->getVal(), tempPt->getVal());
+		double efficiency = effMap->GetEfficiency(effBin);
 
-		weightCS = ((acceptanceCS == 0) || (efficiencyCS == 0)) ? 0 : sWeightedRawDataset.weight() / (acceptanceCS * efficiencyCS); // IMPORTANT!
+
+		weight = ((acceptance == 0) || (efficiency == 0)) ? 0 : sWeightedRawDataset.weight() / (acceptance * efficiency); // IMPORTANT!
 
 		//		weightCS = (efficiencyCS == 0) ? 0 : sWeightedRawDataset.weight() / (efficiencyCS); // IMPORTANT!
 
 		// propagate both scale factor uncertainties and efficiency stat errors to the weight
-		errorWeightLowCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorUp(effBinCS) / efficiencyCS);
+		errorWeightLow = weight * TMath::Hypot(systEff->GetBinContent(effBin), effMap->GetEfficiencyErrorUp(effBin) / efficiency);
 
-		errorWeightHighCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorLow(effBinCS) / efficiencyCS);
+		errorWeightHigh = weight * TMath::Hypot(systEff->GetBinContent(effBin), effMap->GetEfficiencyErrorLow(effBin) / efficiency);
 
-		correctionCSVar = weightCS;
+		correctionVar = weight;
 
-		correctionCSVar.setAsymError(errorWeightLowCS, errorWeightHighCS);
+		correctionVar.setAsymError(errorWeightLow, errorWeightHigh);
 
-		correctedAfterDataset.add(RooArgSet(*tempCosThetaCS, correctionCSVar), weightCS, errorWeightLowCS, errorWeightHighCS);
+		correctedAfterDataset.add(RooArgSet(*tempCosTheta, correctionVar), weight, errorWeightLow, errorWeightHigh);
 	}
 
 	/// Last check: extract the raw yields for each cos theta bins, correct for acceptance times efficiency, and plot the resulting distribution
@@ -281,9 +284,9 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
 
 	// get the correction histograms (1D!)
-	auto* efficiency1D = (TEfficiency*)efficiencyFile->Get(Form("hEffCosThetaCS_pt%dto%d", ptMin, ptMax));
+	auto* efficiency1D = (TEfficiency*)efficiencyFile->Get(Form("hEffCosTheta%s_pt%dto%d", refFrameName, ptMin, ptMax));
 
-	auto* acceptance1D = (TEfficiency*)acceptanceFile->Get(Form("AccCosThetaCS_pt%dto%d", ptMin, ptMax));
+	auto* acceptance1D = (TEfficiency*)acceptanceFile->Get(Form("AccCosTheta%s_pt%dto%d", refFrameName, ptMin, ptMax));
 
 	// loop and fit
 
@@ -306,7 +309,7 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 		double errorRawYield = yield1S->getError();
 
 		int globalBin = efficiency1D->GetGlobalBin(iCosTheta + 1);
-
+	
 		double effValue = efficiency1D->GetEfficiency(globalBin);
 
 		double accValue = acceptance1D->GetEfficiency(globalBin);
@@ -317,14 +320,14 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 		standardCorrectedHist.SetBinError(iCosTheta + 1, errorRawYield / (effValue * accValue));
 	}
 
-	RooDataHist correctedHist("correctedHist", " ", cosThetaCS, Import(standardCorrectedHist));
+	RooDataHist correctedHist("correctedHist", " ", cosTheta, Import(standardCorrectedHist));
 
 	/// Draw the cos theta distributions
 
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
-	RooPlot* frame = cosThetaCS.frame(Title(" "), Range(cosThetaMin, cosThetaMax));
-	frame->SetXTitle("cos #theta_{CS}");
+	RooPlot* frame = cosTheta.frame(Title(" "), Range(cosThetaMin, cosThetaMax));
+	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
 
 	correctedBeforeDataset.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("dataBefore"));
 
@@ -358,5 +361,6 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30) {
 	gPad->Update();
 
 	//CMS_lumi(canvas, gCMSLumiText);
-	canvas->SaveAs(Form("1D/compareCosThetaCS_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	gSystem->mkdir("1D", kTRUE);
+	canvas->SaveAs(Form("1D/compareCosTheta%s_cent%dto%d_pt%dto%dGeV.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 }
