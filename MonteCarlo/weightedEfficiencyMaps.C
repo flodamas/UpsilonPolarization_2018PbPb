@@ -153,6 +153,7 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax) {
 	effMap->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 240);
 	effMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 0.9);
 
+	gSystem->mkdir(Form("EfficiencyMaps/%dS", gUpsilonState), kTRUE);
 	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", gUpsilonState, effMap->GetName()), "RECREATE");
 }
 
