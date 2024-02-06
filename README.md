@@ -8,7 +8,7 @@
     - headers: 1) AnalysisParameters.h
                2) ReferenceFrameTransformation/Transformations.h
     - input: OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root 
-    - output: upsilonSkimmedDataset.root
+    - output: UpsilonSkimmedDataset.root
     ```
     
 **2.**  Draw Cos&theta; vs &phi; map   <br>
