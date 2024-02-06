@@ -161,7 +161,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 		pad1->Draw();
 		pad2->Draw();
 
-		Bool_t isCSframe = strcmp(refFrameName, "CS"); 
+		Bool_t isCSframe = (strcmp(refFrameName, "CS")==0)? kTRUE : kFALSE; 
 		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaVal, cosThetaVal + cosThetaStep, 0, 180);
 
 		gSystem->mkdir("InvMassFits");
