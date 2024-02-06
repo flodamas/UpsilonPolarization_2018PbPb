@@ -56,7 +56,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
-		exit(1);
+		return;
 	}
 
 	cout << "File " << filename << " opened" << endl;
