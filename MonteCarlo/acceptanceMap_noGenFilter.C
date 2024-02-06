@@ -23,7 +23,8 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax) {
 
 	accMap->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
 	accMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
-
+	
+	gSystem->mkdir(Form("AcceptanceMaps/%dS", gUpsilonState), kTRUE);
 	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", gUpsilonState, accMap->GetName()), "RECREATE");
 }
 
@@ -155,6 +156,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 	DrawAcceptanceMap(hAnalysisHX, ptMin, ptMax);
 
 	/// save the results in a file for later usage
+	gSystem->mkdir(Form("AcceptanceMaps/%dS", gUpsilonState), kTRUE);
 	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", gUpsilonState);
 	TFile outputFile(outputFileName, "UPDATE");
 
