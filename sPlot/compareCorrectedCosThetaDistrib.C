@@ -47,6 +47,8 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	Int_t nCosThetaBins = 10;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
+	// Int_t nCosThetaBins = 1;
+	// Float_t cosThetaMin = -0.4, cosThetaMax = -0.2;
 
 	/// Set up the data
 	using namespace RooFit;
@@ -111,13 +113,14 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
 
 	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
-	wspace.import(*invMassModel, RecycleConflictNodes());
 
 	/// "Standard" procedure: extract the yields per bin
 
 	TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
 
 	Float_t cosThetaStep = ((cosThetaMax - cosThetaMin) / nCosThetaBins);
+
+	TCanvas* massCanvas = 0;
 
 	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
 		Float_t cosThetaVal = cosThetaMin + iCosTheta * cosThetaStep;
@@ -132,12 +135,15 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 		// save the invariant mass distribution fit for further checks
 		// one pad for the invariant mass data distribution with fit components, one for the pull distribution
-		TCanvas* massCanvas = new TCanvas("massCanvas", "", 600, 600);
+		// TCanvas* massCanvas = new TCanvas("massCanvas", "", 600, 600);
+		if(massCanvas) delete massCanvas;
+		massCanvas = new TCanvas("massCanvas", "", 600, 600);
 		TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 		pad1->SetBottomMargin(0.03);
 		pad1->Draw();
 		pad1->cd();
 
+		wspace.import(*invMassModel, RecycleConflictNodes());
 		RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
 
 		frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
@@ -218,6 +224,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("standard"));
 
+	// frame->GetYaxis()->SetRangeUser(0,30000);
 	frame->GetYaxis()->SetMaxDigits(3);
 
 	frame->Draw();
