@@ -69,7 +69,14 @@
               (read by the function in Tools/Shortcuts.h)
     - output: fit results
     ```
-    
+   iii) SPlot technique vs Standard signal extraction  
+   - sPlot/compareCorrectedCosThetaDistrib.C <br>
+     ```
+     - inputs: 1) WeightedUpsilonSkimmedDataset.root
+               2) MonteCarlo/SignalParameters.txt
+     - output: invariant mass fits plots and comparison between sPlot technique and standard signal extraction plot
+     ```
+
 **5.**  Extract polarization parameters
 
 
