@@ -41,12 +41,15 @@ RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t p
 }
 
 // compare the resulting distributions before and after acc x eff correction
-void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root", const char* refFrameName = "CS"/*, Float_t cosThetaMin = -0.6, Float_t cosThetaMax = 0.*/) {
+void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root"/*, Float_t cosThetaMin = -0.6, Float_t cosThetaMax = 0.*/) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
 	Int_t nCosThetaBins = 10;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
+
+	// Int_t nCosThetaBins = 2;
+	// Float_t cosThetaMin = -1., cosThetaMax = -0.6;
 
 	/// Set up the data
 	using namespace RooFit;
@@ -145,7 +148,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 		pad1->cd();
 
 		// RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset, invMassModel);
-		
+
 		RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
 		frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 		reducedDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
@@ -243,7 +246,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("standard"));
 
-	// frame->GetYaxis()->SetRangeUser(0,30000);
+	frame->GetYaxis()->SetRangeUser(0,1000);
 	frame->GetYaxis()->SetMaxDigits(3);
 
 	frame->Draw();
