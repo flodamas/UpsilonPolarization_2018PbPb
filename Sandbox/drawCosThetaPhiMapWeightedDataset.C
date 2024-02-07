@@ -43,6 +43,8 @@ TH2* DrawCosThetaPhiDistribution(RooDataSet* dataset, RooWorkspace& wspace, cons
 	histo->GetYaxis()->CenterTitle();
 	histo->GetZaxis()->SetMaxDigits(3);
 
+	canvas->SetLogz();
+	
 	gPad->Update();
 
 	CMS_lumi(canvas, gCMSLumiText);
