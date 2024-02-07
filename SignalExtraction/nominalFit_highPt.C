@@ -153,3 +153,14 @@ void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTR
 
 	canvas->SaveAs(Form("FitPlots/%s.png", fitModelName.Data()), "RECREATE");
 }
+
+void scanNominalFit_highPt(){
+
+	Int_t PtEdges[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
+	Int_t NumPtEle = sizeof(PtEdges)/sizeof(Int_t);
+	for(Int_t idx =0; idx < NumPtEle-1; idx++){
+		nominalFit_highPt(0, 90, PtEdges[idx], PtEdges[idx+1]);
+	}
+}
+
+
