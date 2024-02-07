@@ -2,26 +2,60 @@
 //#include "../Tools/Style/CMS_lumi.C"
 #include "../Tools/BasicHeaders.h"
 
-#include "../Tools/FitShortcuts.h"
+#include "../AnalysisParameters.h"
 
-#include "../Tools/Style/FitDistributions.h"
+#include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
-#include "../Tools/Parameters/PhysicsConstants.h"
-
+#include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/RooFitPDFs/ErrorFuncTimesExp.h"
+#include "../Tools/Style/FitDistributions.h"
+// #include "../Tools/Parameters/PhysicsConstants.h"
+
+#include "RooStats/SPlot.h"
+
+RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
+	if (allDataset == nullptr) {
+		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		return nullptr;
+	}
+
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
+
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s",refFrameName)))), kinematicCut);
+
+	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta) dataset"));
+
+	return reducedDataset;
+}
+
+RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS") {
+	if (allDataset == nullptr) {
+		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		return nullptr;
+	}
+
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosTheta%s > %f && cosTheta%s < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, cosThetaMin, refFrameName, cosThetaMax);
+
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
+
+	wspace.import(*reducedDataset, Rename(Form("dataset_cosTheta_%.1fto%.1f", cosThetaMin, cosThetaMax)));
+
+	return reducedDataset;
+}
+
 
 void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	// get the tail parameters of the signal shape first in case the MC fit is needed
-	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
-	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
-	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
-	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
+	writeExtraText = true; // if extra text
+	extraText = "      Internal";
 
-	const char* signalShapeName = "symDSCB";
-	const char* refFrameName = isCSframe ? "CS":"HX" ;
+	Float_t binMin = 7, binMax = 13;
+	Int_t nBins = 80;
 
-	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, signalShapeName, ptMin, ptMax);
+	/// Set up the data
+	using namespace RooFit;
+	using namespace RooStats;
+	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
 	const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root";
 	TFile* f = TFile::Open(filename, "READ");
@@ -32,154 +66,107 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	cout << "File " << filename << " opened" << endl;
 
-	Float_t binMin = 7, binMax = 13;
-	Int_t nBins = 80;
+	const char* refFrameName = isCSframe ? "CS":"HX" ;
 
-	using namespace RooFit;
-	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
+	const char* datasetName = Form("dataset%s", refFrameName);
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
-	RooDataSet* allDataset = (RooDataSet*)f->Get(Form("dataset%s", refFrameName));
+	// import the dataset to a workspace
+	RooWorkspace wspace(Form("workspace_%s", datasetName));
+	wspace.import(*allDataset);
 
-	RooWorkspace* wspace = new RooWorkspace("workspace");
-	wspace->import(*allDataset);
+	RooRealVar invMass = *wspace.var("mass");
 
-	RooDataSet* massDataset = isCSframe ? ReducedWeightedMassDatasetCS(allDataset, *wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax):ReducedWeightedMassDatasetHX(allDataset, *wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	RooRealVar* massVar = wspace->var("mass");
+	auto* data = InvMassCosThetaWeightedDataset(allDataset, wspace, ptMin, ptMax, refFrameName);
 
-	Long64_t nEntries = massDataset->sumEntries();
-	cout << "nEntries: "<< nEntries << endl;
+	Long64_t nEntries = data->sumEntries();
+	/// Invariant mass model
 
-	auto* canvas = new TCanvas("canvas", "", 600, 600);
+	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
+	// tail parameters fixed to MC extracted values, and identical for the three resonances
+
+	const char* signalShapeName = "symDSCB";
+
+	// get the tail parameters of the signal shape first in case the MC fit is needed
+	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
+	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
+	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
+	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
+
+	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, signalShapeName, ptMin, ptMax);
+
+	auto signalModel = NominalSignalModel(wspace, alphaInf, orderInf, alphaSup, orderSup, nEntries);
+
+	RooAbsPdf* signalPDF_1S = wspace.pdf("signalPDF_1S");
+	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
+	RooAbsPdf* signalPDF_3S = wspace.pdf("signalPDF_3S");
+
+	RooRealVar* yield1S = wspace.var("yield1S");
+	RooRealVar* yield2S = wspace.var("yield2S");
+	RooRealVar* yield3S = wspace.var("yield3S");
+
+	// background: Chebychev polynomial
+
+	int order = 2;
+
+	RooArgList coefList = ChebychevCoefList(order);
+
+	RooChebychev bkgPDF("bkgPDF", " ", invMass, coefList);
+
+	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
+
+	// sig + bkg model
+
+	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
+
+	// TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
+
+	RooDataSet* reducedDataset = InvMassDataset(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName);
+
+	auto* fitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE)/*, PrintLevel(-1)*/, NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
+
+	fitResult->Print("v");
+
+	auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 	pad1->SetBottomMargin(0.03);
 	pad1->Draw();
 	pad1->cd();
 
-	RooPlot* frame = massVar->frame(Title(" "), Range(MassBinMin, MassBinMax));
-	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
-	//frame->SetYTitle(Form("Candidates / (%d MeV)", (int)1000 * (binMax - binMin) / nBins));
-	massDataset->plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
-
-	/// fitting model
-
-	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
-	// tail parameters fixed to MC extracted values, and identical for the three resonances
-
-	// Y(1S) signal shape
-	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.3, 9.6);
-	RooRealVar sigma_1S("sigma_1S", "", .01, .15);
-
-	RooCrystalBall signal_1S("signal_1S", "", *massVar, mean_1S, sigma_1S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar nSignal_1S("nSignal_1S", "N 1S", nEntries / 5, 0, nEntries);
-
-	// Y(2S) signal shape, mass scaling for mean and widths
-	RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
-
-	RooFormulaVar mean_2S("mean_2S", "massScaling_2S*mean_1S", RooArgSet(massScaling_2S, mean_1S));
-	RooFormulaVar sigma_2S("sigma_2S", "massScaling_2S*sigma_1S", RooArgSet(massScaling_2S, sigma_1S));
-
-	RooCrystalBall signal_2S("signal_2S", "", *massVar, mean_2S, sigma_2S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar nSignal_2S("nSignal_2S", "N 2S", nEntries / 10, 0, nEntries / 2);
-
-	// Y(3S) signal shape, mass scaling for mean and widths
-	RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
-
-	RooFormulaVar mean_3S("mean_3S", "massScaling_3S*mean_1S", RooArgSet(massScaling_3S, mean_1S));
-	RooFormulaVar sigma_3S("sigma_3S", "massScaling_3S*sigma_1S", RooArgSet(massScaling_3S, sigma_1S));
-
-	RooCrystalBall signal_3S("signal_3S", "", *massVar, mean_3S, sigma_3S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar nSignal_3S("nSignal_3S", "N 3S", nEntries / 20, 0, nEntries / 2);
-
-	// background: error function x exponential
-	RooRealVar err_mu("err_mu", "err_mu", 0, 10);
-	RooRealVar err_sigma("err_sigma", "err_sigma", 0, 10);
-	RooRealVar exp_lambda("exp_lambda", "m_lambda", 0, 10);
-
-	ErrorFuncTimesExp bkgPDF("bkgPDF", "", *massVar, err_mu, err_sigma, exp_lambda);
-	RooRealVar nBkg("nBkg", "N background events", 0, nEntries);
-
-	RooAddPdf fitModel("fitModel", "", RooArgList(signal_1S, signal_2S, signal_3S, bkgPDF), RooArgList(nSignal_1S, nSignal_2S, nSignal_3S, nBkg));
-
-	auto* fitResult = fitModel.fitTo(*massDataset, Save(), Extended(kTRUE), PrintLevel(-1), Minos(kTRUE), NumCPU(4), Range(binMin, binMax));
-
-	fitResult->Print("v");
-
-	// compute significance
-	massVar->setRange("integral", mean_1S.getVal() - 3 * sigma_1S.getVal(), mean_1S.getVal() + 3 * sigma_1S.getVal());
-
-	Double_t signal = signal_1S.createIntegral(*massVar, NormSet(*massVar), Range("integral"))->getVal() * nSignal_1S.getVal();
-
-	Double_t bkg = bkgPDF.createIntegral(*massVar, NormSet(*massVar), Range("integral"))->getVal() * nBkg.getVal();
-
-	Double_t significance = signal / sqrt(signal + bkg);
-
-	cout << endl
-	     << "Y(1S) yield significance = " << significance << endl;
-
-	// for Y(2S)
-	massVar->setRange("integral2S", mean_2S.getVal() - 3 * sigma_2S.getVal(), mean_2S.getVal() + 3 * sigma_2S.getVal());
-
-	Double_t signal2S = signal_2S.createIntegral(*massVar, NormSet(*massVar), Range("integral2S"))->getVal() * nSignal_2S.getVal();
-
-	Double_t bkg2S = bkgPDF.createIntegral(*massVar, NormSet(*massVar), Range("integral2S"))->getVal() * nBkg.getVal();
-
-	Double_t significance2S = signal2S / sqrt(signal2S + bkg2S);
-
-	cout << endl
-	     << "Y(2S) yield significance = " << significance2S << endl;
-
-	fitModel.plotOn(frame, Components(bkgPDF), LineColor(kGray + 2), LineStyle(kDashed));
-	fitModel.plotOn(frame, Components(signal_1S), LineColor(kRed));
-	fitModel.plotOn(frame, Components(signal_2S), LineColor(kRed));
-	fitModel.plotOn(frame, Components(signal_3S), LineColor(kRed));
-	fitModel.plotOn(frame, LineColor(kBlue));
+	wspace.import(*invMassModel, RecycleConflictNodes());
+	RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
 
 	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
-	//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 
-	frame->addObject(FitResultText(nSignal_1S, significance, nSignal_2S, significance2S));
-
-	frame->addObject(SymCoreDoubleCBParamsText(mean_1S, sigma_1S, *alphaInf, *orderInf, *alphaSup, *orderSup));
-
+	frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
 
 	frame->Draw();
-	frame->GetYaxis()->SetMaxDigits(3);
 
 	gPad->RedrawAxis();
 
-	//frame->SetMaximum(nEntries / 15);
-	//frame->SetMinimum(0.8);
-
-	//	CMS_lumi(pad1, "2018 PbPb miniAOD, DoubleMuon PD");
-
 	// pull distribution
-	canvas->cd();
+	massCanvas->cd();
 
 	TPad* pad2 = GetPadPullDistribution(frame, fitResult->floatParsFinal().getSize());
 
 	//canvas->Modified();
 	//canvas->Update();
-	canvas->cd();
+	massCanvas->cd();
 	pad1->Draw();
 	pad2->Draw();
 
-	const char* fitModelName = GetFitModelName("symCoreDSCB", ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
-	gSystem->mkdir("FitPlots", kTRUE);
-	canvas->SaveAs(Form("FitPlots/%s.png", fitModelName), "RECREATE");
+	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
+	gSystem->mkdir("InvMassFits", kTRUE);
+	massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
 
-	// wspace->import(fitModel); 
-	// wspace->Print();
+	// standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
+	// standardCorrectedHist.SetBinError(iCosTheta + 1, yield1S->getError());
 
-	// SaveFitResults(*wspace, fitModelName);
-
-	// TFile outputfile(Form("FitResults/%s.root", fitModelName),"RECREATE");
-	// // outputfile.cd();
-
-	// wspace->Write();
-	// outputfile.Close();
 }
 
 void scanNominalFit_lowPt(){
