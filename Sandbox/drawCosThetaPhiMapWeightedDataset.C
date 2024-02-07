@@ -93,8 +93,8 @@ void drawCosThetaPhiMapWeightedDataset(Int_t ptMin = 0, Int_t ptMax = 30, const 
 	     << "CosTheta-Phi maps saved in " << outputFile.GetName() << endl;
 }
 
-void scanDrawCosThetaPhiMapWeightedDataset() {
+void scanDrawCosThetaPhiMapWeightedDataset(const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root") {
 	for (Int_t idx = 0; idx < NPtBins; idx++) {
-		drawCosThetaPhiMapWeightedDataset(gPtBinning[idx], gPtBinning[idx + 1], "../Files/WeightedUpsilonSkimmedDataset.root");
+		drawCosThetaPhiMapWeightedDataset(gPtBinning[idx], gPtBinning[idx + 1], filename);
 	}
 }
