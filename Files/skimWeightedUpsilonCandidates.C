@@ -170,12 +170,18 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 			int effBinCS = effMapCS->FindFixBin(muPlus_CS.CosTheta(), muPlus_CS.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
 			double efficiencyCS = effMapCS->GetEfficiency(effBinCS);
 
-			weightCS = ((acceptanceCS == 0) || (efficiencyCS == 0)) ? 0 : 1 / (acceptanceCS * efficiencyCS); // IMPORTANT!
+			if ((acceptanceCS == 0) || (efficiencyCS == 0)) { // IMPORTANT!
+				weightCS = 0;
+				errorWeightLowCS = 1;
+				errorWeightHighCS = 1;
+			} else {
+				weightCS = 1 / (acceptanceCS * efficiencyCS);
 
-			// propagate both scale factor uncertainties and efficiency stat errors to the weight
-			errorWeightLowCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorUp(effBinCS) / efficiencyCS);
+				// propagate both scale factor uncertainties and efficiency stat errors to the weight
+				errorWeightLowCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorUp(effBinCS) / efficiencyCS);
 
-			errorWeightHighCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorLow(effBinCS) / efficiencyCS);
+				errorWeightHighCS = weightCS * TMath::Hypot(systEffCS->GetBinContent(effBinCS), effMapCS->GetEfficiencyErrorLow(effBinCS) / efficiencyCS);
+			}
 
 			int accBinHX = accMapHX->FindFixBin(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
 			double acceptanceHX = accMapHX->GetEfficiency(accBinHX);
@@ -183,11 +189,18 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 			int effBinHX = effMapHX->FindFixBin(muPlus_HX.CosTheta(), muPlus_HX.Phi() * 180 / TMath::Pi(), Reco_QQ_4mom->Pt());
 			double efficiencyHX = effMapHX->GetEfficiency(effBinHX);
 
-			weightHX = ((acceptanceHX == 0) || (efficiencyHX == 0)) ? 0 : 1 / (acceptanceHX * efficiencyHX); // IMPORTANT!
+			if ((acceptanceHX == 0) || (efficiencyHX == 0)) { // IMPORTANT!
+				weightHX = 0;
+				errorWeightLowHX = 1;
+				errorWeightHighHX = 1;
+			} else {
+				weightHX = 1 / (acceptanceHX * efficiencyHX);
 
-			errorWeightLowHX = weightHX * TMath::Hypot(systEffHX->GetBinContent(effBinHX), effMapHX->GetEfficiencyErrorUp(effBinHX) / efficiencyHX);
+				// propagate both scale factor uncertainties and efficiency stat errors to the weight
+				errorWeightLowHX = weightHX * TMath::Hypot(systEffHX->GetBinContent(effBinHX), effMapHX->GetEfficiencyErrorUp(effBinHX) / efficiencyHX);
 
-			errorWeightHighHX = weightHX * TMath::Hypot(systEffHX->GetBinContent(effBinHX), effMapHX->GetEfficiencyErrorLow(effBinHX) / efficiencyHX);
+				errorWeightHighHX = weightHX * TMath::Hypot(systEffHX->GetBinContent(effBinHX), effMapHX->GetEfficiencyErrorLow(effBinHX) / efficiencyHX);
+			}
 
 			// fill the datasets
 
