@@ -41,10 +41,20 @@ RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t p
 }
 
 // compare the resulting distributions before and after acc x eff correction
+<<<<<<< HEAD
 void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
+=======
+void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root" /*, Float_t cosThetaMin = -0.6, Float_t cosThetaMax = 0.*/) {
+	writeExtraText = true; // if extra text
+	extraText = "      Internal";
+
+	Int_t nCosThetaBins = 10;
+	Float_t cosThetaMin = -1, cosThetaMax = 1;
+
+>>>>>>> a5202b58de6c8a25163ca5d021142f09950b3db1
 	Float_t phiMin = 0, phiMax = 180;
 
 	/// Set up the data
