@@ -18,7 +18,7 @@ RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace&
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
 
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s",refFrameName)))), kinematicCut);
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s", refFrameName)))), kinematicCut);
 
 	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta) dataset"));
 
@@ -41,15 +41,11 @@ RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t p
 }
 
 // compare the resulting distributions before and after acc x eff correction
-void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root"/*, Float_t cosThetaMin = -0.6, Float_t cosThetaMax = 0.*/) {
+void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
-	Int_t nCosThetaBins = 10;
-	Float_t cosThetaMin = -1, cosThetaMax = 1;
-
-	// Int_t nCosThetaBins = 2;
-	// Float_t cosThetaMin = -1., cosThetaMax = -0.6;
+	Float_t phiMin = 0, phiMax = 180;
 
 	/// Set up the data
 	using namespace RooFit;
@@ -116,7 +112,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
 
 	wspace.import(*invMassModel, RecycleConflictNodes());
-	
+
 	/// "Standard" procedure: extract the yields per bin
 
 	TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
@@ -124,8 +120,8 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	Float_t cosThetaStep = ((cosThetaMax - cosThetaMin) / nCosThetaBins);
 
 	TCanvas* massCanvas = 0;
-	Bool_t isCSframe = (strcmp(refFrameName, "CS")==0)? kTRUE : kFALSE; 
-	
+	Bool_t isCSframe = (strcmp(refFrameName, "CS") == 0) ? kTRUE : kFALSE;
+
 	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
 		Float_t cosThetaVal = cosThetaMin + iCosTheta * cosThetaStep;
 
@@ -140,7 +136,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 		// save the invariant mass distribution fit for further checks
 		// one pad for the invariant mass data distribution with fit components, one for the pull distribution
 		// TCanvas* massCanvas = new TCanvas("massCanvas", "", 600, 600);
-		if(massCanvas) delete massCanvas;
+		if (massCanvas) delete massCanvas;
 		massCanvas = new TCanvas("massCanvas", "", 600, 600);
 		TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 		pad1->SetBottomMargin(0.03);
@@ -170,7 +166,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 		frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
-		frame->addObject(RefFrameText(isCSframe, cosThetaVal, cosThetaVal + cosThetaStep, -180, 180));
+		frame->addObject(RefFrameText(isCSframe, cosThetaVal, cosThetaVal + cosThetaStep, phiMin, phiMax));
 
 		frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
 
@@ -189,7 +185,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 		pad1->Draw();
 		pad2->Draw();
 
-		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaVal, cosThetaVal + cosThetaStep, 0, 180);
+		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaVal, cosThetaVal + cosThetaStep, phiMin, phiMax);
 
 		gSystem->mkdir("InvMassFits", kTRUE);
 		massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
@@ -246,7 +242,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("standard"));
 
-	frame->GetYaxis()->SetRangeUser(0,1000);
+	frame->GetYaxis()->SetRangeUser(0, 1000);
 	frame->GetYaxis()->SetMaxDigits(3);
 
 	frame->Draw();
