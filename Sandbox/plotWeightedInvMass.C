@@ -8,14 +8,15 @@
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
-void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+void plotWeightedInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* filename = "../Files/UpsilonSkimmedDataset.root";
+	const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root";
+
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -24,12 +25,13 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 
 	cout << "File " << filename << " opened" << endl;
 
-	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
+	const char* datasetName = Form("dataset%s", isCSframe? "CS":"HX");
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* massDataset = isCSframe? ReducedWeightedMassDatasetCS(allDataset, *wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax):ReducedWeightedMassDatasetHX(allDataset, *wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	Long64_t nEntries = massDataset->sumEntries();
 
@@ -55,23 +57,23 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 	canvas->Update();
 
 	gSystem->mkdir("mass_distrib", kTRUE);
-	canvas->SaveAs(Form("mass_distrib/RawData_cent%dto%d_pt%dto%dGeV_cosTheta%.1fto%.1f_phi%.1dto%.1d.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax), "RECREATE");
+	canvas->SaveAs(Form("mass_distrib/cent%dto%d_pt%dto%dGeV_cosTheta%.1fto%.1f_phi%.1dto%.1d.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax), "RECREATE");
 }
 
-void scanPlotInvMass(){
+void scanPlotWeightedInvMass(){
 
 	Int_t ptEdges[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
-	// Int_t ptEdges[2] = {2, 4};
+	// Int_t ptEdges[4] = {2, 4, 6, 8};
 	Float_t cosThetaEdges[11] = {-1., -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.};
 	Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
-	// Int_t phiEdges[2] = {0, 180};
+	// Int_t phiEdges[13] = {0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180};
 	Int_t numPtEle = sizeof(ptEdges)/sizeof(Int_t);
 	Int_t numCosThetaEle = sizeof(cosThetaEdges)/sizeof(Float_t);
 	Int_t numPhiEle = sizeof(phiEdges)/sizeof(Int_t);
 	for(Int_t ptIdx =0; ptIdx < numPtEle-1; ptIdx++){	
 		for(Int_t cosThetaIdx =0; cosThetaIdx < numCosThetaEle-1; cosThetaIdx++){
 			for(Int_t phiIdx =0; phiIdx < numPhiEle-1; phiIdx++){
-				plotInvMass(ptEdges[ptIdx], ptEdges[ptIdx+1], kFALSE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx+1], phiEdges[phiIdx], phiEdges[phiIdx+1]);
+				plotWeightedInvMass(ptEdges[ptIdx], ptEdges[ptIdx+1], kFALSE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx+1], phiEdges[phiIdx], phiEdges[phiIdx+1]);
 			}
 		}
 	}

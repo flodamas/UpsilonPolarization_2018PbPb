@@ -11,7 +11,7 @@ TH2* DrawCosThetaPhiDistribution(RooDataSet* dataset, RooWorkspace& wspace, cons
 	Int_t nPhiBins = 11;
 	Float_t phiMin = 0, phiMax = 220;
 
-	const char* histoName = Form("WeightedData%s_cent%dto%d_pt%dto%dGeV", frameAcronym, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
+	const char* histoName = Form("WeightedData%s_mass%.fto%.f_cent%dto%d_pt%dto%dGeV", frameAcronym, massMin, massMax, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
 
 	wspace.import(*dataset);
 	RooRealVar cosThetaVar = *wspace.var(Form("cosTheta%s", frameAcronym));
