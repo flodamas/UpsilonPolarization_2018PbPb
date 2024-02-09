@@ -18,7 +18,7 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, RooRealVar* alphaInf, RooReal
 	RooRealVar mass = *wspace.var("mass");
 
 	// Y(1S) signal shape
-	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.3, 9.6);
+	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
 	RooRealVar sigma_1S("sigma_1S", "", .04, .13);
 
 	RooCrystalBall signalPDF_1S("signalPDF_1S", "", mass, mean_1S, sigma_1S, *alphaInf, *orderInf, *alphaSup, *orderSup);
@@ -40,7 +40,7 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, RooRealVar* alphaInf, RooReal
 	RooFormulaVar sigma_3S("sigma_3S", "massScaling_3S*sigma_1S", RooArgSet(massScaling_3S, sigma_1S));
 
 	RooCrystalBall signalPDF_3S("signalPDF_3S", "", mass, mean_3S, sigma_3S, *alphaInf, *orderInf, *alphaSup, *orderSup);
-	RooRealVar yield3S("yield3S", "N 3S", yieldMax / 20, 0, yieldMax / 2);
+	RooRealVar yield3S("yield3S", "N 3S", yieldMax / 20, 0, yieldMax / 4);
 
 	RooAddPdf signalModel("SymDSCBModel", "PDF of the sum of the three Y signal PDFs", {signalPDF_1S, signalPDF_2S, signalPDF_3S}, {yield1S, yield2S, yield3S});
 

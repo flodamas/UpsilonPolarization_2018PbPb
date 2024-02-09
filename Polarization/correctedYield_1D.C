@@ -51,7 +51,7 @@ void correctedYield_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	Long64_t nEntries = allDataset->sumEntries() / 10000; // to set limits on the yields
+	Long64_t nEntries = allDataset->sumEntries() / 1000;
 
 	/// Invariant mass model
 
@@ -68,7 +68,7 @@ void correctedYield_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, signalShapeName, ptMin, ptMax);
 
-	auto signalModel = NominalSignalModel(wspace, alphaInf, orderInf, alphaSup, orderSup, nEntries);
+	auto signalModel = NominalSignalModel(wspace, alphaInf, orderInf, alphaSup, orderSup, 1e5);
 
 	RooAbsPdf* signalPDF_1S = wspace.pdf("signalPDF_1S");
 	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
