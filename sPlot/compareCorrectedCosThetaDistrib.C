@@ -122,6 +122,8 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	TCanvas* massCanvas = 0;
 	Bool_t isCSframe = (strcmp(refFrameName, "CS") == 0) ? kTRUE : kFALSE;
 
+	Float_t maxYield = 0;
+
 	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
 		Float_t cosThetaVal = cosThetaMin + iCosTheta * cosThetaStep;
 
@@ -193,6 +195,8 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 		// frame->Clear();
 		standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
 		standardCorrectedHist.SetBinError(iCosTheta + 1, yield1S->getError());
+
+		if (yield1S->getVal() > maxYield) maxYield = yield1S->getVal();
 	}
 
 	RooDataHist correctedHist("correctedHist", " ", cosTheta, Import(standardCorrectedHist));
@@ -242,14 +246,14 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("standard"));
 
-	frame->GetYaxis()->SetRangeUser(0, 1000);
+	//frame->GetYaxis()->SetRangeUser(0, 1000);
 	frame->GetYaxis()->SetMaxDigits(3);
 
 	frame->Draw();
 
 	gPad->RedrawAxis();
 
-	//frame->SetMaximum(nEntries / 15);
+	frame->SetMaximum(2 * maxYield);
 
 	TLatex text;
 	text.SetTextAlign(22);
