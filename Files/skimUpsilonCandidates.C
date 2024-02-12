@@ -51,7 +51,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	/// RooDataSet output: one entry = one dimuon candidate!
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 
-	Float_t lowMassCut = 6, highMassCut = 15; // large invariant mass window to ease the integration for RooFit
+	Float_t lowMassCut = 6.5, highMassCut = 14.5; // large invariant mass window to ease the integration for RooFit
 	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
 	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4);
 	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
