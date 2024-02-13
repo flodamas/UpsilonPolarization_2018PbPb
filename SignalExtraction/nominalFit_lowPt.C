@@ -14,32 +14,32 @@
 
 #include "RooStats/SPlot.h"
 
-RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
+RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
 	}
 
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (phi%s > %d && phi%s < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, phiMin, refFrameName, phiMax);
 
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s",refFrameName)))), kinematicCut);
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s", refFrameName)))), kinematicCut);
 
 	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta) dataset"));
 
 	return reducedDataset;
 }
 
-RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS") {
+RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
 	}
 
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosTheta%s > %f && cosTheta%s < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, cosThetaMin, refFrameName, cosThetaMax);
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosTheta%s > %f && cosTheta%s < %f) && (phi%s > %d && phi%s < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, cosThetaMin, refFrameName, cosThetaMax, refFrameName, phiMin, refFrameName, phiMax);
 
 	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
 
-	wspace.import(*reducedDataset, Rename(Form("dataset_cosTheta_%.1fto%.1f", cosThetaMin, cosThetaMax)));
+	wspace.import(*reducedDataset, Rename(Form("dataset_cosTheta_%.1fto%.1f_phi_%dto%d", cosThetaMin, cosThetaMax, phiMin, phiMax)));
 
 	return reducedDataset;
 }
@@ -121,9 +121,7 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
 
-	// TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
-
-	RooDataSet* reducedDataset = InvMassDataset(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName);
+	RooDataSet* reducedDataset = InvMassDataset(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName, phiMin, phiMax);
 
 	auto* fitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE)/*, PrintLevel(-1)*/, NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
 
@@ -136,7 +134,17 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	pad1->cd();
 
 	wspace.import(*invMassModel, RecycleConflictNodes());
-	RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
+	// RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
+
+	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
+	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
+	reducedDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
+
+	invMassModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(kGray + 2), LineStyle(kDashed));
+	invMassModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(kRed));
+	invMassModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(kRed));
+	invMassModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(kRed));
+	invMassModel->plotOn(frame, LineColor(kBlue));
 
 	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
@@ -164,9 +172,6 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	gSystem->mkdir("InvMassFits", kTRUE);
 	massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
 
-	// standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
-	// standardCorrectedHist.SetBinError(iCosTheta + 1, yield1S->getError());
-
 }
 
 void scanNominalFit_lowPt(){
@@ -176,6 +181,6 @@ void scanNominalFit_lowPt(){
 	Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
 	Int_t numPhiEle = sizeof(phiEdges)/sizeof(Int_t);
 	for(Int_t idx =0; idx < numPhiEle-1; idx++){
-		nominalFit_lowPt(ptEdges[0], ptEdges[1], kFALSE, cosThetaEdges[4], cosThetaEdges[5], phiEdges[idx], phiEdges[idx+1]);
+		nominalFit_lowPt(ptEdges[1], ptEdges[2], kFALSE, cosThetaEdges[3], cosThetaEdges[4], phiEdges[idx], phiEdges[idx+1]);
 	}
 }

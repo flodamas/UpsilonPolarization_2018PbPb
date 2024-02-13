@@ -199,8 +199,8 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaVal, cosThetaVal + cosThetaStep, phiMin, phiMax);
 
 		gSystem->mkdir("InvMassFits", kTRUE);
-		// massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
-		massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ErrorFuncTimesExp_%s.png", fitModelName), "RECREATE");
+		massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
+		// massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ErrorFuncTimesExp_%s.png", fitModelName), "RECREATE");
 
 		// frame->Clear();
 		standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
@@ -256,7 +256,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("standard"));
 
-	//frame->GetYaxis()->SetRangeUser(0, 30000);
+	//frame->GetYaxis()->SetRangeUser(0, 1000);
 	frame->GetYaxis()->SetMaxDigits(3);
 
 	frame->Draw();
