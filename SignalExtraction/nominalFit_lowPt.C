@@ -1,5 +1,3 @@
-//#include "../Tools/Style/tdrStyle.C"
-//#include "../Tools/Style/CMS_lumi.C"
 #include "../Tools/BasicHeaders.h"
 
 #include "../AnalysisParameters.h"
@@ -10,7 +8,6 @@
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/RooFitPDFs/ErrorFuncTimesExp.h"
 #include "../Tools/Style/FitDistributions.h"
-// #include "../Tools/Parameters/PhysicsConstants.h"
 
 #include "RooStats/SPlot.h"
 
@@ -107,19 +104,19 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	RooRealVar* yield2S = wspace.var("yield2S");
 	RooRealVar* yield3S = wspace.var("yield3S");
 
-	// background: Chebychev polynomial
+	// background: Choose "ChebychevOrderN" or "ExpTimesErr"
 
-	int order = 2;
+	const char* bkgShapeName = "ChebychevOrder2";
 
-	RooArgList coefList = ChebychevCoefList(order);
+	auto bkgModel = NominalBkgModel(wspace, bkgShapeName, nEntries);
 
-	RooChebychev bkgPDF("bkgPDF", " ", invMass, coefList);
+	RooAbsPdf* bkgPDF = wspace.pdf("bkgPDF");
 
-	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
+	RooRealVar* yieldBkg = wspace.var("yieldBkg");
 
 	// sig + bkg model
 
-	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
+	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF), {*yield1S, *yield2S, *yield3S, *yieldBkg});
 
 	RooDataSet* reducedDataset = InvMassDataset(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName, phiMin, phiMax);
 
@@ -170,8 +167,7 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	gSystem->mkdir("InvMassFits", kTRUE);
-	massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
-
+	massCanvas->SaveAs(Form("InvMassFits/CorrectedData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
 }
 
 void scanNominalFit_lowPt(){
