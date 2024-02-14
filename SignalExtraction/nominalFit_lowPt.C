@@ -42,7 +42,7 @@ RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t p
 }
 
 
-void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -166,8 +166,10 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	gSystem->mkdir("InvMassFits", kTRUE);
-	massCanvas->SaveAs(Form("InvMassFits/CorrectedData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
+	RooArgSet* signalYields = new RooArgSet(*yield1S, *yield2S, *yield3S);
+
+	SaveSignalYields(signalYields, bkgShapeName, fitModelName);
+	SaveCanvas(massCanvas, bkgShapeName, fitModelName);
 }
 
 void scanNominalFit_lowPt(){
