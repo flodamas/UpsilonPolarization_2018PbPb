@@ -6,6 +6,7 @@
 #include "../Tools/Style/Legends.h"
 
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
+#include "../Tools/RooFitPDFs/ErrorFuncTimesExp.h"
 #include "../Tools/Style/FitDistributions.h"
 
 #include "RooStats/SPlot.h"
@@ -35,7 +36,7 @@ RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t p
 
 	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
 
-	wspace.import(*reducedDataset, Rename(Form("dataset_cosTheta_%.1fto%.1f", cosThetaMin, cosThetaMax)));
+	wspace.import(*reducedDataset, Rename(Form("dataset_cosTheta_%.1fto%.1f_phi_%dto%d", cosThetaMin, cosThetaMax, phiMin, phiMax)));
 
 	return reducedDataset;
 }
@@ -105,12 +106,22 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	RooChebychev bkgPDF("bkgPDF", " ", invMass, coefList);
 
+	// // background: exponential x err function
+
+	// RooRealVar err_mu("err_mu", " ", 0, 13);
+	// RooRealVar err_sigma("err_sigma", " ", 0, 10);
+	// RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
+	
+	// ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
+	
 	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
+	
+	// signal + background
 
 	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
-
+	
 	wspace.import(*invMassModel, RecycleConflictNodes());
-
+	
 	/// "Standard" procedure: extract the yields per bin
 
 	TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
@@ -189,6 +200,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 		gSystem->mkdir("InvMassFits", kTRUE);
 		massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
+		// massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ErrorFuncTimesExp_%s.png", fitModelName), "RECREATE");
 
 		// frame->Clear();
 		standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
