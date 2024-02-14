@@ -49,7 +49,7 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	RooWorkspace wspace(Form("workspace_%s", refFrameName));
 	wspace.import(*allDataset);
 
-	auto* data = InvMassCosThetaDataset(allDataset, wspace, ptMin, ptMax);
+	auto* data = InvMassCosThetaDataset(allDataset, wspace, ptMin, ptMax, refFrameName);
 
 	std::cout << "\n------------------------------------------\nThe dataset before creating sWeights:\n";
 	data->Print();
