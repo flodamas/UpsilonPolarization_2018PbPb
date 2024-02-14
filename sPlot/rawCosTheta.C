@@ -11,7 +11,7 @@
 #include "RooStats/SPlot.h"
 
 // reduce the whole dataset (N dimensions)
-RooDataSet* InvMassCosThetaDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30) {
+RooDataSet* InvMassCosThetaDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -19,14 +19,14 @@ RooDataSet* InvMassCosThetaDataset(RooDataSet* allDataset, RooWorkspace& wspace,
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
 
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var("cosThetaCS"))), kinematicCut);
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s", refFrameName)))), kinematicCut);
 
-	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta CS) dataset"));
+	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta) dataset"));
 
 	return reducedDataset;
 }
 
-void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/UpsilonSkimmedDataset.root") {
+void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., const char* filename = "../Files/UpsilonSkimmedDataset.root") {
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -38,21 +38,18 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../F
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
-	Int_t nCosThetaBins = 20;
-	Float_t cosThetaMin = -1, cosThetaMax = 1;
-
 	/// Set up the data
 	using namespace RooFit;
 	using namespace RooStats;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	RooDataSet* allDatasetCS = (RooDataSet*)f->Get("dataset");
+	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
 
 	// import the dataset to a workspace
-	RooWorkspace wspace("workspace");
-	wspace.import(*allDatasetCS);
+	RooWorkspace wspace(Form("workspace_%s", refFrameName));
+	wspace.import(*allDataset);
 
-	auto* data = InvMassCosThetaDataset(allDatasetCS, wspace, ptMin, ptMax);
+	auto* data = InvMassCosThetaDataset(allDataset, wspace, ptMin, ptMax);
 
 	std::cout << "\n------------------------------------------\nThe dataset before creating sWeights:\n";
 	data->Print();
@@ -60,7 +57,7 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../F
 	// read variables in the reduced dataset in the workspace
 	RooRealVar* invMass = wspace.var("mass");
 
-	RooRealVar* cosThetaCS = wspace.var("cosThetaCS");
+	RooRealVar* cosTheta = wspace.var(Form("cosTheta%s", refFrameName));
 
 	Long64_t nEntries = data->sumEntries();
 
@@ -141,8 +138,8 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../F
 
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
-	RooPlot* frame = cosThetaCS->frame(Title(" "), Range(cosThetaMin, cosThetaMax));
-	frame->SetXTitle("cos #theta_{CS}");
+	RooPlot* frame = cosTheta->frame(Title(" "), Range(cosThetaMin, cosThetaMax));
+	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
 	data->plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), Name("data"), DataError(RooAbsData::SumW2));
 
 	// create weighted data sets
@@ -155,8 +152,6 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../F
 	frame->Draw();
 
 	gPad->RedrawAxis();
-
-	frame->SetMaximum(nEntries / 15);
 
 	TLatex text;
 	text.SetTextAlign(22);
@@ -174,5 +169,5 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../F
 	gPad->Update();
 
 	//CMS_lumi(canvas, gCMSLumiText);
-	canvas->SaveAs(Form("1D/rawCosThetaCS_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	canvas->SaveAs(Form("1D/rawCosTheta%s_cent%dto%d_pt%dto%dGeV.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 }
