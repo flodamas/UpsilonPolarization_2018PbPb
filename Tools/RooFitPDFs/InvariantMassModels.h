@@ -59,3 +59,50 @@ RooArgList ChebychevCoefList(int order = 1) {
 
 	return coefList;
 }
+
+RooAddPdf NominalBkgModel(RooWorkspace& wspace, const char* bkgShapeName, Long64_t yieldMax = 1e6) {
+	RooRealVar mass = *wspace.var("mass");
+
+	// Chebychev Nth order polynomial
+	if (strncmp(bkgShapeName, "ChebychevOrder", 14) == 0) {
+		int charSize = strlen(bkgShapeName);
+		const char* lastDigit = bkgShapeName + charSize -1;
+		std::stringstream converter(lastDigit);
+
+		int order = 0;
+		converter >> order;
+		
+		RooArgList coefList = ChebychevCoefList(order);
+		RooChebychev bkgPDF("bkgPDF", " ", mass, coefList);
+
+		RooRealVar yieldBkg("yieldBkg", "N background events", 0, yieldMax);
+
+		RooAddPdf bkgModel("bkgModel", "PDF of the backgroud", {bkgPDF}, {yieldBkg});
+
+		wspace.import(bkgModel);
+
+		return bkgModel;
+	}
+	
+	// exponential x err function
+	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
+		RooRealVar err_mu("err_mu", " ", 0, 13);
+		RooRealVar err_sigma("err_sigma", " ", 0, 10);
+		RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
+		
+		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", mass, err_mu, err_sigma, exp_lambda);
+
+		RooRealVar yieldBkg("yieldBkg", "N background events", 0, yieldMax);
+
+		RooAddPdf bkgModel("bkgModel", "PDF of the backgroud", {bkgPDF}, {yieldBkg});
+
+		wspace.import(bkgModel);
+
+		return bkgModel;
+	}
+
+	else {
+		cout << "No matching background model" << endl;
+		return nullptr;
+	}
+}
