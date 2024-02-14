@@ -407,3 +407,13 @@ Double_t ComputeSignalSignificance(RooWorkspace& wspace, Int_t iState = 1) {
 
 	return signalYield / sqrt(signalYield + bkgYield);
 }
+
+void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName){
+	gSystem->mkdir("../SignalExtraction/SinalYields/", kTRUE);
+	signalYields->writeToFile(Form("../SignalExtraction/SinalYields/%s_%s.txt", bkgShapeName, fitModelName));
+}
+
+void SaveCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName){
+	gSystem->mkdir("InvMassFits", kTRUE);
+	canvasName->SaveAs(Form("InvMassFits/CorrectedData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
+}
