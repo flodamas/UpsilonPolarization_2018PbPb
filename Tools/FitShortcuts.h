@@ -409,8 +409,30 @@ Double_t ComputeSignalSignificance(RooWorkspace& wspace, Int_t iState = 1) {
 }
 
 void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName){
-	gSystem->mkdir("../SignalExtraction/SinalYields/", kTRUE);
-	signalYields->writeToFile(Form("../SignalExtraction/SinalYields/%s_%s.txt", bkgShapeName, fitModelName));
+	gSystem->mkdir("../SignalExtraction/SignalYields/", kTRUE);
+	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName));
+}
+
+RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName){
+	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
+
+	const char* yieldsFileName = Form("../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName);
+
+	if (fopen(yieldsFileName, "r")) {
+		cout << endl
+		     << "Found" << yieldsFileName << " file, will read signal yields from it" << endl;
+		     signalYields.readFromFile(yieldsFileName);
+	} else {
+		cout << endl
+		     << yieldsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << endl;
+		exit(1);
+	}
+
+	cout << endl
+	     << "Signal yields values:" << endl;
+	signalYields.Print("v");
+
+	return signalYields;
 }
 
 void SaveCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName){

@@ -46,9 +46,6 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
-	Float_t binMin = 7, binMax = 13;
-	Int_t nBins = 80;
-
 	/// Set up the data
 	using namespace RooFit;
 	using namespace RooStats;
@@ -76,9 +73,10 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	auto* data = InvMassCosThetaWeightedDataset(allDataset, wspace, ptMin, ptMax, refFrameName);
+	auto* data = InvMassCosThetaWeightedDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	Long64_t nEntries = data->sumEntries();
+
 	/// Invariant mass model
 
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
@@ -104,33 +102,62 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	RooRealVar* yield2S = wspace.var("yield2S");
 	RooRealVar* yield3S = wspace.var("yield3S");
 
-	// background: Choose "ChebychevOrderN" or "ExpTimesErr"
-
+	// {{{1. background: Chebychev polynomial
 	const char* bkgShapeName = "ChebychevOrder2";
 
-	auto bkgModel = NominalBkgModel(wspace, bkgShapeName, nEntries);
+	int charSize = strlen(bkgShapeName);
+	const char* lastDigit = bkgShapeName + charSize -1;
+	std::stringstream converter(lastDigit);
 
-	RooAbsPdf* bkgPDF = wspace.pdf("bkgPDF");
+	int order = 2;
+	converter >> order;
 
-	RooRealVar* yieldBkg = wspace.var("yieldBkg");
+	RooArgList coefList = ChebychevCoefList(order);
+
+	RooChebychev bkgPDF("bkgPDF", " ", invMass, coefList);
+	// }}}
+
+	// // {{{2. background: exponential x err function
+	// const char* bkgShapeName = "ExpTimesErr";
+	// RooRealVar err_mu("err_mu", " ", 0, 13);
+	// RooRealVar err_sigma("err_sigma", " ", 0, 10);
+	// RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
+	
+	// ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
+	// }}}
+	
+	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
+
+	// background: Choose "ChebychevOrderN" or "ExpTimesErr"
+
+	// int order = 2;
+
+	// RooArgList coefList = ChebychevCoefList(order);
+
+	// RooChebychev* bkgPDF = new RooChebychev("bkgPDF", " ", invMass, coefList);
+
+	// RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "N background events", 0, nEntries);
 
 	// sig + bkg model
 
-	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF), {*yield1S, *yield2S, *yield3S, *yieldBkg});
+	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
+
+	wspace.import(*invMassModel, RecycleConflictNodes());
 
 	RooDataSet* reducedDataset = InvMassDataset(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName, phiMin, phiMax);
-
-	auto* fitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE)/*, PrintLevel(-1)*/, NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
+	
+	auto* fitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
 
 	fitResult->Print("v");
-
+	
+	// save the invariant mass distribution fit for further checks
+	// one pad for the invariant mass data distribution with fit components, one for the pull distribution
 	auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 	pad1->SetBottomMargin(0.03);
 	pad1->Draw();
 	pad1->cd();
 
-	wspace.import(*invMassModel, RecycleConflictNodes());
 	// RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
 
 	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
@@ -142,6 +169,8 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	invMassModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(kRed));
 	invMassModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(kRed));
 	invMassModel->plotOn(frame, LineColor(kBlue));
+
+	frame->GetYaxis()->SetMaxDigits(3);
 
 	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
@@ -175,10 +204,17 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 void scanNominalFit_lowPt(){
 
 	Int_t ptEdges[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
-	Double_t cosThetaEdges[11] = {-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1};
-	Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+	Float_t cosThetaEdges[11] = {-1., -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.};
+	// Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+	Int_t phiEdges[2] = {0, 180};
+
+	Int_t numPtEle = sizeof(ptEdges)/sizeof(Int_t);
+	Int_t numCosThetaEle = sizeof(cosThetaEdges)/sizeof(Float_t);
 	Int_t numPhiEle = sizeof(phiEdges)/sizeof(Int_t);
-	for(Int_t idx =0; idx < numPhiEle-1; idx++){
-		nominalFit_lowPt(ptEdges[1], ptEdges[2], kFALSE, cosThetaEdges[3], cosThetaEdges[4], phiEdges[idx], phiEdges[idx+1]);
+
+	for(Int_t cosThetaIdx =0; cosThetaIdx < numCosThetaEle-1; cosThetaIdx++){
+		for(Int_t idx =0; idx < numPhiEle-1; idx++){
+			nominalFit_lowPt(ptEdges[0], ptEdges[1], kTRUE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx+1], phiEdges[idx], phiEdges[idx+1]);
+		}
 	}
 }
