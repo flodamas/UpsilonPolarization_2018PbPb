@@ -61,7 +61,7 @@ RooArgList ChebychevCoefList(int order = 1) {
 }
 
 RooAddPdf NominalBkgModel(RooWorkspace& wspace, const char* bkgShapeName, Long64_t yieldMax = 1e6) {
-	RooRealVar mass = *wspace.var("mass");
+	RooRealVar invMass = *wspace.var("mass");
 
 	// Chebychev Nth order polynomial
 	if (strncmp(bkgShapeName, "ChebychevOrder", 14) == 0) {
@@ -73,13 +73,13 @@ RooAddPdf NominalBkgModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 		converter >> order;
 		
 		RooArgList coefList = ChebychevCoefList(order);
-		RooChebychev bkgPDF("bkgPDF", " ", mass, coefList);
+		RooChebychev bkgPDF("bkgPDF", " ", invMass, coefList);
 
 		RooRealVar yieldBkg("yieldBkg", "N background events", 0, yieldMax);
 
 		RooAddPdf bkgModel("bkgModel", "PDF of the backgroud", {bkgPDF}, {yieldBkg});
 
-		wspace.import(bkgModel);
+		wspace.import(bkgModel, RecycleConflictNodes());
 
 		return bkgModel;
 	}
@@ -90,13 +90,13 @@ RooAddPdf NominalBkgModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 		RooRealVar err_sigma("err_sigma", " ", 0, 10);
 		RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
 		
-		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", mass, err_mu, err_sigma, exp_lambda);
+		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
 
 		RooRealVar yieldBkg("yieldBkg", "N background events", 0, yieldMax);
 
 		RooAddPdf bkgModel("bkgModel", "PDF of the backgroud", {bkgPDF}, {yieldBkg});
 
-		wspace.import(bkgModel);
+		wspace.import(bkgModel, RecycleConflictNodes());
 
 		return bkgModel;
 	}
