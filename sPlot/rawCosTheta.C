@@ -8,6 +8,8 @@
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/Style/FitDistributions.h"
 
+#include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
+
 #include "RooStats/SPlot.h"
 
 // reduce the whole dataset (N dimensions)
@@ -145,15 +147,27 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 
 	data_weight1S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("data1S"));
 
-	RooDataSet data_weight2S{data->GetName(), data->GetTitle(), data, *data->get(), nullptr, "yield2S_sw"};
-
-	data_weight2S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kGreen + 2), DataError(RooAbsData::SumW2), Name("data2S"));
-
 	frame->GetYaxis()->SetMaxDigits(3);
 
 	frame->Draw();
 
 	gPad->RedrawAxis();
+
+	/// Polarization fit
+
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -2, 2);
+
+	auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", *cosTheta, lambdaTheta);
+
+	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(data_weight1S, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), Range(cosThetaMin, cosThetaMax), AsymptoticError(DoAsymptoticError));
+
+	polarizationFitResult->Print("v");
+
+	cosThetaPDF_1S.plotOn(frame, LineColor(kRed + 1), Name("polaResult"));
+
+	frame->Draw();
+
+	// cosmetics
 
 	TLatex text;
 	text.SetTextAlign(22);
@@ -161,12 +175,11 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	text.DrawLatexNDC(.55, .85, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 	//text.DrawLatexNDC(.48, .8, Form("%.0f < m_{#mu#mu} < %.0f GeV/c^{2}", massMin, massMax));
 
-	TLegend legend(.35, .8, .55, .6);
+	TLegend legend(.35, .8, .55, .65);
 	legend.SetTextSize(.05);
 
 	legend.AddEntry(frame->findObject("data"), "dimuon events", "lp");
 	legend.AddEntry(frame->findObject("data1S"), "with #varUpsilon(1S) sWeights", "lp");
-	legend.AddEntry(frame->findObject("data2S"), "with #varUpsilon(2S) sWeights", "lp");
 
 	legend.DrawClone();
 
