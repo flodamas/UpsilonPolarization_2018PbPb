@@ -8,6 +8,8 @@
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/Style/FitDistributions.h"
 
+#include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
+
 RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
@@ -204,10 +206,10 @@ void correctedYield_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	     << "Distribution fit for polarization paramaters extraction" << endl;
 
 	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -2, 2);
-	RooRealVar normCosTheta("normCosTheta", "normCosTheta", yield1S->getVal(), -2 * maxYield, 2 * maxYield);
-	RooGenericPdf cosThetaPDF_1S("cosThetaPDF_1S", "cosThetaPDF_1S", "(@0/(3 + @1)) * (1 + @1*@2*@2)", {normCosTheta, lambdaTheta, cosTheta});
 
-	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(correctedHist, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), AsymptoticError(DoAsymptoticError), Range(cosThetaMin, cosThetaMax));
+	auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", cosTheta, lambdaTheta);
+
+	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(correctedHist, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), Range(cosThetaMin, cosThetaMax));
 
 	polarizationFitResult->Print("v");
 
@@ -221,7 +223,7 @@ void correctedYield_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	legend.SetTextSize(.05);
 	legend.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 	legend.AddEntry(frame->findObject("dataPoints"), "#varUpsilon(1S) corrected yield", "lp");
-	legend.AddEntry(frame->findObject("polaResult"), Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaTheta.getVal(), lambdaTheta.getError()), "l");
+	//legend.AddEntry(frame->findObject("polaResult"), Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaTheta.getVal(), lambdaTheta.getError()), "l");
 
 	legend.DrawClone();
 
