@@ -1,8 +1,5 @@
 #include "../Tools/BasicHeaders.h"
 
-//#include "../Tools/Style/tdrStyle.C"
-//#include "../Tools/Style/CMS_lumi.C"
-
 #include "../AnalysisParameters.h"
 
 //#include "../Tools/Style/FitDistributions.h"
@@ -13,23 +10,6 @@
 #include "../Tools/Parameters/MuonScaleFactors.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
-
-// helping function to compute the product of the muon trigger efficiency scale factors when the two muons pass the L3 filter
-double DimuonL3TriggerWeight(float pt_mupl, float eta_mupl, float pt_mumi, float eta_mumi, int indexSF = 0) {
-	double T1_ = tnp_weight_trg_pbpb_mc(pt_mupl, eta_mupl, 3, indexSF);
-	double T2_ = tnp_weight_trg_pbpb_mc(pt_mumi, eta_mumi, 3, indexSF);
-	double T1 = tnp_weight_trg_pbpb_mc(pt_mupl, eta_mupl, 2, indexSF);
-	double T2 = tnp_weight_trg_pbpb_mc(pt_mumi, eta_mumi, 2, indexSF);
-	double den_ = T1_ * T2 + (T1 - T1_) * T2_;
-	double num_ = T1_ * tnp_weight_trg_pbpb(pt_mupl, eta_mupl, 3, indexSF) * T2 * tnp_weight_trg_pbpb(pt_mumi, eta_mumi, 2, indexSF) + (T1 * tnp_weight_trg_pbpb(pt_mupl, eta_mupl, 2, indexSF) - T1_ * tnp_weight_trg_pbpb(pt_mupl, eta_mupl, 3, indexSF)) * T2_ * tnp_weight_trg_pbpb(pt_mumi, eta_mumi, 3, indexSF);
-
-	if (den_ <= 0 || num_ <= 0) {
-		cout << "ERROR wrong calculation" << endl;
-		return 0;
-	}
-
-	return num_ / den_;
-}
 
 // return the 2D map of the relative systematic efficiency uncertainty
 TH2D* RelSystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency* hTrk_systDown, TEfficiency* hMuId_systUp, TEfficiency* hMuId_systDown, TEfficiency* hTrig_systUp, TEfficiency* hTrig_systDown, TEfficiency* hTrk_statUp, TEfficiency* hTrk_statDown, TEfficiency* hMuId_statUp, TEfficiency* hMuId_statDown, TEfficiency* hTrig_statUp, TEfficiency* hTrig_statDown) {
