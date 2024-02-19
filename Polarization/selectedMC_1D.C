@@ -24,7 +24,7 @@ RooDataSet* CosThetaDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t 
 	return reducedDataset;
 }
 
-void selectedMC_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180, const char* filename = "../Files/MCUpsilonSkimmedWeightedDataset.root") {
+void selectedMC_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = 1) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -35,6 +35,8 @@ void selectedMC_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	using namespace RooFit;
 	using namespace RooStats;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
+
+	const char* filename = Form("../Files/Y%dSSelectedMCWeightedDataset.root", iState);
 
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
@@ -86,7 +88,7 @@ void selectedMC_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	TLegend legend(.22, .88, .5, .65);
 	legend.SetTextSize(.05);
 	legend.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-	legend.AddEntry(frame->findObject("data"), "selected #varUpsilon(1S) MC candidates", "e0p");
+	legend.AddEntry(frame->findObject("data"), Form("selected #varUpsilon(%dS) MC candidates", iState), "e0p");
 	legend.AddEntry(frame->findObject("polaResult"), Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaTheta.getVal(), lambdaTheta.getError()), "l");
 
 	legend.DrawClone();
@@ -96,5 +98,5 @@ void selectedMC_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	//CMS_lumi(canvas, gCMSLumiText);
 
 	gSystem->mkdir("DistributionFits/1D", kTRUE);
-	canvas->SaveAs(Form("DistributionFits/1D/SelectedMC_%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
+	canvas->SaveAs(Form("DistributionFits/1D/SelectedY%dSMC_%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
 }
