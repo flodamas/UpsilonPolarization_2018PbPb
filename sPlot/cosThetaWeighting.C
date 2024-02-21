@@ -10,23 +10,7 @@
 
 #include "RooStats/SPlot.h"
 
-// reduce the whole dataset (N dimensions)
-RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30) {
-	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
-		return nullptr;
-	}
-
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
-
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var("cosThetaCS"))), kinematicCut);
-
-	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta CS) dataset"));
-
-	return reducedDataset;
-}
-
-void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root") {
+void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root") {
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -53,7 +37,7 @@ void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename =
 	RooWorkspace wspace("workspace");
 	wspace.import(*allDatasetCS);
 
-	auto* data = InvMassCosThetaWeightedDataset(allDatasetCS, wspace, ptMin, ptMax);
+	auto* data = InvMassCosThetaPhiDataset(allDatasetCS, wspace, ptMin, ptMax, refFrameName);
 
 	std::cout << "\n------------------------------------------\nThe dataset before creating sWeights:\n";
 	data->Print();
