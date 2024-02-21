@@ -73,6 +73,8 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight x reco pT reweighting x muon scale factors)", 0, 100000);
 
+	Float_t lowMassCut = 8, highMassCut = 11;
+	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
 	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4); // cut when reducing the dataset at a later stage
 	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
 
@@ -87,7 +89,7 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
 	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
 
-	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(centVar, eventWeightVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"), RooFit::StoreAsymError(RooArgSet(eventWeightVar)));
+	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"), RooFit::StoreAsymError(RooArgSet(eventWeightVar)));
 
 	// loop variables
 	Float_t nColl, weight = 0, dimuonPtWeight = 0, errorWeightDown = 0, errorWeightUp = 0;
@@ -133,6 +135,8 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 			if (Reco_QQ_VtxProb[iQQ] < 0.01) continue; // good common vertex proba
 
 			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iQQ);
+
+			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
 			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue;
 
@@ -294,6 +298,7 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 
 			eventWeightVar.setAsymError(errorWeightDown, errorWeightUp);
 
+			massVar = Reco_QQ_4mom->M();
 			yVar = fabs(Reco_QQ_4mom->Rapidity());
 			ptVar = Reco_QQ_4mom->Pt();
 

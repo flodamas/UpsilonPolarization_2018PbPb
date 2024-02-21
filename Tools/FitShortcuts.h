@@ -2,6 +2,22 @@
 
 #include "../AnalysisParameters.h"
 
+// reduce the whole dataset (N dimensions) to (invariant mass, cos theta, phi), allowing cutting off over some dimensions
+RooDataSet* InvMassCosThetaPhiDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {
+	if (allDataset == nullptr) {
+		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		return nullptr;
+	}
+
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (phi%s > %d && phi%s < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, phiMin, refFrameName, phiMax);
+
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s", refFrameName)))), kinematicCut);
+
+	wspace.import(*reducedDataset, RooFit::Rename(Form("(inv mass, cos theta, phi) %s reduced dataset", refFrameName)));
+
+	return reducedDataset;
+}
+
 // reduce the input dataset (N dimensions) to the apply desired kinematic cuts
 RooDataSet* ReducedDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, Double_t massMin = 8, Double_t massMax = 14, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
@@ -127,40 +143,6 @@ RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int
 	massDataset->SetName(kinematicCut); // just to make it unique
 
 	wspace->import(*massDataset);
-
-	return massDataset;
-}
-
-// reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
-RooDataSet* ReducedWeightedMassDatasetCS(RooDataSet* allDataset, RooWorkspace wspace, Int_t ptMin = 0, Int_t ptMax = 30, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
-	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
-		return nullptr;
-	}
-
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %f && phiCS < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
-
-	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
-	massDataset->SetName("ReducedWeightedMassDatasetCS");
-
-	wspace.import(*massDataset);
-
-	return massDataset;
-}
-
-// reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
-RooDataSet* ReducedWeightedMassDatasetHX(RooDataSet* allDataset, RooWorkspace wspace, Int_t ptMin = 0, Int_t ptMax = 30, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
-	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
-		return nullptr;
-	}
-
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %f && phiHX < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
-
-	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
-	massDataset->SetName("ReducedWeightedMassDatasetHX");
-
-	wspace.import(*massDataset);
 
 	return massDataset;
 }
@@ -408,12 +390,12 @@ Double_t ComputeSignalSignificance(RooWorkspace& wspace, Int_t iState = 1) {
 	return signalYield / sqrt(signalYield + bkgYield);
 }
 
-void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName){
+void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName) {
 	gSystem->mkdir("../SignalExtraction/SignalYields/", kTRUE);
 	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName));
 }
 
-RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName){
+RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName) {
 	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
 	const char* yieldsFileName = Form("../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName);
@@ -421,7 +403,7 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	if (fopen(yieldsFileName, "r")) {
 		cout << endl
 		     << "Found" << yieldsFileName << " file, will read signal yields from it" << endl;
-		     signalYields.readFromFile(yieldsFileName);
+		signalYields.readFromFile(yieldsFileName);
 	} else {
 		cout << endl
 		     << yieldsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << endl;
@@ -435,7 +417,7 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	return signalYields;
 }
 
-void SaveCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName){
+void SaveCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName) {
 	gSystem->mkdir("InvMassFits", kTRUE);
 	canvasName->SaveAs(Form("InvMassFits/CorrectedData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
 }
