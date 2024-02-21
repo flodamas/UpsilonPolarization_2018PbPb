@@ -9,7 +9,7 @@
 
 #include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
 
-RooDataSet* CosThetaDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
+RooDataSet* CosThetaDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -58,7 +58,7 @@ void selectedMC_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	// polarization fit
 
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -2, 2);
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.0, 1.0);
 
 	auto cosThetaPDF = CosThetaPolarizationPDF("cosThetaPDF", " ", cosTheta, lambdaTheta);
 
@@ -88,7 +88,7 @@ void selectedMC_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	TLegend legend(.22, .88, .5, .65);
 	legend.SetTextSize(.05);
 	legend.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-	legend.AddEntry(frame->findObject("data"), Form("selected #varUpsilon(%dS) MC candidates", iState), "e0p");
+	legend.AddEntry(frame->findObject("data"), Form("selected #varUpsilon(%dS) MC candidates", iState), "ep");
 	legend.AddEntry(frame->findObject("polaResult"), Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaTheta.getVal(), lambdaTheta.getError()), "l");
 
 	legend.DrawClone();
