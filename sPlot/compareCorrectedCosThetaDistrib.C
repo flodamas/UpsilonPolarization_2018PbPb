@@ -11,21 +11,6 @@
 
 #include "RooStats/SPlot.h"
 
-RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
-	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
-		return nullptr;
-	}
-
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (phi%s > %d && phi%s < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, phiMin, refFrameName, phiMax);
-
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s", refFrameName)))), kinematicCut);
-
-	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta) dataset"));
-
-	return reducedDataset;
-}
-
 RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
@@ -70,7 +55,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	auto* data = InvMassCosThetaWeightedDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto* data = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	Long64_t nEntries = data->sumEntries();
 	/// Invariant mass model
@@ -111,17 +96,17 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	// RooRealVar err_mu("err_mu", " ", 0, 13);
 	// RooRealVar err_sigma("err_sigma", " ", 0, 10);
 	// RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
-	
+
 	// ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
-	
+
 	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
-	
+
 	// signal + background
 
 	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
-	
+
 	wspace.import(*invMassModel, RecycleConflictNodes());
-	
+
 	/// "Standard" procedure: extract the yields per bin
 
 	TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);

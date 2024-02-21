@@ -10,28 +10,12 @@
 
 #include "RooStats/SPlot.h"
 
-// reduce the whole dataset (N dimensions)
-RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
-	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
-		return nullptr;
-	}
-
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
-
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s", refFrameName)))), kinematicCut);
-
-	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta) dataset"));
-
-	return reducedDataset;
-}
-
 // based on the tutorial https://github.com/root-project/root/blob/master/tutorials/roostats/rs301_splot.C
 void testPolaFit1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
-	Float_t phiMin = 0, phiMax = 180;
+	Float_t phiMin = -180, phiMax = 180;
 
 	/// Set up the data
 	using namespace RooFit;
@@ -53,7 +37,7 @@ void testPolaFit1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	RooWorkspace wspace("workspace");
 	wspace.import(*allDatasetCS);
 
-	auto* data = InvMassCosThetaWeightedDataset(allDatasetCS, wspace, ptMin, ptMax, refFrameName);
+	auto* data = InvMassCosThetaPhiDataset(allDatasetCS, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	std::cout << "\n------------------------------------------\nThe dataset before creating sWeights:\n";
 	data->Print();
@@ -144,16 +128,16 @@ void testPolaFit1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	//CMS_lumi(canvas, gCMSLumiText);
 
-	// polarization fit, just to give it a try but weird results obtained so far, WIP
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -2., 2.);
-	RooRealVar normCosTheta("normCosTheta", "normCosTheta", 0, nEntries);
-	RooGenericPdf cosThetaPDF_1S("cosThetaPDF_1S", "cosThetaPDF_1S", "(@0/(3 + @1)) * (1 + @1*@2*@2)", {normCosTheta, lambdaTheta, cosTheta});
+	// polarization fit
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.0, 1.0);
 
-	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(data_weight1S, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), AsymptoticError(DoAsymptoticError), Range(cosThetaMin, cosThetaMax));
+	auto cosThetaPDF = CosThetaPolarizationPDF("cosThetaPDF", " ", cosTheta, lambdaTheta);
+
+	auto* polarizationFitResult = cosThetaPDF.fitTo(data_weight1S, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), AsymptoticError(DoAsymptoticError), Range(cosThetaMin, cosThetaMax));
 
 	polarizationFitResult->Print("v");
 
-	cosThetaPDF_1S.plotOn(frame, LineColor(kBlue));
+	cosThetaPDF.plotOn(frame, LineColor(kBlue));
 
 	frame->Draw();
 

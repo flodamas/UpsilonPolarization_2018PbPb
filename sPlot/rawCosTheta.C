@@ -12,23 +12,7 @@
 
 #include "RooStats/SPlot.h"
 
-// reduce the whole dataset (N dimensions)
-RooDataSet* InvMassCosThetaDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
-	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
-		return nullptr;
-	}
-
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
-
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s", refFrameName)))), kinematicCut);
-
-	wspace.import(*reducedDataset, RooFit::Rename("(inv mass, cos theta) dataset"));
-
-	return reducedDataset;
-}
-
-void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., const char* filename = "../Files/UpsilonSkimmedDataset.root") {
+void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Int_t phiMin = -180, Int_t phiMax = 180, const char* filename = "../Files/UpsilonSkimmedDataset.root") {
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -51,7 +35,7 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	RooWorkspace wspace(Form("workspace_%s", refFrameName));
 	wspace.import(*allDataset);
 
-	auto* data = InvMassCosThetaDataset(allDataset, wspace, ptMin, ptMax, refFrameName);
+	auto* data = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	std::cout << "\n------------------------------------------\nThe dataset before creating sWeights:\n";
 	data->Print();
@@ -107,7 +91,7 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	/// Draw the invariant mass distribution, to check the fit
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
 
-	massCanvas->SaveAs(Form("1D/rawInvMassFit_ChebychevBkg_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	massCanvas->SaveAs(Form("InvMassFits/rawInvMassFit_ChebychevBkg_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	/// SPlot time!
 

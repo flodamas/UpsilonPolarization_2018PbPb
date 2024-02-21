@@ -9,21 +9,6 @@
 
 #include "../Tools/RooFitPDFs/GeneralPolarizationPDF.h"
 
-RooDataSet* CosThetaPhiDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
-	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
-		return nullptr;
-	}
-
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (phi%s > %d && phi%s < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, phiMin, refFrameName, phiMax);
-
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var(Form("cosTheta%s", refFrameName))), *(wspace.var(Form("phi%s", refFrameName)))), kinematicCut);
-
-	wspace.import(*reducedDataset, RooFit::Rename("(cos theta, phi) dataset"));
-
-	return reducedDataset;
-}
-
 void selectedMC_2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = 1) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
@@ -52,7 +37,7 @@ void selectedMC_2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	RooWorkspace wspace("workspace");
 	wspace.import(*allDataset);
 
-	auto* data = CosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto* data = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 	RooRealVar phi = *wspace.var(Form("phi%s", refFrameName));
