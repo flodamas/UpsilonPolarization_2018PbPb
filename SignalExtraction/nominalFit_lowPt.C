@@ -42,7 +42,7 @@ RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t p
 }
 
 
-void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = 0, Int_t phiMax = 180) {
+void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = 0, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -109,44 +109,43 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	const char* lastDigit = bkgShapeName + charSize -1;
 	std::stringstream converter(lastDigit);
 
-	int order = 2;
+	int order = 0;
 	converter >> order;
 
 	RooArgList coefList = ChebychevCoefList(order);
 
-	RooChebychev bkgPDF("bkgPDF", " ", invMass, coefList);
+	RooChebychev* bkgPDF = new RooChebychev("bkgPDF", " ", invMass, coefList);
 	// }}}
 
 	// // {{{2. background: exponential x err function
 	// const char* bkgShapeName = "ExpTimesErr";
-	// RooRealVar err_mu("err_mu", " ", 0, 13);
+	// RooRealVar err_mu("err_mu", " ", 0, 30);
 	// RooRealVar err_sigma("err_sigma", " ", 0, 10);
 	// RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
 	
-	// ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
-	// }}}
+	// ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
+	// // }}}
 	
-	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
+	RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "N background events", 0, nEntries);
 
-	// background: Choose "ChebychevOrderN" or "ExpTimesErr"
+	// // background: Choose "ChebychevOrderN" or "ExpTimesErr"
+	// const char* bkgShapeName = "ExpTimesErr";
+	
+	// auto bkgModel = NominalBkgModel(wspace, bkgShapeName, nEntries);
 
-	// int order = 2;
+	// RooAbsPdf* bkgPDF = wspace.pdf("bkgPDF");
 
-	// RooArgList coefList = ChebychevCoefList(order);
-
-	// RooChebychev* bkgPDF = new RooChebychev("bkgPDF", " ", invMass, coefList);
-
-	// RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "N background events", 0, nEntries);
+	// RooRealVar* yieldBkg = wspace.var("yieldBkg");
 
 	// sig + bkg model
 
-	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
+	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF), {*yield1S, *yield2S, *yield3S, *yieldBkg});
 
 	wspace.import(*invMassModel, RecycleConflictNodes());
 
 	RooDataSet* reducedDataset = InvMassDataset(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName, phiMin, phiMax);
 	
-	auto* fitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
+	auto* fitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE)/*, PrintLevel(-1)*/, NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
 
 	fitResult->Print("v");
 	
