@@ -8,6 +8,8 @@
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/Style/FitDistributions.h"
 
+#include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
+
 void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
@@ -26,8 +28,20 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	/// Assign signal and background shape name to read the file for the yield extraction results
 	const char* signalShapeName = "SymDSCB";
 
-	const char* bkgShapeName = "ChebychevOrder2"; //ChebychevOrderN or ExpTimesErr
-
+	/// background shape array: ChebychevOrderN or ExpTimesErr
+	const char* bkgShapeName[] = {
+		// "ChebychevOrder2", 
+		"ChebychevOrder2",
+		"ChebychevOrder2",
+		"ChebychevOrder2",
+		"ChebychevOrder2",
+		"ChebychevOrder2",
+		"ChebychevOrder2",
+		"ChebychevOrder2",
+		"ChebychevOrder2",
+		// "ChebychevOrder2"
+	};
+	
 	/// "Standard" procedure: extract the yields per bin
 
 	TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
@@ -44,7 +58,7 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 
 		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaVal, cosThetaVal + cosThetaStep, phiMin, phiMax);
 
-		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, bkgShapeName, fitModelName);
+		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, bkgShapeName[iCosTheta], fitModelName);
 
 		standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
 		standardCorrectedHist.SetBinError(iCosTheta + 1, yield1S->getError());
@@ -78,10 +92,9 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	     << "Distribution fit for polarization paramaters extraction" << endl;
 
 	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -2, 2);
-	RooRealVar normCosTheta("normCosTheta", "normCosTheta", yield1S->getVal(), -2 * maxYield, 2 * maxYield);
-	RooGenericPdf cosThetaPDF_1S("cosThetaPDF_1S", "cosThetaPDF_1S", "(@0/(3 + @1)) * (1 + @1*@2*@2)", {normCosTheta, lambdaTheta, cosTheta});
+	auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", cosTheta, lambdaTheta);
 
-	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(correctedHist, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), AsymptoticError(DoAsymptoticError), Range(cosThetaMin, cosThetaMax));
+	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(correctedHist, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), Range(cosThetaMin, cosThetaMax));
 
 	polarizationFitResult->Print("v");
 
