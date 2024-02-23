@@ -9,6 +9,7 @@
 #include "../Tools/Style/FitDistributions.h"
 
 #include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
+#include "../Tools/RooFitPDFs/cosThetaPolarFunc.h"
 
 void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
@@ -28,7 +29,7 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	/// Assign signal and background shape name to read the file for the yield extraction results
 	const char* signalShapeName = "SymDSCB";
 
-	/// background shape array: ChebychevOrderN or ExpTimesErr
+	// background shape array: ChebychevOrderN or ExpTimesErr
 	const char* bkgShapeName[] = {
 		// "ChebychevOrder2", 
 		"ChebychevOrder2",
@@ -41,10 +42,10 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 		"ChebychevOrder2",
 		// "ChebychevOrder2"
 	};
-	
+
 	/// "Standard" procedure: extract the yields per bin
 
-	TH1D standardCorrectedHist("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
+	TH1D* standardCorrectedHist = new TH1D("standardCorrectedHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
 
 	Float_t cosThetaStep = ((cosThetaMax - cosThetaMin) / nCosThetaBins);
 
@@ -60,13 +61,14 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 
 		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, bkgShapeName[iCosTheta], fitModelName);
 
-		standardCorrectedHist.SetBinContent(iCosTheta + 1, yield1S->getVal());
-		standardCorrectedHist.SetBinError(iCosTheta + 1, yield1S->getError());
+		standardCorrectedHist->SetBinContent(iCosTheta + 1, yield1S->getVal());
+		standardCorrectedHist->SetBinError(iCosTheta + 1, yield1S->getError());
 
 		if (yield1S->getVal() > maxYield) maxYield = yield1S->getVal();
 	}
 	cout << yield1S->getError() << endl;
-	RooDataHist correctedHist("correctedHist", " ", cosTheta, Import(standardCorrectedHist));
+
+	RooDataHist correctedHist("correctedHist", " ", cosTheta, standardCorrectedHist);
 
 	/// Draw the cos theta distributions
 
@@ -87,14 +89,14 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	frame->SetMaximum(2 * maxYield);
 
 	/// Polarization fit
-
+	// with RooFit
 	cout << endl
 	     << "Distribution fit for polarization paramaters extraction" << endl;
 
 	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -2, 2);
 	auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", cosTheta, lambdaTheta);
 
-	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(correctedHist, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), Range(cosThetaMin, cosThetaMax));
+	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(correctedHist, Save(), Extended(kTRUE)/*, PrintLevel(+1)*/, NumCPU(NCPUs), Range(cosThetaMin, cosThetaMax), SumW2Error(kFALSE)/*, AsymptoticError(DoAsymptoticError)*/);
 
 	polarizationFitResult->Print("v");
 
@@ -118,4 +120,43 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 
 	gSystem->mkdir("DistributionFits/1D", kTRUE);
 	canvas->SaveAs(Form("DistributionFits/1D/compareCorrectedCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
+
+	// with Root Fit function
+	TCanvas* canvas2 = new TCanvas("canvas2", "canvas2", 650, 600);
+
+	TF1* PolarFunc = cosThetaPolarFunc(maxYield);
+
+	TFitResultPtr fitResults = standardCorrectedHist->Fit("PolarFunc", "LESV", "", cosThetaMin, cosThetaMax); //L:log likelihood fit, E: NINOS
+
+	// Fit results
+
+	double chi2 = fitResults->Chi2();;
+	double lambdaVal = fitResults->Parameter(0);
+	double lambdaErr = fitResults->ParError(0);	
+
+	gStyle->SetOptFit(1011);
+
+	// cosmetics
+	
+	standardCorrectedHist->SetMarkerStyle(20);
+    standardCorrectedHist->SetMarkerSize(1);
+    standardCorrectedHist->SetMarkerColor(kAzure + 2);
+
+	standardCorrectedHist->GetYaxis()->SetRangeUser(0, 2 * maxYield);
+	standardCorrectedHist->GetYaxis()->SetMaxDigits(3);
+
+	standardCorrectedHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
+	standardCorrectedHist->SetYTitle(Form("Events / ( %0.1f )", cosThetaStep));
+	
+	TLegend legend2(.22, .88, .5, .68);
+	legend2.SetTextSize(.05);
+	legend2.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legend2.AddEntry(standardCorrectedHist, "#varUpsilon(1S) corrected yield", "lp");
+	legend2.AddEntry(PolarFunc, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaVal, lambdaErr), "l");
+	
+	legend2.DrawClone();
+	
+	gPad->Update();
+
+	canvas2->SaveAs(Form("DistributionFits/1D/ROOTFIT_compareCorrectedCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
 }
