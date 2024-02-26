@@ -2,7 +2,7 @@
 
 #include "../AnalysisParameters.h"
 
-// reduce the whole dataset (N dimensions) to (invariant mass, cos theta, phi), allowing cutting off over some dimensions
+// reduce the whole dataset (N dimensions) to (invariant mass, cos theta, phi), allowing cutting off along phi
 RooDataSet* InvMassCosThetaPhiDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
@@ -11,7 +11,7 @@ RooDataSet* InvMassCosThetaPhiDataset(RooDataSet* allDataset, RooWorkspace& wspa
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (phi%s > %d && phi%s < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, phiMin, refFrameName, phiMax);
 
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s", refFrameName)))), kinematicCut);
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(Form("cosTheta%s", refFrameName))), *(wspace.var(Form("phi%s", refFrameName)))), kinematicCut);
 
 	wspace.import(*reducedDataset, RooFit::Rename(Form("(inv mass, cos theta, phi) %s reduced dataset", refFrameName)));
 
