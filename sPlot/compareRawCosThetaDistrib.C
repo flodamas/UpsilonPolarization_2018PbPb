@@ -76,9 +76,9 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	RooRealVar* yield2S = wspace.var("yield2S");
 	RooRealVar* yield3S = wspace.var("yield3S");
 
-	// background: Chebychev polynomial
-	int order = 2;
-	auto bkgModel = NominalBkgModel(wspace, Form("ChebychevOrder%d", order), nEntries);
+	// background: error function x exponential
+	const char* bkgShapeName = "ExpTimesErr";
+	auto bkgModel = NominalBkgModel(wspace, bkgShapeName, nEntries);
 
 	RooAbsPdf* bkgPDF = wspace.pdf("bkgPDF");
 
@@ -95,7 +95,7 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	/// Draw the invariant mass distribution, to check the fit
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
 
-	massCanvas->SaveAs(Form("InvMassFits/rawInvMassFit_ChebychevBkg_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	massCanvas->SaveAs(Form("InvMassFits/rawInvMassFit_%s_cent%dto%d_pt%dto%dGeV.png", bkgShapeName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	/// SPlot time!
 

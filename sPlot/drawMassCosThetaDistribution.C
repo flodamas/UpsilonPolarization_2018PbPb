@@ -5,8 +5,8 @@
 #include "../Tools/FitShortcuts.h"
 
 void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
-	Double_t massMin = MassBinMin, massMax = MassBinMax;
-	Int_t nInvMassBins = 10 * (MassBinMax - MassBinMin);
+	Double_t massMin = 9, massMax = 10;
+	Int_t nInvMassBins = (Int_t)10 * (massMax - massMin);
 
 	Int_t nCosThetaBins = 20;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
