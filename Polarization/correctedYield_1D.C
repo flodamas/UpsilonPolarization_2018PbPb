@@ -235,43 +235,4 @@ void correctedYield_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	gSystem->mkdir("DistributionFits/1D", kTRUE);
 	canvas->SaveAs(Form("DistributionFits/1D/%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
-
-	// with Root Fit function
-	TCanvas* canvas2 = new TCanvas("canvas2", "canvas2", 650, 600);
-
-	TF1* PolarFunc = cosThetaPolarFunc(maxYield);
-
-	TFitResultPtr fitResults = standardCorrectedHist->Fit("PolarFunc", "LESV", "", cosThetaMin, cosThetaMax); //L:log likelihood fit, E: NINOS
-
-	// Fit results
-
-	double chi2 = fitResults->Chi2();;
-	double lambdaVal = fitResults->Parameter(0);
-	double lambdaErr = fitResults->ParError(0);	
-
-	gStyle->SetOptFit(1011);
-
-	// cosmetics
-
-	standardCorrectedHist->SetMarkerStyle(20);
-    standardCorrectedHist->SetMarkerSize(1);
-    standardCorrectedHist->SetMarkerColor(kAzure + 2);
-
-	standardCorrectedHist->GetYaxis()->SetRangeUser(0, 2 * maxYield);
-	standardCorrectedHist->GetYaxis()->SetMaxDigits(3);
-
-	standardCorrectedHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-	standardCorrectedHist->SetYTitle(Form("Events / ( %0.1f )", cosThetaStep));
-	
-	TLegend legend2(.22, .88, .5, .68);
-	legend2.SetTextSize(.05);
-	legend2.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-	legend2.AddEntry(standardCorrectedHist, "#varUpsilon(1S) corrected yield", "lp");
-	legend2.AddEntry(PolarFunc, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaVal, lambdaErr), "l");
-	
-	legend2.DrawClone();
-	
-	gPad->Update();
-
-	canvas2->SaveAs(Form("DistributionFits/1D/ROOTFIT_compareCorrectedCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
 }
