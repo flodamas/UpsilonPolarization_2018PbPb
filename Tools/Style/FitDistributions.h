@@ -13,10 +13,9 @@
 using namespace RooFit;
 
 // make and draw the invariant mass distribution with fit results
-RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet* dataset/*, RooAddPdf* invMassModel*/) {
+RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet* dataset) {
 	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
-	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
-	dataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
+	dataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	auto* fitModel = wspace.pdf("fitModel");
 	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(kGray + 2), LineStyle(kDashed));
@@ -24,12 +23,6 @@ RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet* dataset/*, RooAd
 	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(kRed));
 	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(kRed));
 	fitModel->plotOn(frame, LineColor(kBlue));
-
-	// invMassModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(kGray + 2), LineStyle(kDashed));
-	// invMassModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(kRed));
-	// invMassModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(kRed));
-	// invMassModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(kRed));
-	// invMassModel->plotOn(frame, LineColor(kBlue));
 
 	frame->GetYaxis()->SetMaxDigits(3);
 
@@ -81,7 +74,7 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	TLatex textChi2;
 	textChi2.SetTextAlign(12);
 	textChi2.SetTextSize(0.15);
-	textChi2.DrawLatexNDC(0.75, 0.12, Form("#chi^{2} / n_{d.o.f.} = %.1f", frame->chiSquare(nFitPars)));
+	textChi2.DrawLatexNDC(0.75, 0.12, Form("#chi^{2} / n_{dof} = %.1f", frame->chiSquare(nFitPars)));
 
 	return bottomPad;
 }
@@ -145,6 +138,7 @@ TCanvas* DrawMassFitDistributions(RooWorkspace& wspace, RooDataSet* dataset, Int
 	pad1->cd();
 
 	RooPlot* frame = InvariantMassRooPlot(wspace, dataset);
+	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 
 	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
