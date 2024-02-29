@@ -170,6 +170,15 @@ TCanvas* DrawMassFitDistributions(RooWorkspace& wspace, RooDataSet* dataset, Int
 	return canvas; // to be saved outside
 }
 
+void enableBinIntegrator(RooAbsReal &func, int numBins)
+{
+   RooNumIntConfig customConfig(*func.getIntegratorConfig());
+   customConfig.method1D().setLabel("RooBinIntegrator");
+   customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBins", numBins);
+   func.setIntegratorConfig(customConfig);
+   func.forceNumInt(true);
+}
+
 void SaveMCSignalTailParameters(RooArgSet* params, const char* outputName) {
 	params->writeToFile(Form("../MonteCarlo/SignalParameters/%s.txt", outputName));
 }

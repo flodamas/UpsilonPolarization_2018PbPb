@@ -210,6 +210,7 @@ void correctedYield_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", cosTheta, lambdaTheta);
 
+	enableBinIntegrator(cosThetaPDF_1S, nCosThetaBins);
 	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(correctedHist, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), Range(cosThetaMin, cosThetaMax), SumW2Error(false));
 
 	polarizationFitResult->Print("v");
@@ -251,7 +252,7 @@ void correctedYield_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	gStyle->SetOptFit(1011);
 
 	// cosmetics
-	
+
 	standardCorrectedHist->SetMarkerStyle(20);
     standardCorrectedHist->SetMarkerSize(1);
     standardCorrectedHist->SetMarkerColor(kAzure + 2);
