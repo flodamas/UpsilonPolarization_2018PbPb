@@ -66,7 +66,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooDataSet datasetLab("datasetLab", "skimmed dataset for the Lab frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar));
 
 	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
-	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", 0, 180, "#circ");
+	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
 
 	RooDataSet datasetCS("datasetCS", "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
 
