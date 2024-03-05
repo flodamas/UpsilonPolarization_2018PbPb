@@ -1,4 +1,5 @@
 #include "../Tools/BasicHeaders.h"
+
 #include "../AnalysisParameters.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
@@ -6,6 +7,7 @@
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
 
 void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root", const char* outputFileName = "UpsilonSkimmedDataset.root") {
+	/// Open OniaTree
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
@@ -54,21 +56,26 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	Float_t lowMassCut = 6.5, highMassCut = 14.5; // large invariant mass window to ease the integration for RooFit
 	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
 	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4);
-	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
+	RooRealVar ptVar("pt", "dimuon pT", 0, gPtBinning[NPtBins], "GeV/c");
 
 	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
-	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", -180, 180, "#circ");
+	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", 0, 180, "#circ");
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
 	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
 
+	RooDataSet datasetLab("datasetLab", "skimmed dataset for the Lab frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar));
+
 	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
-	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
+	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", 0, 180, "#circ");
+
+	RooDataSet datasetCS("datasetCS", "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
 
 	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
-	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
+	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", 0, 180, "#circ");
 
-	RooDataSet dataset("dataset", "skimmed dataset", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
+	RooDataSet datasetHX("datasetHX", "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
 
+	// loop variables
 	Long64_t totEntries = OniaTree->GetEntries();
 
 	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
@@ -99,7 +106,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue; // cut on the dimuon rapidity when reducing the dataset later
 
-			//if (Reco_QQ_4mom->Pt() > 50) continue;
+			if (Reco_QQ_4mom->Pt() > gPtBinning[NPtBins]) continue;
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
@@ -130,7 +137,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
-			// fill the dataset
+			// fill the datasets
 
 			centVar = Centrality;
 
@@ -138,25 +145,34 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 			yVar = fabs(Reco_QQ_4mom->Rapidity());
 			ptVar = Reco_QQ_4mom->Pt();
 
+			// Lab
 			cosThetaLabVar = Reco_mupl_4mom->CosTheta();
-			phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
+			phiLabVar = fabs(Reco_mupl_4mom->Phi() * 180 / TMath::Pi());
 			etaLabMuplVar = Reco_mupl_4mom->PseudoRapidity();
 			etaLabMumiVar = Reco_mumi_4mom->PseudoRapidity();
 
+			datasetLab.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar));
+
+			// Collins-Soper
 			cosThetaCSVar = muPlus_CS.CosTheta();
-			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
+			phiCSVar = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
 
+			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
+
+			// Helicity
 			cosThetaHXVar = muPlus_HX.CosTheta();
-			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
+			phiHXVar = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
 
-			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
+			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
 
 		} // end of reco QQ loop
 	}   // enf of event loop
 
 	TFile file(outputFileName, "RECREATE");
 
-	dataset.Write();
+	datasetCS.Write();
+
+	datasetHX.Write();
 
 	file.Close();
 

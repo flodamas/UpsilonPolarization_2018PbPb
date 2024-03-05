@@ -8,7 +8,7 @@
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
-void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
@@ -16,6 +16,7 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
 	const char* filename = "../Files/UpsilonSkimmedDataset.root";
+	
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -24,19 +25,20 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 
 	cout << "File " << filename << " opened" << endl;
 
-	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
+	const char* datasetName = Form("dataset%s", isCSframe? "CS":"HX");
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* reducedDataset = isCSframe? ReducedDatasetCS(allDataset, wspace, ptMin, ptMax, MassBinMin, MassBinMax, cosThetaMin, cosThetaMax, phiMin, phiMax):ReducedDatasetHX(allDataset, wspace, ptMin, ptMax, MassBinMin, MassBinMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	Long64_t nEntries = massDataset->sumEntries();
+	Long64_t nEntries = reducedDataset->sumEntries();
 
 	auto* canvas = new TCanvas("canvas", "", 650, 600);
 
 	RooPlot* frame = wspace->var("mass")->frame(Title(" "), Range(MassBinMin, MassBinMax));
-	massDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
+	reducedDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
 
 	frame->GetYaxis()->SetMaxDigits(3);
 
@@ -55,7 +57,7 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 	canvas->Update();
 
 	gSystem->mkdir("mass_distrib", kTRUE);
-	canvas->SaveAs(Form("mass_distrib/RawData_cent%dto%d_pt%dto%dGeV_cosTheta%.1fto%.1f_phi%.1dto%.1d.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax), "RECREATE");
+	canvas->SaveAs(Form("mass_distrib/RawData_%s_cent%dto%d_pt%dto%dGeV_cosTheta%.1fto%.1f_phi%.1dto%.1d.png", datasetName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax), "RECREATE");
 }
 
 void scanPlotInvMass(){

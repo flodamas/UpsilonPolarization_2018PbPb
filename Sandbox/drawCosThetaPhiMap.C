@@ -75,9 +75,9 @@ void drawCosThetaPhiMap(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename 
 	/// Draw and save the number of events(signal+background) plots in the 2D (costheta, phi) space
 	RooWorkspace wspace("workspace");
 
-	TH2* histoCS = DrawCosThetaPhiDistribution((RooDataSet*)f->Get("dataset"), wspace, "CS", ptMin, ptMax);
+	TH2* histoCS = DrawCosThetaPhiDistribution((RooDataSet*)f->Get("datasetCS"), wspace, "CS", ptMin, ptMax);
 
-	TH2* histoHX = DrawCosThetaPhiDistribution((RooDataSet*)f->Get("dataset"), wspace, "HX", ptMin, ptMax);
+	TH2* histoHX = DrawCosThetaPhiDistribution((RooDataSet*)f->Get("datasetHX"), wspace, "HX", ptMin, ptMax);
 
 	/// save the results in a file for later usage
 	gSystem->mkdir("frame_distrib", kTRUE);
