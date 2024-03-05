@@ -59,7 +59,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar ptVar("pt", "dimuon pT", 0, gPtBinning[NPtBins], "GeV/c");
 
 	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
-	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", 0, 180, "#circ");
+	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", -180, 180, "#circ");
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
 	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
 
@@ -71,7 +71,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooDataSet datasetCS("datasetCS", "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
 
 	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
-	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", 0, 180, "#circ");
+	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
 
 	RooDataSet datasetHX("datasetHX", "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
 
@@ -147,7 +147,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			// Lab
 			cosThetaLabVar = Reco_mupl_4mom->CosTheta();
-			phiLabVar = fabs(Reco_mupl_4mom->Phi() * 180 / TMath::Pi());
+			phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
 			etaLabMuplVar = Reco_mupl_4mom->PseudoRapidity();
 			etaLabMumiVar = Reco_mumi_4mom->PseudoRapidity();
 
@@ -155,13 +155,13 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			// Collins-Soper
 			cosThetaCSVar = muPlus_CS.CosTheta();
-			phiCSVar = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
+			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
 
 			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
 
 			// Helicity
 			cosThetaHXVar = muPlus_HX.CosTheta();
-			phiHXVar = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
+			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
 
 			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
 

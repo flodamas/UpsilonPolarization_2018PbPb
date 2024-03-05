@@ -27,7 +27,7 @@ RooDataSet* CosThetaDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t 
 	return reducedDataset;
 }
 
-void simultaneousLikelihoods(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = 1) {
+void simultaneousLikelihoods(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = 1) {
 	using namespace RooFit;
 	using namespace RooStats;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
