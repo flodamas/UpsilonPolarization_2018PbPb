@@ -20,16 +20,16 @@ RooDataSet* ReducedMCDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t
 		return nullptr;
 	}
 
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (phi%s > %d && phi%s < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, phiMin, refFrameName, phiMax);
+	const char* kinematicCut = Form("(rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (phi%s > %d && phi%s < %d)", gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, phiMin, refFrameName, phiMax);
 
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.cat("recoCategory")), *(wspace.var(Form("cosTheta%s", refFrameName))), *(wspace.var(Form("phi%s", refFrameName)))), kinematicCut);
+	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.cat("eventCat")), *(wspace.var(Form("cosTheta%s", refFrameName))), *(wspace.var(Form("phi%s", refFrameName)))), kinematicCut);
 
 	wspace.import(*reducedDataset, RooFit::Rename(Form("(cos theta, phi) %s reduced dataset", refFrameName)));
 
 	return reducedDataset;
 }
 
-void efficiencyFit_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = 1) {
+void acceptanceFit_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = 1) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -40,7 +40,7 @@ void efficiencyFit_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNam
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* filename = Form("../Files/Y%dSReconstructedMCWeightedDataset.root", iState);
+	const char* filename = Form("../Files/Y%dSGeneratedMCDataset.root", iState);
 
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
@@ -63,18 +63,18 @@ void efficiencyFit_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNam
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	RooCategory recoCat = *wspace.cat("recoCategory");
+	RooCategory eventCat = *wspace.cat("eventCat");
 
 	// define efficiency objects
 
-	RooFormulaVar effFunc("effFunc", "@0*(1+@1*@2*@2)", RooArgList(normFactor, lambdaTheta, cosTheta));
+	RooFormulaVar accFunc("accFunc", "@0*(1+@1*@2*@2)", RooArgList(normFactor, lambdaTheta, cosTheta));
 
-	RooEfficiency effPDF("effPDF", "effPDF", effFunc, recoCat, "selected");
+	RooEfficiency accPDF("accPDF", "accPDF", accFunc, eventCat, "accepted");
 
 	//auto cosThetaPDF = CosThetaPolarizationPDF("cosThetaPDF", " ", cosTheta, lambdaTheta);
 	// Fit conditional efficiency pdf to data
 
-	auto* fitResult = effPDF.fitTo(*data, ConditionalObservables(cosTheta), Save(), PrintLevel(+1), Range(cosThetaMin, cosThetaMax), AsymptoticError(DoAsymptoticError));
+	auto* fitResult = accPDF.fitTo(*data, ConditionalObservables(cosTheta), Save(), PrintLevel(+1), Range(cosThetaMin, cosThetaMax), AsymptoticError(DoAsymptoticError));
 
 	fitResult->Print("v");
 
@@ -84,11 +84,11 @@ void efficiencyFit_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNam
 
 	RooPlot* frame = cosTheta.frame(Title(" "), Bins(nCosThetaBins), Range(cosThetaMin, cosThetaMax));
 	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-	frame->SetYTitle("Efficiency");
+	frame->SetYTitle("Acceptance");
 
-	data->plotOn(frame, Efficiency(recoCat), DrawOption("P0Z"), Name("data"));
+	data->plotOn(frame, Efficiency(eventCat), DrawOption("P0Z"), Name("data"));
 
-	effPDF.plotOn(frame, LineColor(kRed + 1), Name("polaResult"));
+	accPDF.plotOn(frame, LineColor(kRed + 1), Name("polaResult"));
 
 	//frame->GetYaxis()->SetRangeUser(0, 1000);
 	frame->SetMaximum(1);
@@ -100,14 +100,14 @@ void efficiencyFit_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNam
 	TLegend legend(.22, .88, .5, .65);
 	legend.SetTextSize(.05);
 	legend.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-	legend.AddEntry(frame->findObject("data"), Form("selected #varUpsilon(%dS) MC candidates", iState), "EP");
+	legend.AddEntry(frame->findObject("data"), Form("accepted #varUpsilon(%dS) MC candidates", iState), "EP");
 	legend.AddEntry(frame->findObject("polaResult"), Form("distribution fit: #lambda_{#theta} = %.3f #pm %.3f", lambdaTheta.getVal(), lambdaTheta.getError()), "l");
 
 	legend.DrawClone();
 
 	gPad->Update();
 
-	CMS_lumi(canvas, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
+	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 MC", iState));
 
-	canvas->SaveAs(Form("EfficiencyMaps/%dS/Efficiency1D_CosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
+	canvas->SaveAs(Form("AcceptanceMaps/%dS/AcceptanceFit1D_CosTheta%s_pt%dto%dGeV_phi%dto%d.png", iState, refFrameName, ptMin, ptMax, phiMin, phiMax), "RECREATE");
 }
