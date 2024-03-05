@@ -11,7 +11,7 @@
 #include "RooStats/SPlot.h"
 
 // compare the sPlot and raw yield extraction methods
-void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) { //possible refFrame names: CS or HX
+void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) { //possible refFrame names: CS or HX
 
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
@@ -33,7 +33,8 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 
 	cout << "File " << filename << " opened" << endl;
 
-	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
+	const char* datasetName = Form("dataset%s", refFrameName);
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	// import the dataset to a workspace
 	RooWorkspace wspace(Form("workspace_%s", refFrameName));
