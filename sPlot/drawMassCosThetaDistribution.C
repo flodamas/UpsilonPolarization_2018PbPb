@@ -59,11 +59,10 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 
 	/// Draw and save the number of events(signal+background) plots in the 2D (costheta, phi) space
 
-	TCanvas* canvas = new TCanvas(Form("canvas%s", refFrameName), "canvas", 700, 600);
+	TCanvas* canvas = new TCanvas("canvas", "canvas", 700, 600);
 
 	TH2* histo = dynamic_cast<TH2*>(reducedDataset->createHistogram(histoName, cosTheta, RooFit::Binning(nCosThetaBins, cosThetaMin, cosThetaMax), RooFit::YVar(invMass, RooFit::Binning(nInvMassBins, massMin, massMax))));
 
-	histo->SetTitle(Form(";cos #theta_{%s}; m_{#mu^{#plus}#mu^{#minus}} (GeV/c^{2})", refFrameName));
 	histo->Draw("COLZ");
 
 	TLatex legend;

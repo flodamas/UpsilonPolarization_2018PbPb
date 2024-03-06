@@ -200,7 +200,6 @@ void simultaneousLikelihoods(Int_t ptMin = 0, Int_t ptMax = 30, const char* refF
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
 	RooPlot* frame = cosTheta->frame(Title(" "), Range(cosThetaMin, cosThetaMax));
-	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
 
 	data_weight1S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2), Name("data1S"));
 	cosThetaPDF.plotOn(frame, LineColor(kRed + 1), Name("polaResult"));
