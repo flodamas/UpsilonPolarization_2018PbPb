@@ -65,7 +65,7 @@ RooDataSet* ReducedDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t c
 }
 
 // apply desired kinematic cuts on the dataset, but keep its original content
-RooDataSet* ReducedWeightedDatasetCS(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, Double_t massMin = 8, Double_t massMax = 14, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+RooDataSet* ReducedDatasetCS(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, Double_t massMin = 8, Double_t massMax = 14, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -76,7 +76,7 @@ RooDataSet* ReducedWeightedDatasetCS(RooDataSet* allDataset, RooWorkspace* wspac
 	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("centrality")), *(wspace->var("mass")), *(wspace->var("rapidity")), *(wspace->var("pt")), *(wspace->var("cosThetaCS")), *(wspace->var("phiCS"))), kinematicCut);
 
 	// RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
-	reducedDataset->SetName("ReducedWeightedDatasetCS");
+	reducedDataset->SetName("ReducedDatasetCS");
 
 	wspace->import(*reducedDataset);
 
@@ -84,7 +84,7 @@ RooDataSet* ReducedWeightedDatasetCS(RooDataSet* allDataset, RooWorkspace* wspac
 }
 
 // apply desired kinematic cuts on the dataset, but keep its original content
-RooDataSet* ReducedWeightedDatasetHX(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, Double_t massMin = 8, Double_t massMax = 14, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+RooDataSet* ReducedDatasetHX(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, Double_t massMin = 8, Double_t massMax = 14, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -94,7 +94,7 @@ RooDataSet* ReducedWeightedDatasetHX(RooDataSet* allDataset, RooWorkspace* wspac
 
 	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("centrality")), *(wspace->var("mass")), *(wspace->var("rapidity")), *(wspace->var("pt")), *(wspace->var("cosThetaHX")), *(wspace->var("phiHX"))), kinematicCut);
 
-	reducedDataset->SetName("ReducedWeightedDatasetHX");
+	reducedDataset->SetName("ReducedDatasetHX");
 
 	wspace->import(*reducedDataset);
 

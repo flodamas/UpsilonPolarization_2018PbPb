@@ -29,7 +29,8 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	using namespace RooStats;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
+	const char* datasetName = Form("dataset%s", refFrameName);
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	// import the dataset to a workspace
 	RooWorkspace wspace(Form("workspace_%s", refFrameName));
@@ -91,6 +92,7 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	/// Draw the invariant mass distribution, to check the fit
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
 
+	gSystem->mkdir("InvMassFits", kTRUE);
 	massCanvas->SaveAs(Form("InvMassFits/rawInvMassFit_ChebychevBkg_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	/// SPlot time!
@@ -170,5 +172,6 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	gPad->Update();
 
 	//CMS_lumi(canvas, gCMSLumiText);
+	gSystem->mkdir("1D", kTRUE);
 	canvas->SaveAs(Form("1D/rawCosTheta%s_cent%dto%d_pt%dto%dGeV.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 }
