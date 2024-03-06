@@ -56,7 +56,6 @@ void selectedMC_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
 	RooPlot* frame = cosTheta.frame(Title(" "), Range(cosThetaMin, cosThetaMax));
-	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
 
 	data->plotOn(frame, Name("data"), Binning(nCosThetaBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
 

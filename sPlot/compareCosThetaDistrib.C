@@ -325,12 +325,11 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFr
 
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
-	RooPlot* frame = cosTheta.frame(Title(" "), Range(cosThetaMin, cosThetaMax));
-	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
+	RooPlot* frame = cosTheta.frame(Title(" "), Bins(nCosThetaBins), Range(cosThetaMin, cosThetaMax));
 
-	correctedBeforeDataset.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("dataBefore"));
+	correctedBeforeDataset.plotOn(frame, DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("dataBefore"));
 
-	correctedAfterDataset.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kAzure + 2), DataError(RooAbsData::SumW2), Name("dataAfter"));
+	correctedAfterDataset.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), DataError(RooAbsData::SumW2), Name("dataAfter"));
 
 	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kGreen + 2), Name("corrected"));
 

@@ -78,16 +78,16 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4); // cut when reducing the dataset at a later stage
 	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
 
-	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
-	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", -180, 180, "#circ");
+	RooRealVar cosThetaLabVar("cosThetaLab", "cos #theta_{Lab}", -1, 1);
+	RooRealVar phiLabVar("phiLab", "#varphi_{Lab}", -180, 180, "#circ");
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
 	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
 
-	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
-	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
+	RooRealVar cosThetaCSVar("cosThetaCS", "cos #theta_{CS}", -1, 1);
+	RooRealVar phiCSVar("phiCS", "#varphi_{CS}", -180, 180, "#circ");
 
-	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
-	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
+	RooRealVar cosThetaHXVar("cosThetaHX", "cos #theta_{HX}", -1, 1);
+	RooRealVar phiHXVar("phiHX", "#varphi_{HX}", -180, 180, "#circ");
 
 	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"), RooFit::StoreAsymError(RooArgSet(eventWeightVar)));
 
@@ -320,6 +320,8 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 	dataset.Write();
 
 	file.Close();
+
+	infile->Close();
 
 	return;
 }

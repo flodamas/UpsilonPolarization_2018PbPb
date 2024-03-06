@@ -68,7 +68,6 @@ void selectedMC_2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	TH1* histo = data->createHistogram("histo", cosTheta, Binning(nCosThetaBins, cosThetaMin, cosThetaMax), YVar(phi, Binning(nPhiBins, phiMin, phiMax)));
 
-	histo->SetTitle(Form(";cos #theta_{%s}; #varphi_{%s} (#circ)", refFrameName, refFrameName));
 	histo->GetXaxis()->CenterTitle();
 	histo->GetYaxis()->SetRangeUser(-180, 300);
 	histo->GetYaxis()->CenterTitle();
@@ -90,7 +89,7 @@ void selectedMC_2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	gPad->Update();
 
-	CMS_lumi(canvas, Form("#varUpsilon(%dS) Hydjet-embedded MC", gUpsilonState));
+	CMS_lumi(canvas, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
 
 	gSystem->mkdir("DistributionFits/2D", kTRUE);
 	canvas->SaveAs(Form("DistributionFits/2D/SelectedY%dSMC_%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
