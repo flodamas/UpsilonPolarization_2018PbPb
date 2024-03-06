@@ -21,7 +21,6 @@ RooDataSet sWeightedCosThetaDataset(Int_t ptMin = 0, Int_t ptMax = 30, const cha
 	cout << "File " << filename << " opened" << endl;
 
 	const char* datasetName = Form("dataset%s", refFrameName);
-	if(strcmp(filename, "../Files/UpsilonSkimmedDataset.root")==0) datasetName = "dataset";
 	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	// import the dataset to a workspace
@@ -235,7 +234,8 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFr
 
 	cout << "File " << filename << " opened" << endl;
 
-	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
+	const char* datasetName = Form("dataset%s", refFrameName);
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	// import the dataset to a workspace
 	RooWorkspace wspace("workspace");
