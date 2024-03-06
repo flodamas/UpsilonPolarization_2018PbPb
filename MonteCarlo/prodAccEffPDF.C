@@ -10,7 +10,7 @@
 
 void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t iState = 1) { //possible refFrame names: CS or HX
 	writeExtraText = true;
-	extraText = "      Internal";
+	extraText = "       Internal";
 
 	/// Set up the data
 	//	using namespace RooFit;
@@ -56,7 +56,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	/// 3. transform into a RooDataHist, then into a RooHistPdf
 	RooDataHist effDataHist("effDataHist", "", {cosTheta, phi}, effTH2);
 
-	RooHistPdf effPDF("effPDF", "", {cosTheta, phi}, effDataHist, 2);
+	RooHistPdf effPDF("effPDF", "", {cosTheta, phi}, effDataHist, 3);
 
 	/// Draw the distributions
 	gStyle->SetPadLeftMargin(.15);
@@ -73,7 +73,8 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	effTH2->GetYaxis()->CenterTitle();
 
-	effTH2->GetZaxis()->SetRangeUser(0, 0.8);
+	//effTH2->GetZaxis()->SetRangeUser(0, 0.8);
+	effTH2->SetMinimum(0);
 
 	effTH2->Draw("COLZ");
 
@@ -93,7 +94,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	histoPDF->SetTitle(" ");
 
-	histoPDF->GetZaxis()->SetTitle("Acceptance x efficiency PDF value");
+	histoPDF->GetZaxis()->SetTitle("acceptance #times efficiency PDF value");
 	histoPDF->GetXaxis()->CenterTitle();
 
 	histoPDF->GetYaxis()->CenterTitle();
