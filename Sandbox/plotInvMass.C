@@ -16,7 +16,7 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
 	const char* filename = "../Files/UpsilonSkimmedDataset.root";
-	
+
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -25,20 +25,22 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 
 	cout << "File " << filename << " opened" << endl;
 
-	const char* datasetName = Form("dataset%s", isCSframe? "CS":"HX");
+	const char* refFrameName = isCSframe ? "CS" : "HX";
+
+	const char* datasetName = Form("dataset%s", refFrameName);
 	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
-	RooWorkspace* wspace = new RooWorkspace("workspace");
-	wspace->import(*allDataset);
+	RooWorkspace wspace("workspace");
+	wspace.import(*allDataset);
 
-	RooDataSet* reducedDataset = isCSframe? ReducedDatasetCS(allDataset, wspace, ptMin, ptMax, MassBinMin, MassBinMax, cosThetaMin, cosThetaMax, phiMin, phiMax):ReducedDatasetHX(allDataset, wspace, ptMin, ptMax, MassBinMin, MassBinMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* reducedDataset = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	Long64_t nEntries = reducedDataset->sumEntries();
 
 	auto* canvas = new TCanvas("canvas", "", 650, 600);
 
-	RooPlot* frame = wspace->var("mass")->frame(Title(" "), Range(MassBinMin, MassBinMax));
-	reducedDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
+	RooPlot* frame = wspace.var("mass")->frame(Title(" "), Range(MassBinMin, MassBinMax));
+	reducedDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	frame->GetYaxis()->SetMaxDigits(3);
 
@@ -57,23 +59,22 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 	canvas->Update();
 
 	gSystem->mkdir("mass_distrib", kTRUE);
-	canvas->SaveAs(Form("mass_distrib/RawData_%s_cent%dto%d_pt%dto%dGeV_cosTheta%.1fto%.1f_phi%.1dto%.1d.png", datasetName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax), "RECREATE");
+	canvas->SaveAs(Form("mass_distrib/RawData_%s_cent%dto%d_pt%dto%dGeV_cosTheta%.1fto%.1f_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax), "RECREATE");
 }
 
-void scanPlotInvMass(){
-
+void scanPlotInvMass() {
 	Int_t ptEdges[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
 	// Int_t ptEdges[2] = {2, 4};
 	Float_t cosThetaEdges[11] = {-1., -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.};
 	Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
 	// Int_t phiEdges[2] = {0, 180};
-	Int_t numPtEle = sizeof(ptEdges)/sizeof(Int_t);
-	Int_t numCosThetaEle = sizeof(cosThetaEdges)/sizeof(Float_t);
-	Int_t numPhiEle = sizeof(phiEdges)/sizeof(Int_t);
-	for(Int_t ptIdx =0; ptIdx < numPtEle-1; ptIdx++){	
-		for(Int_t cosThetaIdx =0; cosThetaIdx < numCosThetaEle-1; cosThetaIdx++){
-			for(Int_t phiIdx =0; phiIdx < numPhiEle-1; phiIdx++){
-				plotInvMass(ptEdges[ptIdx], ptEdges[ptIdx+1], kFALSE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx+1], phiEdges[phiIdx], phiEdges[phiIdx+1]);
+	Int_t numPtEle = sizeof(ptEdges) / sizeof(Int_t);
+	Int_t numCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
+	Int_t numPhiEle = sizeof(phiEdges) / sizeof(Int_t);
+	for (Int_t ptIdx = 0; ptIdx < numPtEle - 1; ptIdx++) {
+		for (Int_t cosThetaIdx = 0; cosThetaIdx < numCosThetaEle - 1; cosThetaIdx++) {
+			for (Int_t phiIdx = 0; phiIdx < numPhiEle - 1; phiIdx++) {
+				plotInvMass(ptEdges[ptIdx], ptEdges[ptIdx + 1], kFALSE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1]);
 			}
 		}
 	}

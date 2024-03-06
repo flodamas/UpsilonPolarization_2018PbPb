@@ -141,7 +141,6 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 
 		cout << "Invariant mass fit for cos theta = [" << cosThetaVal << ", " << cosThetaVal + cosThetaStep << "]" << endl;
 
-		//	RooDataSet* reducedDataset = InvMassRawDataset(allDataset, wspace, ptMin, ptMax, cosThetaVal, cosThetaVal + cosThetaStep);
 		std::unique_ptr<RooAbsData> reducedDataset{data->reduce({*invMass}, Form("cosTheta%s > %f && cosTheta%s < %f", refFrameName, cosThetaVal, refFrameName, cosThetaVal + cosThetaStep))};
 
 		auto* massFitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), Minos(kTRUE));
