@@ -123,8 +123,8 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	RooArgSet* signalYields = new RooArgSet(wspace.var("yield1S"), wspace.var("yield2S"), wspace.var("yield3S"));
 
-	SaveSignalYields(signalYields, bkgShapeName, fitModelName);
-	SaveCanvas(massCanvas, bkgShapeName, fitModelName);
+	SaveRawDataSignalYields(signalYields, bkgShapeName, fitModelName);
+	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName);
 }
 
 void scanNominalFit_lowPt_RawDataset() {
