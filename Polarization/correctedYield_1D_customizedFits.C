@@ -28,7 +28,8 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 
 	/// Bin width
 	const Int_t nCosThetaBins = 7;
-	Float_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7}; 
+
+	Float_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7};
 	// Float_t cosThetaBinEdges[nCosThetaBins+1] = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8}; 
 
 	/// Set up the variables
@@ -40,16 +41,16 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 
 	// background shape array: ChebychevOrderN or ExpTimesErr
 	const char* bkgShapeName[] = {
-		"ChebychevOrder2", 
-		"ChebychevOrder2",
-		"ChebychevOrder2",
-		"ChebychevOrder2",
-		"ChebychevOrder2",
-		"ChebychevOrder2",
-		"ChebychevOrder2",
-		"ChebychevOrder2",
-		"ChebychevOrder2",
-		// "ChebychevOrder2"
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  // "ChebychevOrder2"
 	};
 
 	/// "Standard" procedure: extract the yields per bin
@@ -85,7 +86,6 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
 	RooPlot* frame = cosTheta.frame(Title(" "), Range(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]));
-	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
 
 	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("dataPoints"));
 
@@ -106,7 +106,7 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1, 1);
 	auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", cosTheta, lambdaTheta);
 
-   	enableBinIntegrator(cosThetaPDF_1S, cosTheta.numBins());
+	enableBinIntegrator(cosThetaPDF_1S, cosTheta.numBins());
 
 	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(correctedHist, Save(), Extended(kTRUE) /*, PrintLevel(+1)*/, NumCPU(NCPUs), Range(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), SumW2Error(kFALSE) /*, AsymptoticError(DoAsymptoticError)*/);
 

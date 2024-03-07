@@ -1,9 +1,9 @@
-#include "../Tools/Style/tdrStyle.C"
-#include "../Tools/Style/CMS_lumi.C"
+// #include "../Tools/Style/tdrStyle.C"
+// #include "../Tools/Style/CMS_lumi.C"
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
-#include "../Tools/Shortcuts.h"
+#include "../Tools/FitShortcuts.h"
 
 #include "../Tools/Parameters/PhysicsConstants.h"
 
@@ -38,7 +38,8 @@ void fitSymCoreDSCB_Exponential(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSfr
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
+	const char* datasetName = Form("dataset%s", refFrameName);
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);

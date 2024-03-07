@@ -126,7 +126,7 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax) {
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.042);
-	legend.DrawLatexNDC(.5, .88, Form("cent. %d-%d%%, |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legend.DrawLatexNDC(.5, .88, Form("cent. %d-%d%%, |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
 	gPad->Update();
 
@@ -138,16 +138,20 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax) {
 }
 
 // object constructors called many times...
-TEfficiency* CosThetaEfficiency1D(const char* name, bool isCS = true) {
-	const char* title = (isCS) ? Form(";cos #theta_{CS};#varUpsilon(%dS) total efficiency", gUpsilonState) : Form(";cos #theta_{HX};#varUpsilon(%dS) total efficiency", gUpsilonState);
+TEfficiency* CosThetaEfficiency1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
+	const char* title = Form(";cos #theta_{%s};#varUpsilon(%dS) total efficiency", refFrameName, gUpsilonState);
+
+	const char* name = Form("CosTheta%s_pt%dto%d", refFrameName, ptMin, ptMax);
 
 	TEfficiency* effMap = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax);
 
 	return effMap;
 }
 
-TEfficiency* CosThetaPhiEfficiency2D(const char* name, bool isCS = true) {
-	const char* title = (isCS) ? Form(";cos #theta_{CS}; #varphi_{CS} (#circ);#varUpsilon(%dS) total efficiency", gUpsilonState) : Form(";cos #theta_{HX}; #varphi_{HX} (#circ);#varUpsilon(%dS) total efficiency", gUpsilonState);
+TEfficiency* CosThetaPhiEfficiency2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
+	const char* title = Form(";cos #theta_{%s}; #varphi_{%s} (#circ);#varUpsilon(%dS) total efficiency", refFrameName, refFrameName, gUpsilonState);
+
+	const char* name = Form("CosThetaPhi%s_pt%dto%d", refFrameName, ptMin, ptMax);
 
 	TEfficiency* effMap = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax);
 
@@ -156,8 +160,8 @@ TEfficiency* CosThetaPhiEfficiency2D(const char* name, bool isCS = true) {
 
 // (cos theta, phi, pT) 3D maps for final efficiency correction, variable size binning for the stats
 
-TEfficiency* Efficiency3D(const char* name, bool isCS = true) {
-	const char* title = (isCS) ? Form(";cos #theta_{CS}; #varphi_{CS} (#circ);#varUpsilon(%dS) total efficiency", gUpsilonState) : Form(";cos #theta_{HX}; #varphi_{HX} (#circ); p_{T} (GeV/c);#varUpsilon(%dS) total efficiency", gUpsilonState);
+TEfficiency* Efficiency3D(const char* name, const char* refFrameName = "CS") {
+	const char* title = Form("#varUpsilon(%dS) total efficiency;cos #theta_{%s}; #varphi_{%s} (#circ); p_{T} (GeV/c)", gUpsilonState, refFrameName, refFrameName);
 
 	TEfficiency* effMap = new TEfficiency(name, title, NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning);
 
@@ -252,51 +256,51 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2) {
 
 	// Collins-Soper
 
-	TEfficiency* hNominalEffCS = Efficiency3D("NominalEff_CS", true);
+	TEfficiency* hNominalEffCS = Efficiency3D("NominalEff_CS", "CS");
 
-	TEfficiency* hCS_trk_systUp = Efficiency3D("hCS_trk_systUp", true);
-	TEfficiency* hCS_trk_systDown = Efficiency3D("hCS_trk_systDown", true);
-	TEfficiency* hCS_trk_statUp = Efficiency3D("hCS_trk_statUp", true);
-	TEfficiency* hCS_trk_statDown = Efficiency3D("hCS_trk_statDown", true);
+	TEfficiency* hCS_trk_systUp = Efficiency3D("hCS_trk_systUp", "CS");
+	TEfficiency* hCS_trk_systDown = Efficiency3D("hCS_trk_systDown", "CS");
+	TEfficiency* hCS_trk_statUp = Efficiency3D("hCS_trk_statUp", "CS");
+	TEfficiency* hCS_trk_statDown = Efficiency3D("hCS_trk_statDown", "CS");
 
-	TEfficiency* hCS_muId_systUp = Efficiency3D("hCS_muId_systUp", true);
-	TEfficiency* hCS_muId_systDown = Efficiency3D("hCS_muId_systDown", true);
-	TEfficiency* hCS_muId_statUp = Efficiency3D("hCS_muId_statUp", true);
-	TEfficiency* hCS_muId_statDown = Efficiency3D("hCS_muId_statDown", true);
+	TEfficiency* hCS_muId_systUp = Efficiency3D("hCS_muId_systUp", "CS");
+	TEfficiency* hCS_muId_systDown = Efficiency3D("hCS_muId_systDown", "CS");
+	TEfficiency* hCS_muId_statUp = Efficiency3D("hCS_muId_statUp", "CS");
+	TEfficiency* hCS_muId_statDown = Efficiency3D("hCS_muId_statDown", "CS");
 
-	TEfficiency* hCS_trig_systUp = Efficiency3D("hCS_trig_systUp", true);
-	TEfficiency* hCS_trig_systDown = Efficiency3D("hCS_trig_systDown", true);
-	TEfficiency* hCS_trig_statUp = Efficiency3D("hCS_trig_statUp", true);
-	TEfficiency* hCS_trig_statDown = Efficiency3D("hCS_trig_statDown", true);
+	TEfficiency* hCS_trig_systUp = Efficiency3D("hCS_trig_systUp", "CS");
+	TEfficiency* hCS_trig_systDown = Efficiency3D("hCS_trig_systDown", "CS");
+	TEfficiency* hCS_trig_statUp = Efficiency3D("hCS_trig_statUp", "CS");
+	TEfficiency* hCS_trig_statDown = Efficiency3D("hCS_trig_statDown", "CS");
 
 	// Helicity
-	TEfficiency* hNominalEffHX = Efficiency3D("NominalEff_HX", false);
+	TEfficiency* hNominalEffHX = Efficiency3D("NominalEff_HX", "HX");
 
-	TEfficiency* hHX_trk_systUp = Efficiency3D("hHX_trk_systUp", false);
-	TEfficiency* hHX_trk_systDown = Efficiency3D("hHX_trk_systDown", false);
-	TEfficiency* hHX_trk_statUp = Efficiency3D("hHX_trk_statUp", false);
-	TEfficiency* hHX_trk_statDown = Efficiency3D("hHX_trk_statDown", false);
+	TEfficiency* hHX_trk_systUp = Efficiency3D("hHX_trk_systUp", "HX");
+	TEfficiency* hHX_trk_systDown = Efficiency3D("hHX_trk_systDown", "HX");
+	TEfficiency* hHX_trk_statUp = Efficiency3D("hHX_trk_statUp", "HX");
+	TEfficiency* hHX_trk_statDown = Efficiency3D("hHX_trk_statDown", "HX");
 
-	TEfficiency* hHX_muId_systUp = Efficiency3D("hHX_muId_systUp", false);
-	TEfficiency* hHX_muId_systDown = Efficiency3D("hHX_muId_systDown", false);
-	TEfficiency* hHX_muId_statUp = Efficiency3D("hHX_muId_statUp", false);
-	TEfficiency* hHX_muId_statDown = Efficiency3D("hHX_muId_statDown", false);
+	TEfficiency* hHX_muId_systUp = Efficiency3D("hHX_muId_systUp", "HX");
+	TEfficiency* hHX_muId_systDown = Efficiency3D("hHX_muId_systDown", "HX");
+	TEfficiency* hHX_muId_statUp = Efficiency3D("hHX_muId_statUp", "HX");
+	TEfficiency* hHX_muId_statDown = Efficiency3D("hHX_muId_statDown", "HX");
 
-	TEfficiency* hHX_trig_systUp = Efficiency3D("hHX_trig_systUp", false);
-	TEfficiency* hHX_trig_systDown = Efficiency3D("hHX_trig_systDown", false);
-	TEfficiency* hHX_trig_statUp = Efficiency3D("hHX_trig_statUp", false);
-	TEfficiency* hHX_trig_statDown = Efficiency3D("hHX_trig_statDown", false);
+	TEfficiency* hHX_trig_systUp = Efficiency3D("hHX_trig_systUp", "HX");
+	TEfficiency* hHX_trig_systDown = Efficiency3D("hHX_trig_systDown", "HX");
+	TEfficiency* hHX_trig_statUp = Efficiency3D("hHX_trig_statUp", "HX");
+	TEfficiency* hHX_trig_statDown = Efficiency3D("hHX_trig_statDown", "HX");
 
-	// (cos theta, phi) for vizualization
-	TEfficiency* hEffCS2D = CosThetaPhiEfficiency2D(Form("hEffCosThetaPhiCS_pt%dto%d", ptMin, ptMax), true);
+	// (cos theta, phi) for the given pt range
+	TEfficiency* hEffCS2D = CosThetaPhiEfficiency2D(ptMin, ptMax, "CS");
 
-	TEfficiency* hEffHX2D = CosThetaPhiEfficiency2D(Form("hEffCosThetaPhiHX_pt%dto%d", ptMin, ptMax), false);
+	TEfficiency* hEffHX2D = CosThetaPhiEfficiency2D(ptMin, ptMax, "HX");
 
 	// vs cos theta, to investigate
 
-	TEfficiency* hEffCS1D = CosThetaEfficiency1D(Form("hEffCosThetaCS_pt%dto%d", ptMin, ptMax), true);
+	TEfficiency* hEffCS1D = CosThetaEfficiency1D(ptMin, ptMax, "CS");
 
-	TEfficiency* hEffHX1D = CosThetaEfficiency1D(Form("hEffCosThetaHX_pt%dto%d", ptMin, ptMax), false);
+	TEfficiency* hEffHX1D = CosThetaEfficiency1D(ptMin, ptMax, "HX");
 
 	// we want to estimate the uncertainties from scale factors at the same time
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
@@ -596,7 +600,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2) {
 	gStyle->SetPadRightMargin(0.19);
 	gStyle->SetTitleOffset(1.3, "Z");
 
-	const char* legendText = Form("cent. %d-%d%%, |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
+	const char* legendText = Form("cent. %d-%d%%, |y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
 
 	TLatex* legend = new TLatex(.5, .88, legendText);
 	legend->SetTextAlign(22);
@@ -605,7 +609,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2) {
 	// Collins-Soper
 	auto* hSystCS = RelSystEffHist3D(hNominalEffCS, hCS_trk_systUp, hCS_trk_systDown, hCS_muId_systUp, hCS_muId_systDown, hCS_trig_systUp, hCS_trig_systDown, hCS_trk_statUp, hCS_trk_statDown, hCS_muId_statUp, hCS_muId_statDown, hCS_trig_statUp, hCS_trig_statDown);
 	hSystCS->SetName("RelatSystEff_CS");
-	hSystCS->SetTitle(";cos #theta_{CS}; #varphi_{CS} (#circ);p_{T} (GeV/c);Relative efficiency uncertainty");
+	hSystCS->SetTitle("Relative efficiency uncertainty;cos #theta_{CS}; #varphi_{CS} (#circ);p_{T} (GeV/c)");
 
 	auto* canvasCSsyst = new TCanvas("canvasCSsyst", "", 700, 600);
 	hSystCS->Draw("COLZ");
@@ -623,7 +627,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2) {
 	// Helicity
 	auto* hSystHX = RelSystEffHist3D(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown);
 	hSystHX->SetName("RelatSystEff_HX");
-	hSystHX->SetTitle(";cos #theta_{HX}; #varphi_{HX} (#circ);p_{T} (GeV/c);Relative efficiency uncertainty");
+	hSystHX->SetTitle("Relative efficiency uncertainty;cos #theta_{HX}; #varphi_{HX} (#circ);p_{T} (GeV/c)");
 
 	auto* canvasHXsyst = new TCanvas("canvasHXsyst", "", 700, 600);
 	hSystHX->Draw("COLZ");
@@ -648,10 +652,15 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2) {
 	hSystCS->Write();
 	hSystHX->Write();
 
+	hEffCS2D->Write();
+	hEffHX2D->Write();
+
 	hEffCS1D->Write();
 	hEffHX1D->Write();
 
 	outputFile.Close();
+
+	file->Close();
 
 	cout << endl
 	     << "Nominal efficiency and corresponding systematic uncertainty maps saved in " << outputFileName << endl;

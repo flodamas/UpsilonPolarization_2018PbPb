@@ -58,20 +58,20 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4);
 	RooRealVar ptVar("pt", "dimuon pT", 0, gPtBinning[NPtBins], "GeV/c");
 
-	RooRealVar cosThetaLabVar("cosThetaLab", "cos theta in the lab frame", -1, 1);
-	RooRealVar phiLabVar("phiLab", "phi angle in the lab frame", -180, 180, "#circ");
+	RooRealVar cosThetaLabVar("cosThetaLab", "cos #theta_{Lab}", -1, 1);
+	RooRealVar phiLabVar("phiLab", "#varphi_{Lab}", -180, 180, "#circ");
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
 	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
 
 	RooDataSet datasetLab("datasetLab", "skimmed dataset for the Lab frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar));
 
-	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
-	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
+	RooRealVar cosThetaCSVar("cosThetaCS", "cos #theta_{CS}", -1, 1);
+	RooRealVar phiCSVar("phiCS", "#varphi_{CS}", -180, 180, "#circ");
 
 	RooDataSet datasetCS("datasetCS", "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
 
-	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
-	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
+	RooRealVar cosThetaHXVar("cosThetaHX", "cos #theta_{HX}", -1, 1);
+	RooRealVar phiHXVar("phiHX", "#varphi_{HX}", -180, 180, "#circ");
 
 	RooDataSet datasetHX("datasetHX", "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
 
@@ -170,11 +170,15 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 	TFile file(outputFileName, "RECREATE");
 
+	datasetLab.Write();
+
 	datasetCS.Write();
 
 	datasetHX.Write();
 
 	file.Close();
+
+	infile->Close();
 
 	return;
 }

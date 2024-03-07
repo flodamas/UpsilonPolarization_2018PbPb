@@ -124,14 +124,13 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
-	RooPlot* frame = cosTheta->frame(Title(" "), Range(cosThetaMin, cosThetaMax));
-	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-	data->plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), Name("data"), DataError(RooAbsData::SumW2));
+	RooPlot* frame = cosTheta->frame(Title(" "), Bins(nCosThetaBins), Range(cosThetaMin, cosThetaMax));
+	data->plotOn(frame, DrawOption("P0Z"), Name("data"), DataError(RooAbsData::SumW2));
 
 	// create sWeighted data sets
 	RooDataSet data_weight1S{data->GetName(), data->GetTitle(), data, *data->get(), nullptr, "yield1S_sw"};
 
-	data_weight1S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("data1S"));
+	data_weight1S.plotOn(frame, DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("data1S"));
 
 	frame->GetYaxis()->SetMaxDigits(3);
 

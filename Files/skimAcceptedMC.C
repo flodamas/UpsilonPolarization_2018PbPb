@@ -57,11 +57,11 @@ void skimAcceptedMC(Int_t iState = 1) {
 	RooRealVar etaMuMinusVar("etaMuMinus", "", 0, 100);
 	RooRealVar ptMuMinusVar("ptMuMinus", "negative muon pT", 0, 100, "GeV/c");
 
-	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
-	RooRealVar phiCSVar("phiCS", "phi angle in the Collins-Soper frame", -180, 180, "#circ");
+	RooRealVar cosThetaCSVar("cosThetaCS", "cos #theta_{CS}", -1, 1);
+	RooRealVar phiCSVar("phiCS", "#varphi_{CS}", -180, 180, "#circ");
 
-	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
-	RooRealVar phiHXVar("phiHX", "phi angle in the helicity frame", -180, 180, "#circ");
+	RooRealVar cosThetaHXVar("cosThetaHX", "cos #theta_{HX}", -1, 1);
+	RooRealVar phiHXVar("phiHX", "#varphi_{HX}", -180, 180, "#circ");
 
 	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(eventCat, yVar, ptVar, etaMuPlusVar, ptMuPlusVar, etaMuMinusVar, ptMuMinusVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
 
