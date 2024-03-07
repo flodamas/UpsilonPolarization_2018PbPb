@@ -17,7 +17,7 @@ RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet* dataset) {
 	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
 	dataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
-	auto* fitModel = wspace.pdf("fitModel");
+	auto* fitModel = wspace.pdf("invMassModel");
 	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(kGray + 2), LineStyle(kDashed));
 	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(kRed));
 	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(kRed));
@@ -164,13 +164,12 @@ TCanvas* DrawMassFitDistributions(RooWorkspace& wspace, RooDataSet* dataset, Int
 	return canvas; // to be saved outside
 }
 
-void enableBinIntegrator(RooAbsReal &func, int numBins)
-{
-   RooNumIntConfig customConfig(*func.getIntegratorConfig());
-   customConfig.method1D().setLabel("RooBinIntegrator");
-   customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBins", numBins);
-   func.setIntegratorConfig(customConfig);
-   func.forceNumInt(true);
+void enableBinIntegrator(RooAbsReal& func, int numBins) {
+	RooNumIntConfig customConfig(*func.getIntegratorConfig());
+	customConfig.method1D().setLabel("RooBinIntegrator");
+	customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBins", numBins);
+	func.setIntegratorConfig(customConfig);
+	func.forceNumInt(true);
 }
 
 void SaveMCSignalTailParameters(RooArgSet* params, const char* outputName) {

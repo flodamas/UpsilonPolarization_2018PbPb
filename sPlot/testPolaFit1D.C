@@ -31,13 +31,14 @@ void testPolaFit1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	cout << "File " << filename << " opened" << endl;
 
 	// Read skimmed dataset (contains angular distributions in CS and HX after kinematic cuts due to acceptance)
-	RooDataSet* allDatasetCS = (RooDataSet*)f->Get("datasetCS");
+	const char* datasetName = Form("dataset%s", refFrameName);
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	// import the dataset to a workspace
-	RooWorkspace wspace("workspace");
-	wspace.import(*allDatasetCS);
+	RooWorkspace wspace(Form("workspace_%s", refFrameName));
+	wspace.import(*allDataset);
 
-	auto* data = InvMassCosThetaPhiDataset(allDatasetCS, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto* data = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	std::cout << "\n------------------------------------------\nThe dataset before creating sWeights:\n";
 	data->Print();
@@ -52,44 +53,25 @@ void testPolaFit1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	/// Invariant mass model
 
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
-	// tail parameters fixed to MC extracted values, and identical for the three resonances
 
 	const char* signalShapeName = "SymDSCB";
 
-	// get the tail parameters of the signal shape first in case the MC fit is needed
-	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
-	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
-	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
-	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
+	// background
+	int order = 2;
+	const char* bkgShapeName = Form("ChebychevOrder%d", order);
+	//const char* bkgShapeName = "ExpTimesErr";
 
-	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, signalShapeName, ptMin, ptMax);
-
-	auto signalModel = NominalSignalModel(wspace, alphaInf, orderInf, alphaSup, orderSup, nEntries);
-
-	RooAbsPdf* signalMassPDF_1S = wspace.pdf("signalPDF_1S");
-	RooAbsPdf* signalMassPDF_2S = wspace.pdf("signalPDF_2S");
-	RooAbsPdf* signalMassPDF_3S = wspace.pdf("signalPDF_3S");
-
-	RooRealVar yield1S = *wspace.var("yield1S");
-	RooRealVar yield2S = *wspace.var("yield2S");
-	RooRealVar yield3S = *wspace.var("yield3S");
-
-	// background: Chebychev polynomial
-
-	int order = 3;
-
-	RooArgList coefList = ChebychevCoefList(order);
-
-	RooChebychev bkgMassPDF("bkgPDF", " ", *invMass, coefList);
-
-	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
-
-	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalMassPDF_1S, *signalMassPDF_2S, *signalMassPDF_3S, bkgMassPDF), {yield1S, yield2S, yield3S, yieldBkg});
+	auto* invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
 	/// SPlot time!
 
 	// yields from invariant mass distribution fit as sWeights
 	// see https://root.cern/doc/master/classRooStats_1_1SPlot.html#a5b30f5b1b2a3723bbebef17ffb6507b2 constructor for the arguments
+	RooRealVar yield1S = *wspace.var("yield1S");
+	RooRealVar yield2S = *wspace.var("yield2S");
+	RooRealVar yield3S = *wspace.var("yield3S");
+	RooRealVar yieldBkg = *wspace.var("yieldBkg");
+
 	RooStats::SPlot sData{"sData", "", *data, invMassModel, RooArgList(yield1S, yield2S, yield3S, yieldBkg), RooArgSet(), true, false, "dataWithSWeights", Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError), NumCPU(NCPUs)};
 
 	std::cout << "\n\nThe dataset after creating sWeights:\n";
@@ -116,7 +98,7 @@ void testPolaFit1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
 	RooPlot* frame = cosTheta.frame(Title(" "), Bins(nCosThetaBins), Range(cosThetaMin, cosThetaMax));
-	data->plotOn(frame, DrawOption("P0Z"), Name("data"), DataError(RooAbsData::SumW2));
+	data->plotOn(frame, DrawOption("P0Z"), Name("data"));
 
 	// create weighted data sets
 	RooDataSet data_weight1S{data->GetName(), data->GetTitle(), data, *data->get(), nullptr, "yield1S_sw"};

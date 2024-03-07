@@ -58,54 +58,24 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	auto* data = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	Long64_t nEntries = data->sumEntries();
+
 	/// Invariant mass model
 
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
-	// tail parameters fixed to MC extracted values, and identical for the three resonances
 
 	const char* signalShapeName = "SymDSCB";
 
-	// get the tail parameters of the signal shape first in case the MC fit is needed
-	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
-	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
-	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
-	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
+	// background
+	int order = 2;
+	const char* bkgShapeName = Form("ChebychevOrder%d", order);
+	//const char* bkgShapeName = "ExpTimesErr";
 
-	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, signalShapeName, ptMin, ptMax);
-
-	auto signalModel = NominalSignalModel(wspace, alphaInf, orderInf, alphaSup, orderSup, nEntries);
-
-	RooAbsPdf* signalPDF_1S = wspace.pdf("signalPDF_1S");
-	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
-	RooAbsPdf* signalPDF_3S = wspace.pdf("signalPDF_3S");
+	auto* invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
 	RooRealVar* yield1S = wspace.var("yield1S");
 	RooRealVar* yield2S = wspace.var("yield2S");
 	RooRealVar* yield3S = wspace.var("yield3S");
-
-	// background: Chebychev polynomial
-
-	int order = 2;
-
-	RooArgList coefList = ChebychevCoefList(order);
-
-	RooChebychev bkgPDF("bkgPDF", " ", invMass, coefList);
-
-	// // background: exponential x err function
-
-	// RooRealVar err_mu("err_mu", " ", 0, 13);
-	// RooRealVar err_sigma("err_sigma", " ", 0, 10);
-	// RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
-
-	// ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
-
-	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
-
-	// signal + background
-
-	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
-
-	wspace.import(*invMassModel, RecycleConflictNodes());
+	RooRealVar* yieldBkg = wspace.var("yieldBkg");
 
 	/// "Standard" procedure: extract the yields per bin
 
@@ -184,7 +154,7 @@ void compareCorrectedCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaVal, cosThetaVal + cosThetaStep, phiMin, phiMax);
 
 		gSystem->mkdir("InvMassFits", kTRUE);
-		massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
+		massCanvas->SaveAs(Form("InvMassFits/CorrectedData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
 		// massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ErrorFuncTimesExp_%s.png", fitModelName), "RECREATE");
 
 		// frame->Clear();
