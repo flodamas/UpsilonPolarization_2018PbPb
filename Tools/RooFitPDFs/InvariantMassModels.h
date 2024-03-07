@@ -60,7 +60,7 @@ RooArgList ChebychevCoefList(int order = 1) {
 	return coefList;
 }
 
-RooAddPdf NominalBkgModel(RooWorkspace& wspace, const char* bkgShapeName, Long64_t yieldMax = 1e6) {
+RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64_t yieldMax = 1e6) {
 	RooRealVar invMass = *wspace.var("mass");
 
 	RooRealVar yieldBkg("yieldBkg", "N background events", 0, yieldMax);
@@ -86,10 +86,10 @@ RooAddPdf NominalBkgModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar err_mu("err_mu", " ", 0, 13);
+		RooRealVar err_mu("err_mu", " ", 7, 0, 15);
 		RooRealVar err_sigma("err_sigma", " ", 0, 10);
-		RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
-		
+		RooRealVar exp_lambda("exp_lambda", " ", 3, 0, 20);
+
 		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
 
 		RooAddPdf bkgModel("bkgModel", "PDF of the backgroud", {bkgPDF}, {yieldBkg});
@@ -103,4 +103,47 @@ RooAddPdf NominalBkgModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 		cout << "No matching background model" << endl;
 		return nullptr;
 	}
+}
+
+// build the main PDF based on all PDFs above
+
+RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t yieldMax = 1e6) {
+	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
+	// tail parameters fixed to MC extracted values, and identical for the three resonances
+
+	cout << endl
+	     << "Building invariant mass fit model with " << signalShapeName << " for the signal and " << bkgShapeName << " for the background" << endl;
+
+	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
+	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
+	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
+	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
+
+	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, signalShapeName, ptMin, ptMax);
+
+	auto signalModel = NominalSignalModel(wspace, alphaInf, orderInf, alphaSup, orderSup, yieldMax);
+
+	RooAbsPdf* signalPDF_1S = wspace.pdf("signalPDF_1S");
+	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
+	RooAbsPdf* signalPDF_3S = wspace.pdf("signalPDF_3S");
+
+	RooRealVar* yield1S = wspace.var("yield1S");
+	RooRealVar* yield2S = wspace.var("yield2S");
+	RooRealVar* yield3S = wspace.var("yield3S");
+
+	// background
+	auto bkgModel = BackgroundModel(wspace, bkgShapeName, yieldMax);
+
+	RooAbsPdf* bkgPDF = wspace.pdf("bkgPDF");
+
+	RooRealVar* yieldBkg = wspace.var("yieldBkg");
+
+	RooAddPdf* model = new RooAddPdf("invMassModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF}, {*yield1S, *yield2S, *yield3S, *yieldBkg});
+
+	wspace.import(*model, RecycleConflictNodes());
+
+	cout << endl
+	     << "Model exported to " << wspace.GetName() << endl;
+
+	return model;
 }

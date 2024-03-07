@@ -70,37 +70,15 @@ void simultaneousLikelihoods(Int_t ptMin = 0, Int_t ptMax = 30, const char* refF
 	/// Invariant mass model
 
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
-	// tail parameters fixed to MC extracted values, and identical for the three resonances
 
 	const char* signalShapeName = "SymDSCB";
 
-	// get the tail parameters of the signal shape first in case the MC fit is needed
-	RooRealVar* alphaInf = new RooRealVar("alphaInf", "", 1);
-	RooRealVar* orderInf = new RooRealVar("orderInf", "", 1);
-	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
-	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
+	// background
+	//int order = 2;
+	//const char* bkgShapeName = Form("ChebychevOrder%d", order);
+	const char* bkgShapeName = "ExpTimesErr";
 
-	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, signalShapeName, ptMin, ptMax);
-
-	auto signalModel = NominalSignalModel(wspace, alphaInf, orderInf, alphaSup, orderSup, nEntries);
-
-	RooAbsPdf* signalPDF_1S = wspace.pdf("signalPDF_1S");
-	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
-	RooAbsPdf* signalPDF_3S = wspace.pdf("signalPDF_3S");
-
-	RooRealVar* yield1S = wspace.var("yield1S");
-	RooRealVar* yield2S = wspace.var("yield2S");
-	RooRealVar* yield3S = wspace.var("yield3S");
-
-	// background: Chebychev polynomial
-	int order = 2;
-	auto bkgModel = NominalBkgModel(wspace, Form("ChebychevOrder%d", order), nEntries);
-
-	RooAbsPdf* bkgPDF = wspace.pdf("bkgPDF");
-
-	RooRealVar* yieldBkg = wspace.var("yieldBkg");
-
-	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF), {*yield1S, *yield2S, *yield3S, *yieldBkg});
+	auto* invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
 	auto* invMassFitResult = invMassModel->fitTo(*data, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), Minos(kTRUE));
 
@@ -111,12 +89,17 @@ void simultaneousLikelihoods(Int_t ptMin = 0, Int_t ptMax = 30, const char* refF
 	// draw the invariant mass distribution, to check the fit
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, invMassFitResult->floatParsFinal().getSize(), ptMin, ptMax);
 
-	massCanvas->SaveAs(Form("InvMassFits/rawInvMassFit_ChebychevBkg_cent%dto%d_pt%dto%dGeV.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	massCanvas->SaveAs(Form("InvMassFits/rawInvMassFit_%s_cent%dto%d_pt%dto%dGeV.png", bkgShapeName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	// sPlot time!
 
 	// yields from invariant mass distribution fit as sWeights
 	// see https://root.cern/doc/master/classRooStats_1_1SPlot.html#a5b30f5b1b2a3723bbebef17ffb6507b2 constructor for the arguments
+	RooRealVar* yield1S = wspace.var("yield1S");
+	RooRealVar* yield2S = wspace.var("yield2S");
+	RooRealVar* yield3S = wspace.var("yield3S");
+	RooRealVar* yieldBkg = wspace.var("yieldBkg");
+
 	RooStats::SPlot sData{"sData", "", *data, invMassModel, RooArgList(*yield1S, *yield2S, *yield3S, *yieldBkg), RooArgSet(), true, false, "dataWithSWeights", Range(MassBinMin, MassBinMax), NumCPU(NCPUs)};
 
 	std::cout << "\n\nThe dataset after creating sWeights:\n";
