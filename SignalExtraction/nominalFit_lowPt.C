@@ -52,6 +52,7 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
 	const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root";
+
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -119,7 +120,7 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	// // {{{2. background: exponential x err function
 	// const char* bkgShapeName = "ExpTimesErr";
-	// RooRealVar err_mu("err_mu", " ", 0, 30);
+	// RooRealVar err_mu("err_mu", " ", 8, 0, 10);
 	// RooRealVar err_sigma("err_sigma", " ", 0, 10);
 	// RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
 	

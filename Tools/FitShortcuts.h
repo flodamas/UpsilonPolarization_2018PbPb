@@ -358,6 +358,11 @@ void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const c
 	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName));
 }
 
+void SaveRawDataSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName) {
+	gSystem->mkdir("../SignalExtraction/SignalYields/", kTRUE);
+	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/RawData_%s_%s.txt", bkgShapeName, fitModelName));
+}
+
 RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName) {
 	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
@@ -383,4 +388,9 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 void SaveCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName) {
 	gSystem->mkdir("InvMassFits", kTRUE);
 	canvasName->SaveAs(Form("InvMassFits/CorrectedData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
+}
+
+void SaveRawDataCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName) {
+	gSystem->mkdir("InvMassFits", kTRUE);
+	canvasName->SaveAs(Form("InvMassFits/RawData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
 }

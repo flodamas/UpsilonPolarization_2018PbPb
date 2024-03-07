@@ -26,18 +26,18 @@ void drawEtaDecayMuonGraph(Int_t minPt = 0, Int_t maxPt = 30, Int_t centMin = 0,
 
 	Int_t nPhiBins = 23;
 	
-
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
 	/// Read skimmed dataset (contains angular distributions in CS and HX after kinematic cuts due to acceptance)
-	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
+	const char* datasetName = Form("dataset%s", isCSframe? "CS":"HX");
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 	/// import the dataset to a workspace
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
 	/// Reduce the dataset to an interested region (cent, pT cuts)
-	RooDataSet* reducedDataset = ReducedDataset(allDataset, wspace, centMin, centMax, minPt, maxPt, massMin, massMax, kFALSE, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* reducedDataset = ReducedDataset(allDataset, wspace, centMin, centMax, minPt, maxPt, massMin, massMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 	
 	/// read variables in the reduced dataset in the workspace
 	RooRealVar* centrality = wspace -> var("centrality");
