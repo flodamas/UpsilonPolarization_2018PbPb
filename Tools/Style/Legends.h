@@ -13,7 +13,7 @@ TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax
 
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
-	text->AddText(Form("Centrality %d#minus%d%%", centMin, centMax));
+	text->AddText(Form("Centrality %d-%d%%", centMin, centMax));
 	text->AddText("p_{T}^{#mu} > 3.5 GeV/c");
 	text->AddText(Form("%1.1f < |y^{#mu#mu}| < %1.1f", gRapidityMin, gRapidityMax));
 	text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
@@ -29,7 +29,7 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 	// text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
 	text->AddText(isCSframe ? "Collins-Soper frame" : "Helicity frame");
 	text->AddText(Form("%.2f < cos #theta < %.2f", cosThetaMin, cosThetaMax));
-	text->AddText(Form("%d#circ < |#varphi| < %d#circ", phiMin, phiMax));
+	text->AddText(Form("%d#circ < #varphi < %d#circ", phiMin, phiMax));
 
 	text->SetAllWith("", "align", 32);
 	return text;

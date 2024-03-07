@@ -1,12 +1,13 @@
-
-#include "../Tools/Style/FitDistributions.h"
-#include "../Tools/Style/Legends.h"
-
-#include "../Tools/FitShortcuts.h"
-
-#include "../Tools/Parameters/PhysicsConstants.h"
+#include "../Tools/BasicHeaders.h"
 
 #include "../AnalysisParameters.h"
+
+#include "../Tools/FitShortcuts.h"
+#include "../Tools/Style/Legends.h"
+
+#include "../Tools/RooFitPDFs/InvariantMassModels.h"
+#include "../Tools/RooFitPDFs/ErrorFuncTimesExp.h"
+#include "../Tools/Style/FitDistributions.h"
 
 void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	TString fitModelName = Form("symCoreDSCB_expo_cent%dto%d_pt%dto%d_cosTheta%.1fto%.1f_phi%dto%d_%s", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
@@ -31,7 +32,8 @@ void nominalFit_highPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTR
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	RooDataSet* allDataset = (RooDataSet*)f->Get("dataset");
+	const char* datasetName = Form("dataset%s", isCSframe? "CS":"HX");
+	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
 
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);

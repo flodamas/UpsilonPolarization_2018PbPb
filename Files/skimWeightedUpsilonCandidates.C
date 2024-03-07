@@ -84,15 +84,15 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 
 	// separate into two datasets (easier for entry weighting) and forget about lab variables
 
-	RooRealVar cosThetaCSVar("cosThetaCS", "cos theta in the Collins-Soper frame", -1, 1);
-	RooRealVar phiCSVar("phiCS", "absolute phi angle in the Collins-Soper frame", 0, 180, "#circ");
+	RooRealVar cosThetaCSVar("cosThetaCS", "cos #theta_{CS}", -1, 1);
+	RooRealVar phiCSVar("phiCS", "|#varphi_{CS}|", 0, 180, "#circ");
 
 	RooRealVar dimuonWeightCSVar("dimuonWeightCS", "1 / (acc x eff) weight in the CS frame", 0, 1000000);
 
 	RooDataSet datasetCS("datasetCS", "skimmed weighted dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, dimuonWeightCSVar), RooFit::WeightVar("dimuonWeightCS"), RooFit::StoreAsymError(RooArgSet(dimuonWeightCSVar)));
 
-	RooRealVar cosThetaHXVar("cosThetaHX", "cos theta in the helicity frame", -1, 1);
-	RooRealVar phiHXVar("phiHX", "absolute phi angle in the helicity frame", 0, 180, "#circ");
+	RooRealVar cosThetaHXVar("cosThetaHX", "cos #theta_{HX}", -1, 1);
+	RooRealVar phiHXVar("phiHX", "|#varphi_{HX}|", 0, 180, "#circ");
 
 	RooRealVar dimuonWeightHXVar("dimuonWeightHX", "1 / (acc x eff) weight in the HX frame", 0, 1000000);
 
@@ -239,6 +239,8 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 	datasetHX.Write();
 
 	file.Close();
+
+	infile->Close();
 
 	return;
 }

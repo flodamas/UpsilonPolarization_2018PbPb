@@ -7,33 +7,36 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax) {
+void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iState = 1) {
 	TCanvas* canvas = new TCanvas(accMap->GetName(), "", 700, 600);
 	accMap->Draw("COLZ");
 
-	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 MC", gUpsilonState));
+	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
 
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.05);
-	legend.DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV", ptMin, ptMax));
-	legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV", gUpsilonState));
+	legend.DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
+	legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV/c", iState));
 
 	gPad->Update();
 
+	accMap->GetPaintedHistogram()->GetXaxis()->CenterTitle();
+	accMap->GetPaintedHistogram()->GetYaxis()->CenterTitle();
+
 	accMap->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 300);
 	accMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
-	
-	gSystem->mkdir(Form("AcceptanceMaps/%dS", gUpsilonState), kTRUE);
-	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", gUpsilonState, accMap->GetName()), "RECREATE");
+
+	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
+	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accMap->GetName()), "RECREATE");
 }
 
 // (cos theta, phi) acceptance maps based on Y events generated without any decay kinematic cut
 // MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/
 
-void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
+void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1) {
 	// Read GenOnly Nofilter file
-	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", gUpsilonState);
+	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -62,9 +65,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 	OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
 
 	// (cos theta, phi, pT) 3D maps for final acceptance correction, variable size binning for the stats
-	TEfficiency* accMatrixCS = new TEfficiency("AccMatrixCS", ";cos #theta_{CS}; #varphi_{CS} (#circ);p_{T} (GeV/c);acceptance", NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning);
+	TEfficiency* accMatrixCS = new TEfficiency("AccMatrixCS", "acceptance;cos #theta_{CS}; #varphi_{CS} (#circ);p_{T} (GeV/c)", NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning);
 
-	TEfficiency* accMatrixHX = new TEfficiency("AccMatrixHX", ";cos #theta_{HX}; #varphi_{HX} (#circ);p_{T} (GeV/c);acceptance", NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning);
+	TEfficiency* accMatrixHX = new TEfficiency("AccMatrixHX", "acceptance;cos #theta_{HX}; #varphi_{HX} (#circ);p_{T} (GeV/c)", NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning);
 
 	// (cos theta, phi) 2D distribution maps for Lab, CS and HX frames
 
@@ -156,8 +159,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30) {
 	DrawAcceptanceMap(hAnalysisHX, ptMin, ptMax);
 
 	/// save the results in a file for later usage
-	gSystem->mkdir(Form("AcceptanceMaps/%dS", gUpsilonState), kTRUE);
-	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", gUpsilonState);
+	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
+	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", iState);
 	TFile outputFile(outputFileName, "UPDATE");
 
 	accMatrixCS->Write();

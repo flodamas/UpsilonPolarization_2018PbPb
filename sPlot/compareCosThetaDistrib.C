@@ -135,7 +135,7 @@ RooDataSet* InvMassRawDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_
 
 // compare the resulting distributions before and after acc x eff correction
 void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") { //possibla refFrame names: CS or HX
-	writeExtraText = true; // if extra text
+	writeExtraText = true;                                                                          // if extra text
 	extraText = "      Internal";
 
 	/// Set up the data
@@ -206,7 +206,6 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFr
 
 		int effBin = effMap->FindFixBin(tempCosTheta->getVal(), tempPhi->getVal(), tempPt->getVal());
 		double efficiency = effMap->GetEfficiency(effBin);
-
 
 		weight = ((acceptance == 0) || (efficiency == 0)) ? 0 : sWeightedRawDataset.weight() / (acceptance * efficiency); // IMPORTANT!
 
@@ -284,7 +283,7 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFr
 	RooAddPdf* invMassModel = new RooAddPdf("fitModel", "", RooArgList(*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, bkgPDF), {*yield1S, *yield2S, *yield3S, yieldBkg});
 
 	// get the correction histograms (1D!)
-	auto* efficiency1D = (TEfficiency*)efficiencyFile->Get(Form("hEffCosTheta%s_pt%dto%d", refFrameName, ptMin, ptMax));
+	auto* efficiency1D = (TEfficiency*)efficiencyFile->Get(Form("CosTheta%s_pt%dto%d", refFrameName, ptMin, ptMax));
 
 	auto* acceptance1D = (TEfficiency*)acceptanceFile->Get(Form("AccCosTheta%s_pt%dto%d", refFrameName, ptMin, ptMax));
 
@@ -309,7 +308,7 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFr
 		double errorRawYield = yield1S->getError();
 
 		int globalBin = efficiency1D->GetGlobalBin(iCosTheta + 1);
-	
+
 		double effValue = efficiency1D->GetEfficiency(globalBin);
 
 		double accValue = acceptance1D->GetEfficiency(globalBin);
@@ -326,12 +325,11 @@ void compareCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFr
 
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
-	RooPlot* frame = cosTheta.frame(Title(" "), Range(cosThetaMin, cosThetaMax));
-	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
+	RooPlot* frame = cosTheta.frame(Title(" "), Bins(nCosThetaBins), Range(cosThetaMin, cosThetaMax));
 
-	correctedBeforeDataset.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("dataBefore"));
+	correctedBeforeDataset.plotOn(frame, DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("dataBefore"));
 
-	correctedAfterDataset.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kAzure + 2), DataError(RooAbsData::SumW2), Name("dataAfter"));
+	correctedAfterDataset.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), DataError(RooAbsData::SumW2), Name("dataAfter"));
 
 	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kGreen + 2), Name("corrected"));
 

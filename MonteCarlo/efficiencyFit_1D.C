@@ -83,7 +83,6 @@ void efficiencyFit_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNam
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
 	RooPlot* frame = cosTheta.frame(Title(" "), Bins(nCosThetaBins), Range(cosThetaMin, cosThetaMax));
-	frame->SetXTitle(Form("cos #theta_{%s}", refFrameName));
 	frame->SetYTitle("Efficiency");
 
 	data->plotOn(frame, Efficiency(recoCat), DrawOption("P0Z"), Name("data"));

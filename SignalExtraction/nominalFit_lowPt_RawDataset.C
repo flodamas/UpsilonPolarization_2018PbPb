@@ -11,7 +11,7 @@
 
 #include "RooStats/SPlot.h"
 
-RooDataSet* InvMassCosThetaWeightedDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
+RooDataSet* InvMassCosThetaDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = 0, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -41,7 +41,7 @@ RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t p
 	return reducedDataset;
 }
 
-void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = 0, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -72,7 +72,7 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	auto* data = InvMassCosThetaWeightedDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto* data = InvMassCosThetaDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	Long64_t nEntries = data->sumEntries();
 
@@ -195,8 +195,8 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	RooArgSet* signalYields = new RooArgSet(*yield1S, *yield2S, *yield3S);
 
-	SaveSignalYields(signalYields, bkgShapeName, fitModelName);
-	SaveCanvas(massCanvas, bkgShapeName, fitModelName);
+	SaveRawDataSignalYields(signalYields, bkgShapeName, fitModelName);
+	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName);
 }
 
 void scanNominalFit_lowPt_RawDataset(){
@@ -204,7 +204,7 @@ void scanNominalFit_lowPt_RawDataset(){
 	Int_t ptEdges[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
 	Float_t cosThetaEdges[11] = {-1., -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.};
 	// Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
-	Int_t phiEdges[2] = {0, 180};
+	Int_t phiEdges[2] = {-180, 180};
 
 	Int_t numPtEle = sizeof(ptEdges)/sizeof(Int_t);
 	Int_t numCosThetaEle = sizeof(cosThetaEdges)/sizeof(Float_t);
