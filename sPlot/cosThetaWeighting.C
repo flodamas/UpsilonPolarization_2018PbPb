@@ -2,13 +2,14 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../Tools/Datasets/RooDataSetHelpers.h"
+#include "../Tools/Datasets/SPlotHelpers.h"
+
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/Style/FitDistributions.h"
-
-#include "RooStats/SPlot.h"
 
 void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const char* filename = "../Files/WeightedUpsilonSkimmedDataset.root") {
 	TFile* f = TFile::Open(filename, "READ");
@@ -27,20 +28,11 @@ void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	/// Set up the data
 	using namespace RooFit;
-	using namespace RooStats;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	// Read skimmed dataset (contains angular distributions in CS and HX after kinematic cuts due to acceptance)
-	RooDataSet* allDatasetCS = (RooDataSet*)f->Get("datasetCS");
+	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
 
-	// import the dataset to a workspace
-	RooWorkspace wspace("workspace");
-	wspace.import(*allDatasetCS);
-
-	auto* data = InvMassCosThetaPhiDataset(allDatasetCS, wspace, ptMin, ptMax, refFrameName);
-
-	std::cout << "\n------------------------------------------\nThe dataset before creating sWeights:\n";
-	data->Print();
+	auto* data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName);
 
 	// read variables in the reduced dataset in the workspace
 	RooRealVar* invMass = wspace.var("mass");
@@ -72,33 +64,7 @@ void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	/// SPlot time!
 
-	// yields from invariant mass distribution fit as sWeights
-	// see https://root.cern/doc/master/classRooStats_1_1SPlot.html#a5b30f5b1b2a3723bbebef17ffb6507b2 constructor for the arguments
-	RooRealVar* yield1S = wspace.var("yield1S");
-	RooRealVar* yield2S = wspace.var("yield2S");
-	RooRealVar* yield3S = wspace.var("yield3S");
-	RooRealVar* yieldBkg = wspace.var("yieldBkg");
-
-	RooStats::SPlot sData{"sData", "", *data, invMassModel, RooArgList(*yield1S, *yield2S, *yield3S, *yieldBkg), RooArgSet(), true, false, "dataWithSWeights", Range(MassBinMin, MassBinMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError), NumCPU(NCPUs)};
-
-	std::cout << "\n\nThe dataset after creating sWeights:\n";
-	data->Print();
-
-	// check that our weights have the desired properties
-
-	std::cout << "\n------------------------------------------\n\nCheck SWeights:" << std::endl;
-
-	std::cout << std::endl
-	          << "Yield of Y(1S) is\t" << yield1S->getVal() << ".  From sWeights it is "
-	          << sData.GetYieldFromSWeight("yield1S") << std::endl;
-
-	std::cout << "Yield of background is\t" << yieldBkg->getVal() << ".  From sWeights it is "
-	          << sData.GetYieldFromSWeight("yieldBkg") << std::endl
-	          << std::endl;
-
-	// import this new dataset with sWeights
-	std::cout << "import new dataset with sWeights" << std::endl;
-	wspace.import(*data, Rename("dataWithSWeights"));
+	SPlot sData = CreateSPlot(wspace, data, invMassModel);
 
 	/// Draw the cos theta distribution with and without sWeights
 
@@ -108,7 +74,7 @@ void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	data->plotOn(frame, DrawOption("P0Z"), Name("data"), DataError(RooAbsData::SumW2));
 
 	// create weighted data sets
-	RooDataSet data_weight1S{data->GetName(), data->GetTitle(), data, *data->get(), nullptr, "yield1S_sw"};
+	RooDataSet data_weight1S = GetSWeightedDataset(data, "1S");
 
 	data_weight1S.plotOn(frame, DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("data1S"));
 

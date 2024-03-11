@@ -2,7 +2,7 @@
 
 #include "../AnalysisParameters.h"
 
-#include "../Tools/Datasets/RooDataSetReducers.h"
+#include "../Tools/Datasets/RooDataSetHelpers.h"
 
 #include "../Tools/FitShortcuts.h"
 
@@ -29,20 +29,7 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 
 	const char* filename = "../Files/UpsilonSkimmedDataset.root";
 
-	TFile* f = TFile::Open(filename, "READ");
-	if (!f) {
-		cout << "File " << filename << " not found. Check the directory of the file." << endl;
-		return;
-	}
-
-	cout << "File " << filename << " opened" << endl;
-
-	const char* datasetName = Form("dataset%s", refFrameName);
-	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
-
-	// import the dataset to a workspace
-	RooWorkspace wspace(Form("workspace_%s", refFrameName));
-	wspace.import(*allDataset);
+	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
 
 	RooRealVar invMass = *wspace.var("mass");
 
