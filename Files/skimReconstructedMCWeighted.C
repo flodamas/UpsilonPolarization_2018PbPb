@@ -360,13 +360,18 @@ void skimReconstructedMCWeighted(Int_t iState = 1) {
 			cosThetaHXVar = muPlus_HX.CosTheta();
 			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
 
-			dataset.add(RooArgSet(recoCat, centVar, eventWeightVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), weight, errorWeightDown, errorWeightUp);
+			dataset.add(RooArgSet(recoCat, centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), weight, errorWeightDown, errorWeightUp);
 		}
 	}
 
 	dataset.Write();
 
 	file.Close();
+
+	infile->Close();
+
+	cout << endl
+	     << dataset.GetName() << " written in " << outputFileName << endl;
 
 	return;
 }

@@ -5,9 +5,9 @@
 
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
-RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, bool saveParams = true) {
 	/// open the MC skimmed file
-	const char* filename = "../Files/MCUpsilonSkimmedWeightedDataset.root";
+	const char* filename = "../Files/Y1SSelectedMCWeightedDataset.root";
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -18,6 +18,8 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 
 	writeExtraText = true; // if extra text
 	extraText = "      Simulation Internal";
+
+	const char* signalShapeName = "SymDSCB";
 
 	// we only extract the tail parameters for a specific pt bin, they do not vary significantly with cos theta or phi within this pt bin
 	// Bool_t isCSframe = kTRUE;
@@ -33,36 +35,24 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 
 	RooDataSet* allDataset = (RooDataSet*)file->Get("MCdataset");
 
-	RooWorkspace* wspace = new RooWorkspace("workspace");
-	wspace->import(*allDataset);
+	RooWorkspace wspace("workspace");
+	wspace.import(*allDataset);
+
+	const char* refFrameName = (isCSframe) ? "CS" : "HX";
 
 	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	RooRealVar* massVar = wspace->var("mass");
+	RooRealVar* massVar = wspace.var("mass");
 
 	// fit
-	RooRealVar mean("mean", "", 9.4, 9., 10.);
-	RooRealVar sigma("sigma", "", 0.09, .05, .15);
-	RooRealVar alphaInf("alphaInf", "", 1.1, 0.1, 10);
-	RooRealVar orderInf("orderInf", "", 4.9, 0.1, 10);
-	RooRealVar alphaSup("alphaSup", "", 1.7, 0.1, 10);
-	RooRealVar orderSup("orderSup", "", 17.5, 0.1, 100);
+	auto* fitResult = SymDSCBfit(wspace, massDataset, massMin, massMax);
 
-	RooCrystalBall signal("CB", "", *massVar, mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
-
-	cout << endl
-	     << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << endl;
-
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError)); // quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
-
-	fitResult->Print("v");
-
-	const char* outputName = GetSignalFitName("SymDSCB", ptMin, ptMax);
-
-	// save signal shape parameters in a txt file to be read for data fit
-	RooArgSet* tailParams = new RooArgSet(alphaInf, orderInf, alphaSup, orderSup);
-
-	SaveMCSignalTailParameters(tailParams, outputName); // so that we don't have to refit later
+	RooRealVar mean = *wspace.var(Form("mean%s", signalShapeName));
+	RooRealVar sigma = *wspace.var(Form("sigma%s", signalShapeName));
+	RooRealVar alphaInf = *wspace.var(Form("alphaInf%s", signalShapeName));
+	RooRealVar orderInf = *wspace.var(Form("orderInf%s", signalShapeName));
+	RooRealVar alphaSup = *wspace.var(Form("alphaSup%s", signalShapeName));
+	RooRealVar orderSup = *wspace.var(Form("orderSup%s", signalShapeName));
 
 	/// draw the fit to see if the fit is reasonable (we can comment it (lines 79-105) out if drawing is not necessary)
 	auto* canvas = new TCanvas("canvas", "", 600, 600);
@@ -76,7 +66,7 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 	// frame->SetYTitle(Form("Candidates / (%d MeV)", (int)1000 * (binMax - binMin) / nBins));
 	massDataset->plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
 
-	signal.plotOn(frame, LineColor(kBlue));
+	wspace.pdf(signalShapeName)->plotOn(frame, LineColor(kBlue));
 
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
 	//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
@@ -87,22 +77,30 @@ RooArgSet* extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 9
 
 	TPad* pad2 = GetPadPullDistribution(frame, fitResult->floatParsFinal().getSize());
 
+	canvas->Modified();
+	canvas->Update();
 	canvas->cd();
 	pad1->Draw();
 	pad2->Draw();
+
+	const char* outputName = GetSignalFitName(signalShapeName, ptMin, ptMax);
+
 	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
 
-	// file->Close();
-	return tailParams;
+	if (saveParams) {
+		// save signal shape parameters in a txt file to be read for data fit
+		RooArgSet* tailParams = new RooArgSet(alphaInf, orderInf, alphaSup, orderSup);
+
+		SaveMCSignalParameters(tailParams, outputName); // so that we don't have to refit later
+	}
+
+	file->Close();
 }
 
-
-void scanExtractMCSignalTails_symCoreDSCB(){
-
-	Int_t PtEdges[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
-	Int_t NumPtEle = sizeof(PtEdges)/sizeof(Int_t);
-	for(Int_t idx =0; idx < NumPtEle-1; idx++){
-		extractMCSignalTails_symCoreDSCB(0, 90, PtEdges[idx], PtEdges[idx+1]);
+void scanExtractMCSignalTails_symCoreDSCB() {
+	Int_t PtEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
+	Int_t NumPtEle = sizeof(PtEdges) / sizeof(Int_t);
+	for (Int_t idx = 0; idx < NumPtEle - 1; idx++) {
+		extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, PtEdges[idx], PtEdges[idx + 1]);
 	}
 }
-
