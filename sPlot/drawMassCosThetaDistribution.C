@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../Tools/Datasets/RooDataSetReducers.h"
+
 #include "../Tools/FitShortcuts.h"
 
 void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {

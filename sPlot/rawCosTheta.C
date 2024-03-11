@@ -2,6 +2,7 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../Tools/Datasets/RooDataSetHelpers.h"
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
@@ -13,14 +14,6 @@
 #include "RooStats/SPlot.h"
 
 void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Int_t phiMin = -180, Int_t phiMax = 180, const char* filename = "../Files/UpsilonSkimmedDataset.root") {
-	TFile* f = TFile::Open(filename, "READ");
-	if (!f) {
-		cout << "File " << filename << " not found. Check the directory of the file." << endl;
-		return;
-	}
-
-	cout << "File " << filename << " opened" << endl;
-
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -29,14 +22,9 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	using namespace RooStats;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* datasetName = Form("dataset%s", refFrameName);
-	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
+	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
 
-	// import the dataset to a workspace
-	RooWorkspace wspace(Form("workspace_%s", refFrameName));
-	wspace.import(*allDataset);
-
-	auto* data = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto* data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	std::cout << "\n------------------------------------------\nThe dataset before creating sWeights:\n";
 	data->Print();
