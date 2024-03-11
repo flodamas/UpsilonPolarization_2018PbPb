@@ -172,10 +172,10 @@ void enableBinIntegrator(RooAbsReal& func, int numBins) {
 	func.forceNumInt(true);
 }
 
-void SaveMCSignalTailParameters(RooArgSet* params, const char* outputName) {
-	params->writeToFile(Form("../MonteCarlo/SignalParameters/%s.txt", outputName));
-}
-
 void SaveMCSignalParameters(RooArgSet* params, const char* outputName) {
-	params->writeToFile(Form("../MonteCarlo/SignalParameters/%s.txt", outputName));
+	const char* name = Form("SignalParameters/%s.txt", outputName);
+
+	params->writeToFile(name);
+
+	cout << "\nSignal shape parameters " << (*params) << " extracted from MC written to " << name << endl;
 }

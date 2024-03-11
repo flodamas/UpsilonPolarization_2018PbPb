@@ -65,7 +65,7 @@ RooDataSet* ReducedDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t c
 }
 
 // reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
-RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
 		return nullptr;
@@ -102,15 +102,15 @@ RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %f && phiCS < %f)&& (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %f && phiHX < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, minCosThetaCS, maxCosThetaCS, minPhiCS, maxPhiCS, minCosThetaHX, maxCosThetaHX, minPhiHX, maxPhiHX);
 
-	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("mass"))), kinematicCut);
+	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
 	massDataset->SetName(kinematicCut); // just to make it unique
 
-	wspace->import(*massDataset);
+	wspace.import(*massDataset);
 
 	return massDataset;
 }
 
-RooFitResult* SymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
+RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
 	using namespace RooFit;
 
 	// fit
@@ -121,7 +121,7 @@ RooFitResult* SymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* 
 	RooRealVar alphaSup("alphaSupSymDSCB", "", 1.5, 0.1, 10);
 	RooRealVar orderSup("orderSupSymDSCB", "", 3, 0.1, 40);
 
-	RooCrystalBall signal("SymDSCB", "SymDSCB", *massVar, mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
+	RooCrystalBall signal("SymDSCB", "SymDSCB", *wspace.var("mass"), mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 
 	cout << endl
 	     << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << endl;
@@ -130,9 +130,10 @@ RooFitResult* SymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* 
 
 	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
-	wspace->import(signal);
 
 	fitResult->Print("v");
+
+	wspace.import(signal);
 
 	return fitResult;
 }
@@ -244,11 +245,11 @@ RooFitResult* Hypatiafit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* 
 
 /// Helpers to get the relevant signal shape parameters and to define an unique fit name
 
-const char* GetSignalFitName(const char* signalShapeName = "symCoreDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
+const char* GetSignalFitName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
 	return Form("%s_cent%dto%d_absy%dp%dto%dp%d_pt%dto%d", signalShapeName, gCentralityBinMin, gCentralityBinMax, (Int_t)gRapidityMin, (Int_t)(10 * (gRapidityMin - (Int_t)gRapidityMin)), (Int_t)gRapidityMax, (Int_t)(10 * (gRapidityMax - (Int_t)gRapidityMax)), ptMin, ptMax);
 }
 
-const char* GetFitModelName(const char* signalShapeName = "symCoreDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	const char* signalFitName = GetSignalFitName(signalShapeName, ptMin, ptMax);
 
 	// just need to append the specific (cos theta, phi) bin name
@@ -257,11 +258,46 @@ const char* GetFitModelName(const char* signalShapeName = "symCoreDSCB", Int_t p
 }
 
 // small dummy function to avoid repetiting the same piece of code everywhere...
-const char* GetMCFileName(const char* signalShapeName = "symCoreDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
+const char* GetMCFileName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
 	return Form("../MonteCarlo/SignalParameters/%s.txt", GetSignalFitName(signalShapeName, ptMin, ptMax));
 }
 
-RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, const char* signalShapeName = "symCoreDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
+void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
+	RooRealVar alphaInf(Form("alphaInf%s", signalShapeName), "", 1);
+	RooRealVar orderInf(Form("orderInf%s", signalShapeName), "", 1);
+	RooRealVar alphaSup(Form("alphaSup%s", signalShapeName), "", 1);
+	RooRealVar orderSup(Form("orderSup%s", signalShapeName), "", 1);
+
+	RooArgSet tailParams(alphaInf, orderInf, alphaSup, orderSup);
+
+	// if the .txt file for this specific fit model exists, just read the tail parameters from it
+
+	const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax);
+
+	if (fopen(mcFileName, "r")) {
+		cout << endl
+		     << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
+		tailParams.readFromFile(mcFileName);
+	} else {
+		cout << endl
+		     << mcFileName << " file does not seem to exist, you need to extract the signal tail paramaters from MC fit first!" << endl;
+		exit(1);
+	}
+
+	// fix the tail parameters
+	alphaInf.setConstant();
+	orderInf.setConstant();
+	alphaSup.setConstant();
+	orderSup.setConstant();
+
+	cout << endl
+	     << "Tail parameters fixed to the following MC signal values:" << endl;
+	tailParams.Print("v");
+
+	wspace.import(tailParams);
+}
+
+RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
 	RooArgSet tailParams(*alphaInf, *orderInf, *alphaSup, *orderSup);
 
 	// if the .txt file for this specific fit model exists, just read the tail parameters from it
@@ -291,10 +327,10 @@ RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, 
 	return tailParams;
 }
 
-RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, RooRealVar* normFraction, const char* signalShapeName = "symCoreDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
-	// RooArgSet GetMCSignalParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
-	// RooArgSet GetMCSignalParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooFormulaVar* ratio_sigma, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
-	// RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, TString signalShapeName = "symCoreDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, RooRealVar* normFraction, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
+	// RooArgSet GetMCSignalParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, TString signalShapeName = "SymDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+	// RooArgSet GetMCSignalParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooFormulaVar* ratio_sigma, TString signalShapeName = "SymDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+	// RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, TString signalShapeName = "SymDSCB", Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
 
 	RooArgSet Params(*sigma, *alphaInf, *orderInf, *alphaSup, *orderSup, *sigma_gauss, *normFraction);
 	// RooArgSet Params(*alphaInf, *orderInf, *alphaSup, *orderSup, *sigma_gauss);
