@@ -14,8 +14,10 @@ using namespace RooFit;
 // one symmetric double-sided Crystal Ball PDF per Y resonance with PDG mass scaling for the mean and width of the excited states
 // tail parameters identical for the three resonances
 
-RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t yieldMax = 1e6) {
+RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 	RooRealVar mass = *wspace.var("mass");
+
+	Long64_t initYield = nEntries / 10;
 
 	// get the tail parameters, assuming that they have been imported to the workspace first!!
 	RooRealVar alphaInf = *wspace.var("alphaInfSymDSCB");
@@ -25,10 +27,10 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t yieldMax = 1e6) {
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
-	RooRealVar sigma_1S("sigma_1S", "", .04, .13);
+	RooRealVar sigma_1S("sigma_1S", "", .04, .15);
 
 	RooCrystalBall signalPDF_1S("signalPDF_1S", "", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
-	RooRealVar yield1S("yield1S", "N 1S", yieldMax / 5, 0, yieldMax);
+	RooRealVar yield1S("yield1S", "N 1S", initYield, 0, nEntries);
 
 	// Y(2S) signal shape, mass scaling for mean and widths
 	RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
@@ -37,7 +39,7 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t yieldMax = 1e6) {
 	RooFormulaVar sigma_2S("sigma_2S", "massScaling_2S*sigma_1S", RooArgSet(massScaling_2S, sigma_1S));
 
 	RooCrystalBall signalPDF_2S("signalPDF_2S", "", mass, mean_2S, sigma_2S, alphaInf, orderInf, alphaSup, orderSup);
-	RooRealVar yield2S("yield2S", "N 2S", yieldMax / 10, 0, yieldMax / 2);
+	RooRealVar yield2S("yield2S", "N 2S", initYield / 4, 0, nEntries);
 
 	// Y(3S) signal shape, mass scaling for mean and widths
 	RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
@@ -46,7 +48,7 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t yieldMax = 1e6) {
 	RooFormulaVar sigma_3S("sigma_3S", "massScaling_3S*sigma_1S", RooArgSet(massScaling_3S, sigma_1S));
 
 	RooCrystalBall signalPDF_3S("signalPDF_3S", "", mass, mean_3S, sigma_3S, alphaInf, orderInf, alphaSup, orderSup);
-	RooRealVar yield3S("yield3S", "N 3S", yieldMax / 20, 0, yieldMax / 4);
+	RooRealVar yield3S("yield3S", "N 3S", initYield / 10, 0, nEntries);
 
 	RooAddPdf signalModel("SymDSCBModel", "PDF of the sum of the three Y signal PDFs", {signalPDF_1S, signalPDF_2S, signalPDF_3S}, {yield1S, yield2S, yield3S});
 
@@ -66,10 +68,10 @@ RooArgList ChebychevCoefList(int order = 1) {
 	return coefList;
 }
 
-RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64_t yieldMax = 1e6) {
+RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64_t nEntries = 1e6) {
 	RooRealVar invMass = *wspace.var("mass");
 
-	RooRealVar yieldBkg("yieldBkg", "N background events", 0, yieldMax);
+	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
 
 	// Chebychev Nth order polynomial
 	if (strncmp(bkgShapeName, "ChebychevOrder", 14) == 0) {
@@ -93,8 +95,8 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
 		RooRealVar err_mu("err_mu", " ", 7, 0, 15);
-		RooRealVar err_sigma("err_sigma", " ", 0, 10);
-		RooRealVar exp_lambda("exp_lambda", " ", 3, 0, 20);
+		RooRealVar err_sigma("err_sigma", " ", 1, 0.001, 10);
+		RooRealVar exp_lambda("exp_lambda", " ", 3, 0, 50);
 
 		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
 
@@ -113,7 +115,7 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 
 // build the main PDF based on all PDFs above
 
-RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t yieldMax = 1e6) {
+RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t nEntries = 1e6) {
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
 
 	cout << endl
@@ -123,7 +125,7 @@ RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const
 
 	ImportAndFixMCSignalParameters(wspace, signalShapeName, ptMin, ptMax);
 
-	auto signalModel = NominalSignalModel(wspace, yieldMax);
+	auto signalModel = NominalSignalModel(wspace, nEntries);
 
 	RooAbsPdf* signalPDF_1S = wspace.pdf("signalPDF_1S");
 	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
@@ -134,7 +136,7 @@ RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const
 	RooRealVar* yield3S = wspace.var("yield3S");
 
 	// background
-	auto bkgModel = BackgroundModel(wspace, bkgShapeName, yieldMax);
+	auto bkgModel = BackgroundModel(wspace, bkgShapeName, nEntries);
 
 	RooAbsPdf* bkgPDF = wspace.pdf("bkgPDF");
 

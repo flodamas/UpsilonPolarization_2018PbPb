@@ -1,12 +1,14 @@
 #include "../Tools/BasicHeaders.h"
 
+#include "/Parameters/PhysicsConstants.h"
+
 #include "../AnalysisParameters.h"
 
-RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
-	using namespace RooFit;
+using namespace RooFit;
 
+RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet* massDataset, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
 	// fit
-	RooRealVar mean("meanSymDSCB", "", 9.457, 9., 10.);
+	RooRealVar mean("meanSymDSCB", "", PDGmass_1S, 9., 10.);
 	RooRealVar sigma("sigmaSymDSCB", "", 0.08, .05, .15);
 	RooRealVar alphaInf("alphaInfSymDSCB", "", 1.5, 0.1, 10);
 	RooRealVar orderInf("orderInfSymDSCB", "", 1.5, 0.1, 10);
@@ -31,9 +33,8 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet* massDataset, Float_t 
 }
 
 RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
-	using namespace RooFit;
 	// fit
-	RooRealVar mean("meanAsymDSCB", "", 9.457, 9., 10.);
+	RooRealVar mean("meanAsymDSCB", "", PDGmass_1S, 9., 10.);
 	RooRealVar sigmaInf("sigmaInfAsymDSCB", "", 0.08, .05, .15);
 	RooRealVar alphaInf("alphaInfAsymDSCB", "", 1.5, 0.1, 10);
 	RooRealVar orderInf("orderInfAsymDSCB", "", 1.5, 0.1, 10);
@@ -58,11 +59,9 @@ RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet*
 }
 
 RooFitResult* SymDSCBGaussfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
-	using namespace RooFit;
-
 	/// fit
 	/// (DSCB variables)
-	RooRealVar mean("meanDSCBGauss", "", 9.457, 9., 10.);
+	RooRealVar mean("meanDSCBGauss", "", PDGmass_1S, 9., 10.);
 	RooRealVar sigma("sigmaDSCBGauss", "", 0.08, .05, .15);
 	RooRealVar alphaInf("alphaInfDSCBGauss", "", 1.5, 0.1, 10);
 	RooRealVar orderInf("orderInfDSCBGauss", "", 1.5, 0.1, 10);
@@ -95,10 +94,8 @@ RooFitResult* SymDSCBGaussfit(RooRealVar* massVar, RooWorkspace* wspace, RooData
 }
 
 RooFitResult* Hypatiafit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
-	using namespace RooFit;
-
 	// fit
-	RooRealVar mean("meanHypatia", "", 9.451, 9., 10.);
+	RooRealVar mean("meanHypatia", "", PDGmass_1S, 9., 10.);
 	RooRealVar lambda("lambdaHypatia", "lambda of hypatia PDF", -1.0, -20.0, -0.1);
 	RooRealVar zeta("zetaHypatia", "zeta of hypatia PDF", 0.01, 0.0, 1.0);
 	RooRealVar beta("betaHypatia", "beta of hypatia PDF", -0.01, -20.0, 0.0);

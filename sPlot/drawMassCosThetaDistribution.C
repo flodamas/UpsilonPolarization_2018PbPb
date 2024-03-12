@@ -4,10 +4,8 @@
 
 #include "../Tools/Datasets/RooDataSetHelpers.h"
 
-#include "../Tools/FitShortcuts.h"
-
 void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {
-	Double_t massMin = 9, massMax = 10;
+	Double_t massMin = 7, massMax = 13;
 	Int_t nInvMassBins = (Int_t)10 * (massMax - massMin);
 
 	Int_t nCosThetaBins = 20;
@@ -35,7 +33,7 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	auto* data = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto* data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	std::unique_ptr<RooAbsData> reducedDataset{data->reduce({cosTheta, invMass}, Form("mass > %f && mass < %f", massMin, massMax))};
 
@@ -51,6 +49,7 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 700, 600);
 
 	TH2* histo = dynamic_cast<TH2*>(reducedDataset->createHistogram(histoName, cosTheta, RooFit::Binning(nCosThetaBins, cosThetaMin, cosThetaMax), RooFit::YVar(invMass, RooFit::Binning(nInvMassBins, massMin, massMax))));
+	histo->SetTitle(" ");
 
 	histo->Draw("COLZ");
 

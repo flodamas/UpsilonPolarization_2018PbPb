@@ -12,7 +12,7 @@
 #include "../Tools/Style/FitDistributions.h"
 
 // compare the sPlot and raw yield extraction methods
-void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) { //possible refFrame names: CS or HX
+void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180, const char* filename = "../Files/UpsilonSkimmedDataset.root") { //possible refFrame names: CS or HX
 
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
@@ -26,7 +26,7 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 
 	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
 
-	auto* data = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto* data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	// read variables in the reduced dataset in the workspace
 	RooRealVar* invMass = wspace.var("mass");
@@ -64,7 +64,8 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	RooDataSet data_weight1S = GetSWeightedDataset(data, "1S");
 
 	/// Standard extraction of the raw yield per bin of cos theta
-
+	RooRealVar* yield1S = wspace.var("yield1S");
+	RooRealVar* yield2S = wspace.var("yield2S");
 	// loop and fit
 
 	TH1D yieldHist("yieldHist", " ", nCosThetaBins, cosThetaMin, cosThetaMax);
@@ -101,9 +102,9 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 
 	RooPlot* frame = cosTheta->frame(Title(" "), Range(cosThetaMin, cosThetaMax));
 
-	data_weight1S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), Name("sData"));
-
 	yieldRooDataHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("rawYield"));
+
+	data_weight1S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), Name("sData"));
 
 	frame->GetYaxis()->SetMaxDigits(3);
 	frame->SetMaximum(2 * maxYield);
@@ -114,11 +115,11 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 
 	//frame->SetMaximum(nEntries / 15);
 
-	TLegend legend(.25, .85, .5, .65);
+	TLegend legend(.22, .85, .45, .65);
 	legend.SetTextSize(.05);
-	legend.SetHeader(Form("%d < p_{T}^{#mu#mu} < %d GeV/c, %d < #varphi_{%s} < %d", ptMin, ptMax, phiMin, refFrameName, phiMax));
-	legend.AddEntry(frame->findObject("sData"), "sWeighted data", "lp");
+	legend.SetHeader(Form("%d < p_{T}^{#mu#mu} < %d GeV/c, %d#circ < #varphi_{%s} < %d#circ", ptMin, ptMax, phiMin, refFrameName, phiMax));
 	legend.AddEntry(frame->findObject("rawYield"), "#varUpsilon(1S) raw yield", "lp");
+	legend.AddEntry(frame->findObject("sData"), "sWeighted data", "lp");
 
 	legend.DrawClone();
 
