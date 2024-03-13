@@ -14,6 +14,7 @@
 #include "../ReferenceFrameTransform/Transformations.h"
 
 TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, Double_t* cosThetaBinEdges = nullptr) {
+	
 	// rebin efficiency maps based on costheta, phi, and pT selection 
 	TH3D* hPassed = (TH3D*) TEff3DMap->GetPassedHistogram();
 	TH3D* hTotal = (TH3D*) TEff3DMap->GetTotalHistogram();
@@ -30,15 +31,21 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t phiMin = -180, Int_t p
 	TH1D* hPassedCosTheta_Rebin = (TH1D*) hPassedCosTheta->Rebin(nCosThetaBins, "hPassedCosTheta_Rebin", cosThetaBinEdges);
 	TH1D* hTotalCosTheta_Rebin = (TH1D*) hTotalCosTheta->Rebin(nCosThetaBins, "hTotalCosTheta_Rebin", cosThetaBinEdges);
 
+	cout << "hpassed bin1: " << hPassedCosTheta_Rebin->GetBinContent(1) << endl;
+	cout << "hTotal bin1: " << hTotalCosTheta_Rebin->GetBinContent(1) << endl;
+
 	TEfficiency* TEffMapCosTheta = new TEfficiency("TEffMapCosTheta", "cos #theta_{CS}; efficiency", nCosThetaBins, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
 	
 	TEffMapCosTheta->SetPassedHistogram(*hPassedCosTheta_Rebin, "f");
 	TEffMapCosTheta->SetTotalHistogram(*hTotalCosTheta_Rebin, "f"); 
 
+	cout << "eff bin1: " << TEffMapCosTheta->GetEfficiency(1) << endl;
+
 	return TEffMapCosTheta;
 }
 
 TH1D* rebin3DUnc(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, Double_t* cosThetaBinEdges = nullptr){
+	
 	// rebin efficiency maps based on costheta, phi, and pT selection 
 	// uncertainty sum is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
 	TH1D* h1DUnc = new TH1D("h1DUnc", "cos #theta_{CS}; uncertainty", nCosThetaBins, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
@@ -178,7 +185,12 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s",bkgShapeName[iCosTheta]), fitModelName);
 
 		standardCorrectedHist->SetBinContent(iCosTheta + 1, (yield1S->getVal()) * weight);
-		standardCorrectedHist->SetBinError(iCosTheta + 1, TMath::Hypot(yield1S->getError(), errorWeightLow)); //this one is wrong, will fix it 
+
+		// wrong error propagation, will fix this
+		standardCorrectedHist->SetBinError(iCosTheta + 1, (yield1S->getError())); 
+		// standardCorrectedHist->SetBinError(iCosTheta + 1, (yield1S->getVal()) * weight * (TMath::Hypot((yield1S->getError())/(yield1S->getVal()), accMapCosTheta->GetEfficiencyErrorUp(iCosTheta + 1) / acceptance))); 
+		// standardCorrectedHist->SetBinError(iCosTheta + 1, (yield1S->getVal()) * weight * (TMath::Hypot((yield1S->getError())/(yield1S->getVal()), effMapCosTheta->GetEfficiencyErrorUp(iCosTheta + 1) / efficiency)));
+		// standardCorrectedHist->SetBinError(iCosTheta + 1, (yield1S->getVal()) * weight * TMath::Hypot((yield1S->getError())/(yield1S->getVal()), errorWeightLow)); 	
 
 		if ((yield1S->getVal()) * weight > maxYield) maxYield = (yield1S->getVal()) * weight;
 	}
@@ -237,4 +249,43 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	gSystem->mkdir("DistributionFits/1D", kTRUE);
 	canvas->SaveAs(Form("DistributionFits/1D/compareRawYieldCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
+
+	// with Root Fit function
+	TCanvas* canvas2 = new TCanvas("canvas2", "canvas2", 650, 600);
+
+	TF1* PolarFunc = cosThetaPolarFunc(maxYield);
+
+	TFitResultPtr fitResults = standardCorrectedHist->Fit("PolarFunc", "LESV", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]); //L:log likelihood fit, E: NINOS
+
+	// Fit results
+
+	double chi2 = fitResults->Chi2();;
+	double lambdaVal = fitResults->Parameter(0);
+	double lambdaErr = fitResults->ParError(0);	
+
+	gStyle->SetOptFit(1011);
+
+	// cosmetics
+
+	standardCorrectedHist->SetMarkerStyle(20);
+    standardCorrectedHist->SetMarkerSize(1);
+    standardCorrectedHist->SetMarkerColor(kAzure + 2);
+
+	standardCorrectedHist->GetYaxis()->SetRangeUser(0, 2 * maxYield);
+	standardCorrectedHist->GetYaxis()->SetMaxDigits(3);
+
+	standardCorrectedHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
+	// standardCorrectedHist->SetYTitle(Form("Events / ( %0.1f )", cosThetaStep));
+
+	TLegend legend2(.22, .88, .5, .68);
+	legend2.SetTextSize(.05);
+	legend2.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legend2.AddEntry(standardCorrectedHist, "#varUpsilon(1S) corrected yield", "lp");
+	legend2.AddEntry(PolarFunc, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaVal, lambdaErr), "l");
+
+	legend2.DrawClone();
+
+	gPad->Update();
+
+	canvas2->SaveAs(Form("DistributionFits/1D/ROOTFIT_compareCorrectedCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
 }
