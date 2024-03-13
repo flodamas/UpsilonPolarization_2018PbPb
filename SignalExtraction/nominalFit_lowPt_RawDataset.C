@@ -4,9 +4,10 @@
 
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
-
-#include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/Style/FitDistributions.h"
+
+#include "../Tools/Datasets/RooDataSetHelpers.h"
+#include "../Tools/RooFitPDFs/InvariantMassModels.h"
 
 RooDataSet* InvMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
@@ -53,7 +54,7 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	auto* data = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto* data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	Long64_t nEntries = data->sumEntries();
 
@@ -64,9 +65,9 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 	const char* signalShapeName = "SymDSCB";
 
 	// background
-	//int order = 2;
-	//const char* bkgShapeName = Form("ChebychevOrder%d", order);
-	const char* bkgShapeName = "ExpTimesErr";
+	int order = 2;
+	const char* bkgShapeName = Form("ChebychevOrder%d", order);
+	// const char* bkgShapeName = "ExpTimesErr";
 
 	auto* invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
@@ -81,11 +82,11 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 	auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 	pad1->SetBottomMargin(0.03);
+
 	pad1->Draw();
 	pad1->cd();
 
 	// RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
-
 	RooPlot* frame = invMass.frame(Title(" "), Range(MassBinMin, MassBinMax));
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 	reducedDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
@@ -121,8 +122,9 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	RooArgSet* signalYields = new RooArgSet(wspace.var("yield1S"), wspace.var("yield2S"), wspace.var("yield3S"));
+	RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
 
+	bkgShapeName = Form("ChebychevOrder%d", order);
 	SaveRawDataSignalYields(signalYields, bkgShapeName, fitModelName);
 	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName);
 }
@@ -139,7 +141,7 @@ void scanNominalFit_lowPt_RawDataset() {
 
 	for (Int_t cosThetaIdx = 0; cosThetaIdx < numCosThetaEle - 1; cosThetaIdx++) {
 		for (Int_t idx = 0; idx < numPhiEle - 1; idx++) {
-			nominalFit_lowPt_RawDataset(ptEdges[0], ptEdges[1], kTRUE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1]);
+			nominalFit_lowPt_RawDataset(ptEdges[6], ptEdges[7], kFALSE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1]);
 		}
 	}
 }
