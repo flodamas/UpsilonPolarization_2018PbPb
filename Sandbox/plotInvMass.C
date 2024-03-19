@@ -4,36 +4,25 @@
 #include "../Tools/BasicHeaders.h"
 
 #include "../AnalysisParameters.h"
+#include "../Tools/Datasets/RooDataSetHelpers.h"
 
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
 void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
-	extraText = "       Internal";
+	extraText = "      Internal";
 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
 	const char* filename = "../Files/UpsilonSkimmedDataset.root";
 
-	TFile* f = TFile::Open(filename, "READ");
-	if (!f) {
-		cout << "File " << filename << " not found. Check the directory of the file." << endl;
-		return;
-	}
-
-	cout << "File " << filename << " opened" << endl;
-
 	const char* refFrameName = isCSframe ? "CS" : "HX";
 
-	const char* datasetName = Form("dataset%s", refFrameName);
-	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
+	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
 
-	RooWorkspace wspace("workspace");
-	wspace.import(*allDataset);
-
-	RooDataSet* reducedDataset = InvMassCosThetaPhiDataset(allDataset, wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	RooDataSet* reducedDataset = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	Long64_t nEntries = reducedDataset->sumEntries();
 
@@ -46,17 +35,17 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 
 	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
-	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 
 	frame->Draw();
 
 	//frame->SetMaximum(nEntries / 150);
 	//frame->SetMinimum(0.8);
 
-	//CMS_lumi(canvas, "2018 PbPb miniAOD, DoubleMuon PD");
-
 	canvas->Modified();
 	canvas->Update();
+
+	CMS_lumi(canvas, gCMSLumiText);
 
 	gSystem->mkdir("mass_distrib", kTRUE);
 	canvas->SaveAs(Form("mass_distrib/RawData_%s_cent%dto%d_pt%dto%dGeV_cosTheta%.1fto%.1f_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, cosThetaMin, cosThetaMax, phiMin, phiMax), "RECREATE");

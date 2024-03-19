@@ -56,7 +56,9 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	Float_t lowMassCut = 6.5, highMassCut = 14.5; // large invariant mass window to ease the integration for RooFit
 	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
 	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4);
-	RooRealVar ptVar("pt", "dimuon pT", 0, gPtBinning[NPtBins], "GeV/c");
+
+	Float_t highPtCut = gPtMax;
+	RooRealVar ptVar("pt", "dimuon pT", 0, highPtCut, "GeV/c");
 
 	RooRealVar cosThetaLabVar("cosThetaLab", "cos #theta_{Lab}", -1, 1);
 	RooRealVar phiLabVar("phiLab", "#varphi_{Lab}", -180, 180, "#circ");
@@ -106,7 +108,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue; // cut on the dimuon rapidity when reducing the dataset later
 
-			if (Reco_QQ_4mom->Pt() > gPtBinning[NPtBins]) continue;
+			if (Reco_QQ_4mom->Pt() > highPtCut) continue;
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iQQ];

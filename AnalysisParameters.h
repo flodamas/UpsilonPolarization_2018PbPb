@@ -7,7 +7,7 @@
 
 /// Definition of all global parameters to be used within this analysis framework
 
-const char* gCMSLumiText = "2018 PbPb data (1.61 nb^{-1}, 5.02 TeV)";
+const char* gCMSLumiText = "PbPb 1.61 nb^{-1} (5.02 TeV)";
 
 // CANNOT BE CHANGED!
 const int gUpsilonHLTBit = 14;
