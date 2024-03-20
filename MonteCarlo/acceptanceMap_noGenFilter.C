@@ -156,9 +156,6 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 		}
 	}
 
-	cout << "Error Up" << hAccHX1D->GetEfficiencyErrorUp(1) << endl;
-	cout << "Error Down" << hAccHX1D->GetEfficiencyErrorLow(1) << endl;
-
 	// Set the plot styles
 	gStyle->SetPadLeftMargin(.15);
 	//gStyle->SetTitleYOffset(.9);
