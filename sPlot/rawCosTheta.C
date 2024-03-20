@@ -63,17 +63,25 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
 	RooPlot* frame = cosTheta->frame(Title(" "), Bins(nCosThetaBins), Range(cosThetaMin, cosThetaMax));
-	data->plotOn(frame, DrawOption("P0Z"), Name("data"));
+
+	// select the mass window of the Y peaks for visualisation
+	Float_t lowMassCut = 8.5, highMassCut = 10.5;
+	data->plotOn(frame, DrawOption("P0Z"), Name("data"), Cut(Form("mass > %f && mass < %f", lowMassCut, highMassCut)));
 
 	// create sWeighted data sets
+	RooDataSet data_weightBkg = GetSWeightedDataset(data, "Bkg");
 	RooDataSet data_weight1S = GetSWeightedDataset(data, "1S");
 	RooDataSet data_weight2S = GetSWeightedDataset(data, "2S");
 
-	data_weight1S.plotOn(frame, DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("data1S"));
+	data_weightBkg.plotOn(frame, DrawOption("P0Z"), MarkerColor(kGray + 2), Name("dataBkg"), Cut(Form("mass > %f && mass < %f", lowMassCut, highMassCut)));
 
-	data_weight2S.plotOn(frame, DrawOption("P0Z"), MarkerColor(kGreen + 2), DataError(RooAbsData::SumW2), Name("data2S"));
+	data_weight1S.plotOn(frame, DrawOption("P0Z"), MarkerColor(kRed), Name("data1S"));
+
+	data_weight2S.plotOn(frame, DrawOption("P0Z"), MarkerColor(kGreen + 2), Name("data2S"));
 
 	frame->GetYaxis()->SetMaxDigits(3);
+
+	frame->SetMaximum(1.6 * frame->GetMaximum());
 
 	frame->Draw();
 
@@ -99,12 +107,13 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	text.SetTextAlign(22);
 	text.SetTextSize(0.05);
 	text.DrawLatexNDC(.55, .85, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-	//text.DrawLatexNDC(.48, .8, Form("%.0f < m_{#mu#mu} < %.0f GeV/c^{2}", massMin, massMax));
 
-	TLegend legend(.3, .8, .55, .6);
-	legend.SetTextSize(.055);
+	TLegend legend(.2, .8, .45, .55);
+	legend.SetTextSize(.045);
 
-	legend.AddEntry(frame->findObject("data"), "dimuon candidates", "lp");
+	legend.AddEntry(frame->findObject("data"), Form("candidates with %.1f < %s < %.1f %s", lowMassCut, wspace.var("mass")->GetTitle(), highMassCut, wspace.var("mass")->getUnit()), "lp");
+	legend.AddEntry(frame->findObject("dataBkg"), "with background sWeights", "lp");
+
 	legend.AddEntry(frame->findObject("data1S"), "with #varUpsilon(1S) sWeights", "lp");
 	legend.AddEntry(frame->findObject("data2S"), "with #varUpsilon(2S) sWeights", "lp");
 
