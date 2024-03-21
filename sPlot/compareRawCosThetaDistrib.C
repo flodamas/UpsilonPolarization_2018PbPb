@@ -31,7 +31,7 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	// read variables in the reduced dataset in the workspace
 	RooRealVar* invMass = wspace.var("mass");
 
-	RooRealVar* cosTheta = wspace.var(Form("cosTheta%s", refFrameName));
+	RooRealVar* cosTheta = wspace.var(CosThetaVarName(refFrameName));
 
 	Long64_t nEntries = data->sumEntries();
 

@@ -40,23 +40,26 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 	// weighting by event directly on the fly
 	RooRealVar eventWeightVar("eventWeight", "polarization weight", 0, 10000);
 
-	RooRealVar yVar("rapidity", "dimuon absolute rapidity", gRapidityMin, gRapidityMax);
-	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
+	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
+	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, 100, gPtUnit);
 
 	RooRealVar etaMuPlusVar("etaMuPlus", "", 0, 100);
-	RooRealVar ptMuPlusVar("ptMuPlus", "positive muon pT", 0, 100, "GeV/c");
+	RooRealVar ptMuPlusVar("ptMuPlus", "positive muon pT", 0, 100, gPtUnit);
 
 	RooRealVar etaMuMinusVar("etaMuMinus", "", 0, 100);
-	RooRealVar ptMuMinusVar("ptMuMinus", "negative muon pT", 0, 100, "GeV/c");
+	RooRealVar ptMuMinusVar("ptMuMinus", "negative muon pT", 0, 100, gPtUnit);
 
-	RooRealVar cosThetaLabVar("cosThetaLab", "cos #theta_{Lab}", -1, 1);
-	RooRealVar phiLabVar("phiLab", "#varphi_{Lab}", -180, 180, "#circ");
+	char* refFrameName = "Lab";
+	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooRealVar cosThetaCSVar("cosThetaCS", "cos #theta_{CS}", -1, 1);
-	RooRealVar phiCSVar("phiCS", "#varphi_{CS}", -180, 180, "#circ");
+	refFrameName = "CS";
+	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooRealVar cosThetaHXVar("cosThetaHX", "cos #theta_{HX}", -1, 1);
-	RooRealVar phiHXVar("phiHX", "#varphi_{HX}", -180, 180, "#circ");
+	refFrameName = "HX";
+	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
 	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(eventWeightVar, yVar, ptVar, etaMuPlusVar, ptMuPlusVar, etaMuMinusVar, ptMuMinusVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"));
 

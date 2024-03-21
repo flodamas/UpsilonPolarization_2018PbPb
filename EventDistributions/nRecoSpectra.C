@@ -10,12 +10,14 @@ void nRecoSpectra() {
 	Double_t nSignal1S_absy0to1p2[] = {797, 1680, 1606, 1348, 2506, 2265, 1831, 1344, 1321, 832};
 	Double_t statSignal1S_absy0to1p2[] = {75, 88, 85, 96, 80, 113, 103, 72, 60, 38};
 
-	TH1D* hRawData_absy0to1p2 = new TH1D("hRawData_absy0to1p2", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T} (GeV/c)^{-1}", NPtFineBins, gPtFineBinning);
+	const char* histoTitle = Form(";%s;dN(#varUpsilon(1S)) / d%s (%s)^{-1}", gPtAxisTitle, gPtVarName, gPtUnit);
+
+	TH1D* hRawData_absy0to1p2 = new TH1D("hRawData_absy0to1p2", histoTitle, NPtFineBins, gPtFineBinning);
 
 	Double_t nSignal1S_absy1p2to2p4[] = {889, 1980, 2909, 1562, 2232, 1964, 1261, 709, 746, 514};
 	Double_t statSignal1S_absy1p2to2p4[] = {71, 123, 197, 140, 62, 95, 89, 65, 48, 35};
 
-	TH1D* hRawData_absy1p2to2p4 = new TH1D("hRawData_absy1p2to2p4", ";p_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T} (GeV/c)^{-1}", NPtFineBins, gPtFineBinning);
+	TH1D* hRawData_absy1p2to2p4 = new TH1D("hRawData_absy1p2to2p4", histoTitle, NPtFineBins, gPtFineBinning);
 
 	for (int i = 0; i < NPtFineBins; i++) {
 		hRawData_absy0to1p2->SetBinContent(i + 1, nSignal1S_absy0to1p2[i]);
@@ -77,7 +79,7 @@ void nRecoSpectra() {
 	header->SetFillColor(4000);
 	header->SetBorderSize(0);
 	header->SetTextSize(.07);
-	header->AddText("Centrality 0#minus90%, 1.2 < |y| < 2.4");
+	header->AddText(Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(1.2, 2.4)));
 	header->SetAllWith("", "align", 12);
 	header->Draw();
 
@@ -105,7 +107,7 @@ void nRecoSpectra() {
 	hRatio_absy1p2to2p4->GetYaxis()->SetLabelSize(0.11);
 	hRatio_absy1p2to2p4->GetYaxis()->CenterTitle();
 
-	hRatio_absy1p2to2p4->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+	hRatio_absy1p2to2p4->GetXaxis()->SetTitle(gPtAxisTitle);
 	hRatio_absy1p2to2p4->GetXaxis()->SetLabelSize(0.11);
 	hRatio_absy1p2to2p4->GetXaxis()->SetTitleSize(0.13);
 	hRatio_absy1p2to2p4->GetXaxis()->SetTickSize(0.06);

@@ -31,7 +31,7 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 
 	RooRealVar invMass = *wspace.var("mass");
 
-	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
+	RooRealVar cosTheta = *wspace.var(CosThetaVarName(refFrameName));
 
 	auto* data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
@@ -57,7 +57,7 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.05);
 	legend.SetTextColor(kWhite);
-	legend.DrawLatexNDC(.48, .86, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legend.DrawLatexNDC(.48, .86, CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.48, .78, Form("correlation = %.2f%%", 100 * correlationFactor));
 
 	histo->GetXaxis()->CenterTitle();

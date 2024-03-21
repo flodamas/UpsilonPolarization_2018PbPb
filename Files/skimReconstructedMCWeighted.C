@@ -91,20 +91,24 @@ void skimReconstructedMCWeighted(Int_t iState = 1) {
 	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight x reco pT reweighting x muon scale factors)", 0, 100000);
 
 	Float_t lowMassCut = 8, highMassCut = 11;
-	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
-	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4); // cut when reducing the dataset at a later stage
-	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
+	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
+	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
 
-	RooRealVar cosThetaLabVar("cosThetaLab", "cos #theta_{Lab}", -1, 1);
-	RooRealVar phiLabVar("phiLab", "#varphi_{Lab}", -180, 180, "#circ");
+	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, 100, gPtUnit);
+
+	char* refFrameName = "Lab";
+	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
 	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
 
-	RooRealVar cosThetaCSVar("cosThetaCS", "cos #theta_{CS}", -1, 1);
-	RooRealVar phiCSVar("phiCS", "#varphi_{CS}", -180, 180, "#circ");
+	refFrameName = "CS";
+	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooRealVar cosThetaHXVar("cosThetaHX", "cos #theta_{HX}", -1, 1);
-	RooRealVar phiHXVar("phiHX", "#varphi_{HX}", -180, 180, "#circ");
+	refFrameName = "HX";
+	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
 	RooCategory recoCat("recoCategory", "is the dimuon selected?"); // for efficiency PDF
 	recoCat.defineType("selected", 1);
@@ -162,14 +166,14 @@ void skimReconstructedMCWeighted(Int_t iState = 1) {
 			// positive muon first
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
-			if (genLorentzVector->Pt() < 3.5) continue;
+			if (genLorentzVector->Pt() < gMuonPtCut) continue;
 
 			if (fabs(genLorentzVector->Eta()) > 2.4) continue;
 
 			// then negative muon
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
-			if (genLorentzVector->Pt() < 3.5) continue;
+			if (genLorentzVector->Pt() < gMuonPtCut) continue;
 
 			if (fabs(genLorentzVector->Eta()) > 2.4) continue;
 

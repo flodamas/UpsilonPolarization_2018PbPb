@@ -19,12 +19,12 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	Int_t nCosThetaBins = 20;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
 
-	RooRealVar cosTheta(Form("cosTheta%s", refFrameName), Form("cos #theta_{%s}", refFrameName), cosThetaMin, cosThetaMax);
+	RooRealVar cosTheta(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), cosThetaMin, cosThetaMax);
 
 	Int_t nPhiBins = 18;
 	Int_t phiMin = -180, phiMax = 180;
 
-	RooRealVar phi(Form("phi%s", refFrameName), Form("#varphi_{%s} (#circ)", refFrameName), phiMin, phiMax);
+	RooRealVar phi(PhiVarName(refFrameName), PhiVarTitle(refFrameName), phiMin, phiMax);
 
 	/// 1. retrieve the 2D maps
 
@@ -81,7 +81,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.045);
-	legend.DrawLatexNDC(.5, .75, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legend.SetHeader(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 
 	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) MC", iState));
 
@@ -105,7 +105,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	CMS_lumi(canvas2, Form("Unpolarized #varUpsilon(%dS) MC", iState));
 
-	legend.DrawLatexNDC(.5, .75, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legend.DrawLatexNDC(.5, .75, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 
 	canvas2->SaveAs(Form("EfficiencyMaps/%dS/AccEffPDF_CosThetaPhi%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 }

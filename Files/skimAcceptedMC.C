@@ -116,7 +116,7 @@ void skimAcceptedMC(Int_t iState = 1) {
 			cosThetaHXVar = muPlus_HX.CosTheta();
 			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
 
-			isAccepted = (etaMuPlusVar.getVal() < 2.4 && ptMuPlusVar.getVal() > 3.5) && (etaMuMinusVar.getVal() < 2.4 && ptMuMinusVar.getVal() > 3.5);
+			isAccepted = (etaMuPlusVar.getVal() < 2.4 && ptMuPlusVar.getVal() > gMuonPtCut) && (etaMuMinusVar.getVal() < 2.4 && ptMuMinusVar.getVal() > gMuonPtCut);
 
 			eventCat.setLabel((isAccepted) ? "accepted" : "rejected");
 
