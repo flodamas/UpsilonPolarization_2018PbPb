@@ -163,7 +163,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	TCanvas* massCanvas = 0;
 
-	// define arrays for TGraph (to draw AsymmError ¯\_(ツ)_/¯)
+	// define arrays for TGraph (to draw AsymmError)
 	double finalDataPoints[nCosThetaBins]; 
 	double finalErrHigh[nCosThetaBins]; 
 	double finalErrLow[nCosThetaBins];
@@ -208,8 +208,9 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SErr * weight); 
 		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh)); 
 		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relEffUncHigh));
-		standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightLow)); 	
+		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightLow)); 	
 
+		/// fill arrays for TGraphAsymmError
 		cosThetaBinCenter[iCosTheta] = (cosThetaBinEdges[iCosTheta] + cosThetaBinEdges[iCosTheta + 1]) / 2.;
 
 		finalDataPoints[iCosTheta] = yield1SVal * weight;
@@ -217,11 +218,16 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		finalErrHigh[iCosTheta] = yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightHigh);
 		finalErrLow[iCosTheta] = yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightLow);
 
-		if ((yield1S->getVal()) * weight > maxYield) maxYield = (yield1S->getVal()) * weight;
-	}
-	cout << "Error: " << yield1S->getError() << endl;
+		standardCorrectedHist->SetBinError(iCosTheta + 1, finalErrHigh[iCosTheta]); 	
 
-	TGraphAsymmErrors *correctedGraph = new TGraphAsymmErrors(nCosThetaBins, cosThetaBinCenter, finalDataPoints, 0, 0, finalErrLow, finalErrHigh);
+		if ((yield1S->getVal()) * weight > maxYield) maxYield = (yield1S->getVal()) * weight;
+		cout << "Error: " << finalErrHigh[iCosTheta] << endl;
+	}
+	// cout << "Error: " << yield1S->getError() << endl;
+
+	/// TGraphAsymmErrors - comment out for now
+
+	// TGraphAsymmErrors *correctedGraph = new TGraphAsymmErrors(nCosThetaBins, cosThetaBinCenter, finalDataPoints, 0, 0, finalErrLow, finalErrHigh);
 
 	RooDataHist correctedHist("correctedHist", " ", cosTheta, standardCorrectedHist);
 
@@ -243,47 +249,51 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	frame->SetMaximum(2 * maxYield);
 
 	/// Polarization fit
+	
 	// with RooFit
-	cout << endl
-	     << "Distribution fit for polarization paramaters extraction" << endl;
 
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1, 1);
-	auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", cosTheta, lambdaTheta);
+	// cout << endl
+	//      << "Distribution fit for polarization paramaters extraction" << endl;
 
-   	enableBinIntegrator(cosThetaPDF_1S, cosTheta.numBins());
+	// RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1, 1);
+	// auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", cosTheta, lambdaTheta);
 
-	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(*correctedGraph, Save(), Extended(kTRUE) /*, PrintLevel(+1)*/, NumCPU(NCPUs), Range(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), SumW2Error(kFALSE) /*, AsymptoticError(DoAsymptoticError)*/);
+   	// enableBinIntegrator(cosThetaPDF_1S, cosTheta.numBins());
 
-	polarizationFitResult->Print("v");
+	// auto* polarizationFitResult = cosThetaPDF_1S.chi2FitTo(correctedHist, Save(), Extended(kTRUE) /*, PrintLevel(+1)*/, NumCPU(NCPUs), Range(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), SumW2Error(kFALSE) /*, AsymptoticError(DoAsymptoticError)*/);
 
-	cosThetaPDF_1S.plotOn(frame, LineColor(kRed + 1), Name("polaResult"));
+	// polarizationFitResult->Print("v");
 
-	frame->Draw();
+	// cosThetaPDF_1S.plotOn(frame, LineColor(kRed + 1), Name("polaResult"));
 
-	// cosmetics
+	// frame->Draw();
 
-	TLegend legend(.22, .88, .5, .68);
-	legend.SetTextSize(.05);
-	legend.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-	legend.AddEntry(frame->findObject("dataPoints"), "#varUpsilon(1S) corrected yield", "lp");
-	legend.AddEntry(frame->findObject("polaResult"), Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaTheta.getVal(), lambdaTheta.getError()), "l");
+	// // cosmetics
 
-	legend.DrawClone();
+	// TLegend legend(.22, .88, .5, .68);
+	// legend.SetTextSize(.05);
+	// legend.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	// legend.AddEntry(frame->findObject("dataPoints"), "#varUpsilon(1S) corrected yield", "lp");
+	// legend.AddEntry(frame->findObject("polaResult"), Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaTheta.getVal(), lambdaTheta.getError()), "l");
 
-	gPad->Update();
+	// legend.DrawClone();
 
-	//CMS_lumi(canvas, gCMSLumiText);
+	// gPad->Update();
 
-	gSystem->mkdir("DistributionFits/1D", kTRUE);
-	canvas->SaveAs(Form("DistributionFits/1D/compareRawYieldCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
+	// //CMS_lumi(canvas, gCMSLumiText);
+
+	// gSystem->mkdir("DistributionFits/1D", kTRUE);
+	// canvas->SaveAs(Form("DistributionFits/1D/compareRawYieldCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
 
 	// with Root Fit function
+	
 	TCanvas* canvas2 = new TCanvas("canvas2", "canvas2", 650, 600);
 
 	TF1* PolarFunc = cosThetaPolarFunc(maxYield);
 
-	TFitResultPtr fitResults = standardCorrectedHist->Fit("PolarFunc", "LESV", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]); //L:log likelihood fit, E: NINOS
+	TFitResultPtr fitResults = standardCorrectedHist->Fit("PolarFunc", "ESV", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]); //L:log likelihood fit (default: chi2 method), E: NINOS
 
+	cout << "Error of hist (bin1): "<< standardCorrectedHist->GetBinError(1) << endl;
 	// Fit results
 
 	double chi2 = fitResults->Chi2();;

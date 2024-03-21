@@ -89,6 +89,23 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 	TLorentzVector* gen_mupl_LV = new TLorentzVector();
 
+	// set error calculation options (default: kFCP (Frequentist Clopper-Pearson))
+	// possible options: kFWilson (Frequentist Wilson interval), kBUniform (Beyesian Uniform prior)... 
+	// documentation about the options: https://root.cern.ch/doc/master/classTEfficiency.html#a415d9689c9e50f1d6982d043d5fd11ec
+	accMatrixCS->SetStatisticOption(TEfficiency::kFCP); 
+	accMatrixHX->SetStatisticOption(TEfficiency::kFCP);
+
+	hGranularLab->SetStatisticOption(TEfficiency::kFCP);
+	hGranularCS->SetStatisticOption(TEfficiency::kFCP);
+	hGranularHX->SetStatisticOption(TEfficiency::kFCP);
+
+	hAnalysisLab->SetStatisticOption(TEfficiency::kFCP);
+	hAnalysisCS->SetStatisticOption(TEfficiency::kFCP);
+	hAnalysisHX->SetStatisticOption(TEfficiency::kFCP);
+
+	hAccCS1D->SetStatisticOption(TEfficiency::kFCP);
+	hAccHX1D->SetStatisticOption(TEfficiency::kFCP);
+
 	Bool_t withinAcceptance;
 
 	Long64_t totEntries = OniaTree->GetEntries();
@@ -160,7 +177,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 
 	/// save the results in a file for later usage
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", iState);
+	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults_FCP.root", iState);
 	TFile outputFile(outputFileName, "UPDATE");
 
 	accMatrixCS->Write();
