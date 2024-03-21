@@ -37,7 +37,7 @@ void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	// read variables in the reduced dataset in the workspace
 	RooRealVar* invMass = wspace.var("mass");
 
-	RooRealVar* cosThetaCS = wspace.var("cosThetaCS");
+	RooRealVar* cosThetaCS = wspace.var(CosThetaVarName(refFrameName));
 
 	Long64_t nEntries = data->sumEntries();
 
@@ -89,7 +89,7 @@ void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	TLatex text;
 	text.SetTextAlign(22);
 	text.SetTextSize(0.05);
-	text.DrawLatexNDC(.55, .85, Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	text.DrawLatexNDC(.55, .85, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 	//text.DrawLatexNDC(.48, .8, Form("%.0f < m_{#mu#mu} < %.0f GeV/c^{2}", massMin, massMax));
 
 	TLegend legend(.3, .8, .5, .65);

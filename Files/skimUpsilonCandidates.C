@@ -54,28 +54,31 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 
 	Float_t lowMassCut = 6.5, highMassCut = 14.5; // large invariant mass window to ease the integration for RooFit
-	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
-	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4);
+	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
+	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
 
 	Float_t highPtCut = gPtMax;
-	RooRealVar ptVar("pt", "dimuon pT", 0, highPtCut, "GeV/c");
+	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, highPtCut, gPtUnit);
 
-	RooRealVar cosThetaLabVar("cosThetaLab", "cos #theta_{Lab}", -1, 1);
-	RooRealVar phiLabVar("phiLab", "#varphi_{Lab}", -180, 180, "#circ");
+	char* refFrameName = "Lab";
+	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
 	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
 
-	RooDataSet datasetLab("datasetLab", "skimmed dataset for the Lab frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar));
+	RooDataSet datasetLab(RawDatasetName(refFrameName), "skimmed dataset for the Lab frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar));
 
-	RooRealVar cosThetaCSVar("cosThetaCS", "cos #theta_{CS}", -1, 1);
-	RooRealVar phiCSVar("phiCS", "#varphi_{CS}", -180, 180, "#circ");
+	refFrameName = "CS";
+	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooDataSet datasetCS("datasetCS", "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
+	RooDataSet datasetCS(RawDatasetName(refFrameName), "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
 
-	RooRealVar cosThetaHXVar("cosThetaHX", "cos #theta_{HX}", -1, 1);
-	RooRealVar phiHXVar("phiHX", "#varphi_{HX}", -180, 180, "#circ");
+	refFrameName = "HX";
+	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooDataSet datasetHX("datasetHX", "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
+	RooDataSet datasetHX(RawDatasetName(refFrameName), "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
 
 	// loop variables
 	Long64_t totEntries = OniaTree->GetEntries();
@@ -127,12 +130,12 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 
 			if (fabs(Reco_mupl_4mom->Eta()) > 2.4) continue;
-			if (Reco_mupl_4mom->Pt() < 3.5) continue;
+			if (Reco_mupl_4mom->Pt() < gMuonPtCut) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
 			if (fabs(Reco_mumi_4mom->Eta()) > 2.4) continue;
-			if (Reco_mumi_4mom->Pt() < 3.5) continue;
+			if (Reco_mumi_4mom->Pt() < gMuonPtCut) continue;
 
 			// get positive muon's coordinates in the studied reference frames
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);

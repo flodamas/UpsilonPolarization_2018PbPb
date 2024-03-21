@@ -16,8 +16,8 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.05);
-	legend.DrawLatexNDC(.48, .88, Form("|y^{#mu#mu}| < 2.4, %d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
-	legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, p_{T}^{#mu} > 3.5 GeV/c", iState));
+	legend.DrawLatexNDC(.48, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
 	gPad->Update();
 
@@ -111,7 +111,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
-			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > 3.5) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > 3.5);
+			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > gMuonPtCut) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > gMuonPtCut);
 
 			// Reference frame transformations
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
@@ -147,16 +147,16 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	gStyle->SetNumberContours(256);
 
 	// Draw and save the acceptance map for Lab frame
-	DrawAcceptanceMap(hGranularLab, ptMin, ptMax);
-	DrawAcceptanceMap(hAnalysisLab, ptMin, ptMax);
+	DrawAcceptanceMap(hGranularLab, ptMin, ptMax, iState);
+	DrawAcceptanceMap(hAnalysisLab, ptMin, ptMax, iState);
 
 	// Draw and save the acceptance map for CS frame
-	DrawAcceptanceMap(hGranularCS, ptMin, ptMax);
-	DrawAcceptanceMap(hAnalysisCS, ptMin, ptMax);
+	DrawAcceptanceMap(hGranularCS, ptMin, ptMax, iState);
+	DrawAcceptanceMap(hAnalysisCS, ptMin, ptMax, iState);
 
 	// Draw and save the acceptance map for HX frame
-	DrawAcceptanceMap(hGranularHX, ptMin, ptMax);
-	DrawAcceptanceMap(hAnalysisHX, ptMin, ptMax);
+	DrawAcceptanceMap(hGranularHX, ptMin, ptMax, iState);
+	DrawAcceptanceMap(hAnalysisHX, ptMin, ptMax, iState);
 
 	/// save the results in a file for later usage
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);

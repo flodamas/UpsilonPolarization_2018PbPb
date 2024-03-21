@@ -78,21 +78,24 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 
 	Float_t lowMassCut = 6.5, highMassCut = 14.5; // large invariant mass window to ease the integration for RooFit
-	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
-	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4);
-	RooRealVar ptVar("pt", "dimuon pT", 0, gPtBinning[NPtBins], "GeV/c");
+	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
+	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
+
+	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, gPtBinning[NPtBins], gPtUnit);
 
 	// separate into two datasets (easier for entry weighting) and forget about lab variables
 
-	RooRealVar cosThetaCSVar("cosThetaCS", "cos #theta_{CS}", -1, 1);
-	RooRealVar phiCSVar("phiCS", "|#varphi_{CS}|", 0, 180, "#circ");
+	char* refFrameName = "CS";
+	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
 	RooRealVar dimuonWeightCSVar("dimuonWeightCS", "1 / (acc x eff) weight in the CS frame", 0, 1000000);
 
 	RooDataSet datasetCS("datasetCS", "skimmed weighted dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, dimuonWeightCSVar), RooFit::WeightVar("dimuonWeightCS"), RooFit::StoreAsymError(RooArgSet(dimuonWeightCSVar)));
 
-	RooRealVar cosThetaHXVar("cosThetaHX", "cos #theta_{HX}", -1, 1);
-	RooRealVar phiHXVar("phiHX", "|#varphi_{HX}|", 0, 180, "#circ");
+	refFrameName = "HX";
+	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
 	RooRealVar dimuonWeightHXVar("dimuonWeightHX", "1 / (acc x eff) weight in the HX frame", 0, 1000000);
 
@@ -151,12 +154,12 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 
 			if (fabs(Reco_mupl_4mom->Eta()) > 2.4) continue;
-			if (Reco_mupl_4mom->Pt() < 3.5) continue;
+			if (Reco_mupl_4mom->Pt() < gMuonPtCut) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
 			if (fabs(Reco_mumi_4mom->Eta()) > 2.4) continue;
-			if (Reco_mumi_4mom->Pt() < 3.5) continue;
+			if (Reco_mumi_4mom->Pt() < gMuonPtCut) continue;
 
 			// get positive muon's coordinates in the studied reference frames
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);

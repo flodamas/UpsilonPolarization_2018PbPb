@@ -13,10 +13,10 @@ TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax
 
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
-	text->AddText(Form("Centrality %d-%d%%", centMin, centMax));
-	text->AddText("p_{T}^{#mu} > 3.5 GeV/c");
-	text->AddText(Form("%1.1f < |y^{#mu#mu}| < %1.1f", gRapidityMin, gRapidityMax));
-	text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
+	text->AddText(CentralityRangeText(centMin, centMax));
+	text->AddText(gMuonPtCutText);
+	text->AddText(DimuonRapidityRangeText(gRapidityMin, gRapidityMax));
+	text->AddText(DimuonPtRangeText(ptMin, ptMax));
 
 	text->SetAllWith("", "align", 12);
 	return text;
@@ -28,8 +28,8 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 	text->SetBorderSize(0);
 	// text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
 	text->AddText(isCSframe ? "Collins-Soper frame" : "Helicity frame");
-	text->AddText(Form("%.2f < cos #theta < %.2f", cosThetaMin, cosThetaMax));
-	text->AddText(Form("%d#circ < #varphi < %d#circ", phiMin, phiMax));
+	text->AddText(CosThetaRangeText(isCSframe ? "CS" : "HX", cosThetaMin, cosThetaMax));
+	text->AddText(PhiRangeText(isCSframe ? "CS" : "HX", phiMin, phiMax));
 
 	text->SetAllWith("", "align", 32);
 	return text;

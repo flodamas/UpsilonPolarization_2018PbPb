@@ -74,20 +74,23 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight x reco pT reweighting x muon scale factors)", 0, 100000);
 
 	Float_t lowMassCut = 8, highMassCut = 11;
-	RooRealVar massVar("mass", "m_{#mu^{#plus}#mu^{#minus}}", lowMassCut, highMassCut, "GeV/c^{2}");
-	RooRealVar yVar("rapidity", "dimuon absolute rapidity", 0, 2.4); // cut when reducing the dataset at a later stage
-	RooRealVar ptVar("pt", "dimuon pT", 0, 100, "GeV/c");
+	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
+	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
+	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, 100, gPtUnit);
 
-	RooRealVar cosThetaLabVar("cosThetaLab", "cos #theta_{Lab}", -1, 1);
-	RooRealVar phiLabVar("phiLab", "#varphi_{Lab}", -180, 180, "#circ");
+	char* refFrameName = "Lab";
+	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
 	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
 
-	RooRealVar cosThetaCSVar("cosThetaCS", "cos #theta_{CS}", -1, 1);
-	RooRealVar phiCSVar("phiCS", "#varphi_{CS}", -180, 180, "#circ");
+	refFrameName = "CS";
+	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooRealVar cosThetaHXVar("cosThetaHX", "cos #theta_{HX}", -1, 1);
-	RooRealVar phiHXVar("phiHX", "#varphi_{HX}", -180, 180, "#circ");
+	refFrameName = "HX";
+	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
+	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
 	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"), RooFit::StoreAsymError(RooArgSet(eventWeightVar)));
 
@@ -150,14 +153,14 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 			double Reco_mupl_pt = Reco_mupl_4mom->Pt();
 
 			if (fabs(Reco_mupl_eta) > 2.4) continue;
-			if (Reco_mupl_pt < 3.5) continue;
+			if (Reco_mupl_pt < gMuonPtCut) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 			double Reco_mumi_eta = Reco_mumi_4mom->Eta();
 			double Reco_mumi_pt = Reco_mumi_4mom->Pt();
 
 			if (fabs(Reco_mumi_eta) > 2.4) continue;
-			if (Reco_mumi_pt < 3.5) continue;
+			if (Reco_mumi_pt < gMuonPtCut) continue;
 
 			// global AND tracker muons
 			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;

@@ -8,6 +8,8 @@
 #include "TLatex.h"
 #include "TH2.h"
 
+#include "../../AnalysisParameters.h"
+
 #include "Legends.h"
 
 using namespace RooFit;
@@ -18,10 +20,10 @@ RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet* dataset) {
 	dataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	auto* fitModel = wspace.pdf("invMassModel");
-	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(kGray + 2), LineStyle(kDashed));
-	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(kRed));
-	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(kRed));
-	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(kRed));
+	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(ColorBkg), LineStyle(kDashed));
+	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(Color1S));
+	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(Color2S));
+	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(Color3S));
 	fitModel->plotOn(frame, LineColor(kBlue));
 
 	frame->GetYaxis()->SetMaxDigits(3);
@@ -47,7 +49,7 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	pullFrame->GetYaxis()->SetLabelSize(0.15);
 	pullFrame->GetYaxis()->CenterTitle();
 
-	//pullFrame->GetXaxis()->SetTitle("m_{#mu^{+}#mu^{#minus}} (GeV)");
+	pullFrame->GetXaxis()->SetTitle(gMassAxisTitle);
 	//pullFrame->GetXaxis()->SetTitleOffset(1.20);
 	//pullFrame->GetXaxis()->SetLabelOffset(0.1);
 	pullFrame->GetXaxis()->SetLabelSize(0.15);
@@ -70,6 +72,8 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	TLine zeroLine(bottomPad->GetUxmin(), 0, bottomPad->GetUxmax(), 0);
 	zeroLine.SetLineStyle(kDashed);
 	zeroLine.Draw("SAME");
+
+	bottomPad->Update();
 
 	TLatex textChi2;
 	textChi2.SetTextAlign(12);

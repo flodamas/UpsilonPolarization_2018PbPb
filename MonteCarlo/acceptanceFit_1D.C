@@ -61,7 +61,7 @@ void acceptanceFit_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNam
 	RooRealVar normFactor("normFactor", "normFactor", 0, 1);
 	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -2.0, 2.0);
 
-	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
+	RooRealVar cosTheta = *wspace.var(CosThetaVarName(refFrameName));
 
 	RooCategory eventCat = *wspace.cat("eventCat");
 
@@ -98,7 +98,7 @@ void acceptanceFit_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNam
 
 	TLegend legend(.22, .88, .5, .65);
 	legend.SetTextSize(.05);
-	legend.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legend.SetHeader(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 	legend.AddEntry(frame->findObject("data"), Form("accepted #varUpsilon(%dS) MC candidates", iState), "EP");
 	legend.AddEntry(frame->findObject("polaResult"), Form("distribution fit: #lambda_{#theta} = %.3f #pm %.3f", lambdaTheta.getVal(), lambdaTheta.getError()), "l");
 

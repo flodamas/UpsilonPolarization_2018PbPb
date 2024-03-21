@@ -14,6 +14,8 @@ const int gUpsilonHLTBit = 14;
 const int gL2FilterBit = 19;
 const int gL3FilterBit = 20;
 
+const float gMuonPtCut = 3.5;
+
 // One state at a time, patience is the key!
 
 const int gUpsilonState = 1;
@@ -108,5 +110,68 @@ const int NMassBins = 100;
 bool DoMCWeightedError = true;
 
 bool DoAsymptoticError = true;
+
+/// Cosmetics
+
+// colors (to be agreed on)
+const Color_t Color1S = kRed + 1;
+const Color_t Color2S = kGreen + 2;
+const Color_t Color3S = kAzure + 1;
+const Color_t ColorBkg = kGray + 1;
+
+// consistent naming
+const char* CentralityRangeText(int centMin = gCentralityBinMin, int centMax = gCentralityBinMax) {
+	return Form("Centrality %d-%d%%", centMin, centMax);
+}
+
+const char* gPtVarName = "#it{p}_{T}";
+const char* gPtUnit = "GeV/#it{c}";
+const char* gPtAxisTitle = Form("%s (%s)", gPtVarName, gPtUnit);
+
+const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
+
+const char* gDimuonPtVarTitle = "#it{p}_{T}^{ #mu#mu}";
+const char* DimuonPtRangeText(int ptMin, int ptMax) {
+	return Form("%d < %s < %d %s", ptMin, gDimuonPtVarTitle, ptMax, gPtUnit);
+}
+
+const char* gDimuonRapidityVarTitle = "|#it{y}^{ #mu#mu}|";
+const char* DimuonRapidityRangeText(float rapidityMin, float rapidityMax) {
+	return Form("%1.1f < %s < %1.1f", rapidityMin, gDimuonRapidityVarTitle, rapidityMax);
+}
+
+const char* gMassVarTitle = "#it{m}_{ #mu^{#plus}#mu^{#font[122]{\55}}}";
+const char* gMassUnit = "GeV/#it{c}^{ 2}";
+const char* gMassAxisTitle = Form("%s (%s)", gMassVarTitle, gMassUnit);
+
+const char* CosThetaVarName(const char* refFrameName = "CS") {
+	return Form("cosTheta%s", refFrameName);
+}
+const char* CosThetaVarTitle(const char* refFrameName = "CS") {
+	return Form("cos #theta_{%s}", refFrameName);
+}
+const char* CosThetaRangeText(const char* refFrameName = "CS", float cosThetaMin = -1, float cosThetaMax = 1) {
+	return Form("%.2f < %s < %.2f", cosThetaMin, CosThetaVarTitle(refFrameName), cosThetaMax);
+}
+
+const char* gPhiSymbol = "#varphi";
+const char* gPhiUnit = "#circ";
+
+const char* PhiVarName(const char* refFrameName = "CS") {
+	return Form("phi%s", refFrameName);
+}
+const char* PhiVarTitle(const char* refFrameName = "CS") {
+	return Form("%s_{%s}", gPhiSymbol, refFrameName);
+}
+const char* PhiAxisTitle(const char* refFrameName) {
+	return Form("%s (%s)", PhiVarTitle(refFrameName), gPhiUnit);
+}
+const char* PhiRangeText(const char* refFrameName = "CS", int phiMin = -180, int phiMax = 180) {
+	return Form("%d < %s < %d %s", phiMin, PhiVarTitle(refFrameName), phiMax, gPhiUnit);
+}
+
+const char* RawDatasetName(const char* refFrameName = "CS") {
+	return Form("dataset%s", refFrameName);
+}
 
 #endif
