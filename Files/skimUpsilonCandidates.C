@@ -185,5 +185,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 	infile->Close();
 
+	if (BeVerbose) cout << "\nRaw dimuon candidates skimmed as RooDataSets into " << outputFileName << endl;
+
 	return;
 }

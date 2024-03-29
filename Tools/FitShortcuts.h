@@ -17,15 +17,15 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet* massDataset, Float_t 
 
 	RooCrystalBall signal("SymDSCB", "SymDSCB", *wspace.var("mass"), mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 
-	cout << endl
-	     << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << endl;
+	if (BeVerbose) cout << endl
+		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << endl;
 
 	bool doWeightedError = true;
 
 	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 
-	fitResult->Print("v");
+	if (BeVerbose) fitResult->Print("v");
 
 	wspace.import(signal);
 
@@ -44,8 +44,8 @@ RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet*
 
 	RooCrystalBall signal("AsymDSCB", "AsymDSCB", *massVar, mean, sigmaInf, sigmaSup, alphaInf, orderInf, alphaSup, orderSup);
 
-	cout << endl
-	     << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of an asymmetric Gaussian core and asymmetric tail distributions..." << endl;
+	if (BeVerbose) cout << endl
+		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of an asymmetric Gaussian core and asymmetric tail distributions..." << endl;
 
 	bool doWeightedError = true;
 
@@ -53,7 +53,7 @@ RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet*
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 	wspace->import(signal);
 
-	fitResult->Print("v");
+	if (BeVerbose) fitResult->Print("v");
 
 	return fitResult;
 }
@@ -79,8 +79,8 @@ RooFitResult* SymDSCBGaussfit(RooRealVar* massVar, RooWorkspace* wspace, RooData
 
 	RooAddPdf signal("DSCBGauss", "sum of DSCB and CB PDF", RooArgList(DSCB, gauss), RooArgList(normFraction), kTRUE);
 
-	cout << endl
-	     << "Fitting the MC signal shape (weighted entries!!) with the sum of a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions, and a Gaussian PDF..." << endl;
+	if (BeVerbose) cout << endl
+		                  << "Fitting the MC signal shape (weighted entries!!) with the sum of a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions, and a Gaussian PDF..." << endl;
 
 	bool doWeightedError = true;
 
@@ -88,7 +88,7 @@ RooFitResult* SymDSCBGaussfit(RooRealVar* massVar, RooWorkspace* wspace, RooData
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 	wspace->import(signal);
 
-	fitResult->Print("v");
+	if (BeVerbose) fitResult->Print("v");
 
 	return fitResult;
 }
@@ -118,8 +118,8 @@ RooFitResult* Hypatiafit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* 
 
 	RooHypatia2 signal("Hypatia", "Hypatia", *massVar, lambda, zeta, beta, sigma, mean, alphaInf, orderInf, alphaSup, orderSup);
 
-	cout << endl
-	     << "Fitting the MC signal shape (weighted entries!!) with a Hypatia PDF" << endl;
+	if (BeVerbose) cout << endl
+		                  << "Fitting the MC signal shape (weighted entries!!) with a Hypatia PDF" << endl;
 
 	bool doWeightedError = true;
 
@@ -127,7 +127,7 @@ RooFitResult* Hypatiafit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* 
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 	wspace->import(signal);
 
-	fitResult->Print("v");
+	if (BeVerbose) fitResult->Print("v");
 
 	return fitResult;
 }
@@ -164,8 +164,8 @@ void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShap
 	const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax);
 
 	if (fopen(mcFileName, "r")) {
-		cout << endl
-		     << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
+		if (BeVerbose) cout << endl
+			                  << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
 		tailParams.readFromFile(mcFileName);
 	} else {
 		cout << endl
@@ -179,10 +179,11 @@ void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShap
 	alphaSup.setConstant();
 	orderSup.setConstant();
 
-	cout << endl
-	     << "Tail parameters fixed to the following MC signal values:" << endl;
-	tailParams.Print("v");
-
+	if (BeVerbose) {
+		cout << endl
+		     << "Tail parameters fixed to the following MC signal values:" << endl;
+		tailParams.Print("v");
+	}
 	wspace.import(tailParams);
 }
 
@@ -194,8 +195,8 @@ RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, 
 	const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax);
 
 	if (fopen(mcFileName, "r")) {
-		cout << endl
-		     << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
+		if (BeVerbose) cout << endl
+			                  << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
 		tailParams.readFromFile(mcFileName);
 	} else {
 		cout << endl
@@ -209,10 +210,11 @@ RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, 
 	alphaSup->setConstant();
 	orderSup->setConstant();
 
-	cout << endl
-	     << "Tail parameters fixed to the following MC signal values:" << endl;
-	tailParams.Print("v");
-
+	if (BeVerbose) {
+		cout << endl
+		     << "Tail parameters fixed to the following MC signal values:" << endl;
+		tailParams.Print("v");
+	}
 	return tailParams;
 }
 
@@ -231,8 +233,8 @@ RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooReal
 	const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax);
 
 	if (fopen(mcFileName, "r")) {
-		cout << endl
-		     << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
+		if (BeVerbose) cout << endl
+			                  << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
 		Params.readFromFile(mcFileName);
 	} else {
 		cout << endl
@@ -248,10 +250,11 @@ RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooReal
 	normFraction->setConstant();
 	// ratio_sigma -> setConstant();
 
-	cout << endl
-	     << "Parameters fixed to the following MC signal values:" << endl;
-	Params.Print("v");
-
+	if (BeVerbose) {
+		cout << endl
+		     << "Parameters fixed to the following MC signal values:" << endl;
+		Params.Print("v");
+	}
 	return Params;
 }
 

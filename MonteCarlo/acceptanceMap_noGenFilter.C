@@ -90,9 +90,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	TLorentzVector* gen_mupl_LV = new TLorentzVector();
 
 	// set error calculation options (default: kFCP (Frequentist Clopper-Pearson))
-	// possible options: kFWilson (Frequentist Wilson interval), kBUniform (Beyesian Uniform prior)... 
+	// possible options: kFWilson (Frequentist Wilson interval), kBUniform (Beyesian Uniform prior)...
 	// documentation about the options: https://root.cern.ch/doc/master/classTEfficiency.html#a415d9689c9e50f1d6982d043d5fd11ec
-	accMatrixCS->SetStatisticOption(TEfficiency::kFCP); 
+	accMatrixCS->SetStatisticOption(TEfficiency::kFCP);
 	accMatrixHX->SetStatisticOption(TEfficiency::kFCP);
 
 	hGranularLab->SetStatisticOption(TEfficiency::kFCP);
@@ -195,6 +195,5 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 
 	outputFile.Close();
 
-	cout << endl
-	     << "Acceptance maps saved in " << outputFileName << endl;
+	if (BeVerbose) cout << "\nAcceptance maps saved in " << outputFileName << endl;
 }
