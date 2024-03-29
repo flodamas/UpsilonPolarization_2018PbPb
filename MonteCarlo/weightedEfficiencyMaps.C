@@ -675,6 +675,5 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	file->Close();
 
-	cout << endl
-	     << "Nominal efficiency and corresponding systematic uncertainty maps saved in " << outputFileName << endl;
+	if (BeVerbose) cout << "\nNominal efficiency and corresponding systematic uncertainty maps saved in " << outputFileName << endl;
 }

@@ -8,10 +8,10 @@ using namespace RooStats;
 
 /// sPlot class documentation https://root.cern/doc/master/classRooStats_1_1SPlot.html
 
-SPlot CreateSPlot(RooWorkspace& wspace, RooDataSet* data, RooAddPdf* fitModel, bool beVerbose = true) {
-	std::cout << "\n--------------------------sWeighted data based on yields------------------------\n\n";
+SPlot CreateSPlot(RooWorkspace& wspace, RooDataSet* data, RooAddPdf* fitModel) {
+	if (BeVerbose) {
+		std::cout << "\n--------------------------sWeighted data based on yields------------------------\n\n";
 
-	if (beVerbose) {
 		cout << "Dataset content before creating sWeights:\n";
 		data->Print();
 	}
@@ -26,7 +26,7 @@ SPlot CreateSPlot(RooWorkspace& wspace, RooDataSet* data, RooAddPdf* fitModel, b
 
 	RooStats::SPlot mySPlot{"mySPlot", "", *data, fitModel, RooArgList(yield1S, yield2S, yield3S, yieldBkg), RooArgSet(), true, false, "", Range(MassBinMin, MassBinMax), NumCPU(NCPUs)};
 
-	if (beVerbose) {
+	if (BeVerbose) {
 		std::cout << "\nAfter creating sWeights:\n";
 		data->Print();
 

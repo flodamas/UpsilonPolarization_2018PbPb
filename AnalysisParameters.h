@@ -5,6 +5,8 @@
 #include "Tools/Style/tdrStyle.C"
 #include "Tools/Style/CMS_lumi.C"
 
+bool BeVerbose = true;
+
 /// Definition of all global parameters to be used within this analysis framework
 
 const char* gCMSLumiText = "PbPb 1.61 nb^{-1} (5.02 TeV)";

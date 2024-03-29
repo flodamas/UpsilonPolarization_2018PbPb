@@ -6,7 +6,7 @@ using namespace RooFit;
 
 // open the data file, create a workspace, and import the dataset
 RooWorkspace SetUpWorkspace(const char* filename, const char* refFrameName = "CS") {
-	cout << "\nSetting up the workspace...\n\n";
+	if (BeVerbose) cout << "\nSetting up the workspace...\n\n";
 
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
@@ -14,7 +14,7 @@ RooWorkspace SetUpWorkspace(const char* filename, const char* refFrameName = "CS
 		return RooWorkspace("emptyWorkspace");
 	}
 
-	cout << "File " << filename << " opened" << endl;
+	if (BeVerbose) cout << "File " << filename << " opened" << endl;
 
 	const char* datasetName = RawDatasetName(refFrameName);
 	RooDataSet* data = (RooDataSet*)f->Get(datasetName);
@@ -23,8 +23,8 @@ RooWorkspace SetUpWorkspace(const char* filename, const char* refFrameName = "CS
 
 	wspace.import(*data);
 
-	cout << endl
-	     << datasetName << " imported into " << wspace.GetName() << endl;
+	if (BeVerbose) cout << endl
+		                  << datasetName << " imported into " << wspace.GetName() << endl;
 
 	f->Close();
 

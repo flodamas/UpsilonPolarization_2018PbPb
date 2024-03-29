@@ -118,8 +118,7 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t nEntries = 1e6) {
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
 
-	cout << endl
-	     << "Building invariant mass fit model with " << signalShapeName << " for the signal and " << bkgShapeName << " for the background" << endl;
+	if (BeVerbose) cout << "\nBuilding invariant mass fit model with " << signalShapeName << " for the signal and " << bkgShapeName << " for the background\n";
 
 	// tail parameters fixed to MC extracted values, and identical for the three resonances
 
@@ -146,8 +145,7 @@ RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const
 
 	wspace.import(*model, RecycleConflictNodes());
 
-	cout << endl
-	     << "Model exported to " << wspace.GetName() << endl;
+	if (BeVerbose) cout << "\nModel exported to " << wspace.GetName() << endl;
 
 	return model;
 }
