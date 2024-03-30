@@ -115,7 +115,7 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 
 // build the main PDF based on all PDFs above
 
-RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t nEntries = 1e6) {
+RooAddPdf MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t nEntries = 1e6) {
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
 
 	if (BeVerbose) cout << "\nBuilding invariant mass fit model with " << signalShapeName << " for the signal and " << bkgShapeName << " for the background\n";
@@ -141,9 +141,9 @@ RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const
 
 	RooRealVar* yieldBkg = wspace.var("yieldBkg");
 
-	RooAddPdf* model = new RooAddPdf("invMassModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF}, {*yield1S, *yield2S, *yield3S, *yieldBkg});
+	RooAddPdf model("invMassModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF}, {*yield1S, *yield2S, *yield3S, *yieldBkg});
 
-	wspace.import(*model, RecycleConflictNodes());
+	wspace.import(model, RecycleConflictNodes());
 
 	if (BeVerbose) cout << "\nModel exported to " << wspace.GetName() << endl;
 

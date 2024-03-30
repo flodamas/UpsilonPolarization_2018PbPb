@@ -6,7 +6,41 @@
 
 using namespace RooFit;
 
-RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet* massDataset, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+// for data
+RooFitResult* RawInvariantMassFit(RooDataSet& data, RooAddPdf model, float massMin = MassBinMin, float massMax = MassBinMax) {
+	if (BeVerbose) cout << "\nFitting the raw invariant mass distribution...\n";
+
+	auto* fitResult = model.fitTo(data, Save(), Extended(true), PrintLevel(-1), NumCPU(NCPUs), Range(massMin, massMax), Minos(true));
+
+	if (BeVerbose) fitResult->Print("v");
+
+	return fitResult;
+}
+
+RooFitResult* WeightedInvariantMassFit(RooDataSet& data, RooAddPdf model, float massMin = MassBinMin, float massMax = MassBinMax) {
+	if (BeVerbose) cout << "\nFitting the invariant mass distribution with weighted entries...\n\n";
+
+	bool doWeightedError = true;
+
+	auto* fitResult = model.fitTo(data, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(doWeightedError));
+
+	if (BeVerbose) fitResult->Print("v");
+
+	return fitResult;
+}
+
+// for MC
+RooFitResult* MCWeightedInvariantMassFit(RooDataSet& data, RooCrystalBall model, float massMin = MassBinMin, float massMax = MassBinMax) {
+	if (BeVerbose) cout << "\nFitting the MC invariant mass distribution with weighted entries...\n\n";
+
+	auto* fitResult = model.fitTo(data, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
+	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
+	if (BeVerbose) fitResult->Print("v");
+
+	return fitResult;
+}
+
+RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet& massDataset, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
 	// fit
 	RooRealVar mean("meanSymDSCB", "", PDGmass_1S, 9., 10.);
 	RooRealVar sigma("sigmaSymDSCB", "", 0.08, .05, .15);
@@ -20,12 +54,7 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet* massDataset, Float_t 
 	if (BeVerbose) cout << endl
 		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << endl;
 
-	bool doWeightedError = true;
-
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError));
-	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
-
-	if (BeVerbose) fitResult->Print("v");
+	auto* fitResult = MCWeightedInvariantMassFit(massDataset, signal);
 
 	wspace.import(signal);
 

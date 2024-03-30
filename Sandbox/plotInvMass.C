@@ -22,14 +22,14 @@ void plotInvMass(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Fl
 
 	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
 
-	RooDataSet* reducedDataset = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	RooDataSet reducedDataset = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
-	Long64_t nEntries = reducedDataset->sumEntries();
+	Long64_t nEntries = reducedDataset.sumEntries();
 
 	auto* canvas = new TCanvas("canvas", "", 650, 600);
 
 	RooPlot* frame = wspace.var("mass")->frame(Title(" "), Range(MassBinMin, MassBinMax));
-	reducedDataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
+	reducedDataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	frame->GetYaxis()->SetMaxDigits(3);
 

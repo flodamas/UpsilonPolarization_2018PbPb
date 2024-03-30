@@ -17,8 +17,8 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
-	Int_t nCosThetaBins = 10;
-	Float_t cosThetaMin = -1, cosThetaMax = 1;
+	Int_t nCosThetaBins = 7;
+	Float_t cosThetaMin = -0.7, cosThetaMax = 0.7;
 
 	/// Set up the data
 	using namespace RooFit;
@@ -26,14 +26,14 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 
 	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
 
-	auto* data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	// read variables in the reduced dataset in the workspace
-	RooRealVar* invMass = wspace.var("mass");
+	RooRealVar invMass = *wspace.var("mass");
 
-	RooRealVar* cosTheta = wspace.var(CosThetaVarName(refFrameName));
+	RooRealVar cosTheta = *wspace.var(CosThetaVarName(refFrameName));
 
-	Long64_t nEntries = data->sumEntries();
+	Long64_t nEntries = data.sumEntries();
 
 	/// Invariant mass model
 
@@ -46,11 +46,9 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	//const char* bkgShapeName = Form("ChebychevOrder%d", order);
 	const char* bkgShapeName = "ExpTimesErr";
 
-	auto* invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
+	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
-	auto* fitResult = invMassModel->fitTo(*data, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), Minos(kTRUE));
-
-	fitResult->Print("v");
+	auto* fitResult = RawInvariantMassFit(data, invMassModel);
 
 	/// Draw the invariant mass distribution, to check the fit
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
@@ -61,7 +59,7 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	SPlot sData = CreateSPlot(wspace, data, invMassModel);
 
 	// create weighted data sets
-	RooDataSet data_weight1S = GetSWeightedDataset(data, "1S");
+	RooDataSet data_weight1S = GetSWeightedDataset(&data, "1S");
 
 	/// Standard extraction of the raw yield per bin of cos theta
 	RooRealVar* yield1S = wspace.var("yield1S");
@@ -79,11 +77,9 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 
 		cout << "Invariant mass fit for cos theta = [" << cosThetaVal << ", " << cosThetaVal + cosThetaStep << "]" << endl;
 
-		std::unique_ptr<RooAbsData> reducedDataset{data->reduce({*invMass}, Form("cosTheta%s > %f && cosTheta%s < %f", refFrameName, cosThetaVal, refFrameName, cosThetaVal + cosThetaStep))};
+		RooDataSet reducedDataset = *(RooDataSet*)data.reduce({invMass}, Form("cosTheta%s > %f && cosTheta%s < %f", refFrameName, cosThetaVal, refFrameName, cosThetaVal + cosThetaStep));
 
-		auto* massFitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), Minos({*yield1S, *yield2S}));
-
-		massFitResult->Print("v");
+		auto* massFitResult = RawInvariantMassFit(reducedDataset, invMassModel);
 
 		double rawYield = yield1S->getVal();
 		double errorRawYield = yield1S->getError();
@@ -94,13 +90,13 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 		if (yield1S->getVal() > maxYield) maxYield = rawYield;
 	}
 
-	RooDataHist yieldRooDataHist("yieldRooDataHist", " ", *cosTheta, Import(yieldHist));
+	RooDataHist yieldRooDataHist("yieldRooDataHist", " ", cosTheta, Import(yieldHist));
 
 	/// Draw the cos theta distributions
 
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
-	RooPlot* frame = cosTheta->frame(Title(" "), Range(cosThetaMin, cosThetaMax));
+	RooPlot* frame = cosTheta.frame(Title(" "), Range(cosThetaMin, cosThetaMax));
 
 	yieldRooDataHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("rawYield"));
 

@@ -15,9 +15,9 @@
 using namespace RooFit;
 
 // make and draw the invariant mass distribution with fit results
-RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet* dataset) {
+RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet dataset) {
 	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
-	dataset->plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
+	dataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	auto* fitModel = wspace.pdf("invMassModel");
 	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(ColorBkg), LineStyle(kDashed));
@@ -133,7 +133,7 @@ TH2* GetPullDistribution2D(TH2* h2Ddata, TH2* h2Dfit) {
 	return h2DPull;
 }
 
-TCanvas* DrawMassFitDistributions(RooWorkspace& wspace, RooDataSet* dataset, Int_t nFloatParams = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
+TCanvas* DrawMassFitDistributions(RooWorkspace& wspace, RooDataSet dataset, Int_t nFloatParams = 1, Int_t ptMin = 0, Int_t ptMax = 30) {
 	// one pad for the invariant mass data distribution with fit components, one for the pull distribution
 	TCanvas* canvas = new TCanvas("massCanvas", "", 600, 600);
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
