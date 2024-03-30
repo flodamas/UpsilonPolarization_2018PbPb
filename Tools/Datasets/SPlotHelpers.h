@@ -8,12 +8,11 @@ using namespace RooStats;
 
 /// sPlot class documentation https://root.cern/doc/master/classRooStats_1_1SPlot.html
 
-SPlot CreateSPlot(RooWorkspace& wspace, RooDataSet* data, RooAddPdf* fitModel) {
+SPlot CreateSPlot(RooWorkspace& wspace, RooDataSet& data, RooAddPdf fitModel) {
 	if (BeVerbose) {
-		std::cout << "\n--------------------------sWeighted data based on yields------------------------\n\n";
+		std::cout << "\n--------------------------sWeighted data based on yields------------------------\n\nDataset content before creating sWeights:\n";
 
-		cout << "Dataset content before creating sWeights:\n";
-		data->Print();
+		data.Print();
 	}
 
 	// yields from invariant mass distribution fit as sWeights
@@ -24,11 +23,11 @@ SPlot CreateSPlot(RooWorkspace& wspace, RooDataSet* data, RooAddPdf* fitModel) {
 	RooRealVar yield3S = *wspace.var("yield3S");
 	RooRealVar yieldBkg = *wspace.var("yieldBkg");
 
-	RooStats::SPlot mySPlot{"mySPlot", "", *data, fitModel, RooArgList(yield1S, yield2S, yield3S, yieldBkg), RooArgSet(), true, false, "", Range(MassBinMin, MassBinMax), NumCPU(NCPUs)};
+	RooStats::SPlot mySPlot{"mySPlot", "", data, &fitModel, RooArgList(yield1S, yield2S, yield3S, yieldBkg), RooArgSet(), true, false, "", Range(MassBinMin, MassBinMax), NumCPU(NCPUs)};
 
 	if (BeVerbose) {
 		std::cout << "\nAfter creating sWeights:\n";
-		data->Print();
+		data.Print();
 
 		// check that our weights have the desired properties
 

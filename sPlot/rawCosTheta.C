@@ -23,13 +23,13 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 
 	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
 
-	auto* data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
 	// read variables in the reduced dataset in the workspace
 
-	RooRealVar* cosTheta = wspace.var(CosThetaVarName(refFrameName));
+	RooRealVar cosTheta = *wspace.var(CosThetaVarName(refFrameName));
 
-	Long64_t nEntries = data->sumEntries();
+	Long64_t nEntries = data.sumEntries();
 
 	/// Invariant mass model
 
@@ -42,11 +42,9 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	//const char* bkgShapeName = Form("ChebychevOrder%d", order);
 	const char* bkgShapeName = "ExpTimesErr";
 
-	auto* invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
+	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
-	auto* fitResult = invMassModel->fitTo(*data, Save(), Extended(kTRUE), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), Minos(kTRUE));
-
-	fitResult->Print("v");
+	auto* fitResult = RawInvariantMassFit(data, invMassModel);
 
 	/// Draw the invariant mass distribution, to check the fit
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
@@ -62,18 +60,20 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
 
-	RooPlot* frame = cosTheta->frame(Title(" "), Bins(nCosThetaBins), Range(cosThetaMin, cosThetaMax));
+	RooPlot* frame = cosTheta.frame(Title(" "), Bins(nCosThetaBins), Range(cosThetaMin, cosThetaMax));
 
 	// select the mass window of the Y peaks for visualisation
 	Float_t lowMassCut = 8.5, highMassCut = 10.5;
-	data->plotOn(frame, DrawOption("P0Z"), Name("data"), Cut(Form("mass > %f && mass < %f", lowMassCut, highMassCut)));
+
+	const char* massCut = Form("mass > %f && mass < %f", lowMassCut, highMassCut);
+	data.plotOn(frame, DrawOption("P0Z"), Name("data"), Cut(massCut));
 
 	// create sWeighted data sets
-	RooDataSet data_weightBkg = GetSWeightedDataset(data, "Bkg");
-	RooDataSet data_weight1S = GetSWeightedDataset(data, "1S");
-	RooDataSet data_weight2S = GetSWeightedDataset(data, "2S");
+	RooDataSet data_weightBkg = GetSWeightedDataset(&data, "Bkg");
+	RooDataSet data_weight1S = GetSWeightedDataset(&data, "1S");
+	RooDataSet data_weight2S = GetSWeightedDataset(&data, "2S");
 
-	data_weightBkg.plotOn(frame, DrawOption("P0Z"), MarkerColor(ColorBkg), Name("dataBkg"), Cut(Form("mass > %f && mass < %f", lowMassCut, highMassCut)));
+	data_weightBkg.plotOn(frame, DrawOption("P0Z"), MarkerColor(ColorBkg), Name("dataBkg"), Cut(massCut));
 
 	data_weight1S.plotOn(frame, DrawOption("P0Z"), MarkerColor(Color1S), Name("data1S"));
 

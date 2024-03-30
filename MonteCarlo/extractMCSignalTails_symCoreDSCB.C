@@ -1,3 +1,5 @@
+#include "../Tools/Datasets/RooDataSetHelpers.h"
+
 #include "../Tools/FitShortcuts.h"
 
 #include "../Tools/Style/FitDistributions.h"
@@ -45,7 +47,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	RooRealVar* massVar = wspace.var("mass");
 
 	// fit
-	auto* fitResult = SymDSCBfit(wspace, massDataset, massMin, massMax);
+	auto* fitResult = SymDSCBfit(wspace, *massDataset, massMin, massMax);
 
 	RooRealVar mean = *wspace.var(Form("mean%s", signalShapeName));
 	RooRealVar sigma = *wspace.var(Form("sigma%s", signalShapeName));

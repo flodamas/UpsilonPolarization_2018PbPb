@@ -33,9 +33,9 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 
 	RooRealVar cosTheta = *wspace.var(CosThetaVarName(refFrameName));
 
-	auto* data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
-	std::unique_ptr<RooAbsData> reducedDataset{data->reduce({cosTheta, invMass}, Form("mass > %f && mass < %f", massMin, massMax))};
+	std::unique_ptr<RooAbsData> reducedDataset{data.reduce({cosTheta, invMass}, Form("mass > %f && mass < %f", massMin, massMax))};
 
 	double correlationFactor = reducedDataset->correlation(cosTheta, invMass);
 
