@@ -8,8 +8,8 @@ TH2* DrawCosThetaPhiDistribution(RooDataSet* dataset, RooWorkspace& wspace, cons
 	Int_t nCosThetaBins = 20;
 	Float_t cosThetaMin = -1, cosThetaMax = 1;
 
-	Int_t nPhiBins = 11;
-	Float_t phiMin = 0, phiMax = 220;
+	Int_t nPhiBins = 25;
+	Float_t phiMin = -200, phiMax = 300;
 
 	const char* histoName = Form("%s_cent%dto%d_pt%dto%dGeV", frameAcronym, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
 
@@ -28,7 +28,7 @@ TH2* DrawCosThetaPhiDistribution(RooDataSet* dataset, RooWorkspace& wspace, cons
 
 	TH2* histo = dynamic_cast<TH2*>(reducedDataset->createHistogram(histoName, cosThetaVar, RooFit::Binning(nCosThetaBins, cosThetaMin, cosThetaMax), RooFit::YVar(phiVar, RooFit::Binning(nPhiBins, phiMin, phiMax))));
 
-	histo->SetTitle(Form(";cos #theta_{%s}; |#varphi_{%s}| (#circ)", frameAcronym, frameAcronym));
+	histo->SetTitle(Form(";cos #theta_{%s}; #varphi_{%s} (#circ)", frameAcronym, frameAcronym));
 	histo->Draw("COLZ");
 
 	TLatex legend;
@@ -38,7 +38,7 @@ TH2* DrawCosThetaPhiDistribution(RooDataSet* dataset, RooWorkspace& wspace, cons
 	legend.DrawLatexNDC(.48, .78, Form("%.0f < m_{#mu#mu} < %.0f GeV/c^{2}", massMin, massMax));
 
 	histo->GetXaxis()->CenterTitle();
-	histo->GetYaxis()->SetRangeUser(0, 250);
+	histo->GetYaxis()->SetRangeUser(-200, 300);
 	histo->GetYaxis()->CenterTitle();
 	histo->GetZaxis()->SetMaxDigits(3);
 
@@ -59,7 +59,7 @@ void drawCosThetaPhiMap(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename 
 
 	cout << "File " << filename << " opened" << endl;
 
-	writeExtraText = true; // if extra text
+	writeExtraText = false; // if extra text
 	extraText = "       Internal";
 
 	gStyle->SetPadLeftMargin(.15);
