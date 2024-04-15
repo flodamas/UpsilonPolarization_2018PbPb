@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "AccEffHelpers.h"
+
 //#include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
@@ -12,9 +14,9 @@
 #include "../ReferenceFrameTransform/Transformations.h"
 
 // return the 2D map of the relative systematic efficiency uncertainty
-TH2D* RelSystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency* hTrk_systDown, TEfficiency* hMuId_systUp, TEfficiency* hMuId_systDown, TEfficiency* hTrig_systUp, TEfficiency* hTrig_systDown, TEfficiency* hTrk_statUp, TEfficiency* hTrk_statDown, TEfficiency* hMuId_statUp, TEfficiency* hMuId_statDown, TEfficiency* hTrig_statUp, TEfficiency* hTrig_statDown) {
+TH2D* RelSystEffHist(TEfficiency hNominal, TEfficiency hTrk_systUp, TEfficiency hTrk_systDown, TEfficiency hMuId_systUp, TEfficiency hMuId_systDown, TEfficiency hTrig_systUp, TEfficiency hTrig_systDown, TEfficiency hTrk_statUp, TEfficiency hTrk_statDown, TEfficiency hMuId_statUp, TEfficiency hMuId_statDown, TEfficiency hTrig_statUp, TEfficiency hTrig_statDown) {
 	// clone one of the input efficiency map, to make sure we get the correct binning
-	TH2D* hTotalSyst = (TH2D*)hNominal->GetCopyPassedHisto(); // will rename it outside this function
+	TH2D* hTotalSyst = (TH2D*)hNominal.GetCopyPassedHisto(); // will rename it outside this function
 
 	// useful loop variables
 	int globalBin;
@@ -25,29 +27,29 @@ TH2D* RelSystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficienc
 
 	for (int iCosThetaBin = 1; iCosThetaBin <= hTotalSyst->GetNbinsX(); iCosThetaBin++) {
 		for (int iPhiBin = 1; iPhiBin <= hTotalSyst->GetNbinsY(); iPhiBin++) {
-			globalBin = hNominal->GetGlobalBin(iCosThetaBin, iPhiBin); // to run though the efficiency maps
+			globalBin = hNominal.GetGlobalBin(iCosThetaBin, iPhiBin); // to run though the efficiency maps
 
-			nominalEff = hNominal->GetEfficiency(globalBin);
+			nominalEff = hNominal.GetEfficiency(globalBin);
 
 			// compute the systematic uncertainties associated to the variation of the muon SF uncertainties
 
 			// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
 
 			// from muon SF systematics
-			trk_systEff = max(abs(hTrk_systUp->GetEfficiency(globalBin) - nominalEff), abs(hTrk_systDown->GetEfficiency(globalBin) - nominalEff));
+			trk_systEff = max(abs(hTrk_systUp.GetEfficiency(globalBin) - nominalEff), abs(hTrk_systDown.GetEfficiency(globalBin) - nominalEff));
 
-			muId_systEff = max(abs(hMuId_systUp->GetEfficiency(globalBin) - nominalEff), abs(hMuId_systDown->GetEfficiency(globalBin) - nominalEff));
+			muId_systEff = max(abs(hMuId_systUp.GetEfficiency(globalBin) - nominalEff), abs(hMuId_systDown.GetEfficiency(globalBin) - nominalEff));
 
-			trig_systEff = max(abs(hTrig_systUp->GetEfficiency(globalBin) - nominalEff), abs(hTrig_systDown->GetEfficiency(globalBin) - nominalEff));
+			trig_systEff = max(abs(hTrig_systUp.GetEfficiency(globalBin) - nominalEff), abs(hTrig_systDown.GetEfficiency(globalBin) - nominalEff));
 
 			systEffSquared = trk_systEff * trk_systEff + muId_systEff * muId_systEff + trig_systEff * trig_systEff;
 
 			// from muon SF statistical uncertainties
-			trk_statEff = max(abs(hTrk_statUp->GetEfficiency(globalBin) - nominalEff), abs(hTrk_statDown->GetEfficiency(globalBin) - nominalEff));
+			trk_statEff = max(abs(hTrk_statUp.GetEfficiency(globalBin) - nominalEff), abs(hTrk_statDown.GetEfficiency(globalBin) - nominalEff));
 
-			muId_statEff = max(abs(hMuId_statUp->GetEfficiency(globalBin) - nominalEff), abs(hMuId_statDown->GetEfficiency(globalBin) - nominalEff));
+			muId_statEff = max(abs(hMuId_statUp.GetEfficiency(globalBin) - nominalEff), abs(hMuId_statDown.GetEfficiency(globalBin) - nominalEff));
 
-			trig_statEff = max(abs(hTrig_statUp->GetEfficiency(globalBin) - nominalEff), abs(hTrig_statDown->GetEfficiency(globalBin) - nominalEff));
+			trig_statEff = max(abs(hTrig_statUp.GetEfficiency(globalBin) - nominalEff), abs(hTrig_statDown.GetEfficiency(globalBin) - nominalEff));
 
 			statEffSquared = trk_statEff * trk_statEff + muId_statEff * muId_statEff + trig_statEff * trig_statEff;
 
@@ -64,7 +66,7 @@ TH2D* RelSystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficienc
 }
 
 // return the 3D map of the relative systematic efficiency uncertainty
-TH3D* RelSystEffHist3D(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency* hTrk_systDown, TEfficiency* hMuId_systUp, TEfficiency* hMuId_systDown, TEfficiency* hTrig_systUp, TEfficiency* hTrig_systDown, TEfficiency* hTrk_statUp, TEfficiency* hTrk_statDown, TEfficiency* hMuId_statUp, TEfficiency* hMuId_statDown, TEfficiency* hTrig_statUp, TEfficiency* hTrig_statDown) {
+TH3D* RelSystEffHist3D(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency* hTrk_systDown, TEfficiency* hMuId_systUp, TEfficiency* hMuId_systDown, TEfficiency* hTrig_systUp, TEfficiency* hTrig_systDown, TEfficiency* hTrk_statUp, TEfficiency* hTrk_statDown, TEfficiency* hMuId_statUp, TEfficiency* hMuId_statDown, TEfficiency* hTrig_statUp, TEfficiency* hTrig_statDown, const char* refFrameName = "CS") {
 	// clone one of the input efficiency map, to make sure we get the correct binning
 	TH3D* hTotalSyst = (TH3D*)hNominal->GetCopyPassedHisto(); // will rename it outside this function
 
@@ -114,6 +116,9 @@ TH3D* RelSystEffHist3D(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficie
 		}
 	}
 
+	hTotalSyst->SetName(RelativeSystTEfficiency3DName(refFrameName));
+	hTotalSyst->SetTitle(Form("Relative efficiency uncertainty;%s", TEfficiency3DAxisTitle(refFrameName)));
+
 	return hTotalSyst;
 }
 
@@ -142,43 +147,6 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, int iState
 
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
 	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effMap->GetName()), "RECREATE");
-}
-
-// object constructors called many times...
-const char* EfficiencyAxisTitle(int iState = gUpsilonState) {
-	return Form("#varUpsilon(%dS) total efficiency", iState);
-}
-
-TEfficiency* CosThetaEfficiency1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", int iState = gUpsilonState) {
-	const char* title = Form(";%s;%s", CosThetaVarTitle(refFrameName), EfficiencyAxisTitle(iState));
-
-	const char* name = Form("CosTheta%s_pt%dto%d", refFrameName, ptMin, ptMax);
-
-	TEfficiency* effMap = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax);
-
-	return effMap;
-}
-
-TEfficiency* CosThetaPhiEfficiency2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", int iState = gUpsilonState) {
-	const char* title = Form(";%s;%s;%s", CosThetaVarTitle(refFrameName), PhiAxisTitle(refFrameName), EfficiencyAxisTitle(iState));
-
-	const char* name = Form("CosThetaPhi%s_pt%dto%d", refFrameName, ptMin, ptMax);
-
-	TEfficiency* effMap = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax);
-
-	return effMap;
-}
-
-// (cos theta, phi, pT) 3D maps for final efficiency correction, variable size binning for the stats
-const char* Efficiency3DAxisTitle(const char* refFrameName = "CS") {
-	return Form("%s;%s;%s", CosThetaVarTitle(refFrameName), PhiAxisTitle(refFrameName), gPtAxisTitle);
-}
-TEfficiency* Efficiency3D(const char* name, const char* refFrameName = "CS", int iState = gUpsilonState) {
-	const char* title = Form("%s;%s", EfficiencyAxisTitle(iState), Efficiency3DAxisTitle(refFrameName));
-
-	TEfficiency* effMap = new TEfficiency(name, title, NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning);
-
-	return effMap;
 }
 
 // create the (cos theta, phi) map of the total efficiency (fully reweighted) for a given pT range
@@ -269,51 +237,51 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	// Collins-Soper
 
-	TEfficiency* hNominalEffCS = Efficiency3D("NominalEff_CS", "CS", iState);
+	TEfficiency* hNominalEffCS = TEfficiency3D(NominalTEfficiency3DName("CS"), "CS", iState);
 
-	TEfficiency* hCS_trk_systUp = Efficiency3D("hCS_trk_systUp", "CS", iState);
-	TEfficiency* hCS_trk_systDown = Efficiency3D("hCS_trk_systDown", "CS", iState);
-	TEfficiency* hCS_trk_statUp = Efficiency3D("hCS_trk_statUp", "CS", iState);
-	TEfficiency* hCS_trk_statDown = Efficiency3D("hCS_trk_statDown", "CS", iState);
+	TEfficiency* hCS_trk_systUp = TEfficiency3D("hCS_trk_systUp", "CS", iState);
+	TEfficiency* hCS_trk_systDown = TEfficiency3D("hCS_trk_systDown", "CS", iState);
+	TEfficiency* hCS_trk_statUp = TEfficiency3D("hCS_trk_statUp", "CS", iState);
+	TEfficiency* hCS_trk_statDown = TEfficiency3D("hCS_trk_statDown", "CS", iState);
 
-	TEfficiency* hCS_muId_systUp = Efficiency3D("hCS_muId_systUp", "CS", iState);
-	TEfficiency* hCS_muId_systDown = Efficiency3D("hCS_muId_systDown", "CS", iState);
-	TEfficiency* hCS_muId_statUp = Efficiency3D("hCS_muId_statUp", "CS", iState);
-	TEfficiency* hCS_muId_statDown = Efficiency3D("hCS_muId_statDown", "CS", iState);
+	TEfficiency* hCS_muId_systUp = TEfficiency3D("hCS_muId_systUp", "CS", iState);
+	TEfficiency* hCS_muId_systDown = TEfficiency3D("hCS_muId_systDown", "CS", iState);
+	TEfficiency* hCS_muId_statUp = TEfficiency3D("hCS_muId_statUp", "CS", iState);
+	TEfficiency* hCS_muId_statDown = TEfficiency3D("hCS_muId_statDown", "CS", iState);
 
-	TEfficiency* hCS_trig_systUp = Efficiency3D("hCS_trig_systUp", "CS", iState);
-	TEfficiency* hCS_trig_systDown = Efficiency3D("hCS_trig_systDown", "CS", iState);
-	TEfficiency* hCS_trig_statUp = Efficiency3D("hCS_trig_statUp", "CS", iState);
-	TEfficiency* hCS_trig_statDown = Efficiency3D("hCS_trig_statDown", "CS", iState);
+	TEfficiency* hCS_trig_systUp = TEfficiency3D("hCS_trig_systUp", "CS", iState);
+	TEfficiency* hCS_trig_systDown = TEfficiency3D("hCS_trig_systDown", "CS", iState);
+	TEfficiency* hCS_trig_statUp = TEfficiency3D("hCS_trig_statUp", "CS", iState);
+	TEfficiency* hCS_trig_statDown = TEfficiency3D("hCS_trig_statDown", "CS", iState);
 
 	// Helicity
-	TEfficiency* hNominalEffHX = Efficiency3D("NominalEff_HX", "HX", iState);
+	TEfficiency* hNominalEffHX = TEfficiency3D(NominalTEfficiency3DName("HX"), "HX", iState);
 
-	TEfficiency* hHX_trk_systUp = Efficiency3D("hHX_trk_systUp", "HX", iState);
-	TEfficiency* hHX_trk_systDown = Efficiency3D("hHX_trk_systDown", "HX", iState);
-	TEfficiency* hHX_trk_statUp = Efficiency3D("hHX_trk_statUp", "HX", iState);
-	TEfficiency* hHX_trk_statDown = Efficiency3D("hHX_trk_statDown", "HX", iState);
+	TEfficiency* hHX_trk_systUp = TEfficiency3D("hHX_trk_systUp", "HX", iState);
+	TEfficiency* hHX_trk_systDown = TEfficiency3D("hHX_trk_systDown", "HX", iState);
+	TEfficiency* hHX_trk_statUp = TEfficiency3D("hHX_trk_statUp", "HX", iState);
+	TEfficiency* hHX_trk_statDown = TEfficiency3D("hHX_trk_statDown", "HX", iState);
 
-	TEfficiency* hHX_muId_systUp = Efficiency3D("hHX_muId_systUp", "HX", iState);
-	TEfficiency* hHX_muId_systDown = Efficiency3D("hHX_muId_systDown", "HX", iState);
-	TEfficiency* hHX_muId_statUp = Efficiency3D("hHX_muId_statUp", "HX", iState);
-	TEfficiency* hHX_muId_statDown = Efficiency3D("hHX_muId_statDown", "HX", iState);
+	TEfficiency* hHX_muId_systUp = TEfficiency3D("hHX_muId_systUp", "HX", iState);
+	TEfficiency* hHX_muId_systDown = TEfficiency3D("hHX_muId_systDown", "HX", iState);
+	TEfficiency* hHX_muId_statUp = TEfficiency3D("hHX_muId_statUp", "HX", iState);
+	TEfficiency* hHX_muId_statDown = TEfficiency3D("hHX_muId_statDown", "HX", iState);
 
-	TEfficiency* hHX_trig_systUp = Efficiency3D("hHX_trig_systUp", "HX", iState);
-	TEfficiency* hHX_trig_systDown = Efficiency3D("hHX_trig_systDown", "HX", iState);
-	TEfficiency* hHX_trig_statUp = Efficiency3D("hHX_trig_statUp", "HX", iState);
-	TEfficiency* hHX_trig_statDown = Efficiency3D("hHX_trig_statDown", "HX", iState);
+	TEfficiency* hHX_trig_systUp = TEfficiency3D("hHX_trig_systUp", "HX", iState);
+	TEfficiency* hHX_trig_systDown = TEfficiency3D("hHX_trig_systDown", "HX", iState);
+	TEfficiency* hHX_trig_statUp = TEfficiency3D("hHX_trig_statUp", "HX", iState);
+	TEfficiency* hHX_trig_statDown = TEfficiency3D("hHX_trig_statDown", "HX", iState);
 
 	// (cos theta, phi) for the given pt range
-	TEfficiency* hEffCS2D = CosThetaPhiEfficiency2D(ptMin, ptMax, "CS", iState);
+	TEfficiency* hEffCS2D = CosThetaPhiTEfficiency2D(ptMin, ptMax, "CS", iState);
 
-	TEfficiency* hEffHX2D = CosThetaPhiEfficiency2D(ptMin, ptMax, "HX", iState);
+	TEfficiency* hEffHX2D = CosThetaPhiTEfficiency2D(ptMin, ptMax, "HX", iState);
 
 	// vs cos theta, to investigate
 
-	TEfficiency* hEffCS1D = CosThetaEfficiency1D(ptMin, ptMax, "CS", iState);
+	TEfficiency* hEffCS1D = CosThetaTEfficiency1D(ptMin, ptMax, "CS", iState);
 
-	TEfficiency* hEffHX1D = CosThetaEfficiency1D(ptMin, ptMax, "HX", iState);
+	TEfficiency* hEffHX1D = CosThetaTEfficiency1D(ptMin, ptMax, "HX", iState);
 
 	// we want to estimate the uncertainties from scale factors at the same time
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
@@ -620,9 +588,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	legend->SetTextSize(0.042);
 
 	// Collins-Soper
-	auto* hSystCS = RelSystEffHist3D(hNominalEffCS, hCS_trk_systUp, hCS_trk_systDown, hCS_muId_systUp, hCS_muId_systDown, hCS_trig_systUp, hCS_trig_systDown, hCS_trk_statUp, hCS_trk_statDown, hCS_muId_statUp, hCS_muId_statDown, hCS_trig_statUp, hCS_trig_statDown);
-	hSystCS->SetName("RelatSystEff_CS");
-	hSystCS->SetTitle(Form("Relative efficiency uncertainty;%s", Efficiency3DAxisTitle("CS")));
+	auto* hSystCS = RelSystEffHist3D(hNominalEffCS, hCS_trk_systUp, hCS_trk_systDown, hCS_muId_systUp, hCS_muId_systDown, hCS_trig_systUp, hCS_trig_systDown, hCS_trk_statUp, hCS_trk_statDown, hCS_muId_statUp, hCS_muId_statDown, hCS_trig_statUp, hCS_trig_statDown, "CS");
 
 	auto* canvasCSsyst = new TCanvas("canvasCSsyst", "", 700, 600);
 	hSystCS->Draw("COLZ");
@@ -638,14 +604,12 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	//canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS.png", gUpsilonState), "RECREATE");
 
 	// Helicity
-	auto* hSystHX = RelSystEffHist3D(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown);
-	hSystHX->SetName("RelatSystEff_HX");
-	hSystHX->SetTitle(Form("Relative efficiency uncertainty;%s", Efficiency3DAxisTitle("HX")));
+	auto* hSystHX = RelSystEffHist3D(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown, "HX");
 
 	auto* canvasHXsyst = new TCanvas("canvasHXsyst", "", 700, 600);
 	hSystHX->Draw("COLZ");
 
-	CMS_lumi(canvasHXsyst, Form("#varUpsilon(%dS) Hydjet-embedded MC", gUpsilonState));
+	CMS_lumi(canvasHXsyst, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
 
 	legend->DrawLatexNDC(.5, .88, legendText);
 
