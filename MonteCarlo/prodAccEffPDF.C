@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "AccEffHelpers.h"
+
 #include "../Tools/Style/Legends.h"
 
 // transform the product of the acceptance and efficiency maps into a RooHistPdf
@@ -27,6 +29,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	RooRealVar phi(PhiVarName(refFrameName), PhiVarTitle(refFrameName), phiMin, phiMax);
 
 	/// 1. retrieve the 2D maps
+	const char* mapName = CosThetaPhiTEfficiency2DName(ptMin, ptMax, refFrameName);
 
 	// acceptance maps
 	TFile* acceptanceFile = TFile::Open(Form("AcceptanceMaps/%dS/AcceptanceResults.root", iState), "READ");
@@ -35,7 +38,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 		return;
 	}
 
-	auto* accMap = (TEfficiency*)acceptanceFile->Get(Form("Granular%s_pt%dto%d", refFrameName, ptMin, ptMax));
+	auto* accMap = (TEfficiency*)acceptanceFile->Get(mapName);
 
 	// efficiency maps
 	TFile* efficiencyFile = TFile::Open(Form("EfficiencyMaps/%dS/EfficiencyResults.root", iState), "READ");
@@ -44,7 +47,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 		return;
 	}
 
-	auto* effMap = (TEfficiency*)efficiencyFile->Get(Form("CosThetaPhi%s_pt%dto%d", refFrameName, ptMin, ptMax));
+	auto* effMap = (TEfficiency*)efficiencyFile->Get(mapName);
 
 	/// 2. do the product
 

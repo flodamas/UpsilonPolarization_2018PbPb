@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "AccEffHelpers.h"
+
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
@@ -14,12 +16,11 @@
 #include "../ReferenceFrameTransform/Transformations.h"
 
 TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, Double_t* cosThetaBinEdges = nullptr) {
-	
-	/// rebin efficiency maps based on costheta, phi, and pT selection 
-	
+	/// rebin efficiency maps based on costheta, phi, and pT selection
+
 	// extract the numerator and the denominator from the 3D TEfficiency Map
-	TH3D* hPassed = (TH3D*) TEff3DMap->GetPassedHistogram();
-	TH3D* hTotal = (TH3D*) TEff3DMap->GetTotalHistogram();
+	TH3D* hPassed = (TH3D*)TEff3DMap->GetPassedHistogram();
+	TH3D* hTotal = (TH3D*)TEff3DMap->GetTotalHistogram();
 
 	// obtain the bin numbers of the boundaries on phi and pt
 	Int_t iPhiMin = hPassed->GetYaxis()->FindBin(phiMin);
@@ -28,29 +29,28 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t phiMin = -180, Int_t p
 	Int_t iPtMin = hPassed->GetZaxis()->FindBin(ptMin);
 	Int_t iPtMax = hPassed->GetZaxis()->FindBin(ptMax);
 
-	// obtain the projection histogram along the costheta axis within boundaries of phi and pt 
+	// obtain the projection histogram along the costheta axis within boundaries of phi and pt
 	// (option e: calculate errors, o: only bins inside the selected range will be filled)
-	TH1D* hPassedCosTheta = (TH1D*) hPassed->ProjectionX("hPassedCosTheta", iPhiMin, iPhiMax-1, iPtMin, iPtMax-1, "eo"); 
-	TH1D* hTotalCosTheta = (TH1D*) hTotal->ProjectionX("hTotalCosTheta", iPhiMin, iPhiMax-1, iPtMin, iPtMax-1, "eo");
+	TH1D* hPassedCosTheta = (TH1D*)hPassed->ProjectionX("hPassedCosTheta", iPhiMin, iPhiMax - 1, iPtMin, iPtMax - 1, "eo");
+	TH1D* hTotalCosTheta = (TH1D*)hTotal->ProjectionX("hTotalCosTheta", iPhiMin, iPhiMax - 1, iPtMin, iPtMax - 1, "eo");
 
 	// rebin the projection histogram (default: 20 bins from -1 to 1)
-	TH1D* hPassedCosTheta_Rebin = (TH1D*) hPassedCosTheta->Rebin(nCosThetaBins, "hPassedCosTheta_Rebin", cosThetaBinEdges);
-	TH1D* hTotalCosTheta_Rebin = (TH1D*) hTotalCosTheta->Rebin(nCosThetaBins, "hTotalCosTheta_Rebin", cosThetaBinEdges);
+	TH1D* hPassedCosTheta_Rebin = (TH1D*)hPassedCosTheta->Rebin(nCosThetaBins, "hPassedCosTheta_Rebin", cosThetaBinEdges);
+	TH1D* hTotalCosTheta_Rebin = (TH1D*)hTotalCosTheta->Rebin(nCosThetaBins, "hTotalCosTheta_Rebin", cosThetaBinEdges);
 
 	// define TEfficiency using the final numerator and denominator
 	TEfficiency* TEffMapCosTheta = new TEfficiency("TEffMapCosTheta", "cos #theta_{CS}; efficiency", nCosThetaBins, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
-	
+
 	TEffMapCosTheta->SetPassedHistogram(*hPassedCosTheta_Rebin, "f");
-	TEffMapCosTheta->SetTotalHistogram(*hTotalCosTheta_Rebin, "f"); 
+	TEffMapCosTheta->SetTotalHistogram(*hTotalCosTheta_Rebin, "f");
 
 	return TEffMapCosTheta;
 }
 
-TH1D* rebin3DUnc(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, Double_t* cosThetaBinEdges = nullptr){
-	
-	/// rebin efficiency maps based on costheta, phi, and pT selection 
+TH1D* rebin3DUnc(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, Double_t* cosThetaBinEdges = nullptr) {
+	/// rebin efficiency maps based on costheta, phi, and pT selection
 	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
-	
+
 	TH1D* h1DSystEff = new TH1D("h1DSystEff", ";cos #theta_{CS};Relative systematic uncertainty", nCosThetaBins, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
 
 	Int_t iPhiMin = systEff->GetYaxis()->FindBin(phiMin);
@@ -59,18 +59,15 @@ TH1D* rebin3DUnc(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 180, Int_t p
 	Int_t iPtMin = systEff->GetZaxis()->FindBin(ptMin);
 	Int_t iPtMax = systEff->GetZaxis()->FindBin(ptMax);
 
-	for (int iCosTheta=1; iCosTheta<=nCosThetaBins; iCosTheta++) {
-
+	for (int iCosTheta = 1; iCosTheta <= nCosThetaBins; iCosTheta++) {
 		Double_t phiSumSystEff = 0;
 
 		// sum uncertainties along the phi axis
-		for (int iPhi=iPhiMin; iPhi<=iPhiMax; iPhi++) {
-
+		for (int iPhi = iPhiMin; iPhi <= iPhiMax; iPhi++) {
 			Double_t ptSumSystEff = 0;
 
 			// sum uncertainties along the pt axis
-			for (int iPt=iPtMin; iPt<=iPtMax; iPt++) {
-
+			for (int iPt = iPtMin; iPt <= iPtMax; iPt++) {
 				ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt));
 			}
 
@@ -78,7 +75,7 @@ TH1D* rebin3DUnc(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 180, Int_t p
 		}
 
 		h1DSystEff->SetBinContent(iCosTheta, phiSumSystEff);
-	}	
+	}
 
 	return h1DSystEff;
 }
@@ -100,8 +97,8 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	/// Bin width
 	const Int_t nCosThetaBins = 8;
-	// Double_t cosThetaBinEdges[nCosThetaBins+1] = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7}; 
-	Double_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8}; 
+	// Double_t cosThetaBinEdges[nCosThetaBins+1] = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7};
+	Double_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8};
 
 	/// Set up the variables
 	RooRealVar cosTheta("cosTheta", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
@@ -112,10 +109,10 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	// background shape array: ChebychevOrderN or ExpTimesErr
 	const char* bkgShapeName[] = {
-	  "ChebychevOrder2", 
 	  "ChebychevOrder2",
 	  "ChebychevOrder2",
-      "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
 	  "ChebychevOrder2",
 	  "ChebychevOrder2",
 	  "ChebychevOrder2",
@@ -127,6 +124,8 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	/// "Standard" procedure: extract the yields per bin
 	TH1D* standardCorrectedHist = new TH1D("standardCorrectedHist", " ", nCosThetaBins, cosThetaBinEdges);
 
+	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
+
 	// acceptance maps
 	TFile* acceptanceFile = TFile::Open("../MonteCarlo/AcceptanceMaps/1S/AcceptanceResults.root", "READ");
 	if (!acceptanceFile) {
@@ -134,9 +133,9 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		return;
 	}
 
-	auto* accMap = (TEfficiency*)acceptanceFile->Get(Form("AccMatrix%s", refFrameName));
+	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
 
-	// rebin acceptance maps based on costheta, phi, and pT selection 
+	// rebin acceptance maps based on costheta, phi, and pT selection
 	TEfficiency* accMapCosTheta = rebinTEff3DMap(accMap, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
 
 	// efficiency maps
@@ -146,26 +145,26 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		return;
 	}
 
-	auto* effMap = (TEfficiency*)efficiencyFile->Get(Form("NominalEff_%s", refFrameName));
-	auto* systEff = (TH3D*)efficiencyFile->Get(Form("RelatSystEff_%s", refFrameName));
+	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
+	auto* systEff = (TH3D*)efficiencyFile->Get(RelativeSystTEfficiency3DName(refFrameName));
 
-	// rebin efficiency maps based on costheta, phi, and pT selection 
+	// rebin efficiency maps based on costheta, phi, and pT selection
 	TEfficiency* effMapCosTheta = rebinTEff3DMap(effMap, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
 
-	// rebin uncertainty map based on costheta, phi, and pT selection 
+	// rebin uncertainty map based on costheta, phi, and pT selection
 	TH1D* systEffCosTheta = rebin3DUnc(systEff, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
 
 	Bool_t isCSframe = (strcmp(refFrameName, "CS") == 0) ? kTRUE : kFALSE;
 
 	Double_t errorWeightLow = 0, errorWeightHigh = 0;
-	
+
 	Float_t maxYield = 0;
 
 	TCanvas* massCanvas = 0;
 
 	// define arrays for TGraph (to draw AsymmError)
-	double finalDataPoints[nCosThetaBins]; 
-	double finalErrHigh[nCosThetaBins]; 
+	double finalDataPoints[nCosThetaBins];
+	double finalErrHigh[nCosThetaBins];
 	double finalErrLow[nCosThetaBins];
 	double cosThetaBinCenter[nCosThetaBins];
 
@@ -197,7 +196,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], phiMin, phiMax);
 
-		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s",bkgShapeName[iCosTheta]), fitModelName);
+		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta]), fitModelName);
 
 		double yield1SVal = yield1S->getVal();
 
@@ -205,10 +204,10 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 		standardCorrectedHist->SetBinContent(iCosTheta + 1, yield1SVal * weight);
 
-		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SErr * weight); 
-		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh)); 
+		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SErr * weight);
+		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh));
 		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relEffUncHigh));
-		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightLow)); 	
+		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightLow));
 
 		/// fill arrays for TGraphAsymmError
 		cosThetaBinCenter[iCosTheta] = (cosThetaBinEdges[iCosTheta] + cosThetaBinEdges[iCosTheta + 1]) / 2.;
@@ -218,7 +217,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		finalErrHigh[iCosTheta] = yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightHigh);
 		finalErrLow[iCosTheta] = yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightLow);
 
-		standardCorrectedHist->SetBinError(iCosTheta + 1, finalErrHigh[iCosTheta]); 	
+		standardCorrectedHist->SetBinError(iCosTheta + 1, finalErrHigh[iCosTheta]);
 
 		if ((yield1S->getVal()) * weight > maxYield) maxYield = (yield1S->getVal()) * weight;
 		cout << "Error: " << finalErrHigh[iCosTheta] << endl;
@@ -249,7 +248,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	frame->SetMaximum(2 * maxYield);
 
 	/// Polarization fit
-	
+
 	// with RooFit
 
 	// cout << endl
@@ -258,7 +257,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1, 1);
 	// auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", cosTheta, lambdaTheta);
 
-   	// enableBinIntegrator(cosThetaPDF_1S, cosTheta.numBins());
+	// enableBinIntegrator(cosThetaPDF_1S, cosTheta.numBins());
 
 	// auto* polarizationFitResult = cosThetaPDF_1S.chi2FitTo(correctedHist, Save(), Extended(kTRUE) /*, PrintLevel(+1)*/, NumCPU(NCPUs), Range(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), SumW2Error(kFALSE) /*, AsymptoticError(DoAsymptoticError)*/);
 
@@ -286,27 +285,28 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// canvas->SaveAs(Form("DistributionFits/1D/compareRawYieldCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
 
 	// with Root Fit function
-	
+
 	TCanvas* canvas2 = new TCanvas("canvas2", "canvas2", 650, 600);
 
 	TF1* PolarFunc = cosThetaPolarFunc(maxYield);
 
 	TFitResultPtr fitResults = standardCorrectedHist->Fit("PolarFunc", "ESV", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]); //L:log likelihood fit (default: chi2 method), E: NINOS
 
-	cout << "Error of hist (bin1): "<< standardCorrectedHist->GetBinError(1) << endl;
+	cout << "Error of hist (bin1): " << standardCorrectedHist->GetBinError(1) << endl;
 	// Fit results
 
-	double chi2 = fitResults->Chi2();;
+	double chi2 = fitResults->Chi2();
+	;
 	double lambdaVal = fitResults->Parameter(0);
-	double lambdaErr = fitResults->ParError(0);	
+	double lambdaErr = fitResults->ParError(0);
 
 	gStyle->SetOptFit(1011);
 
 	// cosmetics
 
 	standardCorrectedHist->SetMarkerStyle(20);
-    standardCorrectedHist->SetMarkerSize(1);
-    standardCorrectedHist->SetMarkerColor(kAzure + 2);
+	standardCorrectedHist->SetMarkerSize(1);
+	standardCorrectedHist->SetMarkerColor(kAzure + 2);
 
 	standardCorrectedHist->GetYaxis()->SetRangeUser(0, 2 * maxYield);
 	standardCorrectedHist->GetYaxis()->SetMaxDigits(3);
