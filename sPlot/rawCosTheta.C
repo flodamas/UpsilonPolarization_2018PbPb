@@ -73,13 +73,14 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	RooDataSet data_weight1S = GetSWeightedDataset(&data, "1S");
 	RooDataSet data_weight2S = GetSWeightedDataset(&data, "2S");
 
-	data_weightBkg.plotOn(frame, DrawOption("P0Z"), MarkerColor(ColorBkg), Name("dataBkg"), Cut(massCut));
+	data_weightBkg.plotOn(frame, DrawOption("P0Z"), MarkerColor(gColorBkg), Name("dataBkg"), Cut(massCut));
 
-	data_weight1S.plotOn(frame, DrawOption("P0Z"), MarkerColor(Color1S), Name("data1S"));
+	data_weight1S.plotOn(frame, DrawOption("P0Z"), MarkerColor(gColor1S), Name("data1S"));
 
-	data_weight2S.plotOn(frame, DrawOption("P0Z"), MarkerColor(Color2S), Name("data2S"));
+	data_weight2S.plotOn(frame, DrawOption("P0Z"), MarkerColor(gColor2S), Name("data2S"));
 
 	frame->GetYaxis()->SetMaxDigits(3);
+	gStyle->SetExponentOffset(-0.08, 0.005, "Y");
 
 	frame->SetMaximum(1.6 * frame->GetMaximum());
 

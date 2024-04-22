@@ -18,8 +18,7 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 	gStyle->SetTitleYOffset(1.1);
 	gStyle->SetPadRightMargin(0.17);
 	gStyle->SetTitleOffset(1., "z");
-	gStyle->SetPalette(kRainBow);
-	gStyle->SetNumberContours(256);
+	SetColorPalette("KlimtGold");
 
 	/// Set up the data
 	using namespace RooFit;
@@ -50,14 +49,13 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 
 	TH2* histo = dynamic_cast<TH2*>(reducedDataset->createHistogram(histoName, cosTheta, RooFit::Binning(nCosThetaBins, cosThetaMin, cosThetaMax), RooFit::YVar(invMass, RooFit::Binning(nInvMassBins, massMin, massMax))));
 	histo->SetTitle(" ");
-
 	histo->Draw("COLZ");
 
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.05);
 	legend.SetTextColor(kWhite);
-	legend.DrawLatexNDC(.48, .86, CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .86, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.48, .78, Form("correlation = %.2f%%", 100 * correlationFactor));
 
 	histo->GetXaxis()->CenterTitle();

@@ -20,13 +20,14 @@ RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet dataset) {
 	dataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	auto* fitModel = wspace.pdf("invMassModel");
-	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(ColorBkg), LineStyle(kDashed));
-	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(Color1S));
-	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(Color2S));
-	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(Color3S));
-	fitModel->plotOn(frame, LineColor(kBlue));
+	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed));
+	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(gColor1S));
+	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(gColor2S));
+	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(gColor3S));
+	fitModel->plotOn(frame, LineColor(gColorTotalFit));
 
 	frame->GetYaxis()->SetMaxDigits(3);
+	gStyle->SetExponentOffset(-0.07, 0.005, "Y");
 
 	return frame;
 }

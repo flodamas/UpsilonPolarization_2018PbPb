@@ -64,7 +64,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	/// Draw the distributions
 	gStyle->SetPadLeftMargin(.15);
 	gStyle->SetPadRightMargin(0.18);
-	gStyle->SetPalette(kRainBow);
+	gStyle->SetPalette(gPreferredColorPalette);
 	gStyle->SetNumberContours(256);
 
 	// the acc x eff map
