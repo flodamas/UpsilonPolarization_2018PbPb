@@ -76,7 +76,7 @@ void cosThetaWeighting(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	// create weighted data sets
 	RooDataSet data_weight1S = GetSWeightedDataset(data, "1S");
 
-	data_weight1S.plotOn(frame, DrawOption("P0Z"), MarkerColor(kRed), DataError(RooAbsData::SumW2), Name("data1S"));
+	data_weight1S.plotOn(frame, DrawOption("P0Z"), MarkerColor(gColor1S), DataError(RooAbsData::SumW2), Name("data1S"));
 
 	frame->GetYaxis()->SetMaxDigits(3);
 

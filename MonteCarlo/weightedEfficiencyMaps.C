@@ -564,8 +564,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	gStyle->SetPadLeftMargin(.15);
 	gStyle->SetPadRightMargin(0.18);
-	gStyle->SetPalette(kRainBow);
-	gStyle->SetNumberContours(256);
+	SetColorPalette("cividis");
 
 	/// display the nominal results
 

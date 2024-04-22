@@ -59,7 +59,7 @@ void selectedMC_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	data->plotOn(frame, Name("data"), Binning(nCosThetaBins), DrawOption("P0Z"), DataError(RooAbsData::SumW2));
 
-	cosThetaPDF.plotOn(frame, LineColor(kRed + 1), Name("polaResult"));
+	cosThetaPDF.plotOn(frame, LineColor(gColor1S), Name("polaResult"));
 
 	//frame->GetYaxis()->SetRangeUser(0, 1000);
 	frame->GetYaxis()->SetMaxDigits(3);

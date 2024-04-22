@@ -100,7 +100,7 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 
 	yieldRooDataHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("rawYield"));
 
-	data_weight1S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(kRed), Name("sData"));
+	data_weight1S.plotOn(frame, Binning(nCosThetaBins), DrawOption("P0Z"), MarkerColor(gColor1S), Name("sData"));
 
 	frame->GetYaxis()->SetMaxDigits(3);
 	frame->SetMaximum(2 * maxYield);
