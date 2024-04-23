@@ -118,14 +118,14 @@ bool DoAsymptoticError = true;
 
 // definition of the actual colors globally used in the code
 
-const Color_t gPreferredColorPalette = kSunset;
-const Color_t gAcceptanceColorPalette = kCividis;
-const Color_t gEfficiencyColorPalette = kCividis;
+std::string gPreferredColorPaletteName = "sunset";
+std::string gAcceptanceColorPaletteName = "cividis";
+std::string gEfficiencyColorPaletteName = "cividis";
 
 const Color_t gColor1S = TamDragonRed;
 const Color_t gColor2S = TamDragonOrange;
 const Color_t gColor3S = TamDragonOrangeYellow;
-const Color_t gColorBkg = CMSColorLightGray;
+const Color_t gColorBkg = kGray + 1;
 const Color_t gColorTotalFit = TamDragonDarkPurple;
 
 // consistent naming
