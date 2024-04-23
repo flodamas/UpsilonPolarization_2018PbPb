@@ -50,6 +50,10 @@ const int TamDragonLightOrange = TColor::GetColor("#ef8737");
 const int TamDragonOrangeYellow = TColor::GetColor("#ffb242");
 const int TamDragonYellow = TColor::GetColor("#ffd353");
 
+const int TamDragonPaletteRed[] = {52, 98, 159, 197, 222, 239, 255, 255};
+const int TamDragonPaletteGreen[] = {22, 32, 45, 41, 79, 135, 178, 211};
+const int TamDragonPaletteBlue[] = {72, 95, 85, 44, 51, 55, 66, 83};
+
 // Klimt's gold, inspired from "The Kiss"
 const int NKlimtGoldColors = 5;
 
@@ -110,12 +114,16 @@ void SetColorPalette(string styleName = "cividis", bool invert = false, int nCon
 
 	else if (styleName == "TamDragon") {
 		nColors = NTamDragonColors;
-		int colors[nColors];
 
+		double red[nColors], green[nColors], blue[nColors], stops[nColors];
 		for (int i = 0; i < nColors; ++i) {
-			colors[i] = TColor::GetColor(TamDragonPalette[i]);
+			red[i] = TamDragonPaletteRed[i] / 255.;
+			green[i] = TamDragonPaletteGreen[i] / 255.;
+			blue[i] = TamDragonPaletteBlue[i] / 255.;
+			stops[i] = (double)i / (nColors - 1);
 		}
-		gStyle->SetPalette(nColors, colors); // will not be a linear gradient though, too complicated to convert from hexadecimal to RBG codes
+
+		TColor::CreateGradientColorTable(nColors, stops, red, green, blue, nContours);
 	}
 
 	else {

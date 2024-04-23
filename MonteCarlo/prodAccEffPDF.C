@@ -64,8 +64,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	/// Draw the distributions
 	gStyle->SetPadLeftMargin(.15);
 	gStyle->SetPadRightMargin(0.18);
-	gStyle->SetPalette(gPreferredColorPalette);
-	gStyle->SetNumberContours(256);
+	SetColorPalette(gPreferredColorPaletteName);
 
 	// the acc x eff map
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 700, 600);
@@ -84,7 +83,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.045);
-	legend.SetHeader(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.5, .75, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 
 	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) MC", iState));
 

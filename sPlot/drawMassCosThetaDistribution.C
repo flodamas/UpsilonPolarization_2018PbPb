@@ -18,7 +18,7 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 	gStyle->SetTitleYOffset(1.1);
 	gStyle->SetPadRightMargin(0.17);
 	gStyle->SetTitleOffset(1., "z");
-	SetColorPalette("KlimtGold");
+	SetColorPalette("TamDragon");
 
 	/// Set up the data
 	using namespace RooFit;
