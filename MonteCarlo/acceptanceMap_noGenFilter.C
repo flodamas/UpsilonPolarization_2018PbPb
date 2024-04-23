@@ -158,7 +158,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	gStyle->SetPadLeftMargin(.15);
 	//gStyle->SetTitleYOffset(.9);
 	gStyle->SetPadRightMargin(0.18);
-	SetColorPalette("cividis");
+	SetColorPalette(gAcceptanceColorPaletteName);
 
 	// Draw and save the acceptance map for Lab frame
 	DrawAcceptanceMap(hGranularLab, ptMin, ptMax, iState);
