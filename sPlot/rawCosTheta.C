@@ -11,8 +11,6 @@
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/Style/FitDistributions.h"
 
-#include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
-
 void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Int_t phiMin = -180, Int_t phiMax = 180, const char* filename = "../Files/UpsilonSkimmedDataset.root") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
@@ -88,20 +86,6 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 
 	gPad->RedrawAxis();
 
-	/// Polarization fit
-	/*
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -2, 2);
-
-	auto cosThetaPDF_1S = CosThetaPolarizationPDF("cosThetaPDF_1S", " ", *cosTheta, lambdaTheta);
-
-	auto* polarizationFitResult = cosThetaPDF_1S.fitTo(data_weight1S, Save(), Extended(kTRUE), PrintLevel(+1), NumCPU(NCPUs), Range(cosThetaMin, cosThetaMax), AsymptoticError(DoAsymptoticError));
-
-	polarizationFitResult->Print("v");
-
-	cosThetaPDF_1S.plotOn(frame, LineColor(kRed + 1), Name("polaResult"));
-
-	frame->Draw();
-*/
 	// cosmetics
 
 	TLatex text;
