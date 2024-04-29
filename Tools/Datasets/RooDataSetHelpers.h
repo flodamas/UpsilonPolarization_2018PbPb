@@ -10,11 +10,11 @@ RooWorkspace SetUpWorkspace(const char* filename, const char* refFrameName = "CS
 
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
-		cout << "File " << filename << " not found. Check the directory of the file." << endl;
+		cout << "File " << filename << " not found. Check the directory of the file.\n";
 		return RooWorkspace("emptyWorkspace");
 	}
 
-	if (BeVerbose) cout << "File " << filename << " opened" << endl;
+	if (BeVerbose) cout << "File " << filename << " opened\n";
 
 	const char* datasetName = RawDatasetName(refFrameName);
 	RooDataSet* data = (RooDataSet*)f->Get(datasetName);
@@ -23,8 +23,7 @@ RooWorkspace SetUpWorkspace(const char* filename, const char* refFrameName = "CS
 
 	wspace.import(*data);
 
-	if (BeVerbose) cout << endl
-		                  << datasetName << " imported into " << wspace.GetName() << endl;
+	if (BeVerbose) cout << datasetName << " imported into " << wspace.GetName() << endl;
 
 	f->Close();
 
@@ -52,7 +51,7 @@ RooDataSet InvMassCosThetaPhiDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_
 // reduce the input dataset (N dimensions) to the apply desired kinematic cuts
 RooDataSet* ReducedDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, Double_t massMin = 8, Double_t massMax = 14, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		cerr << "Null RooDataSet provided to the reducer method!!\n";
 		return nullptr;
 	}
 

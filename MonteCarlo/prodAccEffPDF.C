@@ -10,7 +10,7 @@
 
 // see tutorial https://root.cern/doc/master/rf706__histpdf_8C.html
 
-void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t iState = 1) { //possible refFrame names: CS or HX
+RooHistPdf* prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t iState = 1) { //possible refFrame names: CS or HX
 	writeExtraText = true;
 	extraText = "       Internal";
 
@@ -26,7 +26,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	Int_t nPhiBins = 18;
 	Int_t phiMin = -180, phiMax = 180;
 
-	RooRealVar phi(PhiVarName(refFrameName), PhiVarTitle(refFrameName), phiMin, phiMax);
+	RooRealVar phi(PhiVarName(refFrameName), PhiVarTitle(refFrameName), phiMin, phiMax, gPhiUnit);
 
 	/// 1. retrieve the 2D maps
 	const char* mapName = CosThetaPhiTEfficiency2DName(ptMin, ptMax, refFrameName);
@@ -35,7 +35,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	TFile* acceptanceFile = TFile::Open(Form("AcceptanceMaps/%dS/AcceptanceResults.root", iState), "READ");
 	if (!acceptanceFile) {
 		cout << "Acceptance file not found. Check the directory of the file." << endl;
-		return;
+		return nullptr;
 	}
 
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(mapName);
@@ -44,7 +44,7 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	TFile* efficiencyFile = TFile::Open(Form("EfficiencyMaps/%dS/EfficiencyResults.root", iState), "READ");
 	if (!efficiencyFile) {
 		cout << "Efficiency file not found. Check the directory of the file." << endl;
-		return;
+		return nullptr;
 	}
 
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(mapName);
@@ -59,10 +59,10 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	/// 3. transform into a RooDataHist, then into a RooHistPdf
 	RooDataHist effDataHist("effDataHist", "", {cosTheta, phi}, effTH2);
 
-	RooHistPdf effPDF("effPDF", "", {cosTheta, phi}, effDataHist, 3);
+	RooHistPdf* effPDF = new RooHistPdf("effPDF", "", {cosTheta, phi}, effDataHist, 3);
 
 	/// Draw the distributions
-	gStyle->SetPadLeftMargin(.15);
+	//gStyle->SetPadLeftMargin(.15);
 	gStyle->SetPadRightMargin(0.18);
 	SetColorPalette(gPreferredColorPaletteName);
 
@@ -83,7 +83,8 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.045);
-	legend.DrawLatexNDC(.5, .75, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .8, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .72, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
 	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) MC", iState));
 
@@ -92,11 +93,11 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	// draw the sampling of the PDF in 3D
 	TCanvas* canvas2 = new TCanvas("canvas2", "canvas", 700, 600);
-	TH1* histoPDF = effPDF.createHistogram("histoPDF", cosTheta, RooFit::Binning(nCosThetaBins, cosThetaMin, cosThetaMax), RooFit::YVar(phi, RooFit::Binning(nPhiBins, phiMin, phiMax)));
+	TH1* histoPDF = effPDF->createHistogram("histoPDF", cosTheta, RooFit::Binning(nCosThetaBins, cosThetaMin, cosThetaMax), RooFit::YVar(phi, RooFit::Binning(nPhiBins, phiMin, phiMax)));
 
 	histoPDF->SetTitle(" ");
 
-	histoPDF->GetZaxis()->SetTitle("acceptance #times efficiency PDF value");
+	histoPDF->GetZaxis()->SetTitle(Form("#varUpsilon(%dS) acceptance #times efficiency PDF", iState));
 	histoPDF->GetXaxis()->CenterTitle();
 
 	histoPDF->GetYaxis()->CenterTitle();
@@ -107,7 +108,16 @@ void prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 
 	CMS_lumi(canvas2, Form("Unpolarized #varUpsilon(%dS) MC", iState));
 
-	legend.DrawLatexNDC(.5, .75, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .8, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .72, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
 	canvas2->SaveAs(Form("EfficiencyMaps/%dS/AccEffPDF_CosThetaPhi%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+
+	acceptanceFile->Close();
+	efficiencyFile->Close();
+
+	delete canvas;
+	delete canvas2;
+
+	return effPDF;
 }
