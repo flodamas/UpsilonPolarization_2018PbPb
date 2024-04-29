@@ -4,6 +4,8 @@
 
 #include "../Tools/Datasets/RooDataSetHelpers.h"
 
+#include "../Tools/Style/Figures.h"
+
 void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {
 	Double_t massMin = 7, massMax = 13;
 	Int_t nInvMassBins = (Int_t)10 * (massMax - massMin);
@@ -34,12 +36,11 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 
 	auto data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
 
-	std::unique_ptr<RooAbsData> reducedDataset{data.reduce({cosTheta, invMass}, Form("mass > %f && mass < %f", massMin, massMax))};
+	auto reducedDataset = *(RooDataSet*)data.reduce(Form("mass > %f && mass < %f", massMin, massMax));
 
-	double correlationFactor = reducedDataset->correlation(cosTheta, invMass);
+	double correlationFactor = reducedDataset.correlation(cosTheta, invMass);
 
-	cout << endl
-	     << "Correlation between the invariant mass and cos theta = " << correlationFactor << endl;
+	cout << "\nCorrelation between the invariant mass and cos theta = " << correlationFactor << endl;
 
 	const char* histoName = Form("InvMassCosTheta%s_cent%dto%d_pt%dto%dGeV", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
 
@@ -47,8 +48,8 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 700, 600);
 
-	TH2* histo = dynamic_cast<TH2*>(reducedDataset->createHistogram(histoName, cosTheta, RooFit::Binning(nCosThetaBins, cosThetaMin, cosThetaMax), RooFit::YVar(invMass, RooFit::Binning(nInvMassBins, massMin, massMax))));
-	histo->SetTitle(" ");
+	auto histo = TH2fromRooDataSet(reducedDataset, histoName, cosTheta, nCosThetaBins, cosThetaMin, cosThetaMax, invMass, nInvMassBins, massMin, massMax);
+
 	histo->Draw("COLZ");
 
 	TLatex legend;
@@ -57,12 +58,6 @@ void drawMassCosThetaDistribution(Int_t ptMin = 0, Int_t ptMax = 30, const char*
 	legend.SetTextColor(kWhite);
 	legend.DrawLatexNDC(.48, .86, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.48, .78, Form("correlation = %.2f%%", 100 * correlationFactor));
-
-	histo->GetXaxis()->CenterTitle();
-	histo->GetYaxis()->CenterTitle();
-	//histo->GetYaxis()->SetRangeUser(massMin, massMax + 2);
-
-	histo->GetZaxis()->SetMaxDigits(3);
 
 	gPad->Update();
 
