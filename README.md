@@ -22,12 +22,16 @@
   i) Get acceptance correction map
   - MonteCarlo/acceptanceMap_noGenFilter.C
     ```
+    - headers: 1) AnalysisParameters.h (determine the bin width)
+               2) MonteCarlo/AccEffHelpers.h (define TEfficiency3D)
     - input: Files/OniaTree_Y%dS_GENONLY_NoFilter.root
     - output: MonteCarlo/acceptanceMaps/%S/AcceptanceResults.root 
     ```
   ii) Get efficiency map
   - MonteCarlo/weightedEfficiencyMaps.C
     ```
+    - headers: 1) AnalysisParameters.h (determine the bin width)
+               2) MonteCarlo/AccEffHelpers.h (define TEfficiency3D)
     - input: Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root
     - output: MonteCarlo/EfficiencyMaps/%S/EfficiencyResults.root 
     ```
