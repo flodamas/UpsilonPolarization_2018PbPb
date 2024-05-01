@@ -33,6 +33,30 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accMap->GetName()), "RECREATE");
 }
 
+void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t iState = 1) {
+	TCanvas* canvas = new TCanvas(accHist->GetName(), "", 700, 600);
+	accHist->SetLineWidth(3);
+	accHist->Draw("APL");
+
+	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
+
+	TLatex legend;
+	legend.SetTextAlign(22);
+	legend.SetTextSize(0.05);
+	legend.DrawLatexNDC(.48, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+
+	gPad->Update();
+
+	accHist->GetPaintedGraph()->GetXaxis()->CenterTitle();
+	accHist->GetPaintedGraph()->GetYaxis()->CenterTitle();
+
+	accHist->GetPaintedGraph()->GetYaxis()->SetRangeUser(0, 1);
+
+	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
+	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accHist->GetName()), "RECREATE");
+}
+
 const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
 	return Form(";%s;%s;acceptance", CosThetaVarTitle(refFrameName), PhiAxisTitle(refFrameName));
 }
@@ -167,10 +191,12 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	// Draw and save the acceptance map for CS frame
 	DrawAcceptanceMap(hGranularCS, ptMin, ptMax, iState);
 	DrawAcceptanceMap(hAnalysisCS, ptMin, ptMax, iState);
+	DrawAcceptance1DHist(hAccCS1D, ptMin, ptMax, iState);
 
 	// Draw and save the acceptance map for HX frame
 	DrawAcceptanceMap(hGranularHX, ptMin, ptMax, iState);
 	DrawAcceptanceMap(hAnalysisHX, ptMin, ptMax, iState);
+	DrawAcceptance1DHist(hAccHX1D, ptMin, ptMax, iState);
 
 	/// save the results in a file for later usage
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
