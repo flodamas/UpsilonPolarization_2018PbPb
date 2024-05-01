@@ -42,7 +42,7 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 
 	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
-	auto* fitResult = RawInvariantMassFit(data, invMassModel);
+	auto* fitResult = RawInvariantMassFit(data, invMassModel, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")));
 
 	/// Draw the invariant mass distribution, to check the fit
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
