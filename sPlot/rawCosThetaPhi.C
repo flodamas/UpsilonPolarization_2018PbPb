@@ -69,7 +69,7 @@ void rawCosThetaPhi(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName 
 
 	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
-	auto* fitResult = RawInvariantMassFit(allData, invMassModel);
+	auto* fitResult = RawInvariantMassFit(allData, invMassModel, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")));
 
 	/// Draw the invariant mass distribution, to check the fit
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, allData, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
