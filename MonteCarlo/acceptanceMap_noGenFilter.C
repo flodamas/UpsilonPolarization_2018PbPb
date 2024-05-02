@@ -56,8 +56,6 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	accHist->GetPaintedGraph()->GetXaxis()->SetRangeUser(-1, 1);
 	accHist->GetPaintedGraph()->GetYaxis()->SetRangeUser(0, 1);
 
-	// gPad->Update();
-
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
 	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accHist->GetName()), "RECREATE");
 }
