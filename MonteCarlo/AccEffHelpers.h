@@ -34,7 +34,9 @@ TEfficiency* CosThetaTEfficiency1D(Int_t ptMin = 0, Int_t ptMax = 30, const char
 	if (isAcc) title = Form(";%s;%s", CosThetaVarTitle(refFrameName), TEfficiencyAccMainTitle(iState));
 	else title = Form(";%s;%s", CosThetaVarTitle(refFrameName), TEfficiencyMainTitle(iState));
 
-	TEfficiency* tEff = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax);
+	TEfficiency* tEff;
+	if (std::string(refFrameName) == "CS") tEff = new TEfficiency(name, title, NCosThetaBinsCS, CosThetaBinningCS);
+	else tEff = new TEfficiency(name, title, NCosThetaBinsHX, CosThetaBinningHX);
 
 	tEff->SetStatisticOption(gTEffStatOption);
 
