@@ -149,6 +149,33 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, int iState
 	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effMap->GetName()), "RECREATE");
 }
 
+void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t iState = gUpsilonState) {
+	TCanvas* canvas = new TCanvas(effHist->GetName(), "", 600, 600);
+	canvas->SetRightMargin(0.05);
+
+	effHist->SetLineWidth(3);
+	effHist->Draw("APL");
+
+	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
+
+	TLatex legend;
+	legend.SetTextAlign(22);
+	legend.SetTextSize(0.05);
+	legend.DrawLatexNDC(.55, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+
+	gPad->Update();
+
+	effHist->GetPaintedGraph()->GetXaxis()->CenterTitle();
+	effHist->GetPaintedGraph()->GetYaxis()->CenterTitle();
+
+	effHist->GetPaintedGraph()->GetXaxis()->SetRangeUser(-1, 1);
+	effHist->GetPaintedGraph()->GetYaxis()->SetRangeUser(0, 1);
+
+	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
+	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effHist->GetName()), "RECREATE");
+}
+
 // create the (cos theta, phi) map of the total efficiency (fully reweighted) for a given pT range
 
 // this macro is based on mapUpsilonEfficiency.C with the difference that only "granular" distributions are made, following the new strategy of correcting the data BEFORE signal extraction from invariant mass fit
@@ -569,8 +596,10 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	/// display the nominal results
 
 	DrawEfficiencyMap(hEffCS2D, ptMin, ptMax, iState);
+	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, iState);
 
 	DrawEfficiencyMap(hEffHX2D, ptMin, ptMax, iState);
+	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, iState);
 
 	/// compute the systematics in this macro since we have all the ingredients for that
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
