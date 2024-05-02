@@ -35,6 +35,8 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 
 void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t iState = 1) {
 	TCanvas* canvas = new TCanvas(accHist->GetName(), "", 600, 600);
+	canvas->SetRightMargin(0.05);
+
 	accHist->SetLineWidth(3);
 	accHist->Draw("APL");
 
@@ -47,13 +49,14 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
 	gPad->Update();
-	canvas->SetRightMargin(0.05);
 
 	accHist->GetPaintedGraph()->GetXaxis()->CenterTitle();
 	accHist->GetPaintedGraph()->GetYaxis()->CenterTitle();
 
 	accHist->GetPaintedGraph()->GetXaxis()->SetRangeUser(-1, 1);
 	accHist->GetPaintedGraph()->GetYaxis()->SetRangeUser(0, 1);
+
+	// gPad->Update();
 
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
 	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accHist->GetName()), "RECREATE");
