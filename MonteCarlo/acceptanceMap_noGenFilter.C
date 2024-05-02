@@ -34,7 +34,7 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 }
 
 void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t iState = 1) {
-	TCanvas* canvas = new TCanvas(accHist->GetName(), "", 700, 600);
+	TCanvas* canvas = new TCanvas(accHist->GetName(), "", 600, 600);
 	accHist->SetLineWidth(3);
 	accHist->Draw("APL");
 
@@ -43,14 +43,16 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.05);
-	legend.DrawLatexNDC(.48, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
-	legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	legend.DrawLatexNDC(.55, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
 	gPad->Update();
+	canvas->SetRightMargin(0.05);
 
 	accHist->GetPaintedGraph()->GetXaxis()->CenterTitle();
 	accHist->GetPaintedGraph()->GetYaxis()->CenterTitle();
 
+	accHist->GetPaintedGraph()->GetXaxis()->SetRangeUser(-1, 1);
 	accHist->GetPaintedGraph()->GetYaxis()->SetRangeUser(0, 1);
 
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
@@ -62,9 +64,12 @@ const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
 }
 
 // (cos theta, phi) acceptance maps based on Y events generated without any decay kinematic cut
-// MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/
+// MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/ (deleted:/)
 
-void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1, const char* statOptionName = "FCP") {
+// For TEfficiency, Used default error calculation method (frequentist Clopper-Pearson)
+// Statistic opsilons documentation: https://root.cern.ch/doc/master/classTEfficiency.html#a3f714468ae043885adfb890677498ae4:~:text=TEfficiency%3A%3ASetTotalEvents%20method.-,IV.%20Statistic%20options,-The%20calculation%20of
+
+void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1) {
 	// Read GenOnly Nofilter file
 	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
@@ -112,9 +117,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 
 	// vs cos theta, for investigation
 
-	TEfficiency* hAccCS1D = CosThetaTEfficiency1D(ptMin, ptMax, "CS", iState);
+	TEfficiency* hAccCS1D = CosThetaTEfficiency1D(ptMin, ptMax, "CS", iState, kTRUE);
 
-	TEfficiency* hAccHX1D = CosThetaTEfficiency1D(ptMin, ptMax, "HX", iState);
+	TEfficiency* hAccHX1D = CosThetaTEfficiency1D(ptMin, ptMax, "HX", iState, kTRUE);
 
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();

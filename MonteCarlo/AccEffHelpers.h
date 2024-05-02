@@ -20,13 +20,19 @@ const char* TEfficiencyMainTitle(int iState = gUpsilonState) {
 	return Form("#varUpsilon(%dS) total efficiency", iState);
 }
 
+const char* TEfficiencyAccMainTitle(int iState = gUpsilonState) {
+	return Form("#varUpsilon(%dS) acceptance", iState);
+}
+
 /// TEfficiency constructors
 
 // cos theta distribution for a given pT range
-TEfficiency* CosThetaTEfficiency1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", int iState = gUpsilonState) {
+TEfficiency* CosThetaTEfficiency1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", int iState = gUpsilonState, Bool_t isAcc = kFALSE) {
 	const char* name = Form("CosTheta%s", TEfficiencyEndName(refFrameName, ptMin, ptMax));
 
-	const char* title = Form(";%s;%s", CosThetaVarTitle(refFrameName), TEfficiencyMainTitle(iState));
+	char* title;
+	if (isAcc) title = Form(";%s;%s", CosThetaVarTitle(refFrameName), TEfficiencyAccMainTitle(iState));
+	else title = Form(";%s;%s", CosThetaVarTitle(refFrameName), TEfficiencyMainTitle(iState));
 
 	TEfficiency* tEff = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax);
 
