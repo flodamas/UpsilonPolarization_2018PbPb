@@ -5,12 +5,10 @@
 #include "../Tools/Datasets/RooDataSetHelpers.h"
 #include "../Tools/Datasets/SPlotHelpers.h"
 
-#include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 #include "../Tools/Style/Figures.h"
 
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
-#include "../Tools/Style/FitDistributions.h"
 
 void drawAndSaveDistribution(TH2* histo, const char* name, Int_t ptMin, Int_t ptMax, const char* legend) {
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 700, 600);
@@ -69,17 +67,9 @@ void rawCosThetaPhi(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName 
 
 	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
-	auto* fitResult = RawInvariantMassFit(allData, invMassModel, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")));
-
-	/// Draw the invariant mass distribution, to check the fit
-	TCanvas* massCanvas = DrawMassFitDistributions(wspace, allData, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
-
-	gSystem->mkdir("InvMassFits", kTRUE);
-	massCanvas->SaveAs(Form("InvMassFits/rawInvMassFit_%s_cent%dto%d_pt%dto%dGeV.png", bkgShapeName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
-
 	/// SPlot time!
 
-	SPlot sData = CreateSPlot(wspace, allData, invMassModel);
+	SPlot sData = CreateSWeights(wspace, allData);
 
 	/// Draw the (cos theta, phi) distributions with and without sWeights
 	gStyle->SetPadLeftMargin(.14);

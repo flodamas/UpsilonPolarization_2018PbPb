@@ -5,11 +5,9 @@
 #include "../Tools/Datasets/RooDataSetHelpers.h"
 #include "../Tools/Datasets/SPlotHelpers.h"
 
-#include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
-#include "../Tools/Style/FitDistributions.h"
 
 void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Int_t phiMin = -180, Int_t phiMax = 180, const char* filename = "../Files/UpsilonSkimmedDataset.root") {
 	writeExtraText = true; // if extra text
@@ -41,7 +39,7 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 	const char* bkgShapeName = "ExpTimesErr";
 
 	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
-
+	/*
 	auto* fitResult = RawInvariantMassFit(data, invMassModel, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")));
 
 	/// Draw the invariant mass distribution, to check the fit
@@ -49,10 +47,10 @@ void rawCosTheta(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "
 
 	gSystem->mkdir("InvMassFits", kTRUE);
 	massCanvas->SaveAs(Form("InvMassFits/rawInvMassFit_%s_cent%dto%d_pt%dto%dGeV.png", bkgShapeName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
-
+*/
 	/// SPlot time!
 
-	SPlot sData = CreateSPlot(wspace, data, invMassModel);
+	SPlot sData = CreateSWeights(wspace, data);
 
 	/// Draw the cos theta distributions with and without sWeights
 
