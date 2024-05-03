@@ -60,7 +60,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	Float_t highPtCut = gPtMax;
 	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, highPtCut, gPtUnit);
 
-	char* refFrameName = (char*) "Lab";
+	char* refFrameName = (char*)"Lab";
 	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
@@ -68,17 +68,19 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 	RooDataSet datasetLab(RawDatasetName(refFrameName), "skimmed dataset for the Lab frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar));
 
-	refFrameName = (char*) "CS";
+	refFrameName = (char*)"CS";
 	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
 	RooDataSet datasetCS(RawDatasetName(refFrameName), "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
 
-	refFrameName = (char*) "HX";
+	refFrameName = (char*)"HX";
 	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
 	RooDataSet datasetHX(RawDatasetName(refFrameName), "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
+
+	RooDataSet dataset(RawDatasetName(""), "skimmed dataset for both CS and HX frames", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
 
 	// loop variables
 	Long64_t totEntries = OniaTree->GetEntries();
@@ -170,6 +172,8 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
 
+			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
+
 		} // end of reco QQ loop
 	}   // enf of event loop
 
@@ -180,6 +184,8 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	datasetCS.Write();
 
 	datasetHX.Write();
+
+	dataset.Write();
 
 	file.Close();
 
