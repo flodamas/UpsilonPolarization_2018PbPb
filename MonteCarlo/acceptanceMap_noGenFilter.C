@@ -37,8 +37,13 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	TCanvas* canvas = new TCanvas(accHist->GetName(), "", 600, 600);
 	canvas->SetRightMargin(0.05);
 
+	// empty frame for the axes
+	TH1D* frameHist = new TH1D("frameHist", "", NCosThetaBinsHX, CosThetaBinningHX);
+
+	frameHist->Draw(); 
+
 	accHist->SetLineWidth(3);
-	accHist->Draw("APL");
+	accHist->Draw("PL E0 SAME");
 
 	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
 
@@ -48,13 +53,18 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	legend.DrawLatexNDC(.55, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
-	gPad->Update();
+	if (strstr(accHist->GetName(), "CS")) frameHist->SetXTitle(CosThetaVarTitle("CS"));
+	else frameHist->SetXTitle(CosThetaVarTitle("HX"));
 
-	accHist->GetPaintedGraph()->GetXaxis()->CenterTitle();
-	accHist->GetPaintedGraph()->GetYaxis()->CenterTitle();
+	frameHist->SetYTitle(TEfficiencyAccMainTitle(iState));
+	
+	frameHist->GetXaxis()->CenterTitle();
+	frameHist->GetYaxis()->CenterTitle();
 
-	accHist->GetPaintedGraph()->GetXaxis()->SetRangeUser(-1, 1);
-	accHist->GetPaintedGraph()->GetYaxis()->SetRangeUser(0, 1);
+	frameHist->GetXaxis()->SetRangeUser(-1, 1);
+	frameHist->GetYaxis()->SetRangeUser(0, 1);
+
+	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
 
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
 	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accHist->GetName()), "RECREATE");
@@ -65,10 +75,7 @@ const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
 }
 
 // (cos theta, phi) acceptance maps based on Y events generated without any decay kinematic cut
-// MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/ (deleted:/)
-
-// For TEfficiency, Used default error calculation method (frequentist Clopper-Pearson)
-// Statistic opsilons documentation: https://root.cern.ch/doc/master/classTEfficiency.html#a3f714468ae043885adfb890677498ae4:~:text=TEfficiency%3A%3ASetTotalEvents%20method.-,IV.%20Statistic%20options,-The%20calculation%20of
+// MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/ (This file was deleted:/)
 
 void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1) {
 	// Read GenOnly Nofilter file
