@@ -153,8 +153,13 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	TCanvas* canvas = new TCanvas(effHist->GetName(), "", 600, 600);
 	canvas->SetRightMargin(0.05);
 
+	// empty frame for the axes
+	TH1D* frameHist = new TH1D("frameHist", "", NCosThetaBinsHX, CosThetaBinningHX);
+
+	frameHist->Draw(); 
+
 	effHist->SetLineWidth(3);
-	effHist->Draw("APL");
+	effHist->Draw("PL E0 SAME");
 
 	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
 
@@ -164,13 +169,18 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	legend.DrawLatexNDC(.55, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
-	gPad->Update();
+	if (strstr(effHist->GetName(), "CS")) frameHist->SetXTitle(CosThetaVarTitle("CS"));
+	else frameHist->SetXTitle(CosThetaVarTitle("HX"));
 
-	effHist->GetPaintedGraph()->GetXaxis()->CenterTitle();
-	effHist->GetPaintedGraph()->GetYaxis()->CenterTitle();
+	frameHist->SetYTitle(TEfficiencyAccMainTitle(iState));
+	
+	frameHist->GetXaxis()->CenterTitle();
+	frameHist->GetYaxis()->CenterTitle();
 
-	effHist->GetPaintedGraph()->GetXaxis()->SetRangeUser(-1, 1);
-	effHist->GetPaintedGraph()->GetYaxis()->SetRangeUser(0, 1);
+	frameHist->GetXaxis()->SetRangeUser(-1, 1);
+	frameHist->GetYaxis()->SetRangeUser(0, 1);
+
+	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
 
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
 	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effHist->GetName()), "RECREATE");
