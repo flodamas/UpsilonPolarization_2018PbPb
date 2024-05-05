@@ -3,13 +3,9 @@
 #include "../AnalysisParameters.h"
 
 #include "../Tools/Datasets/RooDataSetHelpers.h"
-#include "../Tools/Datasets/SPlotHelpers.h"
+#include "SPlotHelpers.h"
 
-#include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
-
-#include "../Tools/RooFitPDFs/InvariantMassModels.h"
-#include "../Tools/Style/FitDistributions.h"
 
 // compare the sPlot and raw yield extraction methods
 void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180, const char* filename = "../Files/UpsilonSkimmedDataset.root") { //possible refFrame names: CS or HX
@@ -24,16 +20,14 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
+	RooWorkspace wspace = SetUpWorkspace(filename);
 
-	auto data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax);
 
 	// read variables in the reduced dataset in the workspace
 	RooRealVar invMass = *wspace.var("mass");
 
 	RooRealVar cosTheta = *wspace.var(CosThetaVarName(refFrameName));
-
-	Long64_t nEntries = data.sumEntries();
 
 	/// Invariant mass model
 
@@ -46,20 +40,11 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	//const char* bkgShapeName = Form("ChebychevOrder%d", order);
 	const char* bkgShapeName = "ExpTimesErr";
 
-	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
-
-	auto* fitResult = RawInvariantMassFit(data, invMassModel, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")));
-
-	/// Draw the invariant mass distribution, to check the fit
-	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
-
-	massCanvas->SaveAs(Form("InvMassFits/rawInvMassFit_%s_cent%dto%d_pt%dto%dGeV.png", bkgShapeName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
-
 	/// SPlot time!
-	SPlot sData = CreateSPlot(wspace, data, invMassModel);
+	auto* sData = SWeightedDataset(wspace, ptMin, ptMax, signalShapeName, bkgShapeName);
 
 	// create weighted data sets
-	RooDataSet data_weight1S = GetSWeightedDataset(&data, "1S");
+	RooDataSet data_weight1S = GetSpeciesSWeightedDataset(sData, "1S");
 
 	/// Standard extraction of the raw yield per bin of cos theta
 	RooRealVar* yield1S = wspace.var("yield1S");
