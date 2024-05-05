@@ -3,12 +3,10 @@
 #include "../AnalysisParameters.h"
 
 #include "../Tools/Datasets/RooDataSetHelpers.h"
-#include "../Tools/Datasets/SPlotHelpers.h"
+#include "SPlotHelpers.h"
 
 #include "../Tools/Style/Legends.h"
 #include "../Tools/Style/Figures.h"
-
-#include "../Tools/RooFitPDFs/InvariantMassModels.h"
 
 void drawAndSaveDistribution(TH2* histo, const char* name, Int_t ptMin, Int_t ptMax, const char* legend) {
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 700, 600);
@@ -42,17 +40,15 @@ void rawCosThetaPhi(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
+	RooWorkspace wspace = SetUpWorkspace(filename);
 
-	auto allData = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	auto allData = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax);
 
 	// read variables in the reduced dataset in the workspace
 
 	RooRealVar cosTheta = *wspace.var(CosThetaVarName(refFrameName));
 
 	RooRealVar phi = *wspace.var(PhiVarName(refFrameName));
-
-	Long64_t nEntries = allData.sumEntries();
 
 	/// Invariant mass model
 
@@ -65,11 +61,9 @@ void rawCosThetaPhi(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName 
 	//const char* bkgShapeName = Form("ChebychevOrder%d", order);
 	const char* bkgShapeName = "ExpTimesErr";
 
-	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
-
 	/// SPlot time!
 
-	SPlot sData = CreateSWeights(wspace, allData);
+	auto* sData = SWeightedDataset(wspace, ptMin, ptMax, signalShapeName, bkgShapeName);
 
 	/// Draw the (cos theta, phi) distributions with and without sWeights
 	gStyle->SetPadLeftMargin(.14);
@@ -85,7 +79,7 @@ void rawCosThetaPhi(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName 
 
 	const char* histoName = Form("rawCosThetaPhi%s_cent%dto%d_pt%dto%dGeV", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
 
-	auto data = *(RooDataSet*)allData.reduce(massCut);
+	auto data = *(RooDataSet*)sData->reduce(massCut);
 
 	// all data in mass window
 
@@ -98,7 +92,7 @@ void rawCosThetaPhi(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName 
 	//allData.plotOn(frame, DrawOption("P0Z"), Name("allData"), Cut(massCut));
 
 	// background in mass window
-	RooDataSet data_weightBkg = GetSWeightedDataset(&data, "Bkg");
+	RooDataSet data_weightBkg = GetSpeciesSWeightedDataset(&data, "Bkg");
 
 	const char* nameBkg = Form("%s_Bkg", histoName);
 
@@ -107,7 +101,7 @@ void rawCosThetaPhi(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName 
 	drawAndSaveDistribution(histoBkg, nameBkg, ptMin, ptMax, Form("background in %.1f < %s < %.1f %s", lowMassCut, gMassVarTitle, highMassCut, gMassUnit));
 
 	// Y(1S)
-	RooDataSet data_weight1S = GetSWeightedDataset(&data, "1S");
+	RooDataSet data_weight1S = GetSpeciesSWeightedDataset(&data, "1S");
 
 	const char* name1S = Form("%s_1S", histoName);
 
