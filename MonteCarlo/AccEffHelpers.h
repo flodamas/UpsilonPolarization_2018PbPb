@@ -30,11 +30,14 @@ const char* TEfficiencyAccMainTitle(int iState = gUpsilonState) {
 TEfficiency* CosThetaTEfficiency1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", int iState = gUpsilonState, Bool_t isAcc = kFALSE) {
 	const char* name = Form("CosTheta%s", TEfficiencyEndName(refFrameName, ptMin, ptMax));
 
-	char* title;
+	char* title = nullptr;
 	if (isAcc) title = Form(";%s;%s", CosThetaVarTitle(refFrameName), TEfficiencyAccMainTitle(iState));
 	else title = Form(";%s;%s", CosThetaVarTitle(refFrameName), TEfficiencyMainTitle(iState));
 
-	TEfficiency* tEff;
+	cout << isAcc << endl;
+	cout << title << endl;
+
+	TEfficiency* tEff = nullptr;
 	if (std::string(refFrameName) == "CS") tEff = new TEfficiency(name, title, NCosThetaBinsCS, CosThetaBinningCS);
 	else tEff = new TEfficiency(name, title, NCosThetaBinsHX, CosThetaBinningHX);
 
