@@ -27,7 +27,7 @@ RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet dataset) {
 	fitModel->plotOn(frame, LineColor(gColorTotalFit));
 
 	frame->GetYaxis()->SetMaxDigits(3);
-	gStyle->SetExponentOffset(-0.07, 0.005, "Y");
+	// gStyle->SetExponentOffset(-0.07, 0.005, "Y");
 
 	return frame;
 }
@@ -50,7 +50,7 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	pullFrame->GetYaxis()->SetLabelSize(0.15);
 	pullFrame->GetYaxis()->CenterTitle();
 
-	pullFrame->GetXaxis()->SetTitle(gMassAxisTitle);
+	// pullFrame->GetXaxis()->SetTitle(gMassAxisTitle);
 	//pullFrame->GetXaxis()->SetTitleOffset(1.20);
 	//pullFrame->GetXaxis()->SetLabelOffset(0.1);
 	pullFrame->GetXaxis()->SetLabelSize(0.15);
