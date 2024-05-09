@@ -2,7 +2,7 @@
 
 #include "../AnalysisParameters.h"
 
-#include "AccEffHelpers.h"
+#include "../MonteCarlo/AccEffHelpers.h"
 
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
@@ -95,10 +95,19 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	RooRealVar* yield2S = new RooRealVar("yield2S", "", 100);
 	RooRealVar* yield3S = new RooRealVar("yield3S", "", 10);
 
-	/// Bin width
-	const Int_t nCosThetaBins = 8;
+	/// Bin width 
+	// choose the number of bins and bin edge array depending on the signal yield extraction
+	
+	const Int_t nCosThetaBins = 10;
+	
+	// Double_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.5, -0.3, -0.1, 0.1, 0.3, 0.5};
+	// Double_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6};
 	// Double_t cosThetaBinEdges[nCosThetaBins+1] = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7};
-	Double_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8};
+	// Double_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8};
+	// Double_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9};
+	Double_t cosThetaBinEdges[nCosThetaBins + 1] = {-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1};
+
+	Double_t cosThetaStep = (cosThetaBinEdges[nCosThetaBins] - cosThetaBinEdges[0]) / nCosThetaBins;
 
 	/// Set up the variables
 	RooRealVar cosTheta("cosTheta", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
@@ -107,18 +116,33 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	/// Assign signal and background shape name to read the file for the yield extraction results
 	const char* signalShapeName = "SymDSCB";
 
-	// background shape array: ChebychevOrderN or ExpTimesErr
+	// // background shape array: ChebychevOrderN or ExpTimesErr
+	// choose the number of bins and bin edge array depending on the signal yield extraction
+	
+	// const char* bkgShapeName[] = {
+	//   // "ChebychevOrder1",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   // "ChebychevOrder1"
+	// };
+
 	const char* bkgShapeName[] = {
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  // "ChebychevOrder2"
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr"
 	};
 
 	/// "Standard" procedure: extract the yields per bin
@@ -202,6 +226,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 		double yield1SErr = yield1S->getError();
 
+		// set the bin contents reflecting weights
 		standardCorrectedHist->SetBinContent(iCosTheta + 1, yield1SVal * weight);
 
 		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SErr * weight);
@@ -227,25 +252,6 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	/// TGraphAsymmErrors - comment out for now
 
 	// TGraphAsymmErrors *correctedGraph = new TGraphAsymmErrors(nCosThetaBins, cosThetaBinCenter, finalDataPoints, 0, 0, finalErrLow, finalErrHigh);
-
-	RooDataHist correctedHist("correctedHist", " ", cosTheta, standardCorrectedHist);
-
-	/// Draw the cos theta distributions
-
-	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);
-
-	RooPlot* frame = cosTheta.frame(Title(" "), Range(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]));
-
-	correctedHist.plotOn(frame, DrawOption("P0Z"), MarkerColor(kAzure + 2), Name("dataPoints"));
-
-	frame->GetYaxis()->SetRangeUser(0, 2 * maxYield);
-	frame->GetYaxis()->SetMaxDigits(3);
-
-	frame->Draw();
-
-	gPad->RedrawAxis();
-
-	frame->SetMaximum(2 * maxYield);
 
 	/// Polarization fit
 
@@ -293,10 +299,12 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	TFitResultPtr fitResults = standardCorrectedHist->Fit("PolarFunc", "ESV", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]); //L:log likelihood fit (default: chi2 method), E: NINOS
 
 	cout << "Error of hist (bin1): " << standardCorrectedHist->GetBinError(1) << endl;
+	
 	// Fit results
 
 	double chi2 = fitResults->Chi2();
-	;
+	double nDOF = nCosThetaBins - PolarFunc->GetNpar();
+
 	double lambdaVal = fitResults->Parameter(0);
 	double lambdaErr = fitResults->ParError(0);
 
@@ -312,7 +320,10 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	standardCorrectedHist->GetYaxis()->SetMaxDigits(3);
 
 	standardCorrectedHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-	// standardCorrectedHist->SetYTitle(Form("Events / ( %0.1f )", cosThetaStep));
+	standardCorrectedHist->SetYTitle(Form("Events / ( %0.1f )", cosThetaStep));
+
+	standardCorrectedHist->GetXaxis()->CenterTitle();
+	standardCorrectedHist->GetYaxis()->CenterTitle();
 
 	TLegend legend2(.22, .88, .5, .68);
 	legend2.SetTextSize(.05);
@@ -321,6 +332,31 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	legend2.AddEntry(PolarFunc, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaVal, lambdaErr), "l");
 
 	legend2.DrawClone();
+
+	TLatex textChi2;
+	textChi2.SetTextAlign(12);
+	textChi2.SetTextSize(0.045);
+	textChi2.DrawLatexNDC(0.74, 0.044, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
+
+
+	// calculate chi2 / nDOF by hand for cross-check
+	
+	double chiSqr = 0;
+
+    for(int i=1; i<=nCosThetaBins; i++){
+    	Double_t x = standardCorrectedHist->GetBinCenter(i);
+		Double_t res = (standardCorrectedHist->GetBinContent(i) - PolarFunc->Eval(x)) / (standardCorrectedHist->GetBinError(i));
+	   	if(res == 0) continue;
+
+	   	chiSqr += TMath::Power(res, 2);
+
+	   	cout << "x: " << x << endl;
+    	cout << "res: " << res << endl;
+    }
+
+    cout << "chi2: " << chiSqr << endl;
+    cout << "nDOF: " << (nCosThetaBins - PolarFunc->GetNpar()) << endl;
+    cout << "reduced chi2: " << chiSqr / (nCosThetaBins - PolarFunc->GetNpar()) << endl;
 
 	gPad->Update();
 
