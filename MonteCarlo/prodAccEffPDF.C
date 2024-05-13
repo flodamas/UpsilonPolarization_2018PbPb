@@ -10,7 +10,10 @@
 
 // see tutorial https://root.cern/doc/master/rf706__histpdf_8C.html
 
-RooHistPdf* prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t iState = 1) { //possible refFrame names: CS or HX
+//RooHistPdf* prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Float_t phiMin = -180, Float_t phiMax = 180, Int_t iState = gUpsilonState) { //possible refFrame names: CS or HX
+
+RooHistPdf* prodAccEffPDF(RooRealVar cosTheta, RooRealVar phi, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t iState = gUpsilonState) { //possible refFrame names: CS or HX
+
 	writeExtraText = true;
 	extraText = "       Internal";
 
@@ -19,20 +22,18 @@ RooHistPdf* prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFram
 	//	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
 	Int_t nCosThetaBins = 20;
-	Float_t cosThetaMin = -1, cosThetaMax = 1;
 
-	RooRealVar cosTheta(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), cosThetaMin, cosThetaMax);
+	//	RooRealVar cosTheta(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), cosThetaMin, cosThetaMax);
 
 	Int_t nPhiBins = 18;
-	Int_t phiMin = -180, phiMax = 180;
 
-	RooRealVar phi(PhiVarName(refFrameName), PhiVarTitle(refFrameName), phiMin, phiMax, gPhiUnit);
+	//	RooRealVar phi(PhiVarName(refFrameName), PhiVarTitle(refFrameName), phiMin, phiMax, gPhiUnit);
 
 	/// 1. retrieve the 2D maps
 	const char* mapName = CosThetaPhiTEfficiency2DName(ptMin, ptMax, refFrameName);
 
 	// acceptance maps
-	TFile* acceptanceFile = TFile::Open(Form("AcceptanceMaps/%dS/AcceptanceResults.root", iState), "READ");
+	TFile* acceptanceFile = TFile::Open(Form("../MonteCarlo/AcceptanceMaps/%dS/AcceptanceResults.root", iState), "READ");
 	if (!acceptanceFile) {
 		cout << "Acceptance file not found. Check the directory of the file." << endl;
 		return nullptr;
@@ -41,7 +42,7 @@ RooHistPdf* prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFram
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(mapName);
 
 	// efficiency maps
-	TFile* efficiencyFile = TFile::Open(Form("EfficiencyMaps/%dS/EfficiencyResults.root", iState), "READ");
+	TFile* efficiencyFile = TFile::Open(Form("../MonteCarlo/EfficiencyMaps/%dS/EfficiencyResults.root", iState), "READ");
 	if (!efficiencyFile) {
 		cout << "Efficiency file not found. Check the directory of the file." << endl;
 		return nullptr;
@@ -88,12 +89,12 @@ RooHistPdf* prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFram
 
 	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) MC", iState));
 
-	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("EfficiencyMaps/%dS/AccEff_CosThetaPhi%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	gSystem->mkdir(Form("../MonteCarlo/EfficiencyMaps/%dS", iState), kTRUE);
+	canvas->SaveAs(Form("../MonteCarlo/EfficiencyMaps/%dS/AccEff_CosThetaPhi%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	// draw the sampling of the PDF in 3D
 	TCanvas* canvas2 = new TCanvas("canvas2", "canvas", 700, 600);
-	TH1* histoPDF = effPDF->createHistogram("histoPDF", cosTheta, RooFit::Binning(nCosThetaBins, cosThetaMin, cosThetaMax), RooFit::YVar(phi, RooFit::Binning(nPhiBins, phiMin, phiMax)));
+	TH1* histoPDF = effPDF->createHistogram("histoPDF", cosTheta, RooFit::Binning(nCosThetaBins, -1, 1), RooFit::YVar(phi, RooFit::Binning(nPhiBins, -180, 180)));
 
 	histoPDF->SetTitle(" ");
 
@@ -111,7 +112,7 @@ RooHistPdf* prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFram
 	legend.DrawLatexNDC(.48, .8, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.48, .72, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
-	canvas2->SaveAs(Form("EfficiencyMaps/%dS/AccEffPDF_CosThetaPhi%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	canvas2->SaveAs(Form("../MonteCarlo/EfficiencyMaps/%dS/AccEffPDF_CosThetaPhi%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	acceptanceFile->Close();
 	efficiencyFile->Close();
