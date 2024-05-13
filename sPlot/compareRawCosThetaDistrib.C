@@ -24,6 +24,8 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 
 	auto data = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax);
 
+	Long64_t nEntries = data->sumEntries();
+
 	// read variables in the reduced dataset in the workspace
 	RooRealVar invMass = *wspace.var("mass");
 
@@ -39,6 +41,8 @@ void compareRawCosThetaDistrib(Int_t ptMin = 0, Int_t ptMax = 30, const char* re
 	//int order = 2;
 	//const char* bkgShapeName = Form("ChebychevOrder%d", order);
 	const char* bkgShapeName = "ExpTimesErr";
+
+	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
 	/// SPlot time!
 	auto* sData = SWeightedDataset(wspace, ptMin, ptMax, signalShapeName, bkgShapeName);
