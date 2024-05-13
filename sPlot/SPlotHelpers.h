@@ -42,8 +42,10 @@ RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const
 
 	const char* fitName = Form("%s_%s_cent%dto%d_pt%dto%dGeV", signalShapeName, bkgShapeName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
 
-	gSystem->mkdir("InvMassFits", kTRUE);
-	massCanvas->SaveAs(Form("InvMassFits/%s.png", fitName), "RECREATE");
+	gSystem->mkdir("../sPlot/InvMassFits", kTRUE);
+	massCanvas->SaveAs(Form("../sPlot/InvMassFits/%s.png", fitName), "RECREATE");
+
+	delete massCanvas;
 
 	// yields from invariant mass distribution fit as sWeights
 	// see https://root.cern/doc/master/classRooStats_1_1SPlot.html#a5b30f5b1b2a3723bbebef17ffb6507b2 constructor for the arguments
@@ -126,6 +128,7 @@ RooDataSet* SWeightedDataset(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, con
 
 			sData = (RooDataSet*)file->Get(datasetName);
 			wspace.import(*sData);
+			file->Close();
 		}
 
 		else {
@@ -148,4 +151,22 @@ RooDataSet* SWeightedDataset(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, con
 
 RooDataSet GetSpeciesSWeightedDataset(RooDataSet* sData, const char* species = "1S") {
 	return RooDataSet(sData->GetName(), sData->GetTitle(), sData, *sData->get(), nullptr, Form("yield%s_sw", species));
+}
+
+// for polarization likelihood fit
+RooConstVar GetSPlotScaleFactor(RooDataSet* sData, Int_t iState = gUpsilonState) {
+	double scaleFactor = 0, sumOfSWeightsSquared = 0;
+
+	for (int i = 0; i < sData->numEntries(); i++) {
+		const RooArgSet* values = sData->get(i);
+
+		double sWeight = dynamic_cast<const RooRealVar*>(values->find(Form("yield%dS_sw", iState)))->getVal();
+
+		scaleFactor += sWeight;
+		sumOfSWeightsSquared += sWeight * sWeight;
+	}
+
+	scaleFactor /= sumOfSWeightsSquared;
+
+	return RooConstVar("sPlotScaleFactor", "sPlot scale factor", scaleFactor);
 }
