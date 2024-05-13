@@ -172,7 +172,7 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	if (strstr(effHist->GetName(), "CS")) frameHist->SetXTitle(CosThetaVarTitle("CS"));
 	else frameHist->SetXTitle(CosThetaVarTitle("HX"));
 
-	frameHist->SetYTitle(TEfficiencyAccMainTitle(iState));
+	frameHist->SetYTitle(TEfficiencyMainTitle(iState));
 	
 	frameHist->GetXaxis()->CenterTitle();
 	frameHist->GetYaxis()->CenterTitle();

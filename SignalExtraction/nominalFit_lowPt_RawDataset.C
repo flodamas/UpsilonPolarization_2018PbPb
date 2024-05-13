@@ -10,7 +10,7 @@
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 
 RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {
-	RooDataSet* allDataset = (RooDataSet*)wspace.data(RawDatasetName(refFrameName));
+	RooDataSet* allDataset = (RooDataSet*)wspace.data(RawDatasetName(""));
 
 	if (allDataset == nullptr) {
 		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
@@ -38,13 +38,15 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	const char* refFrameName = isCSframe ? "CS" : "HX";
 
-	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
+	RooWorkspace wspace = SetUpWorkspace(filename, "");
 
 	RooRealVar invMass = *wspace.var("mass");
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
-	auto allDataset = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, refFrameName, phiMin, phiMax);
+	wspace.Print();
+
+	auto allDataset = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, "");
 
 	Long64_t nEntries = allDataset.sumEntries();
 
@@ -55,9 +57,9 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 	const char* signalShapeName = "SymDSCB";
 
 	// background
-	int order = 2;
-	const char* bkgShapeName = Form("ChebychevOrder%d", order);
-	// const char* bkgShapeName = "ExpTimesErr";
+	// int order = 2;
+	// const char* bkgShapeName = Form("ChebychevOrder%d", order);
+	const char* bkgShapeName = "ExpTimesErr";
 
 	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
@@ -114,7 +116,7 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
 
-	bkgShapeName = Form("ChebychevOrder%d", order);
+	// bkgShapeName = Form("ChebychevOrder%d", order);
 	SaveRawDataSignalYields(signalYields, bkgShapeName, fitModelName);
 	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName);
 }
