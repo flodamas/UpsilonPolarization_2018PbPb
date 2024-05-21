@@ -4,6 +4,9 @@
 
 #include "../MonteCarlo/AccEffHelpers.h"
 
+#include "../Tools/Datasets/RooDataSetHelpers.h"
+#include "../sPlot/SPlotHelpers.h"
+
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
@@ -156,7 +159,7 @@ vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins){
 	return cosThetaBinEdges;
 }
 
-TCanvas* drawUncertainties(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPlot2, TH1D* uncPlot3, TH1D* uncPlot4, TH1D* uncPlot5, TH1D* uncPlot6, TH1D* uncPlot7){
+TCanvas* drawUncertaintyPlot(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPlot2, TH1D* uncPlot3, TH1D* uncPlot4, TH1D* uncPlot5, TH1D* uncPlot6, TH1D* uncPlot7){
 
 	TCanvas *errCanvas = new TCanvas("errCanvas", "errCanvas", 650, 600);
 
@@ -209,17 +212,13 @@ TCanvas* drawUncertainties(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPl
 }
 
 void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 10, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState) {
+	
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
 	using namespace RooFit;
 	using namespace RooStats;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
-
-	/// Set up the variables
-	RooRealVar* yield1S = new RooRealVar("yield1S", "", 1000);
-	RooRealVar* yield2S = new RooRealVar("yield2S", "", 100);
-	RooRealVar* yield3S = new RooRealVar("yield3S", "", 10);
 
 	/// Bin edges and width 
 	// Set the bin edges along the cosTheta axis depending on the number of bins 
@@ -231,7 +230,12 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	/// Set up the variables
 	RooRealVar cosTheta("cosTheta", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
+	cosTheta.setRange(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
 	cosTheta.setBins(nCosThetaBins);
+
+	RooRealVar* yield1S = new RooRealVar("yield1S", "", 1000);
+	RooRealVar* yield2S = new RooRealVar("yield2S", "", 100);
+	RooRealVar* yield3S = new RooRealVar("yield3S", "", 10);
 
 	/// Assign signal and background shape name to read the file for the yield extraction results
 	const char* signalShapeName = "SymDSCB";
@@ -298,16 +302,11 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	TCanvas* massCanvas = 0;
 
-	// // define arrays for TGraph (to draw AsymmError)
-	// double finalDataPoints[nCosThetaBins];
-	// double finalErrHigh[nCosThetaBins];
-	// double finalErrLow[nCosThetaBins];
-	// double cosThetaBinCenter[nCosThetaBins];
-
 	// draw acc and eff histograms to check if the rebinning works well
 	DrawEfficiency1DHist(accMapCosTheta, ptMin, ptMax, iState, kTRUE);
 	DrawEfficiency1DHist(effMapCosTheta, ptMin, ptMax, iState, kFALSE);
 
+	// define histograms to draw uncertainty plots
 	TH1D* statHighEffCosTheta = new TH1D("statHighEffCosTheta", "", nCosThetaBins, cosThetaBinEdges.data());
 	TH1D* statLowEffCosTheta = new TH1D("statLowEffCosTheta", "", nCosThetaBins, cosThetaBinEdges.data());
 	TH1D* statHighAccCosTheta = new TH1D("statHighAccCosTheta", "", nCosThetaBins, cosThetaBinEdges.data());
@@ -326,13 +325,6 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		// calculate weight
 		weight = 1. / (acceptance * efficiency);
 
-		// print acc, eff, and weight values
-		// cout << "bin " << iCosTheta << endl;
-		// cout << "acceptance: " << acceptance << endl;
-		// cout << "efficiency: " << efficiency << endl;
-		// cout << "weight: " << weight << endl;
-		// cout << endl;
-
 		// propagate both scale factor uncertainties and efficiency stat errors to the weight
 		double relSystUnc = systEffCosTheta->GetBinContent(iCosTheta + 1);
 
@@ -341,12 +333,6 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 		double relAccUncHigh = accMapCosTheta->GetEfficiencyErrorUp(iCosTheta + 1) / acceptance;
 		double relAccUncLow = accMapCosTheta->GetEfficiencyErrorLow(iCosTheta + 1) / acceptance;
-
-		// print statistical uncertainties of nominal efficiency and acceptance
-		// cout << "eff error up: " << effMapCosTheta->GetEfficiencyErrorUp(iCosTheta + 1) << endl;
-		// cout << "eff error low: " << effMapCosTheta->GetEfficiencyErrorLow(iCosTheta + 1) << endl;
-		// cout << "acc error up: " << accMapCosTheta->GetEfficiencyErrorUp(iCosTheta + 1) << endl;
-		// cout << "acc error low: " << accMapCosTheta->GetEfficiencyErrorLow(iCosTheta + 1) << endl;
 
 		totalRelUncHigh = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncHigh), relAccUncHigh);
 		totalRelUncLow = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncLow), relAccUncLow);
@@ -365,7 +351,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 		// set the bin contents reflecting weights
 		standardCorrectedHist->SetBinContent(iCosTheta + 1, yield1SVal * weight);
-
+				
 		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SErr * weight);
 		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh));
 		// standardCorrectedHist->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relEffUncHigh));
@@ -375,17 +361,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		// standardCorrectedHist->SetBinError(iCosTheta + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
 
 		standardCorrectedHist->SetBinError(iCosTheta + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
-
-		/// fill arrays for TGraphAsymmError
-		// cosThetaBinCenter[iCosTheta] = (cosThetaBinEdges[iCosTheta] + cosThetaBinEdges[iCosTheta + 1]) / 2.;
-
-		// finalDataPoints[iCosTheta] = yield1SVal * weight;
-
-		// finalErrHigh[iCosTheta] = yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightHigh);
-		// finalErrLow[iCosTheta] = yield1SVal * TMath::Hypot(weight * yield1SErr / yield1SVal, errorWeightLow);
-
-		// standardCorrectedHist->SetBinError(iCosTheta + 1, finalErrHigh[iCosTheta]);
-
+		
 		// fill uncertainty histograms
 		statHighEffCosTheta->SetBinContent(iCosTheta + 1, relEffUncHigh);
 		statLowEffCosTheta->SetBinContent(iCosTheta + 1, relEffUncLow);
@@ -394,35 +370,18 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		yield1SUncCosTheta->SetBinContent(iCosTheta + 1, yield1SUnc / yield1SVal);
 		totalRelUncCosTheta->SetBinContent(iCosTheta + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
 
-		// cout << "bin: " << iCosTheta+1 << endl;
-		// cout << "sys: " << relSystUnc << endl;
-		// cout << "effHigh: " << relEffUncHigh << endl;
-		// cout << "effLow: " << relEffUncLow << endl;
-		// cout << "accHigh: " << relAccUncHigh << endl;
-		// cout << "accLow: " << relAccUncLow << endl;
-		// cout << "yield: " << yield1SUnc/yield1SVal << endl;
-		// cout << "total: " << TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) << endl;
-
 		if ((yield1S->getVal()) * weight > maxYield) maxYield = (yield1S->getVal()) * weight;
-		// cout << "Uncertainty: " << finalErrHigh[iCosTheta] << endl;
 	}
-	cout << "Uncertainty: " << yield1S->getError() << endl;
-
-	/// TGraphAsymmErrors - comment out for now
-
-	// TGraphAsymmErrors *correctedGraph = new TGraphAsymmErrors(nCosThetaBins, cosThetaBinCenter, finalDataPoints, 0, 0, finalErrLow, finalErrHigh);
-
+	
 	/// Polarization fit
 	// with Root Fit function
 
-	TCanvas* canvas2 = new TCanvas("canvas2", "canvas2", 650, 600);
+	TCanvas* polarCanvas = new TCanvas(standardCorrectedHist->GetName(), "", 650, 600);
 
 	TF1* PolarFunc = cosThetaPolarFunc(maxYield);
 
 	TFitResultPtr fitResults = standardCorrectedHist->Fit("PolarFunc", "ESV", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]); //L:log likelihood fit (default: chi2 method), E: NINOS
 
-	cout << "Error of hist (bin1): " << standardCorrectedHist->GetBinError(1) << endl;
-	
 	// Fit results
 
 	double chi2 = fitResults->Chi2();
@@ -465,7 +424,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	// draw uncertainties
 	
-	TCanvas* errCanvas = drawUncertainties(refFrameName, systEffCosTheta, statHighEffCosTheta, statLowEffCosTheta, statHighAccCosTheta, statLowAccCosTheta, yield1SUncCosTheta, totalRelUncCosTheta);
+	TCanvas* errCanvas = drawUncertaintyPlot(refFrameName, systEffCosTheta, statHighEffCosTheta, statLowEffCosTheta, statHighAccCosTheta, statLowAccCosTheta, yield1SUncCosTheta, totalRelUncCosTheta);
 
 	TLegend legend3(.22, .9, .5, .61);
 	legend3.SetTextSize(.04);
@@ -487,6 +446,6 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	calculateChi2(standardCorrectedHist, PolarFunc, nCosThetaBins);	
 
 	gSystem->mkdir("DistributionFits/1D", kTRUE);
-	canvas2->SaveAs(Form("DistributionFits/1D/ROOTFIT_compareCorrectedCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	polarCanvas->SaveAs(Form("DistributionFits/1D/ROOTFIT_compareCorrectedCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 	errCanvas->SaveAs(Form("DistributionFits/1D/uncertainty%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 }
