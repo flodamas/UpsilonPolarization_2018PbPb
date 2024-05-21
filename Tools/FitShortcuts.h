@@ -1,3 +1,7 @@
+// when the header is included several times, to avoid the redefinition error
+#ifndef Fit_Shortcuts_GUARD
+#define Fit_Shortcuts_GUARD
+
 #include "../Tools/BasicHeaders.h"
 
 #include "../Tools/Parameters/PhysicsConstants.h"
@@ -371,3 +375,5 @@ void calculateChi2(TH1D* standardCorrectedHist, TF1* PolarFunc, Int_t nCosThetaB
     cout << "nDOF: " << (nCosThetaBins - PolarFunc->GetNpar()) << endl;
     cout << "reduced chi2: " << chiSqr / (nCosThetaBins - PolarFunc->GetNpar()) << endl;
 }
+
+#endif
