@@ -1,3 +1,6 @@
+#ifndef basic_headers
+#define basic_headers
+
 //basic headers
 //c headers
 #include <iostream>
@@ -50,5 +53,15 @@
 #include "RooRealVar.h"
 #include "RooWorkspace.h"
 
+TFile* openFile(const char* fileName){
 
+	TFile* file = TFile::Open(fileName, "READ");
+	if (!file) {
+		cout << fileName << " not found. Check the directory of the file." << endl;
+		exit(1);
+	}
 
+	return file;
+}
+
+#endif
