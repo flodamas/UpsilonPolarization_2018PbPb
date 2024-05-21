@@ -1,3 +1,7 @@
+// when the header is included several times, to avoid the redefinition error
+#ifndef Fit_Distributions_GUARD
+#define Fit_Distributions_GUARD
+
 #include "RooPlot.h"
 #include "RooArgSet.h"
 #include "RooAbsRealLValue.h"
@@ -184,3 +188,5 @@ void SaveMCSignalParameters(RooArgSet* params, const char* outputName) {
 
 	if (BeVerbose) cout << "\nSignal shape parameters " << (*params) << " extracted from MC written to " << name << endl;
 }
+
+#endif
