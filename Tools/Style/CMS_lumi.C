@@ -3,9 +3,11 @@
 
 void CMS_lumi(TPad* pad, TString lumiText, int iPosX = 0) {
 	bool outOfFrame = false;
+	
 	if (iPosX / 10 == 0) {
 		outOfFrame = true;
 	}
+	
 	int alignY_ = 3;
 	int alignX_ = 2;
 	if (iPosX / 10 == 0) alignX_ = 1;
@@ -56,6 +58,7 @@ void CMS_lumi(TPad* pad, TString lumiText, int iPosX = 0) {
 	} else if (iPosX % 10 == 3) {
 		posX_ = 1 - r - relPosX * (1 - l - r);
 	}
+	
 	float posY_ = 1 - t - relPosY * (1 - t - b);
 	if (!outOfFrame) {
 		if (drawLogo) {
@@ -81,7 +84,9 @@ void CMS_lumi(TPad* pad, TString lumiText, int iPosX = 0) {
 				latex.SetTextFont(extraTextFont);
 				latex.SetTextAlign(align_);
 				latex.SetTextSize(extraTextSize * t);
-				latex.DrawLatex(posX_, posY_ - relExtraDY * cmsTextSize * t, extraText);
+				// latex.DrawLatex(posX_, posY_ - relExtraDY * cmsTextSize * t, extraText);
+				// when it conflicts to the exponent on the y axis, write the extraText right next to CMS
+				latex.DrawLatex(posX_ + relPosX - 0.008, posY_ -0.006, extraText);
 			}
 		}
 	} else if (writeExtraText) {
