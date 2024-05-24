@@ -10,6 +10,8 @@
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
+#include "PolarFitHelpers.h"
+
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 #include "../Tools/Style/FitDistributions.h"
 
@@ -17,199 +19,6 @@
 #include "../Tools/RooFitPDFs/cosThetaPolarFunc.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
-
-TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}) {
-	/// rebin efficiency maps based on costheta, phi, and pT selection
-
-	// extract the numerator and the denominator from the 3D TEfficiency Map
-	TH3D* hPassed = (TH3D*)TEff3DMap->GetPassedHistogram();
-	TH3D* hTotal = (TH3D*)TEff3DMap->GetTotalHistogram();
-
-	// obtain the bin numbers of the boundaries on phi and pt
-	Int_t iPhiMin = hPassed->GetYaxis()->FindBin(phiMin);
-	Int_t iPhiMax = hPassed->GetYaxis()->FindBin(phiMax);
-
-	Int_t iPtMin = hPassed->GetZaxis()->FindBin(ptMin);
-	Int_t iPtMax = hPassed->GetZaxis()->FindBin(ptMax);
-
-	// obtain the projection histogram along the costheta axis within boundaries of phi and pt
-	// (option e: calculate errors, o: only bins inside the selected range will be filled)
-	TH1D* hPassedCosTheta = (TH1D*)hPassed->ProjectionX("hPassedCosTheta", iPhiMin, iPhiMax - 1, iPtMin, iPtMax - 1, "eo");
-	TH1D* hTotalCosTheta = (TH1D*)hTotal->ProjectionX("hTotalCosTheta", iPhiMin, iPhiMax - 1, iPtMin, iPtMax - 1, "eo");
-
-	// rebin the projection histogram (default: 20 bins from -1 to 1)
-	TH1D* hPassedCosTheta_Rebin = (TH1D*)hPassedCosTheta->Rebin(nCosThetaBins, "hPassedCosTheta_Rebin", cosThetaBinEdges.data());
-	TH1D* hTotalCosTheta_Rebin = (TH1D*)hTotalCosTheta->Rebin(nCosThetaBins, "hTotalCosTheta_Rebin", cosThetaBinEdges.data());
-
-	// define TEfficiency using the final numerator and denominator
-	TEfficiency* TEffCosTheta = new TEfficiency("TEffCosTheta", "cos #theta_{CS}; efficiency", nCosThetaBins, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
-
-	TEffCosTheta->SetPassedHistogram(*hPassedCosTheta_Rebin, "f");
-	TEffCosTheta->SetTotalHistogram(*hTotalCosTheta_Rebin, "f");
-
-	return TEffCosTheta;
-}
-
-TH1D* rebinRel3DUnc(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}) {
-	/// rebin efficiency maps based on costheta, phi, and pT selection
-	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
-
-	TH1D* h1DSystEff = new TH1D("h1DSystEff", "", nCosThetaBins, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
-
-	// obtain the bin numbers of the boundaries on phi and pt
-	Int_t iPhiMin = systEff->GetYaxis()->FindBin(phiMin);
-	Int_t iPhiMax = systEff->GetYaxis()->FindBin(phiMax) - 1;
-
-	Int_t iPtMin = systEff->GetZaxis()->FindBin(ptMin);
-	Int_t iPtMax = systEff->GetZaxis()->FindBin(ptMax) - 1;
-
-	Int_t ibin = 1;
-
-	// calculate the systematic uncertainties merging phi and pt bins
-	// and set the bin content of 1D costheta hist using the calculated value
-	for (int ibin = 1; ibin <= nCosThetaBins; ibin++){
-		Double_t cosThetaSumSystEff = 0;
-
-		Int_t iCosThetaMin = systEff->GetXaxis()->FindBin(cosThetaBinEdges[ibin-1]);
-		Int_t iCosThetaMax = systEff->GetXaxis()->FindBin(cosThetaBinEdges[ibin])-1;
-
-		// merge bins along the cosTheta axis
-		for (int iCosTheta = iCosThetaMin; iCosTheta <= iCosThetaMax; iCosTheta++) {
-			Double_t phiSumSystEff = 0;
-
-			// sum uncertainties along the phi axis
-			for (int iPhi = iPhiMin; iPhi <= iPhiMax; iPhi++) {
-				Double_t ptSumSystEff = 0;
-
-				// sum uncertainties along the pt axis
-				for (int iPt = iPtMin; iPt <= iPtMax; iPt++) {
-					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt));
-				}
-
-				phiSumSystEff = TMath::Hypot(phiSumSystEff, ptSumSystEff);
-			}
-
-			cosThetaSumSystEff = TMath::Hypot(cosThetaSumSystEff, phiSumSystEff);
-		}
-
-		h1DSystEff->SetBinContent(ibin, cosThetaSumSystEff);
-
-	}
-
-	return h1DSystEff;
-}
-
-void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t iState = gUpsilonState, Bool_t	isAcc = kTRUE) {
-	TCanvas* canvas = new TCanvas(effHist->GetName(), "", 600, 600);
-	canvas->SetRightMargin(0.05);
-
-	// empty frame for the axes
-	TH1D* frameHist = new TH1D("frameHist", "", NCosThetaBinsHX, CosThetaBinningHX);
-
-	frameHist->Draw(); 
-
-	// draw efficiency plot on top of the histogram frame
-	effHist->SetLineWidth(3);
-	effHist->Draw("PL E0 SAME");
-
-	// cosmetics of the histogram
-	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
-
-	TLatex legend;
-	legend.SetTextAlign(22);
-	legend.SetTextSize(0.05);
-	legend.DrawLatexNDC(.55, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
-	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-
-	if (strstr(effHist->GetName(), "CS")) frameHist->SetXTitle(CosThetaVarTitle("CS"));
-	else frameHist->SetXTitle(CosThetaVarTitle("HX"));
-
-	frameHist->SetYTitle(TEfficiencyMainTitle(iState));
-	
-	frameHist->GetXaxis()->CenterTitle();
-	frameHist->GetYaxis()->CenterTitle();
-
-	frameHist->GetXaxis()->SetRangeUser(-1, 1);
-	frameHist->GetYaxis()->SetRangeUser(0, 1);
-
-	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
-
-	// save the plot
-	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	if (isAcc) canvas->SaveAs(Form("EfficiencyMaps/%dS/acc_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
-	else canvas->SaveAs(Form("EfficiencyMaps/%dS/eff_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
-}
-
-vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins){
-
-	vector<Double_t> cosThetaBinEdges;
-
-	// define the bin edges along the cosTheta axis depending on the number of bins
-	if (nCosThetaBins == 5) cosThetaBinEdges = {-0.5, -0.3, -0.1, 0.1, 0.3, 0.5};
-	else if (nCosThetaBins == 6) cosThetaBinEdges = {-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6};
-	else if (nCosThetaBins == 7) cosThetaBinEdges = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7};
-	else if (nCosThetaBins == 8) cosThetaBinEdges = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8};
-	else if (nCosThetaBins == 9) cosThetaBinEdges = {-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9};
-	else if (nCosThetaBins == 10) cosThetaBinEdges = {-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1};
-	else {
-		cout << "Pre-defined binning not found. Check the input nCosThetaBins" << endl;
-		exit(1);
-	}
-
-	return cosThetaBinEdges;
-}
-
-TCanvas* drawUncertaintyPlot(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPlot2, TH1D* uncPlot3, TH1D* uncPlot4, TH1D* uncPlot5, TH1D* uncPlot6, TH1D* uncPlot7){
-
-	TCanvas *errCanvas = new TCanvas("errCanvas", "errCanvas", 650, 600);
-
-	uncPlot1->GetYaxis()->SetRangeUser(0, 1);
-
-	uncPlot1->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-	uncPlot1->SetYTitle("Relative Uncertainty");
-
-	uncPlot1->GetXaxis()->CenterTitle();
-	uncPlot1->GetYaxis()->CenterTitle();
-
-	Int_t lineWidth = 6;
-
-	uncPlot1->SetLineWidth(lineWidth);
-	uncPlot1->SetLineColor(kRed+1);
-
-	uncPlot1->Draw();
-
-	uncPlot2->SetLineWidth(lineWidth);
-	uncPlot2->SetLineColor(kRed-7);
-
-	uncPlot2->Draw("SAME");
-
-	uncPlot3->SetLineWidth(lineWidth);
-	uncPlot3->SetLineColor(kOrange);
-
-	uncPlot3->Draw("SAME");
-
-	uncPlot4->SetLineWidth(lineWidth);
-	uncPlot4->SetLineColor(kAzure-9);
-
-	uncPlot4->Draw("SAME");	
-
-	uncPlot5->SetLineWidth(lineWidth);
-	uncPlot5->SetLineColor(kBlue-3);
-
-	uncPlot5->Draw("SAME");
-
-	uncPlot6->SetLineWidth(lineWidth);
-	uncPlot6->SetLineColor(kViolet-8);
-
-	uncPlot6->Draw("SAME");
-
-	uncPlot7->SetLineWidth(lineWidth);
-	uncPlot7->SetLineColor(kBlack);
-
-	uncPlot7->Draw("SAME");
-
-	return errCanvas;
-}
 
 void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 10, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState) {
 	
@@ -390,9 +199,27 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	double lambdaVal = fitResults->Parameter(0);
 	double lambdaErr = fitResults->ParError(0);
 
+	double normVal = fitResults->Parameter(1);
+	double normErr = fitResults->ParError(1);
+
+	// 1 Sigma band
+    TH1D* errorBand = new TH1D("errorBand", "", 1000, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
+   	(TVirtualFitter::GetFitter())->GetConfidenceIntervals(errorBand, 0.68);
+
+	// double contours[1] = {2.3};
+
+	// PolarFunc->SetContour(1, contours);
+
+	// PolarFunc->Draw("CONT1 Z LIST");
+
 	gStyle->SetOptFit(1011);
 
 	// cosmetics
+
+	errorBand->SetFillColorAlpha(kRed-9, 0.2);
+	errorBand->SetMarkerSize(0);
+
+	errorBand->Draw("E3 SAME");
 
 	standardCorrectedHist->SetMarkerStyle(20);
 	standardCorrectedHist->SetMarkerSize(1);
@@ -407,11 +234,16 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	standardCorrectedHist->GetXaxis()->CenterTitle();
 	standardCorrectedHist->GetYaxis()->CenterTitle();
 
-	TLegend legend2(.22, .88, .5, .68);
+	standardCorrectedHist->Draw("SAME");
+
+	PolarFunc->Draw("SAME");
+
+	TLegend legend2(.22, .91, .5, .67);
 	legend2.SetTextSize(.05);
 	legend2.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 	legend2.AddEntry(standardCorrectedHist, "#varUpsilon(1S) corrected yield", "lp");
 	legend2.AddEntry(PolarFunc, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaVal, lambdaErr), "l");
+	legend2.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
 
 	legend2.DrawClone();
 
@@ -419,7 +251,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	textChi2.SetTextAlign(12);
 	textChi2.SetTextSize(0.045);
 	textChi2.DrawLatexNDC(0.74, 0.044, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
-	
+
 	gPad->Update();
 
 	// draw uncertainties
@@ -442,10 +274,14 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	gPad->Update();
 
 	// calculate chi2 / nDOF by hand for cross-check
+	
+	// calculateChi2(standardCorrectedHist, PolarFunc, nCosThetaBins);	
 
-	calculateChi2(standardCorrectedHist, PolarFunc, nCosThetaBins);	
+	// save canvas
 
 	gSystem->mkdir("DistributionFits/1D", kTRUE);
 	polarCanvas->SaveAs(Form("DistributionFits/1D/ROOTFIT_compareCorrectedCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
-	errCanvas->SaveAs(Form("DistributionFits/1D/uncertainty%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	
+	gSystem->mkdir("UncertaintyPlots/1D", kTRUE);
+	errCanvas->SaveAs(Form("UncertaintyPlots/1D/uncertainty%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 }
