@@ -16,8 +16,8 @@ const char* TEfficiencyEndName(const char* refFrameName = "CS", Int_t ptMin = 0,
 	return Form("%s_pt%dto%d", refFrameName, ptMin, ptMax);
 }
 
-const char* TEfficiencyMainTitle(int iState = gUpsilonState) {
-	return Form("#varUpsilon(%dS) total efficiency", iState);
+const char* TEfficiencyMainTitle(int iState = gUpsilonState, const char* title = "total efficiency") {
+	return Form("#varUpsilon(%dS) %s", iState, title);
 }
 
 const char* TEfficiencyAccMainTitle(int iState = gUpsilonState) {
@@ -33,9 +33,6 @@ TEfficiency* CosThetaTEfficiency1D(Int_t ptMin = 0, Int_t ptMax = 30, const char
 	char* title = nullptr;
 	if (isAcc) title = Form(";%s;%s", CosThetaVarTitle(refFrameName), TEfficiencyAccMainTitle(iState));
 	else title = Form(";%s;%s", CosThetaVarTitle(refFrameName), TEfficiencyMainTitle(iState));
-
-	cout << isAcc << endl;
-	cout << title << endl;
 
 	TEfficiency* tEff = nullptr;
 	if (std::string(refFrameName) == "CS") tEff = new TEfficiency(name, title, NCosThetaBinsCS, CosThetaBinningCS);
@@ -104,4 +101,133 @@ TEfficiency* TEfficiency3D(const char* name, const char* refFrameName = "CS", in
 	tEff->SetStatisticOption(gTEffStatOption);
 
 	return tEff;
+}
+
+
+// rebin TEfficiency 3D maps to TEfficiency 1D cosTheta based on costheta, phi, and pT selection
+
+TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}) {
+
+	// extract the numerator and the denominator from the 3D TEfficiency Map
+	TH3D* hPassed = (TH3D*)TEff3DMap->GetPassedHistogram();
+	TH3D* hTotal = (TH3D*)TEff3DMap->GetTotalHistogram();
+
+	// obtain the bin numbers of the boundaries on phi and pt
+	Int_t iPhiMin = hPassed->GetYaxis()->FindBin(phiMin);
+	Int_t iPhiMax = hPassed->GetYaxis()->FindBin(phiMax);
+
+	Int_t iPtMin = hPassed->GetZaxis()->FindBin(ptMin);
+	Int_t iPtMax = hPassed->GetZaxis()->FindBin(ptMax);
+
+	// obtain the projection histogram along the costheta axis within boundaries of phi and pt
+	// (option e: calculate errors, o: only bins inside the selected range will be filled)
+	TH1D* hPassedCosTheta = (TH1D*)hPassed->ProjectionX("hPassedCosTheta", iPhiMin, iPhiMax - 1, iPtMin, iPtMax - 1, "eo");
+	TH1D* hTotalCosTheta = (TH1D*)hTotal->ProjectionX("hTotalCosTheta", iPhiMin, iPhiMax - 1, iPtMin, iPtMax - 1, "eo");
+
+	// rebin the projection histogram (default: 20 bins from -1 to 1)
+	TH1D* hPassedCosTheta_Rebin = (TH1D*)hPassedCosTheta->Rebin(nCosThetaBins, "hPassedCosTheta_Rebin", cosThetaBinEdges.data());
+	TH1D* hTotalCosTheta_Rebin = (TH1D*)hTotalCosTheta->Rebin(nCosThetaBins, "hTotalCosTheta_Rebin", cosThetaBinEdges.data());
+
+	// define TEfficiency using the final numerator and denominator
+	TEfficiency* TEffCosTheta = new TEfficiency("TEffCosTheta", "cos #theta_{CS}; efficiency", nCosThetaBins, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
+
+	TEffCosTheta->SetPassedHistogram(*hPassedCosTheta_Rebin, "f");
+	TEffCosTheta->SetTotalHistogram(*hTotalCosTheta_Rebin, "f");
+
+	return TEffCosTheta;
+}
+
+// rebin TEfficiency 3D maps of efficiency systematic uncertainty to TEfficiency 1D cosTheta based on costheta, phi, and pT selection
+
+TH1D* rebinRel3DUnc(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}) {
+	/// rebin efficiency maps based on costheta, phi, and pT selection
+	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
+
+	TH1D* h1DSystEff = new TH1D("h1DSystEff", "", nCosThetaBins, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
+
+	// obtain the bin numbers of the boundaries on phi and pt
+	Int_t iPhiMin = systEff->GetYaxis()->FindBin(phiMin);
+	Int_t iPhiMax = systEff->GetYaxis()->FindBin(phiMax) - 1;
+
+	Int_t iPtMin = systEff->GetZaxis()->FindBin(ptMin);
+	Int_t iPtMax = systEff->GetZaxis()->FindBin(ptMax) - 1;
+
+	Int_t ibin = 1;
+
+	// calculate the systematic uncertainties merging phi and pt bins
+	// and set the bin content of 1D costheta hist using the calculated value
+	for (int ibin = 1; ibin <= nCosThetaBins; ibin++){
+		Double_t cosThetaSumSystEff = 0;
+
+		Int_t iCosThetaMin = systEff->GetXaxis()->FindBin(cosThetaBinEdges[ibin-1]);
+		Int_t iCosThetaMax = systEff->GetXaxis()->FindBin(cosThetaBinEdges[ibin])-1;
+
+		// merge bins along the cosTheta axis
+		for (int iCosTheta = iCosThetaMin; iCosTheta <= iCosThetaMax; iCosTheta++) {
+			Double_t phiSumSystEff = 0;
+
+			// sum uncertainties along the phi axis
+			for (int iPhi = iPhiMin; iPhi <= iPhiMax; iPhi++) {
+				Double_t ptSumSystEff = 0;
+
+				// sum uncertainties along the pt axis
+				for (int iPt = iPtMin; iPt <= iPtMax; iPt++) {
+					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt));
+				}
+
+				phiSumSystEff = TMath::Hypot(phiSumSystEff, ptSumSystEff);
+			}
+
+			cosThetaSumSystEff = TMath::Hypot(cosThetaSumSystEff, phiSumSystEff);
+		}
+
+		h1DSystEff->SetBinContent(ibin, cosThetaSumSystEff);
+
+	}
+
+	return h1DSystEff;
+}
+
+// Draw 1D efficincy plot
+
+void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t iState = gUpsilonState, Bool_t	isAcc = kTRUE) {
+	TCanvas* canvas = new TCanvas(effHist->GetName(), "", 600, 600);
+	canvas->SetRightMargin(0.05);
+
+	// empty frame for the axes
+	TH1D* frameHist = new TH1D("frameHist", "", NCosThetaBinsHX, CosThetaBinningHX);
+
+	frameHist->Draw(); 
+
+	// draw efficiency plot on top of the histogram frame
+	effHist->SetLineWidth(3);
+	effHist->Draw("PL E0 SAME");
+
+	// cosmetics of the histogram
+	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
+
+	TLatex legend;
+	legend.SetTextAlign(22);
+	legend.SetTextSize(0.05);
+	legend.DrawLatexNDC(.55, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+
+	if (strstr(effHist->GetName(), "CS")) frameHist->SetXTitle(CosThetaVarTitle("CS"));
+	else frameHist->SetXTitle(CosThetaVarTitle("HX"));
+
+	if (isAcc) frameHist->SetYTitle(TEfficiencyMainTitle(iState, "Acceptance"));
+	else frameHist->SetYTitle(TEfficiencyMainTitle(iState));
+	
+	frameHist->GetXaxis()->CenterTitle();
+	frameHist->GetYaxis()->CenterTitle();
+
+	frameHist->GetXaxis()->SetRangeUser(-1, 1);
+	frameHist->GetYaxis()->SetRangeUser(0, 1);
+
+	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
+
+	// save the plot
+	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
+	if (isAcc) canvas->SaveAs(Form("EfficiencyMaps/%dS/acc_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
+	else canvas->SaveAs(Form("EfficiencyMaps/%dS/eff_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
 }
