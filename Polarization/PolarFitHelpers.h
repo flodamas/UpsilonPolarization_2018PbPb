@@ -1,3 +1,4 @@
+// pre-difinced cosTheta bin edges for the polarization 1D fit
 vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins){
 
 	vector<Double_t> cosThetaBinEdges;
@@ -67,4 +68,99 @@ TCanvas* drawUncertaintyPlot(const char* refFrameName, TH1D* uncPlot1, TH1D* unc
 	uncPlot7->Draw("SAME");
 
 	return errCanvas;
+}
+
+// get maximum y value of the contour plot
+double getMaxYValue(TGraph *graph) {
+    double maxY = -1e20; // Initialize with a very small value
+
+    // Get the number of points in the graph
+    int nPoints = graph->GetN();
+
+    // Iterate through each point in the graph
+    for (int iPoint = 0; iPoint < nPoints; iPoint++) {
+        double x, y;
+        graph->GetPoint(iPoint, x, y); // Get x and y coordinates of the point
+
+        // Update the maximum y-value if the current y-value is greater
+        if (y > maxY) {
+            maxY = y;
+        }
+    }
+
+    return maxY;
+}
+
+// get minimum y value of the contour plot
+double getMinYValue(TGraph *graph) {
+    double minY = 1e20; // Initialize with a very large value
+
+    // Get the number of points in the graph
+    int nPoints = graph->GetN();
+
+    // Iterate through each point in the graph
+    for (int iPoint = 0; iPoint < nPoints; iPoint++) {
+        double x, y;
+        graph->GetPoint(iPoint, x, y); // Get x and y coordinates of the point
+
+        // Update the maximum y-value if the current y-value is greater
+        if (y < minY) {
+            minY = y;
+        }
+    }
+
+    return minY;
+}
+
+// draw contour plots
+TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", TGraph* contour1 = nullptr, TGraph* contour2 = nullptr, TGraph* contour3 = nullptr) {
+	TCanvas* contourCanvas = new TCanvas(contour1->GetName(), "", 650, 600);
+
+	contourCanvas->SetLeftMargin(0.17);
+
+	contour1->SetTitle(Form(";cos #theta_{%s};Normalization Factor", refFrameName));
+
+	contour1->GetXaxis()->CenterTitle();
+	contour1->GetYaxis()->CenterTitle();
+
+	contour1->GetYaxis()->SetTitleOffset(1.4);
+
+	contour1->GetYaxis()->SetRangeUser(getMinYValue(contour1) * 0.95, getMaxYValue(contour1) * 1.1);
+
+	contour1->SetFillColorAlpha(kBlue-8, 0.2);
+	contour1->SetLineColor(kBlue-8);
+	contour1->SetLineWidth(2);
+	contour1->Draw("ALF");
+
+	contour2->SetFillColorAlpha(kGreen-8, 0.2);
+	contour2->SetLineColor(kGreen-8);
+	contour2->SetLineWidth(2);
+	contour2->Draw("FL SAME");
+
+	contour3->SetFillColorAlpha(kBlue+2, 0.2);
+	contour3->SetLineColor(kBlue+2);
+	contour3->SetLineWidth(2);
+	contour3->Draw("FL SAME");
+
+	TPaveText* text = new TPaveText(0.20, 0.80, 0.57, 0.90, "NDCNB");
+	text->SetFillColor(4000);
+	text->SetBorderSize(0);
+	text->AddText(CentralityRangeText(gCentralityBinMin, gCentralityBinMax));
+	text->AddText(DimuonPtRangeText(ptMin, ptMax));
+
+	text->SetAllWith("", "align", 12);
+	text->Draw("SAME");
+
+	TLegend contourLegend(.65, .75, .90, .91, NULL, "brNDC");
+	contourLegend.SetTextSize(.05);
+	
+	contourLegend.AddEntry(contour3, "GMinuit, 1#sigma", "F");
+   	contourLegend.AddEntry(contour2, "fitResult, 1#sigma", "F");
+   	contourLegend.AddEntry(contour1, "GMinuit, 2#sigma", "F");
+
+	contourLegend.DrawClone();
+
+	gPad->Update();	
+
+	return contourCanvas;
 }
