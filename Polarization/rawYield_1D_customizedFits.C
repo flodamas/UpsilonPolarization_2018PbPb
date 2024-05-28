@@ -50,31 +50,31 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	const char* signalShapeName = "SymDSCB";
 
 	// background shape array: ChebychevOrderN or ExpTimesErr	
-	// const char* bkgShapeName[] = {
-	//   // "ChebychevOrder1",
-	//   "ChebychevOrder2",
-	//   "ChebychevOrder2",
-	//   "ChebychevOrder2",
-	//   "ChebychevOrder2",
-	//   "ChebychevOrder2",
-	//   "ChebychevOrder2",
-	//   "ChebychevOrder2",
-	//   "ChebychevOrder2",
-	//   // "ChebychevOrder1"
-	// };
-
 	const char* bkgShapeName[] = {
-	  "ExpTimesErr",
-	  "ExpTimesErr",
-	  "ExpTimesErr",
-	  "ExpTimesErr",
-	  "ExpTimesErr",
-	  "ExpTimesErr",
-	  "ExpTimesErr",
-	  "ExpTimesErr",
-	  "ExpTimesErr",
-	  "ExpTimesErr"
+	  // "ChebychevOrder1",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  // "ChebychevOrder1"
 	};
+
+	// const char* bkgShapeName[] = {
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr"
+	// };
 
 	/// "Standard" procedure: extract the yields per bin
 	TH1D* standardCorrectedHist = new TH1D("standardCorrectedHist", " ", nCosThetaBins, cosThetaBinEdges.data());
@@ -185,6 +185,8 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	/// Polarization fit
 	// with Root Fit function
 
+	TVirtualFitter::SetDefaultFitter("Minuit"); 
+
 	TCanvas* polarCanvas = new TCanvas(standardCorrectedHist->GetName(), "", 650, 600);
 
 	TF1* PolarFunc = cosThetaPolarFunc(maxYield);
@@ -205,12 +207,6 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// 1 Sigma band
     TH1D* errorBand = new TH1D("errorBand", "", 1000, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
    	(TVirtualFitter::GetFitter())->GetConfidenceIntervals(errorBand, 0.68);
-
-	// double contours[1] = {2.3};
-
-	// PolarFunc->SetContour(1, contours);
-
-	// PolarFunc->Draw("CONT1 Z LIST");
 
 	gStyle->SetOptFit(1011);
 
@@ -233,10 +229,6 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	standardCorrectedHist->GetXaxis()->CenterTitle();
 	standardCorrectedHist->GetYaxis()->CenterTitle();
-
-	standardCorrectedHist->Draw("SAME");
-
-	PolarFunc->Draw("SAME");
 
 	TLegend legend2(.22, .91, .5, .67);
 	legend2.SetTextSize(.05);
@@ -273,9 +265,34 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	gPad->Update();
 
-	// calculate chi2 / nDOF by hand for cross-check
+	/// calculate chi2 / nDOF by hand for cross-check
 	
 	// calculateChi2(standardCorrectedHist, PolarFunc, nCosThetaBins);	
+	
+	/// contour plot (two methods)
+
+	// method1: using fit results
+    // Define arrays to store the contour points
+	unsigned int nPoints = 1000; // Number of contour points
+	double pntsx[nPoints], pntsy[nPoints]; // Arrays to store x and y coordinates of contour points
+
+	fitResults->Contour(0, 1, nPoints, pntsx, pntsy, 0.683); // 100 points, parameters 0 and 1
+
+   	TGraph* contourPlot_fitResults = new TGraph(nPoints);
+
+    for (int iPoint = 0; iPoint < nPoints; iPoint++) {
+        contourPlot_fitResults->SetPoint(iPoint, pntsx[iPoint], pntsy[iPoint]);
+    }
+
+    // method2: using fit gMinuit
+	// set the confidence level
+   	gMinuit->SetErrorDef(4); // 2 sigma corresponds to 4
+   	TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(80, 0, 1);
+
+   	gMinuit->SetErrorDef(1); // 1 sigma corresponds to 1
+   	TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(80, 0, 1);	
+
+   	TCanvas* contourCanvas = drawContourPlots(ptMin, ptMax, refFrameName, contourPlot1, contourPlot_fitResults, contourPlot2);
 
 	// save canvas
 
@@ -284,4 +301,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	
 	gSystem->mkdir("UncertaintyPlots/1D", kTRUE);
 	errCanvas->SaveAs(Form("UncertaintyPlots/1D/uncertainty%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+
+	gSystem->mkdir("ContourPlots/1D", kTRUE);
+	contourCanvas->SaveAs(Form("ContourPlots/1D/contour%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 }
