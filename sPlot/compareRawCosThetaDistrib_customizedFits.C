@@ -59,13 +59,30 @@ void compareRawCosThetaDistrib_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30,
 	//   "ChebychevOrder2",
 	//   "ChebychevOrder2",
 	//   "ChebychevOrder2",
+
 	//   "ChebychevOrder2",
 	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+
 	//   "ChebychevOrder2",
 	//   // "ChebychevOrder1"
 	// };
 
 	const char* bkgShapeName[] = {
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
 	  "ExpTimesErr",
 	  "ExpTimesErr",
 	  "ExpTimesErr",
