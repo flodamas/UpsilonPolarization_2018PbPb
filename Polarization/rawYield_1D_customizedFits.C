@@ -57,13 +57,30 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	  "ChebychevOrder2",
 	  "ChebychevOrder2",
 	  "ChebychevOrder2",
+
 	  "ChebychevOrder2",
 	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+	  "ChebychevOrder2",
+
 	  "ChebychevOrder2",
 	  // "ChebychevOrder1"
 	};
 
 	// const char* bkgShapeName[] = {
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
+	//   "ExpTimesErr",
 	//   "ExpTimesErr",
 	//   "ExpTimesErr",
 	//   "ExpTimesErr",
@@ -269,30 +286,17 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	
 	// calculateChi2(standardCorrectedHist, PolarFunc, nCosThetaBins);	
 	
-	/// contour plot (two methods)
-
-	// method1: using fit results
-    // Define arrays to store the contour points
-	unsigned int nPoints = 1000; // Number of contour points
-	double pntsx[nPoints], pntsy[nPoints]; // Arrays to store x and y coordinates of contour points
-
-	fitResults->Contour(0, 1, nPoints, pntsx, pntsy, 0.683); // 100 points, parameters 0 and 1
-
-   	TGraph* contourPlot_fitResults = new TGraph(nPoints);
-
-    for (int iPoint = 0; iPoint < nPoints; iPoint++) {
-        contourPlot_fitResults->SetPoint(iPoint, pntsx[iPoint], pntsy[iPoint]);
-    }
-
-    // method2: using fit gMinuit
+	/// contour plot
+	// (ref: https://root-forum.cern.ch/t/roofit-minos-errors-for-2-parameters-of-interest/16157)
+	
 	// set the confidence level
-   	gMinuit->SetErrorDef(4); // 2 sigma corresponds to 4
-   	TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(80, 0, 1);
+   	gMinuit->SetErrorDef(2.30); // 1 sigma corresponds to delchi2 = 2.30 
+   	TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(1000, 0, 1); // Contour(number of points, lambda_theta, normalization factor)
 
-   	gMinuit->SetErrorDef(1); // 1 sigma corresponds to 1
-   	TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(80, 0, 1);	
+   	gMinuit->SetErrorDef(6.18); // 2 sigma corresponds to delchi2 = 6.18
+   	TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(1000, 0, 1);	
 
-   	TCanvas* contourCanvas = drawContourPlots(ptMin, ptMax, refFrameName, contourPlot1, contourPlot_fitResults, contourPlot2);
+   	TCanvas* contourCanvas = drawContourPlots(ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], refFrameName, contourPlot1, contourPlot2);
 
 	// save canvas
 
