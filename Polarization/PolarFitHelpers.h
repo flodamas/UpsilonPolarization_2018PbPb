@@ -10,6 +10,10 @@ vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins){
 	else if (nCosThetaBins == 8) cosThetaBinEdges = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8};
 	else if (nCosThetaBins == 9) cosThetaBinEdges = {-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9};
 	else if (nCosThetaBins == 10) cosThetaBinEdges = {-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1};
+	// else if (nCosThetaBins == 8) cosThetaBinEdges = {-0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4};
+	else if (nCosThetaBins == 12) cosThetaBinEdges = {-0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
+	else if (nCosThetaBins == 14) cosThetaBinEdges = {-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7};
+	else if (nCosThetaBins == 16) cosThetaBinEdges = {-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
 	else {
 		cout << "Pre-defined binning not found. Check the input nCosThetaBins" << endl;
 		exit(1);
@@ -113,50 +117,57 @@ double getMinYValue(TGraph *graph) {
 }
 
 // draw contour plots
-TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", TGraph* contour1 = nullptr, TGraph* contour2 = nullptr, TGraph* contour3 = nullptr) {
+TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, const char* refFrameName = "CS", TGraph* contour1 = nullptr, TGraph* contour2 = nullptr, TGraph* contour3 = nullptr) {
 	TCanvas* contourCanvas = new TCanvas(contour1->GetName(), "", 650, 600);
 
 	contourCanvas->SetLeftMargin(0.17);
 
-	contour1->SetTitle(Form(";cos #theta_{%s};Normalization Factor", refFrameName));
+	TH2D *contourPlotFrame = new TH2D("contourPlotFrame", ";#lambda_{#theta};Normalization Factor", 20, -2, 2, 100, 0, 7000);
 
-	contour1->GetXaxis()->CenterTitle();
-	contour1->GetYaxis()->CenterTitle();
+	// contour1->SetTitle(";#lambda#theta;Normalization Factor");
 
-	contour1->GetYaxis()->SetTitleOffset(1.4);
+	contourPlotFrame->GetXaxis()->CenterTitle();
+	contourPlotFrame->GetYaxis()->CenterTitle();
 
-	contour1->GetYaxis()->SetRangeUser(getMinYValue(contour1) * 0.95, getMaxYValue(contour1) * 1.1);
+	contourPlotFrame->GetYaxis()->SetTitleOffset(1.4);
+	
+	contourPlotFrame->GetXaxis()->SetRangeUser(-2, 2);
+	contourPlotFrame->GetYaxis()->SetRangeUser(0, 7000);
 
-	contour1->SetFillColorAlpha(kBlue-8, 0.2);
-	contour1->SetLineColor(kBlue-8);
-	contour1->SetLineWidth(2);
-	contour1->Draw("ALF");
+	contourPlotFrame->Draw();
 
-	contour2->SetFillColorAlpha(kGreen-8, 0.2);
-	contour2->SetLineColor(kGreen-8);
+	if (contour3){
+		contour3->SetFillColorAlpha(kGreen-8, 0.2);
+		contour3->SetLineColor(kGreen-8);
+		contour3->SetLineWidth(2);
+		contour3->Draw("FL SAME");
+	}
+
+	contour2->SetFillColorAlpha(kAzure-9, 0.7);
+	contour2->SetLineColor(kAzure-9);
 	contour2->SetLineWidth(2);
 	contour2->Draw("FL SAME");
 
-	contour3->SetFillColorAlpha(kBlue+2, 0.2);
-	contour3->SetLineColor(kBlue+2);
-	contour3->SetLineWidth(2);
-	contour3->Draw("FL SAME");
+	contour1->SetFillColorAlpha(kOrange, 0.9);
+	contour1->SetLineColor(kOrange+1);
+	contour1->SetLineWidth(2);
+	contour1->Draw("FL SAME");
 
-	TPaveText* text = new TPaveText(0.20, 0.80, 0.57, 0.90, "NDCNB");
+	TPaveText* text = new TPaveText(0.20, 0.70, 0.57, 0.90, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	text->AddText(CentralityRangeText(gCentralityBinMin, gCentralityBinMax));
 	text->AddText(DimuonPtRangeText(ptMin, ptMax));
+	text->AddText(CosThetaRangeText(refFrameName, cosThetaMin, cosThetaMax));
 
 	text->SetAllWith("", "align", 12);
 	text->Draw("SAME");
 
-	TLegend contourLegend(.65, .75, .90, .91, NULL, "brNDC");
+	TLegend contourLegend(.21, .54, .46, .70, NULL, "brNDC");
 	contourLegend.SetTextSize(.05);
 	
-	contourLegend.AddEntry(contour3, "GMinuit, 1#sigma", "F");
-   	contourLegend.AddEntry(contour2, "fitResult, 1#sigma", "F");
-   	contourLegend.AddEntry(contour1, "GMinuit, 2#sigma", "F");
+	contourLegend.AddEntry(contour1, "1#sigma", "F");
+   	contourLegend.AddEntry(contour2, "2#sigma", "F");
 
 	contourLegend.DrawClone();
 
