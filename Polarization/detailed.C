@@ -152,7 +152,7 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 
 	cout << "\nSECOND FIT METHOD: directly call fitTo() to the total PDF to enable AsymptoticError\n";
 
-	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), Extended(true), AsymptoticError(true), NumCPU(3), PrintLevel(-1), RecoverFromUndefinedRegions(1.), Offset());
+	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), Extended(true), AsymptoticError(true), NumCPU(2), PrintLevel(-1), Offset());
 
 	testResult->Print("v");
 
