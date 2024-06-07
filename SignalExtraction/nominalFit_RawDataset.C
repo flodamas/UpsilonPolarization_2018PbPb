@@ -26,7 +26,7 @@ RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 3
 	return reducedDataset;
 }
 
-void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+void nominalFit_2D_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, Bool_t isBkgExpTimesErr = kTRUE, Int_t ChebychevOrder = 1) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -44,6 +44,8 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
+	RooRealVar phi = *wspace.var(Form("phi%s", refFrameName));
+
 	wspace.Print();
 
 	auto allDataset = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, "");
@@ -57,9 +59,11 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 	const char* signalShapeName = "SymDSCB";
 
 	// background
-	// int order = 2;
-	// const char* bkgShapeName = Form("ChebychevOrder%d", order);
-	const char* bkgShapeName = "ExpTimesErr";
+	
+	const char* bkgShapeName = nullptr;
+
+	if (isBkgExpTimesErr) bkgShapeName = "ExpTimesErr";		
+	else bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
 
 	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
@@ -116,16 +120,18 @@ void nominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSf
 
 	RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
 
-	// bkgShapeName = Form("ChebychevOrder%d", order);
+	if (!isBkgExpTimesErr) bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
 	SaveRawDataSignalYields(signalYields, bkgShapeName, fitModelName);
 	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName);
 }
 
-void scanNominalFit_lowPt_RawDataset() {
+void scanNominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2) {
 	Int_t ptEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
+	// Float_t cosThetaEdges[21] = {-1.,-0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.};
 	Float_t cosThetaEdges[11] = {-1., -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.};
+	Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
 	// Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
-	Int_t phiEdges[2] = {-180, 180};
+	// Int_t phiEdges[2] = {-180, 180};
 
 	Int_t numPtEle = sizeof(ptEdges) / sizeof(Int_t);
 	Int_t numCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
@@ -133,7 +139,7 @@ void scanNominalFit_lowPt_RawDataset() {
 
 	for (Int_t cosThetaIdx = 0; cosThetaIdx < numCosThetaEle - 1; cosThetaIdx++) {
 		for (Int_t idx = 0; idx < numPhiEle - 1; idx++) {
-			nominalFit_lowPt_RawDataset(ptEdges[6], ptEdges[7], kFALSE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1]);
+			nominalFit_2D_RawDataset(ptMin, ptMax, kFALSE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1]);
 		}
 	}
 }

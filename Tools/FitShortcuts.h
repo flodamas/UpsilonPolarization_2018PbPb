@@ -1,3 +1,7 @@
+// when the header is included several times, to avoid the redefinition error
+#ifndef Fit_Shortcuts_GUARD
+#define Fit_Shortcuts_GUARD
+
 #include "../Tools/BasicHeaders.h"
 
 #include "../Tools/Parameters/PhysicsConstants.h"
@@ -352,3 +356,24 @@ void SaveRawDataCanvas(TCanvas* canvasName, const char* bkgShapeName, const char
 	gSystem->mkdir("InvMassFits", kTRUE);
 	canvasName->SaveAs(Form("InvMassFits/RawData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
 }
+
+void calculateChi2(TH1D* standardCorrectedHist, TF1* PolarFunc, Int_t nCosThetaBins = 10){
+	double chiSqr = 0;
+
+    for(int i=1; i<=nCosThetaBins; i++){
+    	Double_t x = standardCorrectedHist->GetBinCenter(i);
+		Double_t res = (standardCorrectedHist->GetBinContent(i) - PolarFunc->Eval(x)) / (standardCorrectedHist->GetBinError(i));
+	   	if(res == 0) continue;
+
+	   	chiSqr += TMath::Power(res, 2);
+
+	   	// cout << "x: " << x << endl;
+    	// cout << "res: " << res << endl;
+    }
+
+    cout << "chi2: " << chiSqr << endl;
+    cout << "nDOF: " << (nCosThetaBins - PolarFunc->GetNpar()) << endl;
+    cout << "reduced chi2: " << chiSqr / (nCosThetaBins - PolarFunc->GetNpar()) << endl;
+}
+
+#endif
