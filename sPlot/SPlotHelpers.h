@@ -86,6 +86,7 @@ RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const
 	wspace.import(*sData);
 
 	// save it in a ROOT file for later usage
+	gSystem->mkdir("../sPlot/Datasets", kTRUE);
 	TFile file(sWeightedDatasetsFileName, "UPDATE");
 
 	sData->Write();
