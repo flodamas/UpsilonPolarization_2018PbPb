@@ -4,7 +4,8 @@ vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins){
 	vector<Double_t> cosThetaBinEdges;
 
 	// define the bin edges along the cosTheta axis depending on the number of bins
-	if (nCosThetaBins == 5) cosThetaBinEdges = {-0.5, -0.3, -0.1, 0.1, 0.3, 0.5};
+	if (nCosThetaBins == 1) cosThetaBinEdges = {-1, 1};
+	else if (nCosThetaBins == 5) cosThetaBinEdges = {-0.5, -0.3, -0.1, 0.1, 0.3, 0.5};
 	else if (nCosThetaBins == 6) cosThetaBinEdges = {-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6};
 	else if (nCosThetaBins == 7) cosThetaBinEdges = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7};
 	else if (nCosThetaBins == 8) cosThetaBinEdges = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8};
@@ -20,6 +21,22 @@ vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins){
 	}
 
 	return cosThetaBinEdges;
+}
+
+vector<Double_t> setPhiBinEdges(Int_t nPhiBins){
+
+	// define the bin edges along the cosTheta axis depending on the number of bins
+	vector<Double_t> phiBinEdges;
+
+	if (nPhiBins == 1) phiBinEdges = {-180, 180};
+	else if (nPhiBins == 6) phiBinEdges = {-180, -120, -60, 0, 60, 120, 180};
+
+	else {
+		cout << "Pre-defined binning not found. Check the input nPhiBins" << endl;
+		exit(1);
+	}
+
+	return phiBinEdges;
 }
 
 TCanvas* drawUncertaintyPlot(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPlot2, TH1D* uncPlot3, TH1D* uncPlot4, TH1D* uncPlot5, TH1D* uncPlot6, TH1D* uncPlot7){
@@ -174,4 +191,36 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 	gPad->Update();	
 
 	return contourCanvas;
+}
+
+// display the uncertainties signal extraction yield on each bin of 2D yield map
+void displayYieldUncertainties(TH2D* yieldMap, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6){
+
+	if(!yieldMap) {
+		cout << "no yield map found!!!" << endl;
+		exit(1);
+	}
+
+	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
+
+		for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+
+			// Get the yield and uncertainty values
+			Double_t yield1SVal = yieldMap->GetBinContent(iCosTheta + 1, iPhi +1);
+
+			Double_t yield1SUnc = yieldMap->GetBinError(iCosTheta + 1, iPhi +1);
+
+            // Get the bin center coordinates
+            double x = yieldMap->GetXaxis()->GetBinCenter(iCosTheta + 1);
+
+            double y = yieldMap->GetYaxis()->GetBinCenter(iPhi + 1);
+
+            // Create a TLatex object to write the signal extraction yield uncertainties on each bin
+            TLatex latex;
+            latex.SetTextSize(0.02);  // Adjust text size as needed
+            latex.SetTextAlign(22);   // Center alignment
+            latex.SetTextColor(kWhite);
+            latex.DrawLatex(x, y, Form("%.2f%%", yield1SUnc / yield1SVal * 100));			
+		}
+	}
 }

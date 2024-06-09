@@ -180,6 +180,28 @@ const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin
 	return Form("%s_cosTheta%.1fto%.1f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 }
 
+const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Int_t nCosThetaBins = 10, const vector<Double_t> &cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
+	const char** signalFitNames = new const char* [nCosThetaBins];
+
+	// just need to append the specific (cos theta, phi) bin name
+	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
+		signalFitNames[iCosTheta] = Form("%s_cosTheta%.1fto%.1f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], phiMin, phiMax, (isCSframe) ? "CS" : "HX");		
+	}
+
+	return signalFitNames;
+}
+
+const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, const vector<Double_t> &phiBinEdges = {}) {
+	const char** signalFitNames = new const char* [nPhiBins];
+
+	// just need to append the specific (cos theta, phi) bin name
+	for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+		signalFitNames[iPhi] = Form("%s_cosTheta%.1fto%.1f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaMin, cosThetaMax, (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1], (isCSframe) ? "CS" : "HX");		
+	}
+
+	return signalFitNames;
+}
+
 // small dummy function to avoid repetiting the same piece of code everywhere...
 const char* GetMCFileName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
 	return Form("../MonteCarlo/SignalParameters/%s.txt", GetSignalFitName(signalShapeName, ptMin, ptMax));
@@ -328,8 +350,10 @@ void SaveRawDataSignalYields(RooArgSet* signalYields, const char* bkgShapeName, 
 RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName) {
 	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
-	const char* yieldsFileName = Form("../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName);
-
+	char yieldsFileName[512];
+    snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName);
+    
+	cout << yieldsFileName << endl;
 	if (fopen(yieldsFileName, "r")) {
 		cout << endl
 		     << "Found" << yieldsFileName << " file, will read signal yields from it" << endl;
