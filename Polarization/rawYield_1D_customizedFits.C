@@ -20,84 +20,6 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-/// apply weights and errors to each costheta bin
-Float_t correctRawYield1DHist(TH1D* standardCorrectedHist, TEfficiency* accMap, TEfficiency* effMap, TH1D* systEff, Int_t nBins = 10, const char** bkgShapeNames = nullptr, const char** fitModelNames = nullptr) {
-
-	// initialize variables used in the loop below
-	Double_t totalRelUncHigh = 0, totalRelUncLow = 0;
-	Double_t totalUncHigh = 0, totalUncLow = 0;
-
-	TCanvas* massCanvas = 0;
-	
-	Float_t maxYield = 0;
-	
-	for (Int_t iBin = 0; iBin < nBins; iBin++) {
-		
-		Double_t weight = 0;
-		
-		RooRealVar* yield1S = new RooRealVar("yield1S", "", 1000);
-		RooRealVar* yield2S = new RooRealVar("yield2S", "", 100);
-		RooRealVar* yield3S = new RooRealVar("yield3S", "", 10);
-
-		// get the corresponding weights
-		double acceptance = accMap->GetEfficiency(iBin + 1);
-		double efficiency = effMap->GetEfficiency(iBin + 1);
-
-		// calculate weight
-		weight = 1. / (acceptance * efficiency);
-
-		// propagate both scale factor uncertainties and efficiency stat errors to the weight
-		double relSystUnc = systEff->GetBinContent(iBin + 1);
-
-		double relEffUncHigh = effMap->GetEfficiencyErrorUp(iBin + 1) / efficiency;
-		double relEffUncLow = effMap->GetEfficiencyErrorLow(iBin + 1) / efficiency;
-
-		double relAccUncHigh = accMap->GetEfficiencyErrorUp(iBin + 1) / acceptance;
-		double relAccUncLow = accMap->GetEfficiencyErrorLow(iBin + 1) / acceptance;
-
-		totalRelUncHigh = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncHigh), relAccUncHigh);
-		totalRelUncLow = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncLow), relAccUncLow);
-
-		totalUncHigh = totalRelUncHigh * efficiency * acceptance;
-		totalUncLow = totalRelUncLow * efficiency * acceptance;
-
-		// get yields and their uncertainties
-		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeNames[iBin]), fitModelNames[iBin]);
-
-		double yield1SVal = yield1S->getVal();
-
-		double yield1SUnc = yield1S->getError();
-
-		// set the bin contents reflecting weights
-		standardCorrectedHist->SetBinContent(iBin + 1, yield1SVal * weight);
-				
-		// standardCorrectedHist->SetBinError(iBin + 1, yield1SErr * weight);
-		// standardCorrectedHist->SetBinError(iBin + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh));
-		// standardCorrectedHist->SetBinError(iBin + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relEffUncHigh));
-		
-		// standardCorrectedHist->SetBinError(iBin + 1, yield1SUnc * weight);
-
-		// standardCorrectedHist->SetBinError(iBin + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
-
-		standardCorrectedHist->SetBinError(iBin + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
-		
-		// // fill uncertainty histograms
-		// statHighEff->SetBinContent(iBin + 1, relEffUncHigh);
-		// statLowEff->SetBinContent(iBin + 1, relEffUncLow);
-		// statHighAcc->SetBinContent(iBin + 1, relAccUncHigh);
-		// statLowAcc->SetBinContent(iBin + 1, relAccUncLow);
-		// yield1SUnc->SetBinContent(iBin + 1, yield1SUnc / yield1SVal);
-		// totalRelUnc->SetBinContent(iBin + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
-
-		if ((yield1S->getVal()) * weight > maxYield) maxYield = (yield1S->getVal()) * weight;
-
-		delete yield1S;
-
-	}
-
-	return maxYield;
-}
-
 void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 10, Int_t phiMin = -180, Int_t phiMax = 180, const Int_t nPhiBins = 6, Int_t cosThetaMin = -1, Int_t cosThetaMax = 1, Int_t iState = gUpsilonState) {
 	
 	writeExtraText = true; // if extra text
@@ -251,7 +173,11 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	TVirtualFitter::SetDefaultFitter("Minuit"); 
 
-	TCanvas* polarCanvas = new TCanvas(standardCorrectedCosThetaHist->GetName(), "", 650, 600);
+	TCanvas* polarCanvas = new TCanvas(standardCorrectedCosThetaHist->GetName(), "", 1200, 600);
+
+	polarCanvas->Divide(2, 1);
+
+	polarCanvas->cd(1);
 
 	TF1* PolarFunc = cosThetaPolarFunc(maxYieldCosTheta);
 
@@ -262,11 +188,11 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	double chi2 = fitResults->Chi2();
 	double nDOF = nCosThetaBins - PolarFunc->GetNpar();
 
-	double lambdaVal = fitResults->Parameter(0);
-	double lambdaErr = fitResults->ParError(0);
+	double normVal = fitResults->Parameter(0);
+	double normErr = fitResults->ParError(0);
 
-	double normVal = fitResults->Parameter(1);
-	double normErr = fitResults->ParError(1);
+	double lambdaVal = fitResults->Parameter(1);
+	double lambdaErr = fitResults->ParError(1);
 
 	// 1 Sigma band
     TH1D* errorBand = new TH1D("errorBand", "", 1000, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
@@ -294,14 +220,14 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	standardCorrectedCosThetaHist->GetXaxis()->CenterTitle();
 	standardCorrectedCosThetaHist->GetYaxis()->CenterTitle();
 
-	TLegend legend2(.22, .91, .5, .67);
-	legend2.SetTextSize(.05);
-	legend2.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-	legend2.AddEntry(standardCorrectedCosThetaHist, "#varUpsilon(1S) corrected yield", "lp");
-	legend2.AddEntry(PolarFunc, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaVal, lambdaErr), "l");
-	legend2.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
+	TLegend legendCosTheta(.2, .91, .48, .67);
+	legendCosTheta.SetTextSize(.05);
+	legendCosTheta.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legendCosTheta.AddEntry(standardCorrectedCosThetaHist, "#varUpsilon(1S) corrected yield", "lp");
+	legendCosTheta.AddEntry(PolarFunc, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaVal, lambdaErr), "l");
+	legendCosTheta.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
 
-	legend2.DrawClone();
+	legendCosTheta.DrawClone();
 
 	TLatex textChi2;
 	textChi2.SetTextAlign(12);
@@ -309,6 +235,34 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	textChi2.DrawLatexNDC(0.74, 0.044, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
 
 	gPad->Update();
+
+	polarCanvas->cd(2);
+
+	standardCorrectedPhiHist->Draw();
+
+	standardCorrectedPhiHist->SetMarkerStyle(20);
+	standardCorrectedPhiHist->SetMarkerSize(1);
+	standardCorrectedPhiHist->SetMarkerColor(kAzure + 2);
+
+	standardCorrectedPhiHist->GetYaxis()->SetRangeUser(0, 2 * maxYieldPhi);
+	standardCorrectedPhiHist->GetYaxis()->SetMaxDigits(3);
+
+	standardCorrectedPhiHist->SetXTitle(Form("#varphi_{%s}", refFrameName));
+	standardCorrectedPhiHist->SetYTitle(Form("Events / ( %0.0f )", phiStep));
+
+	standardCorrectedPhiHist->GetXaxis()->CenterTitle();
+	standardCorrectedPhiHist->GetYaxis()->CenterTitle();
+
+	TLegend* legendPhi = new TLegend(.2, .91, .48, .67);
+	legendPhi->SetTextSize(.05);
+	legendPhi->SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legendPhi->AddEntry(standardCorrectedPhiHist, "#varUpsilon(1S) corrected yield", "lp");
+	// legendPhi.AddEntry(PolarFunc, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaVal, lambdaErr), "l");
+	// legendPhi.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
+
+	legendPhi->Draw();
+
+	polarCanvas->Update();
 
 	// // draw uncertainties
 	
@@ -338,10 +292,10 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	
 	// set the confidence level
    	gMinuit->SetErrorDef(2.30); // 1 sigma corresponds to delchi2 = 2.30 
-   	TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(1000, 0, 1); // Contour(number of points, lambda_theta, normalization factor)
+   	TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(1000, 1, 0); // Contour(number of points, lambda_theta, normalization factor)
 
    	gMinuit->SetErrorDef(6.18); // 2 sigma corresponds to delchi2 = 6.18
-   	TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(1000, 0, 1);	
+   	TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(1000, 1, 0);	
 
    	TCanvas* contourCanvas = drawContourPlots(ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], refFrameName, contourPlot1, contourPlot2);
 
