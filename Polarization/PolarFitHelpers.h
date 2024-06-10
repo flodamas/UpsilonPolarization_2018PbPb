@@ -39,6 +39,84 @@ vector<Double_t> setPhiBinEdges(Int_t nPhiBins){
 	return phiBinEdges;
 }
 
+/// apply weights and errors to each costheta bin
+Float_t correctRawYield1DHist(TH1D* standardCorrectedHist, TEfficiency* accMap, TEfficiency* effMap, TH1D* systEff, Int_t nBins = 10, const char** bkgShapeNames = nullptr, const char** fitModelNames = nullptr) {
+
+	// initialize variables used in the loop below
+	Double_t totalRelUncHigh = 0, totalRelUncLow = 0;
+	Double_t totalUncHigh = 0, totalUncLow = 0;
+
+	TCanvas* massCanvas = 0;
+	
+	Float_t maxYield = 0;
+	
+	for (Int_t iBin = 0; iBin < nBins; iBin++) {
+		
+		Double_t weight = 0;
+		
+		RooRealVar* yield1S = new RooRealVar("yield1S", "", 1000);
+		RooRealVar* yield2S = new RooRealVar("yield2S", "", 100);
+		RooRealVar* yield3S = new RooRealVar("yield3S", "", 10);
+
+		// get the corresponding weights
+		double acceptance = accMap->GetEfficiency(iBin + 1);
+		double efficiency = effMap->GetEfficiency(iBin + 1);
+
+		// calculate weight
+		weight = 1. / (acceptance * efficiency);
+
+		// propagate both scale factor uncertainties and efficiency stat errors to the weight
+		double relSystUnc = systEff->GetBinContent(iBin + 1);
+
+		double relEffUncHigh = effMap->GetEfficiencyErrorUp(iBin + 1) / efficiency;
+		double relEffUncLow = effMap->GetEfficiencyErrorLow(iBin + 1) / efficiency;
+
+		double relAccUncHigh = accMap->GetEfficiencyErrorUp(iBin + 1) / acceptance;
+		double relAccUncLow = accMap->GetEfficiencyErrorLow(iBin + 1) / acceptance;
+
+		totalRelUncHigh = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncHigh), relAccUncHigh);
+		totalRelUncLow = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncLow), relAccUncLow);
+
+		totalUncHigh = totalRelUncHigh * efficiency * acceptance;
+		totalUncLow = totalRelUncLow * efficiency * acceptance;
+
+		// get yields and their uncertainties
+		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeNames[iBin]), fitModelNames[iBin]);
+
+		double yield1SVal = yield1S->getVal();
+
+		double yield1SUnc = yield1S->getError();
+
+		// set the bin contents reflecting weights
+		standardCorrectedHist->SetBinContent(iBin + 1, yield1SVal * weight);
+				
+		// standardCorrectedHist->SetBinError(iBin + 1, yield1SErr * weight);
+		// standardCorrectedHist->SetBinError(iBin + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh));
+		// standardCorrectedHist->SetBinError(iBin + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relEffUncHigh));
+		
+		// standardCorrectedHist->SetBinError(iBin + 1, yield1SUnc * weight);
+
+		// standardCorrectedHist->SetBinError(iBin + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
+
+		standardCorrectedHist->SetBinError(iBin + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
+		
+		// // fill uncertainty histograms
+		// statHighEff->SetBinContent(iBin + 1, relEffUncHigh);
+		// statLowEff->SetBinContent(iBin + 1, relEffUncLow);
+		// statHighAcc->SetBinContent(iBin + 1, relAccUncHigh);
+		// statLowAcc->SetBinContent(iBin + 1, relAccUncLow);
+		// yield1SUnc->SetBinContent(iBin + 1, yield1SUnc / yield1SVal);
+		// totalRelUnc->SetBinContent(iBin + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
+
+		if ((yield1S->getVal()) * weight > maxYield) maxYield = (yield1S->getVal()) * weight;
+
+		delete yield1S;
+
+	}
+
+	return maxYield;
+}
+
 TCanvas* drawUncertaintyPlot(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPlot2, TH1D* uncPlot3, TH1D* uncPlot4, TH1D* uncPlot5, TH1D* uncPlot6, TH1D* uncPlot7){
 
 	TCanvas *errCanvas = new TCanvas("errCanvas", "errCanvas", 650, 600);
