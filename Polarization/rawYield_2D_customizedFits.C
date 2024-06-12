@@ -20,60 +20,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void customYAxisTickMarks() {
-    // Create a canvas
-    TCanvas* canvas = new TCanvas("canvas", "Canvas with Custom Y-Axis Tick Marks", 800, 600);
-
-    // Define the bin edges for the y-axis
-    double yEdges[] = {-210, -150, -90, -30, 30, 90, 150, 210, 270, 330, 390};
-
-    // Number of bins in x and y
-    const int nBinsX = 10;
-    const int nBinsY = sizeof(yEdges) / sizeof(yEdges[0]) - 1;
-
-    // Create a 2D histogram with the specified bin edges
-    TH2D* hist = new TH2D("hist", "Histogram with Custom Y-Axis Tick Marks", nBinsX, 0, 10, nBinsY, yEdges);
-
-    // Fill the histogram with some data
-    for (int i = 1; i <= nBinsX; ++i) {
-        for (int j = 1; j <= nBinsY; ++j) {
-            hist->SetBinContent(i, j, i * j);
-        }
-    }
-
-    // Draw the histogram without the y-axis
-    hist->Draw("COLZ");
-
-    // Define the range for the custom y-axis
-    double yMin = -210;
-    double yMax = 300;
-
-    // Create custom y-axis with tick marks at every 60 units from -180 to 300
-    TGaxis* customYAxis = new TGaxis(
-        gPad->GetUxmin() - 0.1, yMin,
-        gPad->GetUxmin() - 0.1, yMax,
-        -180, 300, (300 + 180) / 60, ""); // (300 + 180) / 60 calculates the number of tick marks
-
-    customYAxis->SetTitle("Y-Axis Title");
-    customYAxis->SetTitleOffset(1.2);
-    customYAxis->CenterTitle();
-    customYAxis->SetLabelOffset(0.01);
-
-    // Adjust the tick mark length
-    customYAxis->SetTickLength(0.02);
-
-    // Draw the custom y-axis
-    customYAxis->Draw();
-
-    // Update the canvas to reflect changes
-    canvas->Modified();
-    canvas->Update();
-
-    // Save the canvas as an image
-    // canvas->SaveAs("histogram_with_custom_y_axis_tick_marks.png");
-}
-
-void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 10, const Int_t nPhiBins = 6, Int_t iState = gUpsilonState) {
+void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 10, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState) {
 	
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
@@ -83,11 +30,11 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
 	/// Bin edges and width 
-	// Set the bin edges along the cosTheta axis depending on the number of bins 
-	// (The bin edges are pre-defined, so need to modify them if different bin edges are required)
-	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaBins);
+	// Set the bin edges along the cosTheta/phi axis depending on the number of bins, min and max values 
+	// (If want to use non-uniform bin width, the bin edges should be pre-defined in PolarFitHelpers.h)
+	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
-	vector<Double_t> phiBinEdges = setPhiBinEdges(nPhiBins);
+	vector<Double_t> phiBinEdges = setPhiBinEdges(nPhiBins, phiMin, phiMax);
 
 	cout << phiBinEdges[0] << endl;
 
@@ -150,20 +97,20 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
 
 	// rebin acceptance maps based on costheta, phi, and pT selection
-	TEfficiency* accMapCosTheta = rebinTEff3DMap(accMap, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+	TEfficiency* accMapCosTheta = rebinTEff3DMapCosTheta(accMap, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
 
 	// get efficiency maps
 	TFile* efficiencyFile = openFile("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults.root");
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	// rebin efficiency maps based on costheta, phi, and pT selection
-	TEfficiency* effMapCosTheta = rebinTEff3DMap(effMap, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+	TEfficiency* effMapCosTheta = rebinTEff3DMapCosTheta(effMap, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
 
 	// get relative systematic uncertainty of efficiency
 	auto* systEff = (TH3D*)efficiencyFile->Get(RelativeSystTEfficiency3DName(refFrameName));
 
 	// rebin uncertainty map based on costheta, phi, and pT selection
-	TH1D* systEffCosTheta = rebinRel3DUnc(systEff, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+	TH1D* systEffCosTheta = rebinRel3DUncCosTheta(systEff, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
 
 	Bool_t isCSframe = (strcmp(refFrameName, "CS") == 0) ? kTRUE : kFALSE;
 
@@ -269,11 +216,11 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// double chi2 = fitResults->Chi2();
 	// double nDOF = nCosThetaBins - PolarFunc->GetNpar();
 
-	// double lambdaVal = fitResults->Parameter(0);
-	// double lambdaErr = fitResults->ParError(0);
+	// double normVal = fitResults->Parameter(0);
+	// double normErr = fitResults->ParError(0);
 
-	// double normVal = fitResults->Parameter(1);
-	// double normErr = fitResults->ParError(1);
+	// double lambdaVal = fitResults->Parameter(1);
+	// double lambdaErr = fitResults->ParError(1);
 
 	// // 1 Sigma band
     // TH1D* errorBand = new TH1D("errorBand", "", 1000, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
@@ -369,10 +316,10 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	
 	// // set the confidence level
    	// gMinuit->SetErrorDef(2.30); // 1 sigma corresponds to delchi2 = 2.30 
-   	// TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(1000, 0, 1); // Contour(number of points, lambda_theta, normalization factor)
+   	// TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(1000, 1, 0); // Contour(number of points, lambda_theta, normalization factor)
 
    	// gMinuit->SetErrorDef(6.18); // 2 sigma corresponds to delchi2 = 6.18
-   	// TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(1000, 0, 1);	
+   	// TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(1000, 1, 0);	
 
    	// TCanvas* contourCanvas = drawContourPlots(ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], refFrameName, contourPlot1, contourPlot2);
 
