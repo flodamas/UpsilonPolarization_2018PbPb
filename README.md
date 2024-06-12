@@ -81,7 +81,28 @@
      - output: invariant mass fits plots and comparison between sPlot technique and standard signal extraction plot
      ```
 
-**5.**  Extract polarization parameters
+**5.**  Extract polarization parameters <br>
+   - Polarization/correctedYield_1D.C : <br>
+   perform the signal yield extraction from the corrected invariant mass distribution and extract polarization parameters from the obtained yields
+     ```
+     - inputs: WeightedUpsilonSkimmedDataset.root
+     - output: distribution fit for polarization paramaters extraction
+     ```
+   - Polarization/correctedYield_1D_customizedFits.C : <br>
+   read the signal yield extraction from the corrected invariant mass distribution and extract polarization parameters from the recorded yields
+     ```
+     - inputs: text files that contains pre-extracted yields under SignalExtraction/SignalYields
+     - output: distribution fit for polarization paramaters extraction
+     ```
+   - Polarization/rawYield_1D_customizedFits.C : <br>
+    apply correction to the signal yield that was obtained from the raw invariant mass distribution and extract polarization parameters <br>
+     ```
+     - inputs: 1) text files that contains pre-extracted yields under SignalExtraction/SignalYields
+               2) MonteCarlo/AcceptanceMaps/1S/AcceptanceResults.root
+               3) MonteCarlo/EfficiencyMaps/1S/EfficiencyResults.root
+     - output: distribution fit for polarization paramaters extraction
+     ```  
+   - Polarization/rawYield_2D_customizedFits.C <br>
 
 
 ## MC
