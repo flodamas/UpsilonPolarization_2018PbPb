@@ -177,7 +177,7 @@ const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin
 
 	// just need to append the specific (cos theta, phi) bin name
 
-	return Form("%s_cosTheta%.1fto%.1f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
+	return Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 }
 
 const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Int_t nCosThetaBins = 10, const vector<Double_t> &cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
@@ -185,7 +185,7 @@ const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptM
 
 	// just need to append the specific (cos theta, phi) bin name
 	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
-		signalFitNames[iCosTheta] = Form("%s_cosTheta%.1fto%.1f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], phiMin, phiMax, (isCSframe) ? "CS" : "HX");		
+		signalFitNames[iCosTheta] = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], phiMin, phiMax, (isCSframe) ? "CS" : "HX");		
 	}
 
 	return signalFitNames;
@@ -196,7 +196,7 @@ const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptM
 
 	// just need to append the specific (cos theta, phi) bin name
 	for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
-		signalFitNames[iPhi] = Form("%s_cosTheta%.1fto%.1f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaMin, cosThetaMax, (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1], (isCSframe) ? "CS" : "HX");		
+		signalFitNames[iPhi] = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaMin, cosThetaMax, (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1], (isCSframe) ? "CS" : "HX");		
 	}
 
 	return signalFitNames;
