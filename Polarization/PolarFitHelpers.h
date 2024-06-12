@@ -1,39 +1,40 @@
 // pre-difinced cosTheta bin edges for the polarization 1D fit
-vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins){
+vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins, Double_t cosThetaMin, Double_t cosThetaMax, Bool_t isUniform = kTRUE){
 
-	vector<Double_t> cosThetaBinEdges;
+	vector<Double_t> cosThetaBinEdges = {};
 
 	// define the bin edges along the cosTheta axis depending on the number of bins
-	if (nCosThetaBins == 1) cosThetaBinEdges = {-1, 1};
-	else if (nCosThetaBins == 5) cosThetaBinEdges = {-0.5, -0.3, -0.1, 0.1, 0.3, 0.5};
-	else if (nCosThetaBins == 6) cosThetaBinEdges = {-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6};
-	else if (nCosThetaBins == 7) cosThetaBinEdges = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7};
-	else if (nCosThetaBins == 8) cosThetaBinEdges = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8};
-	else if (nCosThetaBins == 9) cosThetaBinEdges = {-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9};
-	else if (nCosThetaBins == 10) cosThetaBinEdges = {-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1};
-	// else if (nCosThetaBins == 8) cosThetaBinEdges = {-0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4};
-	else if (nCosThetaBins == 12) cosThetaBinEdges = {-0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
-	else if (nCosThetaBins == 14) cosThetaBinEdges = {-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7};
-	else if (nCosThetaBins == 16) cosThetaBinEdges = {-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-	else {
-		cout << "Pre-defined binning not found. Check the input nCosThetaBins" << endl;
-		exit(1);
+	for (Int_t iCosTheta = 0; iCosTheta <= nCosThetaBins; iCosTheta++) {
+
+		Double_t cosThetaBinWidth = (cosThetaMax - cosThetaMin) / nCosThetaBins;
+
+		cosThetaBinEdges.push_back(cosThetaMin +  cosThetaBinWidth * iCosTheta); 
+
 	}
+
+	// // for the case that the bin width varies
+	// if (!isUniform) {}
+
+	// else if (!cosThetaBinEdges) {
+	// 	cout << "Pre-defined binning not found. Check the input nCosThetaBins" << endl;
+	// 	exit(1);
+	// }
 
 	return cosThetaBinEdges;
 }
 
-vector<Double_t> setPhiBinEdges(Int_t nPhiBins){
+vector<Double_t> setPhiBinEdges(Int_t nPhiBins, Int_t phiMin, Int_t phiMax, Bool_t isUniform = kTRUE){
 
 	// define the bin edges along the cosTheta axis depending on the number of bins
-	vector<Double_t> phiBinEdges;
+	vector<Double_t> phiBinEdges = {};
 
-	if (nPhiBins == 1) phiBinEdges = {-180, 180};
-	else if (nPhiBins == 6) phiBinEdges = {-180, -120, -60, 0, 60, 120, 180};
+	// define the bin edges along the cosTheta axis depending on the number of bins
+	for (Int_t iPhi = 0; iPhi <= nPhiBins; iPhi++) {
 
-	else {
-		cout << "Pre-defined binning not found. Check the input nPhiBins" << endl;
-		exit(1);
+		Double_t phiBinWidth = (phiMax - phiMin) / nPhiBins;
+
+		phiBinEdges.push_back(phiMin +  phiBinWidth * iPhi); 
+
 	}
 
 	return phiBinEdges;

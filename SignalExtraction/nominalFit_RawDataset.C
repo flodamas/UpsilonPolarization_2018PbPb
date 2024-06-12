@@ -9,6 +9,8 @@
 #include "../Tools/Datasets/RooDataSetHelpers.h"
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 
+#include "../Polarization/PolarFitHelpers.h"
+
 RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {
 	RooDataSet* allDataset = (RooDataSet*)wspace.data(RawDatasetName(""));
 
@@ -26,7 +28,7 @@ RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 3
 	return reducedDataset;
 }
 
-void nominalFit_2D_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, Bool_t isBkgExpTimesErr = kTRUE, Int_t ChebychevOrder = 1) {
+void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, Bool_t isBkgExpTimesErr = kFALSE, Int_t ChebychevOrder = 2) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -125,21 +127,19 @@ void nominalFit_2D_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSfram
 	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName);
 }
 
-void scanNominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2) {
-	Int_t ptEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
-	// Float_t cosThetaEdges[21] = {-1.,-0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.};
-	Float_t cosThetaEdges[11] = {-1., -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.};
-	Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
-	// Int_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
-	// Int_t phiEdges[2] = {-180, 180};
+void scanNominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Int_t nCosThetaBins = 10, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isBkgExpTimesErr = kFALSE, Int_t ChebychevOrder = 2) {
+	
+	// Int_t ptEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
 
-	Int_t numPtEle = sizeof(ptEdges) / sizeof(Int_t);
-	Int_t numCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
-	Int_t numPhiEle = sizeof(phiEdges) / sizeof(Int_t);
+	vector<Double_t> cosThetaEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
-	for (Int_t cosThetaIdx = 0; cosThetaIdx < numCosThetaEle - 1; cosThetaIdx++) {
-		for (Int_t idx = 0; idx < numPhiEle - 1; idx++) {
-			nominalFit_2D_RawDataset(ptMin, ptMax, kFALSE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1]);
+	vector<Double_t> phiEdges = setPhiBinEdges(nPhiBins, phiMin, phiMax);
+
+	// Int_t numPtEle = sizeof(ptEdges) / sizeof(Int_t);
+
+	for (Int_t cosThetaIdx = 0; cosThetaIdx < nCosThetaBins; cosThetaIdx++) {
+		for (Int_t idx = 0; idx < nPhiBins; idx++) {
+			nominalFit_RawDataset(ptMin, ptMax, kFALSE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], MassBinMin, MassBinMax, isBkgExpTimesErr, ChebychevOrder);
 		}
 	}
 }
