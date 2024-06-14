@@ -9,6 +9,39 @@
 // Option to estimate the confidence intervals in TEfficiency
 TEfficiency::EStatOption gTEffStatOption = TEfficiency::EStatOption::kFCP; /*default = Clopper-Pearson as recommended by PDG*/
 
+// Define cosTheta bin edges for acceptance and efficiency 3D map grid
+vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins, Double_t cosThetaMin, Double_t cosThetaMax){
+
+	vector<Double_t> cosThetaBinEdges = {};
+
+	// define the bin edges along the cosTheta axis depending on the number of bins
+	for (Int_t iCosTheta = 0; iCosTheta <= nCosThetaBins; iCosTheta++) {
+
+		Double_t cosThetaBinWidth = (cosThetaMax - cosThetaMin) / nCosThetaBins;
+
+		cosThetaBinEdges.push_back(cosThetaMin +  cosThetaBinWidth * iCosTheta); 
+
+	}
+
+	return cosThetaBinEdges;
+}
+
+vector<Double_t> setPhiBinEdges(Int_t nPhiBins, Int_t phiMin, Int_t phiMax){
+
+	vector<Double_t> phiBinEdges = {};
+
+	// define the bin edges along the phi axis depending on the number of bins
+	for (Int_t iPhi = 0; iPhi <= nPhiBins; iPhi++) {
+
+		Double_t phiBinWidth = (phiMax - phiMin) / nPhiBins;
+
+		phiBinEdges.push_back(phiMin +  phiBinWidth * iPhi); 
+
+	}
+
+	return phiBinEdges;
+}
+
 /// Object names (because used here and there) same for acceptance AND efficiency (saved in different files anyway)
 
 // common naming convention
@@ -70,7 +103,7 @@ TEfficiency* CosThetaPhiAcceptance2D(Int_t ptMin = 0, Int_t ptMax = 30, const ch
 	const char* title = Form(";%s;%s;acceptance", CosThetaVarTitle(refFrameName), PhiAxisTitle(refFrameName));
 
 	TEfficiency* tEff = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax);
-
+	
 	tEff->SetStatisticOption(gTEffStatOption);
 
 	return tEff;
@@ -96,13 +129,19 @@ const char* TEfficiency3DTitle(const char* refFrameName = "CS", int iState = gUp
 }
 
 TEfficiency* TEfficiency3D(const char* name, const char* refFrameName = "CS", int iState = gUpsilonState) {
-	TEfficiency* tEff = new TEfficiency(name, TEfficiency3DTitle(refFrameName, iState), NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning, NPtFineBins, gPtFineBinning); // variable size binning for the stats
+
+	Int_t nCosThetaUltraFineBinning = 200; // cosTheta bin width: 0.01
+	Int_t nPhiUltraFineBinning = 360; // phi bin width: 1 degree
+
+	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaUltraFineBinning, gCosThetaMin, gCosThetaMax);
+	vector<Double_t> phiBinEdges = setPhiBinEdges(nPhiUltraFineBinning, gPhiMin, gPhiMax);
+
+	TEfficiency* tEff = new TEfficiency(name, TEfficiency3DTitle(refFrameName, iState), nCosThetaUltraFineBinning, cosThetaBinEdges.data(), nPhiUltraFineBinning, phiBinEdges.data(), NPtFineBins, gPtFineBinning); // variable size binning for the stats
 
 	tEff->SetStatisticOption(gTEffStatOption);
 
 	return tEff;
 }
-
 
 // rebin TEfficiency 3D maps to TEfficiency 1D cosTheta based on costheta, phi, and pT selection
 
@@ -168,6 +207,46 @@ TEfficiency* rebinTEff3DMapPhi(TEfficiency* TEff3DMap, Int_t nPhiBins = 10, cons
 	TEffPhi->SetTotalHistogram(*hTotalPhi_Rebin, "f");
 
 	return TEffPhi;
+}
+
+// rebin TEfficiency 3D maps to TEfficiency 2D map (cosTheta, phi) based on costheta, phi, and pT selection
+
+TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 10, const vector<Double_t>& phiBinEdges = {}) {
+
+	// define TEfficiency that will contain cosTheta-phi 2D TEfficiency map
+	TEfficiency* TEffCosThetaPhi = new TEfficiency(TEff3DMap->GetName(), "cos #theta;#varphi; efficiency", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
+
+	TH2D* hTotalCosThetaPhi = (TH2D*)TEffCosThetaPhi->GetTotalHistogram();
+
+	// loop over the rebinning code along CosTheta and set the contents of the 2D map row by row
+	for (Int_t iRow = 0; iRow < nPhiBins; iRow++) {
+		
+		TEfficiency* TEffCosTheta = rebinTEff3DMapCosTheta(TEff3DMap, (Int_t)phiBinEdges[iRow], (Int_t)phiBinEdges[iRow + 1], ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+
+		TH1D* hPassedCosTheta = (TH1D*)TEffCosTheta->GetPassedHistogram();
+		TH1D* hTotalCosTheta = (TH1D*)TEffCosTheta->GetTotalHistogram();
+	
+		for (Int_t iColumn = 0; iColumn < nCosThetaBins; iColumn++) {
+
+			Double_t passedEvents = hPassedCosTheta->GetBinContent(iColumn + 1);
+			Double_t totalEvents = hTotalCosTheta->GetBinContent(iColumn + 1);
+
+			cout << "passedEvents: " << passedEvents << endl;
+			cout << "totalEvents: " << totalEvents << endl;
+
+			Double_t binCenterCosTheta = hTotalCosThetaPhi->GetXaxis()->GetBinCenter(iColumn + 1);
+			Double_t binCenterPhi = hTotalCosThetaPhi->GetYaxis()->GetBinCenter(iRow + 1);
+
+			Int_t iGlobalBin = TEffCosThetaPhi->FindFixBin(binCenterCosTheta, binCenterPhi);
+
+            TEffCosThetaPhi->SetTotalEvents(iGlobalBin, totalEvents); 
+            TEffCosThetaPhi->SetPassedEvents(iGlobalBin, passedEvents);   
+
+            cout << "TEffCosThetaPhi->GetEfficiency(): "<< TEffCosThetaPhi->GetEfficiency(iGlobalBin) << endl;    
+		}
+	}
+
+	return TEffCosThetaPhi;
 }
 
 // rebin TEfficiency 3D maps of efficiency systematic uncertainty to TEfficiency 1D cosTheta based on costheta, phi, and pT selection
@@ -324,4 +403,67 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
 	if (isAcc) canvas->SaveAs(Form("EfficiencyMaps/%dS/acc_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
 	else canvas->SaveAs(Form("EfficiencyMaps/%dS/eff_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
+}
+
+void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE) {
+
+	TCanvas* canvas;
+	if (isAcc) canvas = new TCanvas("accCosThetaPhi", "", 680, 600);
+	else canvas = new TCanvas("effCosThetaPhi", "", 680, 600);
+	canvas->SetRightMargin(0.18);
+
+	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
+
+	// empty frame for the axes
+	TH2D* frameHist2D = new TH2D("frameHist2D", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
+
+	frameHist2D->Draw("COLZ"); 
+
+	// draw efficiency plot on top of the histogram frame
+	effHist->SetLineWidth(3);
+	effHist->Draw("COLZ SAME");
+
+	// cosmetics of the histogram
+	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
+
+	TLatex legend;
+	legend.SetTextAlign(22);
+	legend.SetTextSize(0.05);
+	legend.DrawLatexNDC(.51, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+
+	if (strstr(effHist->GetName(), "CS")) {
+		frameHist2D->SetXTitle(CosThetaVarTitle("CS"));
+		frameHist2D->SetYTitle(PhiVarTitle("CS"));
+	}
+	else {
+		frameHist2D->SetXTitle(CosThetaVarTitle("HX"));
+		frameHist2D->SetYTitle(PhiVarTitle("HX"));
+	}
+
+	if (isAcc) {
+		effHist->SetTitle(Form(";;;%s", TEfficiencyMainTitle(iState, "Acceptance")));
+		SetColorPalette(gAcceptanceColorPaletteName);
+	}
+	else {
+		effHist->SetTitle(Form(";;;%s", TEfficiencyMainTitle(iState)));
+		SetColorPalette(gEfficiencyColorPaletteName);
+	}
+	
+	frameHist2D->GetXaxis()->CenterTitle();
+	frameHist2D->GetYaxis()->CenterTitle();
+
+	frameHist2D->GetXaxis()->SetRangeUser(-0.7, 0.7);
+	frameHist2D->GetZaxis()->SetRangeUser(0, 1);
+
+	frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
+
+	frameHist2D->GetXaxis()->SetNdivisions(-500 - (5));
+	frameHist2D->GetYaxis()->SetNdivisions(-500 - (5 + 1));
+
+	// save the plot
+	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
+	if (isAcc) canvas->SaveAs(Form("EfficiencyMaps/%dS/2Dacc_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
+	else canvas->SaveAs(Form("EfficiencyMaps/%dS/2Deff_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
 }

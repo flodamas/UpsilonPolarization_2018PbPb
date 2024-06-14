@@ -606,10 +606,10 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	/// display the nominal results
 
 	DrawEfficiencyMap(hEffCS2D, ptMin, ptMax, iState);
-	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, iState);
+	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, iState, kFALSE, kTRUE);
 
 	DrawEfficiencyMap(hEffHX2D, ptMin, ptMax, iState);
-	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, iState);
+	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, iState, kFALSE, kTRUE);
 
 	/// compute the systematics in this macro since we have all the ingredients for that
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5

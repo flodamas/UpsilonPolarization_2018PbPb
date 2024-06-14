@@ -1,45 +1,3 @@
-// pre-difinced cosTheta bin edges for the polarization 1D fit
-vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins, Double_t cosThetaMin, Double_t cosThetaMax, Bool_t isUniform = kTRUE){
-
-	vector<Double_t> cosThetaBinEdges = {};
-
-	// define the bin edges along the cosTheta axis depending on the number of bins
-	for (Int_t iCosTheta = 0; iCosTheta <= nCosThetaBins; iCosTheta++) {
-
-		Double_t cosThetaBinWidth = (cosThetaMax - cosThetaMin) / nCosThetaBins;
-
-		cosThetaBinEdges.push_back(cosThetaMin +  cosThetaBinWidth * iCosTheta); 
-
-	}
-
-	// // for the case that the bin width varies
-	// if (!isUniform) {}
-
-	// else if (!cosThetaBinEdges) {
-	// 	cout << "Pre-defined binning not found. Check the input nCosThetaBins" << endl;
-	// 	exit(1);
-	// }
-
-	return cosThetaBinEdges;
-}
-
-vector<Double_t> setPhiBinEdges(Int_t nPhiBins, Int_t phiMin, Int_t phiMax, Bool_t isUniform = kTRUE){
-
-	// define the bin edges along the cosTheta axis depending on the number of bins
-	vector<Double_t> phiBinEdges = {};
-
-	// define the bin edges along the cosTheta axis depending on the number of bins
-	for (Int_t iPhi = 0; iPhi <= nPhiBins; iPhi++) {
-
-		Double_t phiBinWidth = (phiMax - phiMin) / nPhiBins;
-
-		phiBinEdges.push_back(phiMin +  phiBinWidth * iPhi); 
-
-	}
-
-	return phiBinEdges;
-}
-
 /// apply weights and errors to each costheta bin
 Float_t correctRawYield1DHist(TH1D* standardCorrectedHist, TEfficiency* accMap, TEfficiency* effMap, TH1D* systEff, Int_t nBins = 10, const char** bkgShapeNames = nullptr, const char** fitModelNames = nullptr) {
 
@@ -272,6 +230,52 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 	return contourCanvas;
 }
 
+TCanvas* drawYieldMap(TH2D* yieldMap, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}){
+
+	TCanvas* yieldCanvas = new TCanvas(yieldMap->GetName(), "", 680, 600);
+
+	yieldCanvas->SetRightMargin(0.18);
+	
+	gStyle->SetPadRightMargin(0.2);
+	// SetColorPalette(gPreferredColorPaletteName);
+	SetColorPalette("TamDragon");
+
+	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
+
+	TH2D* frameHist = new TH2D("frameHist", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
+
+	frameHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
+	frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
+	
+	frameHist->SetTitle(Form(";cos #theta_{%s};#varphi_{%s} (#circ);#varUpsilon(1S) Yields", refFrameName, refFrameName));
+	
+	yieldMap->GetZaxis()->SetTitle("#varUpsilon(1S) Yields");
+	yieldMap->GetZaxis()->SetTitleOffset(1.);
+
+	gPad->Modified(); 
+	gPad->Update();
+
+	frameHist->Draw("COLZ");
+
+	yieldMap->Draw("SAME COLZ");
+
+	frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+	frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
+
+	frameHist->GetXaxis()->CenterTitle();
+	frameHist->GetYaxis()->CenterTitle();
+	frameHist->GetZaxis()->CenterTitle();
+
+	frameHist->SetStats(0);
+
+	frameHist->GetZaxis()->SetRangeUser(yieldMap->GetMinimum(), yieldMap->GetMaximum());
+
+	yieldCanvas->Modified();
+    yieldCanvas->Update();
+
+    return yieldCanvas;
+}
+
 // display the uncertainties signal extraction yield on each bin of 2D yield map
 void displayYieldUncertainties(TH2D* yieldMap, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6){
 
@@ -296,7 +300,7 @@ void displayYieldUncertainties(TH2D* yieldMap, Int_t nCosThetaBins = 10, Int_t n
 
             // Create a TLatex object to write the signal extraction yield uncertainties on each bin
             TLatex latex;
-            latex.SetTextSize(0.02);  // Adjust text size as needed
+            latex.SetTextSize(0.03);  // Adjust text size as needed
             latex.SetTextAlign(22);   // Center alignment
             latex.SetTextColor(kWhite);
             latex.DrawLatex(x, y, Form("%.2f%%", yield1SUnc / yield1SVal * 100));			
