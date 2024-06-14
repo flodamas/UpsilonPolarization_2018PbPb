@@ -1,3 +1,0 @@
-yield1S =  30.052 +/- 9.8205 L(0 - 119050) 
-yield2S =  0.0000 C L(-INF - +INF) 
-yield3S =  0.0000 C L(-INF - +INF) 
