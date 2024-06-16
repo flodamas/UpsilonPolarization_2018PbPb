@@ -257,7 +257,7 @@ TCanvas* drawYieldMap(TH2D* yieldMap, const char* refFrameName = "CS", Int_t nCo
 
 	frameHist->Draw("COLZ");
 
-	yieldMap->Draw("SAME COLZ");
+	yieldMap->Draw("SAME LEGO");
 
 	frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
 	frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));

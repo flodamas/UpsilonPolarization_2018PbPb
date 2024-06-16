@@ -231,18 +231,13 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 			Double_t passedEvents = hPassedCosTheta->GetBinContent(iColumn + 1);
 			Double_t totalEvents = hTotalCosTheta->GetBinContent(iColumn + 1);
 
-			cout << "passedEvents: " << passedEvents << endl;
-			cout << "totalEvents: " << totalEvents << endl;
-
 			Double_t binCenterCosTheta = hTotalCosThetaPhi->GetXaxis()->GetBinCenter(iColumn + 1);
 			Double_t binCenterPhi = hTotalCosThetaPhi->GetYaxis()->GetBinCenter(iRow + 1);
 
 			Int_t iGlobalBin = TEffCosThetaPhi->FindFixBin(binCenterCosTheta, binCenterPhi);
 
             TEffCosThetaPhi->SetTotalEvents(iGlobalBin, totalEvents); 
-            TEffCosThetaPhi->SetPassedEvents(iGlobalBin, passedEvents);   
-
-            cout << "TEffCosThetaPhi->GetEfficiency(): "<< TEffCosThetaPhi->GetEfficiency(iGlobalBin) << endl;    
+            TEffCosThetaPhi->SetPassedEvents(iGlobalBin, passedEvents);     
 		}
 	}
 
