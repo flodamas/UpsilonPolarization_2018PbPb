@@ -16,7 +16,7 @@
 #include "../Tools/Style/FitDistributions.h"
 
 #include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
-#include "../Tools/RooFitPDFs/cosThetaPolarFunc.h"
+#include "../Tools/RooFitPDFs/PolarFunc.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
@@ -62,7 +62,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	
 	// fill the background shape array with ChebychevOrder2
 	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
-	// cout << bkgShapeName[0][0] << endl;
 	
 	// exceptions
 	// bkgShapeName[1][1] = "ChebychevOrder1";
@@ -77,7 +76,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	// fill the background shape array with ExpTimesErr
 	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
-	cout << bkgShapeName[0][0] << endl;
 	
 	// // exceptions
 	// bkgShapeName[3][0] = "ChebychevOrder1";
@@ -87,16 +85,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	TH2D* yieldMap = new TH2D("yieldMap", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
 
 	TH2D* standardCorrectedMap = new TH2D("standardCorrectedMap", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
-
-	cout << phiBinEdges[0] << endl;
-	cout << phiBinEdges[1] << endl;
-	cout << phiBinEdges[2] << endl;
-	cout << phiBinEdges[3] << endl;
-	cout << phiBinEdges[4] << endl;
-	cout << phiBinEdges[5] << endl;
-	cout << phiBinEdges[6] << endl;
-	cout << phiBinEdges[7] << endl;
-	cout << phiBinEdges[8] << endl;
 
 	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
 
@@ -224,21 +212,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// with Root Fit function
 
 	// TVirtualFitter::SetDefaultFitter("Minuit"); 
-	
-	// TF1* PolarFunc = cosThetaPolarFunc(maxYield);
-
-	// TFitResultPtr fitResults = yieldMap->Fit("PolarFunc", "ESV", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]); //L:log likelihood fit (default: chi2 method), E: NINOS
-
-	// // Fit results
-
-	// double chi2 = fitResults->Chi2();
-	// double nDOF = nCosThetaBins - PolarFunc->GetNpar();
-
-	// double normVal = fitResults->Parameter(0);
-	// double normErr = fitResults->ParError(0);
-
-	// double lambdaVal = fitResults->Parameter(1);
-	// double lambdaErr = fitResults->ParError(1);
 
 	TCanvas* yieldCanvas = drawYieldMap(yieldMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
@@ -246,7 +219,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	displayYieldUncertainties(yieldMap, nCosThetaBins, nPhiBins);
 
-	TPaveText* kinematicsText = new TPaveText(0.14, 0.82, 0.81, 0.92, "NDCNB");
+	TPaveText* kinematicsText = new TPaveText(0.14, 0.84, 0.81, 0.93, "NDCNB");
 	kinematicsText->SetFillColor(4000);
 	kinematicsText->SetBorderSize(0);
 	kinematicsText->AddText(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
@@ -260,30 +233,55 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	TCanvas* correctedMapCanvas = drawYieldMap(standardCorrectedMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	standardCorrectedMap->GetZaxis()->SetTitle("Corrected #varUpsilon(1S) Yields");
-	standardCorrectedMap->GetZaxis()->SetTitleOffset(1.1);
-
+	// standardCorrectedMap->GetZaxis()->SetTitleOffset(1.1);
+	
+	standardCorrectedMap->GetZaxis()->SetRangeUser(1e-6, maxYield * 2);
+	
 	standardCorrectedMap->SetMinimum(1e-6);
+
+	TF2* polarFunc2D = generalPolarFunc(maxYield);
+
+	TFitResultPtr fitResults = standardCorrectedMap->Fit("polarFunc2D", "ESV");
+
+	// Fit results
+
+	double chi2 = fitResults->Chi2();
+	double nDOF = nCosThetaBins * nPhiBins - polarFunc2D->GetNpar();
+
+	double normVal = fitResults->Parameter(0);
+	double normErr = fitResults->ParError(0);
+
+	double lambdaThetaVal = fitResults->Parameter(1);
+	double lambdaThetaErr = fitResults->ParError(1);
+
+	double lambdaPhiVal = fitResults->Parameter(2);
+	double lambdaPhiErr = fitResults->ParError(2);
+
+	double lambdaThetaPhiVal = fitResults->Parameter(3);
+	double lambdaThetaPhiErr = fitResults->ParError(3);
 
     kinematicsText->Draw("SAME");
 
-	correctedMapCanvas->Modified();
-    correctedMapCanvas->Update();
+	// correctedMapCanvas->Modified();
+    // correctedMapCanvas->Update();
 
-	// TLegend legend2(.22, .91, .5, .67);
-	// legend2.SetTextSize(.05);
+	TLegend legend2(.17, .60, .28, .84);
+	legend2.SetTextSize(.05);
 	// legend2.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-	// legend2.AddEntry(standardCorrectedHist, "#varUpsilon(1S) corrected yield", "lp");
-	// legend2.AddEntry(PolarFunc, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaVal, lambdaErr), "l");
-	// legend2.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
+	legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
+	legend2.AddEntry(polarFunc2D, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr), "l");
+	legend2.AddEntry((TObject*)0, Form("                       #lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr), "");
+	legend2.AddEntry((TObject*)0, Form("                       #lambda_{#theta#varphi} = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr), "");
+	legend2.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
 
-	// legend2.DrawClone();
+	legend2.DrawClone();
 
-	// TLatex textChi2;
-	// textChi2.SetTextAlign(12);
-	// textChi2.SetTextSize(0.045);
-	// textChi2.DrawLatexNDC(0.74, 0.044, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
+	TLatex textChi2;
+	textChi2.SetTextAlign(12);
+	textChi2.SetTextSize(0.045);
+	textChi2.DrawLatexNDC(0.74, 0.044, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
 
-	// gPad->Update();
+	gPad->Update();
 
 	// draw uncertainties
 	
