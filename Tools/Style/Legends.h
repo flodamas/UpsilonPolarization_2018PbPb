@@ -189,11 +189,13 @@ TPaveText* TwoCBParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, 
 	return text;
 }
 
-TPaveText* PolarParamsText(double lambThetaIn, double lambPhiIn, RooRealVar lambThetaFit, RooRealVar lambPhiFit, Bool_t isSecondOrder) {
-	auto* text = new TPaveText(0.35, 0.35, 0.75, 0.15, "NDCNB");
+TPaveText* PolarParamsText(double lambThetaIn, double lambPhiIn, RooRealVar normCosThetaFit, RooRealVar lambThetaFit, RooRealVar normPhiFit, RooRealVar lambPhiFit, Bool_t isSecondOrder) {
+
+	auto* text = new TPaveText(0.27, 0.09, 0.86, 0.36, "NDCNB");
 	text->SetBorderSize(0);
-	text->AddText(isSecondOrder ? Form("#lambda_{#phi, 2D input} = %.3f", lambPhiIn) : Form("#lambda_{#theta, 2D input} = %.3f", lambThetaIn));
-	text->AddText(isSecondOrder ? Form("#lambda_{#phi, 1D fit} = %.3f #pm %.3f", lambPhiFit.getVal(), lambPhiFit.getError()) : Form("#lambda_{#theta, 1D fit} = %.3f #pm %.3f", lambThetaFit.getVal(), lambThetaFit.getError()));
+	text->AddText(isSecondOrder ? Form("#lambda_{#varphi, 2D input} = %.3f", lambPhiIn) : Form("#lambda_{#theta, 2D input} = %.3f", lambThetaIn));
+	text->AddText(isSecondOrder ? Form("#lambda_{#varphi, 1D fit} = %.3f #pm %.3f", lambPhiFit.getVal(), lambPhiFit.getError()) : Form("#lambda_{#theta, 1D fit} = %.3f #pm %.3f", lambThetaFit.getVal(), lambThetaFit.getError()));
+	text->AddText(isSecondOrder ? Form("n_{#varphi, 1D fit} = %.2e #pm %.2e", normPhiFit.getVal(), normPhiFit.getError()) : Form("n_{#theta, 1D fit} = %.2e #pm %.1e", normCosThetaFit.getVal(), normCosThetaFit.getError()));
 
 	text->SetAllWith(" ", "align", 12);
 	return text;
