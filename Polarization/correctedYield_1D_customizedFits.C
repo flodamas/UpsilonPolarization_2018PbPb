@@ -30,7 +30,7 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	const Int_t nCosThetaBins = 7;
 
 	Float_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7};
-	// Float_t cosThetaBinEdges[nCosThetaBins+1] = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8}; 
+	// Float_t cosThetaBinEdges[nCosThetaBins+1] = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8};
 
 	/// Set up the variables
 	RooRealVar cosTheta("cosTheta", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
@@ -68,7 +68,7 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
 		// Float_t cosThetaVal = cosThetaBinEdges[iCosTheta];
 
-		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], phiMin, phiMax);
+		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], phiMin, phiMax);
 
 		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, bkgShapeName[iCosTheta], fitModelName);
 
