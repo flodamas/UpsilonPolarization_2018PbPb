@@ -148,7 +148,7 @@ void correctedYield_1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 		pad1->Draw();
 		pad2->Draw();
 
-		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaVal, cosThetaVal + cosThetaStep, phiMin, phiMax);
+		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaVal, cosThetaVal + cosThetaStep, phiMin, phiMax);
 
 		gSystem->mkdir("InvMassFits", kTRUE);
 		massCanvas->SaveAs(Form("InvMassFits/CorrectedData_ChebychevOrder%d_%s.png", order, fitModelName), "RECREATE");
