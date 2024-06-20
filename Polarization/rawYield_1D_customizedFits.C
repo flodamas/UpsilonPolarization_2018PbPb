@@ -112,18 +112,18 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
 
 	// rebin acceptance maps based on costheta, phi, and pT selection
-	TEfficiency* accMapCosTheta = rebinTEff3DMapCosTheta(accMap, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+	TEfficiency* accHistCosTheta = rebinTEff3DMapCosTheta(accMap, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
 
-	TEfficiency* accMapPhi = rebinTEff3DMapPhi(accMap, nPhiBins, phiBinEdges, ptMin, ptMax, cosThetaMin, cosThetaMax);
+	TEfficiency* accHistPhi = rebinTEff3DMapPhi(accMap, nPhiBins, phiBinEdges, ptMin, ptMax, cosThetaMin, cosThetaMax);
 
 	// get efficiency maps
 	TFile* efficiencyFile = openFile("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults.root");
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	// rebin efficiency maps based on costheta, phi, and pT selection
-	TEfficiency* effMapCosTheta = rebinTEff3DMapCosTheta(effMap, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+	TEfficiency* effHistCosTheta = rebinTEff3DMapCosTheta(effMap, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
 
-	TEfficiency* effMapPhi = rebinTEff3DMapPhi(effMap, nPhiBins, phiBinEdges, ptMin, ptMax, cosThetaMin, cosThetaMax);
+	TEfficiency* effHistPhi = rebinTEff3DMapPhi(effMap, nPhiBins, phiBinEdges, ptMin, ptMax, cosThetaMin, cosThetaMax);
 
 	// get relative systematic uncertainty of efficiency
 	auto* systEff = (TH3D*)efficiencyFile->Get(RelativeSystTEfficiency3DName(refFrameName));
@@ -137,11 +137,11 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 
 	// // draw acc and eff histograms to check if the rebinning works well
-	DrawEfficiency1DHist(accMapCosTheta, ptMin, ptMax, iState, kTRUE, kTRUE);
-	DrawEfficiency1DHist(effMapCosTheta, ptMin, ptMax, iState, kFALSE, kTRUE);
+	DrawEfficiency1DHist(accHistCosTheta, ptMin, ptMax, iState, kTRUE, kTRUE);
+	DrawEfficiency1DHist(effHistCosTheta, ptMin, ptMax, iState, kFALSE, kTRUE);
 
-	DrawEfficiency1DHist(accMapPhi, ptMin, ptMax, iState, kTRUE, kFALSE);
-	DrawEfficiency1DHist(effMapPhi, ptMin, ptMax, iState, kFALSE, kFALSE);
+	DrawEfficiency1DHist(accHistPhi, ptMin, ptMax, iState, kTRUE, kFALSE);
+	DrawEfficiency1DHist(effHistPhi, ptMin, ptMax, iState, kFALSE, kFALSE);
 
 	// // define histograms to draw uncertainty plots
 	// TH1D* statHighEffCosTheta = new TH1D("statHighEffCosTheta", "", nCosThetaBins, cosThetaBinEdges.data());
@@ -164,9 +164,9 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	/// apply weights and errors to each costheta bin
 
-	Float_t maxYieldCosTheta = correctRawYield1DHist(standardCorrectedCosThetaHist, accMapCosTheta, effMapCosTheta, systEffCosTheta, nCosThetaBins, bkgShapeNamesCosTheta, fitModelNamesCosTheta);
+	Float_t maxYieldCosTheta = correctRawYield1DHist(standardCorrectedCosThetaHist, accHistCosTheta, effHistCosTheta, systEffCosTheta, nCosThetaBins, bkgShapeNamesCosTheta, fitModelNamesCosTheta);
 	
-	Float_t maxYieldPhi = correctRawYield1DHist(standardCorrectedPhiHist, accMapPhi, effMapPhi, systEffPhi, nPhiBins, bkgShapeNamesPhi, fitModelNamesPhi);
+	Float_t maxYieldPhi = correctRawYield1DHist(standardCorrectedPhiHist, accHistPhi, effHistPhi, systEffPhi, nPhiBins, bkgShapeNamesPhi, fitModelNamesPhi);
 
 	/// Polarization fit
 	// with Root Fit function
