@@ -62,13 +62,14 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 	/// Set up the likelihood function
 
 	// 1. the polarization POIs and the PDF
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1., 1.);
-	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1., 1.);
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.1, 1.1);
+	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.1, 1.1);
 	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1., 1.);
 
-	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // invariant
+	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame invariant
 
 	auto polarizationPDF = GeneralPolarizationPDF("polarizationPDF", " ", cosTheta, phi, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	polarizationPDF.setNormRange("PolaFitRange");
 
 	auto dataNLL = polarizationPDF.createNLL(sWeightedData, Range("PolaFitRange"));
 
@@ -116,14 +117,16 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 	// 3. the normalization factor
 
 	auto* productPDF = new RooProdPdf("productPDF", "acc x eff x polarization PDF", polarizationPDF, *accEffPDF);
+	productPDF->setNormRange("PolaFitRange");
 
 	auto* normFactor = productPDF->createIntegral(RooArgSet(cosTheta, phi), NormSet(RooArgSet(cosTheta, phi)), Range("PolaFitRange"));
 
 	// 4. bind all components into a single variable
 
 	RooGenericPdf totalPDF("totalPDF", " total polarization PDF", "(@0/@1)*@2", {*productPDF, *normFactor, sPlotScaleFactor});
+	totalPDF.setNormRange("PolaFitRange");
 
-	auto totalNLL = totalPDF.createNLL(sWeightedData, Range("PolaFitRange"));
+	auto totalNLL = totalPDF.createNLL(sWeightedData, Range("PolaFitRange"), NumCPU(2));
 
 	/// Fit the angular distibution
 
@@ -133,9 +136,9 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 
 	RooMinimizer minimizer(*totalNLL);
 
-	minimizer.setStrategy(2); // better convergence
+	minimizer.setStrategy(2); // 1 for faster minimization, 2 for better convergence
 	minimizer.setPrintLevel(-1);
-	minimizer.setRecoverFromNaNStrength(1.);
+	minimizer.setRecoverFromNaNStrength(100.);
 	minimizer.optimizeConst(true);
 	minimizer.setOffsetting(true);
 	//minimizer.setVerbose(true);
@@ -148,13 +151,20 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 
 	polarizationFitResult->Print("v");
 
-	cout << "Frame-invariant polarization parameter (\"lambda tilde\") = " << lambdaTilde.getVal() << " +/- " << lambdaTilde.getPropagatedError(*polarizationFitResult) << endl;
+	cout << "Frame-invariant parameter (\"lambda tilde\") = " << lambdaTilde.getVal() << " +/- " << lambdaTilde.getPropagatedError(*polarizationFitResult) << endl;
+
+	RooRealVar savedLambdaTilde("lambdaTilde", "frame-invariant parameter", -5, 5); // can't directly dump the result for the lambdaTilde variable as RooFormulaVar, will write the analytical formula...
+	savedLambdaTilde.setVal(lambdaTilde.getVal());
+	savedLambdaTilde.setError(lambdaTilde.getPropagatedError(*polarizationFitResult));
+	RooArgSet* savedParams = new RooArgSet(lambdaTheta, lambdaPhi, lambdaThetaPhi, savedLambdaTilde);
+
+	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
+	SavePolarizationFitParameters(savedParams, "detailedViaMinimizer", fitModelName);
 
 	cout << "\nSECOND FIT METHOD: directly call fitTo() to the total PDF to enable AsymptoticError\n";
 
-	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), Extended(true), AsymptoticError(true), NumCPU(2), PrintLevel(-1), Offset());
+	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), AsymptoticError(true), PrintLevel(-1), Offset());
 
 	testResult->Print("v");
-
-	cout << "Frame-invariant polarization parameter (\"lambda tilde\") = " << lambdaTilde.getVal() << " +/- " << lambdaTilde.getPropagatedError(*polarizationFitResult) << endl;
 }

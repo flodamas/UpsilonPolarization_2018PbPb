@@ -84,9 +84,9 @@ void sWeightedLHCbFit(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax 
 	/// Set up the likelihood function
 
 	// 1. the polarization POIs and the PDF
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1., 1.);
-	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1., 1.);
-	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1., 1.);
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.5, 1.5);
+	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.5, 1.5);
+	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1.5, 1.5);
 
 	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // invariant
 
@@ -101,13 +101,41 @@ void sWeightedLHCbFit(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax 
 
 	RooConstVar sPlotScaleFactor = GetSPlotScaleFactor(sData, iState);
 
-	// 2. the acceptance x efficiency PDF
+	// 3. the acceptance x efficiency PDF
 
-	//auto* accEffPDF = prodAccEffPDF(ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, iState);
+	const char* mapName = CosThetaPhiTEfficiency2DName(ptMin, ptMax, refFrameName);
 
-	auto* accEffPDF = prodAccEffPDF(cosTheta, phi, ptMin, ptMax, refFrameName, iState);
+	// acceptance maps
+	TFile* acceptanceFile = TFile::Open(Form("../MonteCarlo/AcceptanceMaps/%dS/AcceptanceResults.root", iState), "READ");
+	if (!acceptanceFile) {
+		cout << "Acceptance file not found. Check the directory of the file." << endl;
+		return;
+	}
 
-	// 3. the normalization factor
+	auto* accMap = (TEfficiency*)acceptanceFile->Get(mapName);
+
+	// efficiency maps
+	TFile* efficiencyFile = TFile::Open(Form("../MonteCarlo/EfficiencyMaps/%dS/EfficiencyResults.root", iState), "READ");
+	if (!efficiencyFile) {
+		cout << "Efficiency file not found. Check the directory of the file." << endl;
+		return;
+	}
+
+	auto* effMap = (TEfficiency*)efficiencyFile->Get(mapName);
+
+	/// 2. do the product
+
+	TH2* accTH2 = accMap->CreateHistogram();
+	TH2* effTH2 = effMap->CreateHistogram();
+
+	effTH2->Multiply(accTH2);
+
+	/// 3. transform into a RooDataHist, then into a RooHistPdf
+	RooDataHist effDataHist("effDataHist", "", {cosTheta, phi}, effTH2);
+
+	RooHistPdf* accEffPDF = new RooHistPdf("effPDF", "", {cosTheta, phi}, effDataHist, 3);
+
+	// 4. the normalization factor
 
 	auto* productPDF = new RooProdPdf("productPDF", "acc x eff x polarization PDF", polarizationPDF, *accEffPDF);
 
@@ -115,7 +143,7 @@ void sWeightedLHCbFit(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax 
 
 	//normFactor->Print("v");
 
-	// 4. bind all components into a single variable
+	// 5. bind all components into a single variable
 
 	RooGenericPdf totalPDF("totalPDF", " total polarization PDF", "(@0/@1)*@2", {*productPDF, *normFactor, sPlotScaleFactor});
 
@@ -156,11 +184,11 @@ void sWeightedLHCbFit(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax 
 
 	cout << "\nSECOND FIT METHOD: directly call fitTo() to the total PDF to enable AsymptoticError\n";
 
-	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), Extended(true), AsymptoticError(true), NumCPU(NCPUs), PrintLevel(-1), RecoverFromUndefinedRegions(1.), Offset());
+	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), Extended(true), AsymptoticError(true), NumCPU(NCPUs), PrintLevel(-1), RecoverFromUndefinedRegions(1.), Offset(), SumCoefRange("PolaFitRange"));
 
 	testResult->Print("v");
 
-	cout << "Frame-invariant polarization parameter (\"lambda tilde\") = " << lambdaTilde.getVal() << " +/- " << lambdaTilde.getPropagatedError(*polarizationFitResult) << endl;
+	cout << "Frame-invariant polarization parameter (\"lambda tilde\") = " << lambdaTilde.getVal() << " +/- " << lambdaTilde.getPropagatedError(*testResult) << endl;
 
 	/*
 	/// Draw the (cos theta, phi) distributions with and without sWeights

@@ -19,6 +19,9 @@
 #include "../Tools/RooFitPDFs/PhiPolarizationPDF.h"
 #include "../Tools/RooFitPDFs/PhiPolarizationPDF.cxx"
 
+#include "../Tools/RooFitPDFs/GeneralPolarizationPDF.h"
+#include "../Tools/RooFitPDFs/GeneralPolarizationPDF.cxx"
+
 using namespace RooFit;
 
 /// Define and draw ideal 2D polarization distribution in (costheta, phi) phase space
@@ -67,7 +70,7 @@ TH2D* generate2DPolarization(Int_t nCosThetaBins, Float_t cosThetaMin, Float_t c
 
 	// Put texts inside the plot
 	legend->DrawLatexNDC(.48, .88, "Idea 2D polarization distribution");
-	legend->DrawLatexNDC(.48, .80, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f", polarFunc2D->GetParameter(1), polarFunc2D->GetParameter(2)));
+	legend->DrawLatexNDC(.48, .80, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", polarFunc2D->GetParameter(1), polarFunc2D->GetParameter(2), polarFunc2D->GetParameter(3)));
 	
 	// Set the plot styles
 	//gStyle->SetTitleYOffset(.9);
@@ -96,7 +99,7 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	Float_t phiMin = -180, phiMax = 180;
 
 	/// set input values
-	Double_t nIn = 1e7; // normalization
+	Double_t nIn = 1e8; // normalization
 	Double_t lambdaThetaPhiIn = 0;
 
 	TH2D* polarHist2D = generate2DPolarization(nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax, nIn, lambdaThetaIn, lambdaPhiIn, lambdaThetaPhiIn);
@@ -115,36 +118,63 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	TH1D *polarHistPhi = polarHist2D->ProjectionY("#varphi", 1, nCosThetaBins);
 
 	/// Define variables
+	// x and y axis
 	RooRealVar cosThetaVar("cosTheta", "cos#theta", cosThetaMin, cosThetaMax); 
-	RooRealVar phiVar("phi", "#varphi (#circ)", phiMin, phiMax); //y
+	RooRealVar phiVar("phi", "#varphi (#circ)", phiMin, phiMax); 
 
-	RooRealVar normCosThetaVar("normCosTheta", "normalization factor for costheta graph",  nIn, nIn * 0.1, nIn * 2.5); //normalization factor
-	RooRealVar normPhiVar("normPhi", "normalization factor for phi graph",  nIn, nIn * 0.1, nIn * 2.5); //normalization factor
-	
+	// polarization parameters
 	RooRealVar lambdaThetaVar("lambdaTheta", "lambda Theta", 0, -2, 2);
 	RooRealVar lambdaPhiVar("lambdaPhi", "lambda Phi", 0, -2, 2);
 	RooRealVar lambdaThetaPhiVar("lambdaThetaPhi", "lambda Theta Phi", 0);
 
-	/// Extract Polarization Parameters with 1D Fit (costheta)
+	// normalization factor
+	RooRealVar normCosThetaVar("normCosTheta", "normalization factor for costheta graph",  nIn, nIn * 0.1, nIn * 2.5); 	
+	RooRealVar normPhiVar("normPhi", "normalization factor for phi graph", nIn, nIn * 0.1, nIn * 2.5);
+	RooRealVar norm2DVar("norm2D", "normalization factor for 2D graph", nIn, nIn * 0.1, nIn * 2.5);
+
+	/// Extract Polarization Parameters with Fit
 	// Import histogram into RooFit
 	RooDataHist rooHistCosTheta("rooHistCosTheta","angular distribution with cosTheta", cosThetaVar, polarHistCosTheta);
+	
+	RooDataHist rooHistPhi("rooHistPhi","angular distribution with phi", phiVar, polarHistPhi);
+	
+    RooArgList varList(cosThetaVar, phiVar);
 
-	// Define model function
+	RooDataHist rooHist2D("rooHist2D", "rooHist2D", varList, polarHist2D);
+
+	// Define model function and apply normalization factor
 	CosThetaPolarizationPDF rooPdfCosTheta("rooPdfCosTheta", "rooPdfCosTheta", cosThetaVar, lambdaThetaVar);
-
 	RooExtendPdf extendedPdfCosTheta("extendedPdfCosTheta", "extended CosTheta PDF", rooPdfCosTheta, normCosThetaVar);
 
-	// Make a frame
+	PhiPolarizationPDF rooPdfPhi("rooPdfPhi", "rooPdfPhi", phiVar, lambdaThetaVar, lambdaPhiVar);
+	RooExtendPdf extendedPdfPhi("extendedPdfPhi", "extended Phi PDF", rooPdfPhi, normPhiVar);
+
+	GeneralPolarizationPDF rooPdf2D("rooPdf2D", "rooPdf2D", cosThetaVar, phiVar, lambdaThetaVar, lambdaPhiVar, lambdaThetaPhiVar);
+	RooExtendPdf extendedPdf2D("extendedPdf2D", "extendedPdf2D", rooPdf2D, norm2DVar);
+
+	// Make frames
 	RooPlot* frameCosTheta = cosThetaVar.frame(cosThetaMin, cosThetaMax, nCosThetaBins);
+
+	RooPlot* framePhi = phiVar.frame(phiMin, phiMax, nPhiBins);
+
+	// RooPlot* frame2D = 
+	
+	// locate imported histogram on the frame
 	rooHistCosTheta.plotOn(frameCosTheta, Name("cosTheta Hist"), MarkerSize(1.5), DrawOption("P0Z"));
+
+	rooHistPhi.plotOn(framePhi, Name("rooHistPhi"), MarkerSize(1.5), DrawOption("P0Z"));
 
 	enableBinIntegrator(extendedPdfCosTheta, nCosThetaBins);
 
 	// Fit the model to the histogram
+	auto* fitResult2D = extendedPdf2D.fitTo(rooHist2D, Save(), Extended(kTRUE), Minos(kTRUE), NumCPU(3));
+	fitResult2D->Print("v");
+
+
 	auto* fitResultCosTheta = extendedPdfCosTheta.fitTo(rooHistCosTheta, Save(), Extended(kTRUE), Minos(kTRUE), NumCPU(3), Range(cosThetaMin, cosThetaMax));
 	fitResultCosTheta->Print("v");
 
-	// Put the histogram on the frame
+	// Put the fit model on the frame
 	extendedPdfCosTheta.plotOn(frameCosTheta, Name("rooPdfCosTheta"));
 	
 	// Draw the histogram and the fit
@@ -186,16 +216,10 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	/// Extract Polarization Parameters with 1D Fit (phi)	
 
 	// Import histogram into RooFit
-	RooDataHist rooHistPhi("rooHistPhi","angular distribution with phi", phiVar, polarHistPhi);
-
+	
 	// Define model function
-	PhiPolarizationPDF rooPdfPhi("rooPdfPhi", "rooPdfPhi", phiVar, lambdaThetaVar, lambdaPhiVar);
-
-	RooExtendPdf extendedPdfPhi("extendedPdfPhi", "extended Phi PDF", rooPdfPhi, normPhiVar);
 
 	// Make a frame
-	RooPlot* framePhi = phiVar.frame();
-	rooHistPhi.plotOn(framePhi, Name("rooHistPhi"), MarkerSize(1.5), DrawOption("P0Z"));
 
 	enableBinIntegrator(extendedPdfPhi, nPhiBins);
 

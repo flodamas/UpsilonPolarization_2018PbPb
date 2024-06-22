@@ -172,31 +172,31 @@ const char* GetSignalFitName(const char* signalShapeName = "SymDSCB", Int_t ptMi
 	return Form("%s_cent%dto%d_absy%dp%dto%dp%d_pt%dto%d", signalShapeName, gCentralityBinMin, gCentralityBinMax, (Int_t)gRapidityMin, (Int_t)(10 * (gRapidityMin - (Int_t)gRapidityMin)), (Int_t)gRapidityMax, (Int_t)(10 * (gRapidityMax - (Int_t)gRapidityMax)), ptMin, ptMax);
 }
 
-const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	const char* signalFitName = GetSignalFitName(signalShapeName, ptMin, ptMax);
 
 	// just need to append the specific (cos theta, phi) bin name
 
-	return Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaMin, cosThetaMax, phiMin, phiMax, (isCSframe) ? "CS" : "HX");
+	return Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", signalFitName, cosThetaMin, cosThetaMax, phiMin, phiMax, refFrameName);
 }
 
-const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Int_t nCosThetaBins = 10, const vector<Double_t> &cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
-	const char** signalFitNames = new const char* [nCosThetaBins];
+const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
+	const char** signalFitNames = new const char*[nCosThetaBins];
 
 	// just need to append the specific (cos theta, phi) bin name
 	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
-		signalFitNames[iCosTheta] = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], phiMin, phiMax, (isCSframe) ? "CS" : "HX");		
+		signalFitNames[iCosTheta] = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], phiMin, phiMax, (isCSframe) ? "CS" : "HX");
 	}
 
 	return signalFitNames;
 }
 
-const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, const vector<Double_t> &phiBinEdges = {}) {
-	const char** signalFitNames = new const char* [nPhiBins];
+const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {}) {
+	const char** signalFitNames = new const char*[nPhiBins];
 
 	// just need to append the specific (cos theta, phi) bin name
 	for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
-		signalFitNames[iPhi] = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaMin, cosThetaMax, (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1], (isCSframe) ? "CS" : "HX");		
+		signalFitNames[iPhi] = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", GetSignalFitName(signalShapeName, ptMin, ptMax), cosThetaMin, cosThetaMax, (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1], (isCSframe) ? "CS" : "HX");
 	}
 
 	return signalFitNames;
@@ -294,7 +294,7 @@ RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooReal
 		Params.readFromFile(mcFileName);
 	} else {
 		cout << endl
-		     << mcFileName << " file does not seem to exist, you need to extract the signal tail paramaters from MC fit first!" << endl;
+		     << mcFileName << " file does not seem to exist, you need to extract the signal tail parameters from MC fit first!" << endl;
 	}
 	// fix the parameters
 	sigma->setConstant();
@@ -347,12 +347,23 @@ void SaveRawDataSignalYields(RooArgSet* signalYields, const char* bkgShapeName, 
 	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/RawData_%s_%s.txt", bkgShapeName, fitModelName));
 }
 
+void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName, const char* modelName) {
+	gSystem->mkdir("../Polarization/ParametersResults/", kTRUE);
+
+	const char* fileName = Form("../Polarization/ParametersResults/%s_%s.txt", methodName, modelName);
+	parameters->writeToFile(fileName);
+
+	auto list = parameters->contentsString();
+
+	cout << "\n[Polarization] fit results for parameters (" << list << ") saved in " << fileName << endl;
+}
+
 RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName) {
 	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
 	char yieldsFileName[512];
-    snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName);
-    
+	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName);
+
 	cout << yieldsFileName << endl;
 	if (fopen(yieldsFileName, "r")) {
 		cout << endl
@@ -381,23 +392,23 @@ void SaveRawDataCanvas(TCanvas* canvasName, const char* bkgShapeName, const char
 	canvasName->SaveAs(Form("InvMassFits/RawData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
 }
 
-void calculateChi2(TH1D* standardCorrectedHist, TF1* PolarFunc, Int_t nCosThetaBins = 10){
+void calculateChi2(TH1D* standardCorrectedHist, TF1* PolarFunc, Int_t nCosThetaBins = 10) {
 	double chiSqr = 0;
 
-    for(int i=1; i<=nCosThetaBins; i++){
-    	Double_t x = standardCorrectedHist->GetBinCenter(i);
+	for (int i = 1; i <= nCosThetaBins; i++) {
+		Double_t x = standardCorrectedHist->GetBinCenter(i);
 		Double_t res = (standardCorrectedHist->GetBinContent(i) - PolarFunc->Eval(x)) / (standardCorrectedHist->GetBinError(i));
-	   	if(res == 0) continue;
+		if (res == 0) continue;
 
-	   	chiSqr += TMath::Power(res, 2);
+		chiSqr += TMath::Power(res, 2);
 
-	   	// cout << "x: " << x << endl;
-    	// cout << "res: " << res << endl;
-    }
+		// cout << "x: " << x << endl;
+		// cout << "res: " << res << endl;
+	}
 
-    cout << "chi2: " << chiSqr << endl;
-    cout << "nDOF: " << (nCosThetaBins - PolarFunc->GetNpar()) << endl;
-    cout << "reduced chi2: " << chiSqr / (nCosThetaBins - PolarFunc->GetNpar()) << endl;
+	cout << "chi2: " << chiSqr << endl;
+	cout << "nDOF: " << (nCosThetaBins - PolarFunc->GetNpar()) << endl;
+	cout << "reduced chi2: " << chiSqr / (nCosThetaBins - PolarFunc->GetNpar()) << endl;
 }
 
 #endif

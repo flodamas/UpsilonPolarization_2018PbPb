@@ -20,8 +20,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState) {
-	
+void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -29,8 +28,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	using namespace RooStats;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	/// Bin edges and width 
-	// Set the bin edges along the cosTheta/phi axis depending on the number of bins, min and max values 
+	/// Bin edges and width
+	// Set the bin edges along the cosTheta/phi axis depending on the number of bins, min and max values
 	// (If want to use non-uniform bin width, the bin edges should be pre-defined in PolarFitHelpers.h)
 	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
@@ -53,16 +52,16 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	/// Assign signal and background shape name to read the file for the yield extraction results
 	const char* signalShapeName = "SymDSCB";
 
-	// background shape array: ChebychevOrderN or ExpTimesErr	
-	
+	// background shape array: ChebychevOrderN or ExpTimesErr
+
 	const Int_t nCosThetaBinsMax = 20;
 	const Int_t nPhiBinsMax = 10;
 
 	std::string bkgShapeName[nCosThetaBinsMax][nPhiBinsMax];
-	
+
 	// fill the background shape array with ChebychevOrder2
 	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
-	
+
 	// exceptions
 	// bkgShapeName[1][1] = "ChebychevOrder1";
 	// bkgShapeName[1][3] = "ChebychevOrder1";
@@ -76,10 +75,9 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	// fill the background shape array with ExpTimesErr
 	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
-	
+
 	// // exceptions
 	// bkgShapeName[3][0] = "ChebychevOrder1";
-
 
 	/// "Standard" procedure: extract the yields per bin
 	TH2D* yieldMap = new TH2D("yieldMap", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
@@ -138,9 +136,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	/// apply weights and errors to each costheta bin
 	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
-
 		for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
-
 			Double_t weight = 1;
 
 			// get the global bin number of Efficiency
@@ -188,6 +184,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 			// yield with acceptance x efficiency correction
 			standardCorrectedMap->SetBinContent(iCosTheta + 1, iPhi + 1, yield1SVal * weight);
+<<<<<<< HEAD
 					
 			// yieldMap->SetBinError(iCosTheta + 1, yield1SErr * weight);
 			// yieldMap->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh));
@@ -212,12 +209,11 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			if ((yield1S->getVal()) * weight > maxYield) maxYield = (yield1S->getVal()) * weight;
 		}
 	}
-	
 
 	/// Polarization fit
 	// with Root Fit function
 
-	// TVirtualFitter::SetDefaultFitter("Minuit"); 
+	// TVirtualFitter::SetDefaultFitter("Minuit");
 
 	// draw 1/(acceptance x efficiency) map
 
@@ -253,15 +249,15 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	kinematicsText->Draw("SAME");
 
 	yieldCanvas->Modified();
-    yieldCanvas->Update();
+	yieldCanvas->Update();
 
 	TCanvas* correctedMapCanvas = draw2DMap(standardCorrectedMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE);
 
 	standardCorrectedMap->GetZaxis()->SetTitle("Corrected #varUpsilon(1S) Yields");
 	// standardCorrectedMap->GetZaxis()->SetTitleOffset(1.1);
-	
+
 	standardCorrectedMap->GetZaxis()->SetRangeUser(1e-6, maxYield * 2);
-	
+
 	standardCorrectedMap->SetMinimum(1e-6);
 
 	TF2* polarFunc2D = generalPolarFunc(maxYield);
@@ -285,10 +281,10 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	double lambdaThetaPhiVal = fitResults->Parameter(3);
 	double lambdaThetaPhiErr = fitResults->ParError(3);
 
-    kinematicsText->Draw("SAME");
+	kinematicsText->Draw("SAME");
 
 	// correctedMapCanvas->Modified();
-    // correctedMapCanvas->Update();
+	// correctedMapCanvas->Update();
 
 	TLegend legend2(.17, .60, .28, .84);
 	legend2.SetTextSize(.05);
@@ -308,7 +304,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	gPad->Update();
 
-	// draw uncertainties
+	/// draw uncertainties
 
 	// statistical uncertainty of acceptance up
 	TCanvas* statHighAccCanvas = draw2DMap(statHighAccCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE);
@@ -403,23 +399,22 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
     totalUncCanvas->Update();
 
 	/// calculate chi2 / nDOF by hand for cross-check
-	
-	// calculateChi2(standardCorrectedHist, PolarFunc, nCosThetaBins);	
-	
+
+	// calculateChi2(standardCorrectedHist, PolarFunc, nCosThetaBins);
+
 	/// contour plot
 	// (ref: https://root-forum.cern.ch/t/roofit-minos-errors-for-2-parameters-of-interest/16157)
-	
+
 	// // set the confidence level
-   	// gMinuit->SetErrorDef(2.30); // 1 sigma corresponds to delchi2 = 2.30 
-   	// TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(1000, 1, 0); // Contour(number of points, lambda_theta, normalization factor)
+	// gMinuit->SetErrorDef(2.30); // 1 sigma corresponds to delchi2 = 2.30
+	// TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(1000, 1, 0); // Contour(number of points, lambda_theta, normalization factor)
 
-   	// gMinuit->SetErrorDef(6.18); // 2 sigma corresponds to delchi2 = 6.18
-   	// TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(1000, 1, 0);	
+	// gMinuit->SetErrorDef(6.18); // 2 sigma corresponds to delchi2 = 6.18
+	// TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(1000, 1, 0);
 
-   	// TCanvas* contourCanvas = drawContourPlots(ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], refFrameName, contourPlot1, contourPlot2);
+	// TCanvas* contourCanvas = drawContourPlots(ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], refFrameName, contourPlot1, contourPlot2);
 
-	// 
-
+	//
 
 	// save canvas
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
@@ -427,7 +422,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	gSystem->mkdir("YieldMap/2D", kTRUE);
 	yieldCanvas->SaveAs(Form("YieldMap/2D/YieldMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
-	
+
 	gSystem->mkdir("YieldMap/2D", kTRUE);
 	correctedMapCanvas->SaveAs(Form("YieldMap/2D/CorrectedMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 

@@ -61,11 +61,13 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	const char* signalShapeName = "SymDSCB";
 
 	// background
-	
+
 	const char* bkgShapeName = nullptr;
 
-	if (isBkgExpTimesErr) bkgShapeName = "ExpTimesErr";		
-	else bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
+	if (isBkgExpTimesErr)
+		bkgShapeName = "ExpTimesErr";
+	else
+		bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
 
 	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
 
@@ -118,7 +120,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	pad1->Draw();
 	pad2->Draw();
 
-	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
 
@@ -128,7 +130,6 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 }
 
 void scanNominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Int_t nCosThetaBins = 10, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isBkgExpTimesErr = kFALSE, Int_t ChebychevOrder = 2) {
-	
 	// Int_t ptEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
 
 	vector<Double_t> cosThetaEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
