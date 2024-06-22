@@ -234,43 +234,63 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 
 	TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 680, 600);
 
-	map2DCanvas->SetRightMargin(0.18);
-	
-	gStyle->SetPadRightMargin(0.2);
+
 	// SetColorPalette(gPreferredColorPaletteName);
 	SetColorPalette("TamDragon");
 
 	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
 
 	TH2D* frameHist = new TH2D(Form("%sframeHist", mapCosThetaPhi->GetName()), " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
-	
-	gPad->Modified(); 
-	gPad->Update();
-
-	frameHist->Draw("COLZ");
 
 	if (LEGO) {
-		mapCosThetaPhi->Draw("SAME LEGO");
+		map2DCanvas->SetLeftMargin(0.18);
+		map2DCanvas->SetRightMargin(0.09);
+
+		mapCosThetaPhi->Draw("LEGO E");
+
+		mapCosThetaPhi->SetXTitle(Form("cos #theta_{%s}", refFrameName));
+		mapCosThetaPhi->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));	
+		mapCosThetaPhi->SetZTitle(Form("Corrected #varUpsilon(%dS) Yields", iState));
+
+		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+		mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
+
+		mapCosThetaPhi->GetXaxis()->CenterTitle();
+		mapCosThetaPhi->GetYaxis()->CenterTitle();
+
+		// Set title offsets
+	    mapCosThetaPhi->GetXaxis()->SetTitleOffset(1.3); 
+	    mapCosThetaPhi->GetYaxis()->SetTitleOffset(1.5);  
+	    mapCosThetaPhi->GetZaxis()->SetTitleOffset(1.3); 
 	}
 
 	else {
+		map2DCanvas->SetRightMargin(0.18);
+	
+		gStyle->SetPadRightMargin(0.2);
+
+		gPad->Modified(); 
+		gPad->Update();
+
+		frameHist->Draw("COLZ");
+
 		mapCosThetaPhi->Draw("SAME COLZ");
+
+		frameHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
+		frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));	
+
+		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
+
+		frameHist->GetXaxis()->CenterTitle();
+		frameHist->GetYaxis()->CenterTitle();
+		frameHist->GetZaxis()->CenterTitle();
+
+		frameHist->SetStats(0);
+
+		if (!isRange0to1) frameHist->GetZaxis()->SetRangeUser(mapCosThetaPhi->GetMinimum(), mapCosThetaPhi->GetMaximum());
+		else frameHist->GetZaxis()->SetRangeUser(0, 1);	
 	}
-
-	frameHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-	frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));	
-
-	frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-	frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
-
-	frameHist->GetXaxis()->CenterTitle();
-	frameHist->GetYaxis()->CenterTitle();
-	frameHist->GetZaxis()->CenterTitle();
-
-	frameHist->SetStats(0);
-
-	if (!isRange0to1) frameHist->GetZaxis()->SetRangeUser(mapCosThetaPhi->GetMinimum(), mapCosThetaPhi->GetMaximum());
-	else frameHist->GetZaxis()->SetRangeUser(0, 1);
 
 	CMS_lumi(map2DCanvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
 
@@ -307,7 +327,9 @@ void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t 
             latex.SetTextSize(0.03);  // Adjust text size as needed
             latex.SetTextAlign(22);   // Center alignment
             latex.SetTextColor(kWhite);
+            
             if (displayError) latex.DrawLatex(x, y, Form("%.2f%%", binUnc / binVal * 100));	
+            
             else latex.DrawLatex(x, y, Form("%.4f", binVal));		
 		}
 	}

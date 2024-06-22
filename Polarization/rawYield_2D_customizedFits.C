@@ -40,11 +40,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
 
-	/// Set up the variables
-	RooRealVar cosTheta("cosTheta", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
-	cosTheta.setRange(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
-	cosTheta.setBins(nCosThetaBins);
-
 	RooRealVar* yield1S = new RooRealVar("yield1S", "", 1000);
 	RooRealVar* yield2S = new RooRealVar("yield2S", "", 100);
 	RooRealVar* yield3S = new RooRealVar("yield3S", "", 10);
@@ -190,11 +185,11 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			// yieldMap->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh));
 			// yieldMap->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relEffUncHigh));
 			
-			// yieldMap->SetBinError(iCosTheta + 1, iPhi +1, yield1SUnc);
+			yieldMap->SetBinError(iCosTheta + 1, iPhi +1, yield1SUnc);
 
 			// yieldMap->SetBinError(iCosTheta + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
 
-			yieldMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
+			// yieldMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 
 			standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 		
@@ -229,7 +224,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	kinematicsText->SetFillColor(4000);
 	kinematicsText->SetBorderSize(0);
 	kinematicsText->AddText(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
-	// kinematicsText->AddText(DimuonPtRangeText(ptMin, ptMax));
 	kinematicsText->SetAllWith("", "align", 12);
 	kinematicsText->Draw("SAME");
 
@@ -238,76 +232,81 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
     // draw yield map before applying corrections
 
-	TCanvas* yieldCanvas = draw2DMap(yieldMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE);
+	Bool_t LEGOplot = kTRUE;
+
+	TCanvas* yieldCanvas = draw2DMap(yieldMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, LEGOplot);
 
 	yieldMap->GetZaxis()->SetTitle("#varUpsilon(1S) Yields");
 	yieldMap->GetZaxis()->SetTitleOffset(1.);
 
 	yieldCanvas->SetLogz();
 
-	// display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kFALSE);
+	if (!LEGOplot) display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE);
 
 	kinematicsText->Draw("SAME");
 
 	yieldCanvas->Modified();
 	yieldCanvas->Update();
 
-	TCanvas* correctedMapCanvas = draw2DMap(standardCorrectedMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE);
+	TCanvas* correctedMapCanvas = draw2DMap(standardCorrectedMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, LEGOplot);
 
 	standardCorrectedMap->GetZaxis()->SetTitle("Corrected #varUpsilon(1S) Yields");
-	// standardCorrectedMap->GetZaxis()->SetTitleOffset(1.1);
+	if (!LEGOplot) standardCorrectedMap->GetZaxis()->SetTitleOffset(1.1);
 
 	standardCorrectedMap->GetZaxis()->SetRangeUser(1e-6, maxYield * 2);
 
 	standardCorrectedMap->SetMinimum(1e-6);
 
-	// display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kFALSE);
-
-	TF2* polarFunc2D = generalPolarFunc(maxYield);
-
-	TFitResultPtr fitResults = standardCorrectedMap->Fit("polarFunc2D", "ESV");
-
-	// Fit results
-
-	double chi2 = fitResults->Chi2();
-	double nDOF = nCosThetaBins * nPhiBins - polarFunc2D->GetNpar();
-
-	double normVal = fitResults->Parameter(0);
-	double normErr = fitResults->ParError(0);
-
-	double lambdaThetaVal = fitResults->Parameter(1);
-	double lambdaThetaErr = fitResults->ParError(1);
-
-	double lambdaPhiVal = fitResults->Parameter(2);
-	double lambdaPhiErr = fitResults->ParError(2);
-
-	double lambdaThetaPhiVal = fitResults->Parameter(3);
-	double lambdaThetaPhiErr = fitResults->ParError(3);
+	if (!LEGOplot) display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kTRUE);
 
 	kinematicsText->Draw("SAME");
 
-	// correctedMapCanvas->Modified();
-	// correctedMapCanvas->Update();
+	TF2* polarFunc2D = generalPolarFunc(maxYield);
 
-	TLegend legend2(.17, .60, .28, .84);
-	legend2.SetTextSize(.05);
-	// legend2.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
-	legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
-	legend2.AddEntry(polarFunc2D, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr), "l");
-	legend2.AddEntry((TObject*)0, Form("                       #lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr), "");
-	legend2.AddEntry((TObject*)0, Form("                       #lambda_{#theta#varphi} = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr), "");
-	legend2.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
+	if (LEGOplot) {
 
-	legend2.DrawClone();
+		TFitResultPtr fitResults = standardCorrectedMap->Fit("polarFunc2D", "ESV");
 
-	TLatex textChi2;
-	textChi2.SetTextAlign(12);
-	textChi2.SetTextSize(0.045);
-	textChi2.DrawLatexNDC(0.74, 0.044, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
+		// Fit results
+
+		double chi2 = fitResults->Chi2();
+		double nDOF = nCosThetaBins * nPhiBins - polarFunc2D->GetNpar();
+
+		double normVal = fitResults->Parameter(0);
+		double normErr = fitResults->ParError(0);
+
+		double lambdaThetaVal = fitResults->Parameter(1);
+		double lambdaThetaErr = fitResults->ParError(1);
+
+		double lambdaPhiVal = fitResults->Parameter(2);
+		double lambdaPhiErr = fitResults->ParError(2);
+
+		double lambdaThetaPhiVal = fitResults->Parameter(3);
+		double lambdaThetaPhiErr = fitResults->ParError(3);
+
+		// correctedMapCanvas->Modified();
+		// correctedMapCanvas->Update();
+
+		TLegend legend2(.17, .60, .28, .84);
+		legend2.SetTextSize(.05);
+		// legend2.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+		legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
+		legend2.AddEntry(polarFunc2D, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr), "l");
+		legend2.AddEntry((TObject*)0, Form("                       #lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr), "");
+		legend2.AddEntry((TObject*)0, Form("                       #lambda_{#theta#varphi} = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr), "");
+		legend2.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
+
+		legend2.DrawClone();
+
+		TLatex textChi2;
+		textChi2.SetTextAlign(12);
+		textChi2.SetTextSize(0.045);
+		textChi2.DrawLatexNDC(0.74, 0.044, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
+	}
 
 	gPad->Update();
 
-	/// draw uncertainties
+	/// draw uncertainty 2D plots
 
 	// statistical uncertainty of acceptance up
 	TCanvas* statHighAccCanvas = draw2DMap(statHighAccCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
@@ -401,25 +400,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	totalUncCanvas->Modified();
     totalUncCanvas->Update();
 
-	/// calculate chi2 / nDOF by hand for cross-check
-
-	// calculateChi2(standardCorrectedHist, PolarFunc, nCosThetaBins);
-
-	/// contour plot
-	// (ref: https://root-forum.cern.ch/t/roofit-minos-errors-for-2-parameters-of-interest/16157)
-
-	// // set the confidence level
-	// gMinuit->SetErrorDef(2.30); // 1 sigma corresponds to delchi2 = 2.30
-	// TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(1000, 1, 0); // Contour(number of points, lambda_theta, normalization factor)
-
-	// gMinuit->SetErrorDef(6.18); // 2 sigma corresponds to delchi2 = 6.18
-	// TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(1000, 1, 0);
-
-	// TCanvas* contourCanvas = drawContourPlots(ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], refFrameName, contourPlot1, contourPlot2);
-
-	//
-
-	// save canvas
+	/// save canvas
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
 	weightCanvas->SaveAs(Form("EfficiencyMaps/%dS/WeightsMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 
@@ -437,7 +418,4 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	systEffCanvas->SaveAs(Form("UncertaintyPlots/2D/sysEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 	yieldUncCanvas->SaveAs(Form("UncertaintyPlots/2D/yieldUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 	totalUncCanvas->SaveAs(Form("UncertaintyPlots/2D/totalUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
-	
-	// gSystem->mkdir("ContourPlots/2D", kTRUE);
-	// contourCanvas->SaveAs(Form("ContourPlots/2D/contour%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiBinEdges[0], phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 }
