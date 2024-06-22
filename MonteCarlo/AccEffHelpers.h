@@ -145,7 +145,7 @@ TEfficiency* TEfficiency3D(const char* name, const char* refFrameName = "CS", in
 
 // rebin TEfficiency 3D maps to TEfficiency 1D cosTheta based on costheta, phi, and pT selection
 
-TEfficiency* rebinTEff3DMapCosTheta(TEfficiency* TEff3DMap, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}) {
+TEfficiency* rebinTEff3DMapCosTheta(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
 
 	// extract the numerator and the denominator from the 3D TEfficiency Map
 	TH3D* hPassed = (TH3D*)TEff3DMap->GetPassedHistogram();
@@ -178,7 +178,7 @@ TEfficiency* rebinTEff3DMapCosTheta(TEfficiency* TEff3DMap, Int_t phiMin = -180,
 
 // rebin TEfficiency 3D maps to TEfficiency 1D phi based on costheta, phi, and pT selection
 
-TEfficiency* rebinTEff3DMapPhi(TEfficiency* TEff3DMap, Int_t nPhiBins = 10, const vector<Double_t>& phiBinEdges = {}, Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1) {
+TEfficiency* rebinTEff3DMapPhi(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 10, const vector<Double_t>& phiBinEdges = {}) {
 
 	// extract the numerator and the denominator from the 3D TEfficiency Map
 	TH3D* hPassed = (TH3D*)TEff3DMap->GetPassedHistogram();
@@ -221,7 +221,7 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 	// loop over the rebinning code along CosTheta and set the contents of the 2D map row by row
 	for (Int_t iRow = 0; iRow < nPhiBins; iRow++) {
 		
-		TEfficiency* TEffCosTheta = rebinTEff3DMapCosTheta(TEff3DMap, (Int_t)phiBinEdges[iRow], (Int_t)phiBinEdges[iRow + 1], ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+		TEfficiency* TEffCosTheta = rebinTEff3DMapCosTheta(TEff3DMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, (Int_t)phiBinEdges[iRow], (Int_t)phiBinEdges[iRow + 1]);
 
 		TH1D* hPassedCosTheta = (TH1D*)TEffCosTheta->GetPassedHistogram();
 		TH1D* hTotalCosTheta = (TH1D*)TEffCosTheta->GetTotalHistogram();
@@ -246,7 +246,7 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 
 // rebin TEfficiency 3D maps of efficiency systematic uncertainty to TEfficiency 1D cosTheta based on costheta, phi, and pT selection
 
-TH1D* rebinRel3DUncCosTheta(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 180, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}) {
+TH1D* rebinRel3DUncCosTheta(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
 	/// rebin efficiency maps based on costheta, phi, and pT selection
 	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
 
@@ -267,7 +267,7 @@ TH1D* rebinRel3DUncCosTheta(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 1
 		Int_t iCosThetaMin = systEff->GetXaxis()->FindBin(cosThetaBinEdges[ibin - 1]);
 		Int_t iCosThetaMax = systEff->GetXaxis()->FindBin(cosThetaBinEdges[ibin]) - 1;
 
-		// merge bins along the cosTheta axis
+		// merge bins along the cosTheta axis within the bin width
 		for (int iCosTheta = iCosThetaMin; iCosTheta <= iCosThetaMax; iCosTheta++) {
 			Double_t phiSumSystEff = 0;
 
@@ -278,6 +278,8 @@ TH1D* rebinRel3DUncCosTheta(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 1
 				// sum uncertainties along the pt axis
 				for (int iPt = iPtMin; iPt <= iPtMax; iPt++) {
 					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt));
+
+					cout << iCosTheta << ", " << iPhi << ", " << iPt << ". " << systEff->GetBinContent(iCosTheta, iPhi, iPt) << endl;
 				}
 
 				phiSumSystEff = TMath::Hypot(phiSumSystEff, ptSumSystEff);
@@ -295,7 +297,7 @@ TH1D* rebinRel3DUncCosTheta(TH3D* systEff, Int_t phiMin = -180, Int_t phiMax = 1
 
 // rebin TEfficiency 3D maps of efficiency systematic uncertainty to TEfficiency 1D phi based on costheta, phi, and pT selection
 
-TH1D* rebinRel3DUncPhi(TH3D* systEff, Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {}, Int_t ptMin = 0, Int_t ptMax = 30, Int_t cosThetaMin = -1, Int_t cosThetaMax = 1) {
+TH1D* rebinRel3DUncPhi(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t cosThetaMin = -1, Int_t cosThetaMax = 1, Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {}) {
 	/// rebin efficiency maps based on costheta, phi, and pT selection
 	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
 
@@ -341,6 +343,74 @@ TH1D* rebinRel3DUncPhi(TH3D* systEff, Int_t nPhiBins = 6, const vector<Double_t>
 
 	return h1DSystEffPhi;
 }
+
+// rebin TEfficiency 3D maps of efficiency systematic uncertainty to TEfficiency 2D map based on costheta, phi, and pT selection
+
+TH2D* rebinRel3DUncMap(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {}) {
+	/// rebin efficiency maps based on costheta, phi, and pT selection
+	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
+
+	TH2D* h2DSystEffMap = new TH2D("h2DSystEffMap", "", nCosThetaBins, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins]);
+
+	// calculate the systematic uncertainties merging cosTheta and pt bins
+	// and set the bin content of 2D cosTheta-phi uncertainty hist using the calculated value
+
+	for (int iPhi = 1; iPhi <= nPhiBins; iPhi++) {
+		
+		for (int iCosTheta = 1; iCosTheta <= nCosThetaBins; iCosTheta++) {
+
+			TH1D* h1DSystEffCosTheta = rebinRel3DUncCosTheta(systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiBinEdges[iPhi - 1], phiBinEdges[iPhi]);
+
+			h2DSystEffMap->SetBinContent(iCosTheta, iPhi, h1DSystEffCosTheta->GetBinContent(iCosTheta));
+
+			cout << "h1DSystEffCosTheta->GetBinContent(iCosTheta): " << iCosTheta << ", " << h1DSystEffCosTheta->GetBinContent(iCosTheta) << endl;
+		}		
+	}		
+
+	return h2DSystEffMap;
+}
+
+// display the uncertainties signal extraction yield on each bin of 2D yield map
+
+void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6){
+
+	if(!effMap) {
+		cout << "no efficiency map found!!!" << endl;
+		exit(1);
+	}
+
+	TH2D* hTotal2D = (TH2D*)effMap->GetTotalHistogram();
+
+	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
+
+		for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+
+			// get the global bin number of Efficiency
+			Double_t binCenterCosTheta = hTotal2D->GetXaxis()->GetBinCenter(iCosTheta + 1);
+			Double_t binCenterPhi = hTotal2D->GetYaxis()->GetBinCenter(iPhi + 1);
+
+			Int_t iGlobalBin = hTotal2D->FindFixBin(binCenterCosTheta, binCenterPhi);
+
+			// Get the yield and uncertainty values
+			Double_t effVal = effMap->GetEfficiency(iGlobalBin);
+
+			Double_t effUncUp = effMap->GetEfficiencyErrorUp(iGlobalBin);
+
+            // Get the bin center coordinates
+            double x = hTotal2D->GetXaxis()->GetBinCenter(iCosTheta + 1);
+
+            double y = hTotal2D->GetYaxis()->GetBinCenter(iPhi + 1);
+
+            // Create a TLatex object to write the signal extraction yield uncertainties on each bin
+            TLatex latex;
+            latex.SetTextSize(0.03);  // Adjust text size as needed
+            latex.SetTextAlign(22);   // Center alignment
+            latex.SetTextColor(kWhite);
+            latex.DrawLatex(x, y, Form("%.2f", effVal));			
+		}
+	}
+}
+
 
 // Draw 1D efficincy plot
 
@@ -400,7 +470,7 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	else canvas->SaveAs(Form("EfficiencyMaps/%dS/eff_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
 }
 
-void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE) {
+void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t displayValues = kFALSE) {
 
 	TCanvas* canvas;
 	if (isAcc) canvas = new TCanvas("accCosThetaPhi", "", 680, 600);
@@ -423,9 +493,9 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 
 	TLatex legend;
 	legend.SetTextAlign(22);
-	legend.SetTextSize(0.05);
-	legend.DrawLatexNDC(.51, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
-	legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	legend.SetTextSize(0.04);
+	legend.DrawLatexNDC(.48, .89, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .83, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
 	if (strstr(effHist->GetName(), "CS")) {
 		frameHist2D->SetXTitle(CosThetaVarTitle("CS"));
@@ -456,6 +526,8 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 
 	frameHist2D->GetXaxis()->SetNdivisions(-500 - (5));
 	frameHist2D->GetYaxis()->SetNdivisions(-500 - (5 + 1));
+
+	if (displayValues) displayEfficiencies(effHist, nCosThetaBins, nPhiBins);
 
 	// save the plot
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
