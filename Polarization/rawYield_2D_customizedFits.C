@@ -174,7 +174,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			totalUncLow = totalRelUncLow * efficiency * acceptance;
 
 			// get yields and their uncertainties
-			const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1]);
+			const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1]);
 
 			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][iPhi].c_str()), fitModelName);
 
