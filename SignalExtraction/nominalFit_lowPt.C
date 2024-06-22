@@ -61,7 +61,7 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 
 	cout << "File " << filename << " opened" << endl;
 
-	const char* refFrameName = isCSframe ? "CS":"HX" ;
+	const char* refFrameName = isCSframe ? "CS" : "HX";
 
 	const char* datasetName = Form("dataset%s", refFrameName);
 	RooDataSet* allDataset = (RooDataSet*)f->Get(datasetName);
@@ -123,15 +123,15 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	// RooRealVar err_mu("err_mu", " ", 8, 0, 10);
 	// RooRealVar err_sigma("err_sigma", " ", 0, 10);
 	// RooRealVar exp_lambda("exp_lambda", " ", 0, 10);
-	
+
 	// ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
 	// // }}}
-	
+
 	RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "N background events", 0, nEntries);
 
 	// // background: Choose "ChebychevOrderN" or "ExpTimesErr"
 	// const char* bkgShapeName = "ExpTimesErr";
-	
+
 	// auto bkgModel = NominalBkgModel(wspace, bkgShapeName, nEntries);
 
 	// RooAbsPdf* bkgPDF = wspace.pdf("bkgPDF");
@@ -145,11 +145,11 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	wspace.import(*invMassModel, RecycleConflictNodes());
 
 	RooDataSet* reducedDataset = InvMassDataset(allDataset, wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName, phiMin, phiMax);
-	
+
 	auto* fitResult = invMassModel->fitTo(*reducedDataset, Save(), Extended(kTRUE)/*, PrintLevel(-1)*/, NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
 
 	fitResult->Print("v");
-	
+
 	// save the invariant mass distribution fit for further checks
 	// one pad for the invariant mass data distribution with fit components, one for the pull distribution
 	auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
@@ -193,7 +193,7 @@ void nominalFit_lowPt(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRU
 	pad1->Draw();
 	pad2->Draw();
 
-	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooArgSet* signalYields = new RooArgSet(*yield1S, *yield2S, *yield3S);
 
