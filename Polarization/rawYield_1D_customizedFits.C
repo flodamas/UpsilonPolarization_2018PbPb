@@ -112,26 +112,26 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
 
 	// rebin acceptance maps based on costheta, phi, and pT selection
-	TEfficiency* accHistCosTheta = rebinTEff3DMapCosTheta(accMap, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+	TEfficiency* accHistCosTheta = rebinTEff3DMapCosTheta(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiMin, phiMax);
 
-	TEfficiency* accHistPhi = rebinTEff3DMapPhi(accMap, nPhiBins, phiBinEdges, ptMin, ptMax, cosThetaMin, cosThetaMax);
+	TEfficiency* accHistPhi = rebinTEff3DMapPhi(accMap, ptMin, ptMax, cosThetaMin, cosThetaMax, nPhiBins, phiBinEdges);
 
 	// get efficiency maps
 	TFile* efficiencyFile = openFile("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults.root");
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	// rebin efficiency maps based on costheta, phi, and pT selection
-	TEfficiency* effHistCosTheta = rebinTEff3DMapCosTheta(effMap, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+	TEfficiency* effHistCosTheta = rebinTEff3DMapCosTheta(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiMin, phiMax);
 
-	TEfficiency* effHistPhi = rebinTEff3DMapPhi(effMap, nPhiBins, phiBinEdges, ptMin, ptMax, cosThetaMin, cosThetaMax);
+	TEfficiency* effHistPhi = rebinTEff3DMapPhi(effMap, ptMin, ptMax, cosThetaMin, cosThetaMax, nPhiBins, phiBinEdges);
 
 	// get relative systematic uncertainty of efficiency
 	auto* systEff = (TH3D*)efficiencyFile->Get(RelativeSystTEfficiency3DName(refFrameName));
 
 	// rebin uncertainty map based on costheta, phi, and pT selection
-	TH1D* systEffCosTheta = rebinRel3DUncCosTheta(systEff, phiMin, phiMax, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges);
+	TH1D* systEffCosTheta = rebinRel3DUncCosTheta(systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiMin, phiMax);
 
-	TH1D* systEffPhi = rebinRel3DUncPhi(systEff, nPhiBins, phiBinEdges, ptMin, ptMax, cosThetaMin, cosThetaMax);
+	TH1D* systEffPhi = rebinRel3DUncPhi(systEff, ptMin, ptMax, cosThetaMin, cosThetaMax, nPhiBins, phiBinEdges);
 
 	Bool_t isCSframe = (strcmp(refFrameName, "CS") == 0) ? kTRUE : kFALSE;
 
@@ -266,7 +266,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	// // draw uncertainties
 	
-	// TCanvas* errCanvas = drawUncertaintyPlot(refFrameName, systEffCosTheta, statHighEffCosTheta, statLowEffCosTheta, statHighAccCosTheta, statLowAccCosTheta, yield1SUncCosTheta, totalRelUncCosTheta);
+	// TCanvas* errCanvas = drawUncertaintyPlot1D(refFrameName, systEffCosTheta, statHighEffCosTheta, statLowEffCosTheta, statHighAccCosTheta, statLowAccCosTheta, yield1SUncCosTheta, totalRelUncCosTheta);
 
 	// TLegend legend3(.22, .9, .5, .61);
 	// legend3.SetTextSize(.04);
