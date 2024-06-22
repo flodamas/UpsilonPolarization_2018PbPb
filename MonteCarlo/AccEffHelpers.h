@@ -246,7 +246,7 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 
 // rebin TEfficiency 3D maps of efficiency systematic uncertainty to TEfficiency 1D cosTheta based on costheta, phi, and pT selection
 
-TH1D* rebinRel3DUncCosTheta(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
+TH1D* rebinRel3DUncCosTheta(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
 	/// rebin efficiency maps based on costheta, phi, and pT selection
 	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
 
@@ -277,9 +277,9 @@ TH1D* rebinRel3DUncCosTheta(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, In
 
 				// sum uncertainties along the pt axis
 				for (int iPt = iPtMin; iPt <= iPtMax; iPt++) {
-					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt));
+					Int_t globalBin = effMap->GetGlobalBin(iCosTheta, iPhi, iPt);
 
-					cout << iCosTheta << ", " << iPhi << ", " << iPt << ". " << systEff->GetBinContent(iCosTheta, iPhi, iPt) << endl;
+					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt) * effMap->GetEfficiency(globalBin));
 				}
 
 				phiSumSystEff = TMath::Hypot(phiSumSystEff, ptSumSystEff);
@@ -297,7 +297,7 @@ TH1D* rebinRel3DUncCosTheta(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, In
 
 // rebin TEfficiency 3D maps of efficiency systematic uncertainty to TEfficiency 1D phi based on costheta, phi, and pT selection
 
-TH1D* rebinRel3DUncPhi(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t cosThetaMin = -1, Int_t cosThetaMax = 1, Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {}) {
+TH1D* rebinRel3DUncPhi(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {}) {
 	/// rebin efficiency maps based on costheta, phi, and pT selection
 	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
 
@@ -318,7 +318,7 @@ TH1D* rebinRel3DUncPhi(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t c
 		Int_t iPhiMin = systEff->GetYaxis()->FindBin(phiBinEdges[ibin - 1]);
 		Int_t iPhiMax = systEff->GetYaxis()->FindBin(phiBinEdges[ibin]) - 1;
 
-		// merge bins along the phi axis
+		// merge bins along the phi axis within the bin width
 		for (int iPhi = iPhiMin; iPhi <= iPhiMax; iPhi++) {
 			Double_t cosThetaSumSystEff = 0;
 
@@ -328,7 +328,9 @@ TH1D* rebinRel3DUncPhi(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t c
 
 				// sum uncertainties along the pt axis
 				for (int iPt = iPtMin; iPt <= iPtMax; iPt++) {
-					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt));
+					Int_t globalBin = effMap->GetGlobalBin(iCosTheta, iPhi, iPt);
+
+					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt) * effMap->GetEfficiency(globalBin));
 				}
 
 				cosThetaSumSystEff = TMath::Hypot(cosThetaSumSystEff, ptSumSystEff);
@@ -346,7 +348,7 @@ TH1D* rebinRel3DUncPhi(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t c
 
 // rebin TEfficiency 3D maps of efficiency systematic uncertainty to TEfficiency 2D map based on costheta, phi, and pT selection
 
-TH2D* rebinRel3DUncMap(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {}) {
+TH2D* rebinRel3DUncMap(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {}) {
 	/// rebin efficiency maps based on costheta, phi, and pT selection
 	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
 
@@ -357,15 +359,13 @@ TH2D* rebinRel3DUncMap(TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t n
 
 	for (int iPhi = 1; iPhi <= nPhiBins; iPhi++) {
 		
+		TH1D* h1DSystEffCosTheta = rebinRel3DUncCosTheta(effMap, systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiBinEdges[iPhi - 1], phiBinEdges[iPhi]);
+
 		for (int iCosTheta = 1; iCosTheta <= nCosThetaBins; iCosTheta++) {
-
-			TH1D* h1DSystEffCosTheta = rebinRel3DUncCosTheta(systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiBinEdges[iPhi - 1], phiBinEdges[iPhi]);
-
+	
 			h2DSystEffMap->SetBinContent(iCosTheta, iPhi, h1DSystEffCosTheta->GetBinContent(iCosTheta));
-
-			cout << "h1DSystEffCosTheta->GetBinContent(iCosTheta): " << iCosTheta << ", " << h1DSystEffCosTheta->GetBinContent(iCosTheta) << endl;
 		}		
-	}		
+	}
 
 	return h2DSystEffMap;
 }
