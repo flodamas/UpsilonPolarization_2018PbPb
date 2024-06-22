@@ -230,7 +230,7 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 	return contourCanvas;
 }
 
-TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Int_t iState = 1){
+TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1){
 
 	TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 680, 600);
 
@@ -269,8 +269,8 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 
 	frameHist->SetStats(0);
 
-	// frameHist->GetZaxis()->SetRangeUser(mapCosThetaPhi->GetMinimum(), mapCosThetaPhi->GetMaximum());
-	frameHist->GetZaxis()->SetRangeUser(0, 1);
+	if (!isRange0to1) frameHist->GetZaxis()->SetRangeUser(mapCosThetaPhi->GetMinimum(), mapCosThetaPhi->GetMaximum());
+	else frameHist->GetZaxis()->SetRangeUser(0, 1);
 
 	CMS_lumi(map2DCanvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
 
@@ -308,7 +308,7 @@ void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t 
             latex.SetTextAlign(22);   // Center alignment
             latex.SetTextColor(kWhite);
             if (displayError) latex.DrawLatex(x, y, Form("%.2f%%", binUnc / binVal * 100));	
-            else latex.DrawLatex(x, y, Form("%.5f", binVal));		
+            else latex.DrawLatex(x, y, Form("%.4f", binVal));		
 		}
 	}
 }
