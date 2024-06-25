@@ -24,70 +24,111 @@
 
 using namespace RooFit;
 
-/// Define and draw ideal 2D polarization distribution in (costheta, phi) phase space
-
-TH2D* generate2DPolarization(Int_t nCosThetaBins, Float_t cosThetaMin, Float_t cosThetaMax, Int_t nPhiBins, Float_t phiMin, Float_t phiMax, Double_t nIn, Double_t lambdaThetaIn, Double_t lambdaPhiIn, Double_t lambdaThetaPhiIn){
+TH2D* generateGeneralPolarizationHist(Int_t nCosThetaBins, Float_t cosThetaMin, Float_t cosThetaMax, Int_t nPhiBins, Float_t phiMin, Float_t phiMax, Double_t n, Double_t lambdaTheta, Double_t lambdaPhi, Double_t lambdaThetaPhi){
 	
-	/// (dummy histogram to adjust the plot range)
-	TH2F* hdummy = new TH2F("hdummy", ";cos #theta; #varphi (#circ);Number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins+5, phiMin-20, phiMax+100); 
+	/// dummy histogram to adjust the plot range
+	TH2F* hdummy = new TH2F("hdummy", ";cos #theta; #varphi (#circ);Number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins + 5, phiMin - 20, phiMax + 100); 
 
-	/// (2D Angular distribution function)
-	TF2* polarFunc2D = generalPolarFunc(nIn);
+	/// 2D Angular distribution function
+	TF2* generalPolarFunc = getGeneralPolarFunc(n); // no need to be n for the argument
 
-	polarFunc2D->FixParameter(0, 1); // (parameter of normalization)
+	generalPolarFunc->FixParameter(0, 1); // (parameter of normalization)
 
-	polarFunc2D->FixParameter(1, lambdaThetaIn); // (parameter of lambda theta)
-	polarFunc2D->FixParameter(2, lambdaPhiIn); // (parameter of lambda phi)
-	polarFunc2D->FixParameter(3, lambdaThetaPhiIn); // (additional factor since y(#phi) is in the unit of degree)
+	generalPolarFunc->FixParameter(1, lambdaTheta); // (input parameter of lambda theta)
+	generalPolarFunc->FixParameter(2, lambdaPhi); // (input parameter of lambda phi)
+	generalPolarFunc->FixParameter(3, lambdaThetaPhi); // (input parameter of lambda theta phi)
 	
-	polarFunc2D->SetParNames("NormFactor", "lambdaTheta", "lambdaPhi",  "lambdaThetaPhi");
-	polarFunc2D->SetTitle(";cos #theta; #varphi (#circ);Number of generated #varUpsilons");
+	generalPolarFunc->SetTitle(";cos #theta; #varphi (#circ);Number of generated #varUpsilons");
 
-	/// (histogram for Random sampling from the angular distribution function)
-	TH2D *polarHist2D = new TH2D("polarHist2D", ";cos #theta; #varphi (#circ);Number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax); 
+	/// histogram for Random sampling from the angular distribution function
+	TH2D *generalPolarHist = new TH2D("generalPolarHist", ";cos #theta; #varphi (#circ);Number of generated #varUpsilons", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax); 
 
-	polarHist2D->FillRandom("polarFunc2D", nIn); // convert the fuction to histogram for fit procedure
+	generalPolarHist->FillRandom("generalPolarFunc", n); // convert the function to histogram for fit procedure
+
+	// fit the histogram to see the change in the input values
+	// TFitResultPtr fitResults = fitGeneralPolarizationHist(generalPolarHist);
+
+	Float_t maxYield = generalPolarHist->GetEntries();
+
+	TF2* generalPolarFuncFit = getGeneralPolarFunc(maxYield);
+
+	TFitResultPtr fitResults = generalPolarHist->Fit("generalPolarFunc", "ESVIM0"); // chi2 fit to the integrated bin 
 
 	// draw plots
-	TCanvas *polarCanvas2D = new TCanvas("polarCanvas2D", "polarCanvas2D", 650, 600);
+	TCanvas *polarCanvas2D = new TCanvas("polarCanvas2D", "polarCanvas2D", 1250, 600);
+
+	polarCanvas2D->Divide(2);
+
+	polarCanvas2D->cd(1);
+
+    gPad->SetRightMargin(0.18);
 
 	hdummy->Draw("COLZ");
 
-	polarHist2D->Draw("COLZ same");
-
-	/// cosmetics	
-	polarCanvas2D->SetLeftMargin(.15);
-	polarCanvas2D->SetRightMargin(.20);
-
-	hdummy->GetZaxis()->SetRangeUser(0, polarHist2D->GetMaximum());
-
-	polarHist2D->GetZaxis()->SetMaxDigits(3);
+	generalPolarHist->Draw("COLZ SAME");
 
 	// Styles of the texts in the plot
-	TLatex* legend = new TLatex();
-	legend->SetTextAlign(22);
-	legend->SetTextSize(0.05);
+	TLatex* legend1 = new TLatex();
+	legend1->SetTextAlign(22);
+	legend1->SetTextSize(0.05);
 
 	// Put texts inside the plot
-	legend->DrawLatexNDC(.48, .88, "Idea 2D polarization distribution");
-	legend->DrawLatexNDC(.48, .80, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", polarFunc2D->GetParameter(1), polarFunc2D->GetParameter(2), polarFunc2D->GetParameter(3)));
-	
+	legend1->DrawLatexNDC(.50, .88, "Idea 2D polarization distribution");
+	legend1->DrawLatexNDC(.50, .80, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", generalPolarFunc->GetParameter(1), generalPolarFunc->GetParameter(2), generalPolarFunc->GetParameter(3)));
+
+	polarCanvas2D->cd(2);
+
+	gPad->SetTopMargin(0.05);
+
+	hdummy->Draw("LEGO");
+
+	generalPolarHist->Draw("LEGO SAME");
+
+	generalPolarFuncFit->Draw("SURFACE SAME");
+
+	/// cosmetics	
+	polarCanvas2D->SetTopMargin(.15);
+	polarCanvas2D->SetLeftMargin(.1);
+
+	hdummy->GetZaxis()->SetRangeUser(0, generalPolarHist->GetMaximum());
+
+	generalPolarHist->GetZaxis()->SetMaxDigits(3);
+
+	// Styles of the texts in the plot
+	TLatex* legend2 = new TLatex();
+
+	// legend2->SetTextAlign(22);
+	legend2->SetTextSize(0.05);
+
+	// Put texts inside the plot
+	legend2->DrawLatexNDC(.5, .90, Form("#lambda_{#theta, fit} = %.4f #pm %.4f", fitResults->Parameter(1), fitResults->ParError(1)));
+	legend2->DrawLatexNDC(.5, .84, Form("#lambda_{#varphi, fit} = %.4f #pm %.4f", fitResults->Parameter(2), fitResults->ParError(2)));
+	legend2->DrawLatexNDC(.5, .78, Form("#lambda_{#theta#varphi, fit} = %.4f #pm %.4f", fitResults->Parameter(3), fitResults->ParError(3)));
+
 	// Set the plot styles
-	//gStyle->SetTitleYOffset(.9);
-	gStyle->SetTitleOffset(1.5, "z"); // gap between color bar and z title
+	hdummy->GetZaxis()->SetTitleOffset(1.);
+	hdummy->GetZaxis()->SetMaxDigits(3);
+
+	hdummy->GetXaxis()->SetTitleOffset(1.);
+	hdummy->GetXaxis()->CenterTitle();
+
+	hdummy->GetYaxis()->SetTitleOffset(1.5);
+	hdummy->GetYaxis()->CenterTitle();
+
 	SetColorPalette(gPreferredColorPaletteName);
-	gStyle->SetNumberContours(256);
 
 	gPad->Update();
 
+	polarCanvas2D->Update();
+
 	// save the plot
 	gSystem->mkdir("DistributionFitsMC", kTRUE);
-	polarCanvas2D->SaveAs(Form("DistributionFitsMC/IdealDistributionTheta%.2f_Phi%.2f.png", polarFunc2D->GetParameter(1), polarFunc2D->GetParameter(2)), "RECREATE");
+	polarCanvas2D->SaveAs(Form("DistributionFitsMC/IdealDistributionTheta%.2f_Phi%.2f.png", generalPolarFunc->GetParameter(1), generalPolarFunc->GetParameter(2)), "RECREATE");
 
-	return polarHist2D;
+	return generalPolarHist;
 }
 
-void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lambdaPhiIn = -0.8) {  
+void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lambdaPhi0 = -0.8) {  
 
 	/// Generate a Toy Data (This part can be replaced by data)
 	
@@ -99,12 +140,13 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	Float_t phiMin = -180, phiMax = 180;
 
 	/// set input values
-	Double_t nIn = 1e8; // normalization
-	Double_t lambdaThetaPhiIn = 0;
+	Double_t n0 = 1e7; // normalization
+	Double_t lambdaThetaPhi0 = 0;
 
-	TH2D* polarHist2D = generate2DPolarization(nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax, nIn, lambdaThetaIn, lambdaPhiIn, lambdaThetaPhiIn);
+	// generate the data
+	TH2D* generalPolarHist = generateGeneralPolarizationHist(nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax, n0, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0);
 
-	Double_t nEntries = polarHist2D->GetEntries();
+	Double_t nEntries = generalPolarHist->GetEntries();
 
 	cout << "--------------------------------------" << endl;
 	cout << "number of entries: " <<  nEntries << endl;
@@ -112,10 +154,10 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 
 	/// Make 2D histograms to 1D 
 	// (integrate over phi, that is, costheta graph)
-	TH1D *polarHistCosTheta = polarHist2D->ProjectionX("cos #theta", 1, nPhiBins); // arguments: (name, firstybin, lastybin)
+	TH1D *polarHistCosTheta = generalPolarHist->ProjectionX("cos #theta", 1, nPhiBins); // arguments: (name, firstybin, lastybin)
 
 	// (integrate over cosTheta, that is, phi graph)
-	TH1D *polarHistPhi = polarHist2D->ProjectionY("#varphi", 1, nCosThetaBins);
+	TH1D *polarHistPhi = generalPolarHist->ProjectionY("#varphi", 1, nCosThetaBins);
 
 	/// Define variables
 	// x and y axis
@@ -128,9 +170,8 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	RooRealVar lambdaThetaPhiVar("lambdaThetaPhi", "lambda Theta Phi", 0);
 
 	// normalization factor
-	RooRealVar normCosThetaVar("normCosTheta", "normalization factor for costheta graph",  nIn, nIn * 0.1, nIn * 2.5); 	
-	RooRealVar normPhiVar("normPhi", "normalization factor for phi graph", nIn, nIn * 0.1, nIn * 2.5);
-	RooRealVar norm2DVar("norm2D", "normalization factor for 2D graph", nIn, nIn * 0.1, nIn * 2.5);
+	RooRealVar normCosThetaVar("normCosTheta", "normalization factor for costheta graph",  n0, n0 * 0.1, n0 * 2.5); 	
+	RooRealVar normPhiVar("normPhi", "normalization factor for phi graph", n0, n0 * 0.1, n0 * 2.5);
 
 	/// Extract Polarization Parameters with Fit
 	// Import histogram into RooFit
@@ -140,8 +181,6 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	
     RooArgList varList(cosThetaVar, phiVar);
 
-	RooDataHist rooHist2D("rooHist2D", "rooHist2D", varList, polarHist2D);
-
 	// Define model function and apply normalization factor
 	CosThetaPolarizationPDF rooPdfCosTheta("rooPdfCosTheta", "rooPdfCosTheta", cosThetaVar, lambdaThetaVar);
 	RooExtendPdf extendedPdfCosTheta("extendedPdfCosTheta", "extended CosTheta PDF", rooPdfCosTheta, normCosThetaVar);
@@ -149,36 +188,26 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	PhiPolarizationPDF rooPdfPhi("rooPdfPhi", "rooPdfPhi", phiVar, lambdaThetaVar, lambdaPhiVar);
 	RooExtendPdf extendedPdfPhi("extendedPdfPhi", "extended Phi PDF", rooPdfPhi, normPhiVar);
 
-	GeneralPolarizationPDF rooPdf2D("rooPdf2D", "rooPdf2D", cosThetaVar, phiVar, lambdaThetaVar, lambdaPhiVar, lambdaThetaPhiVar);
-	RooExtendPdf extendedPdf2D("extendedPdf2D", "extendedPdf2D", rooPdf2D, norm2DVar);
-
 	// Make frames
 	RooPlot* frameCosTheta = cosThetaVar.frame(cosThetaMin, cosThetaMax, nCosThetaBins);
 
 	RooPlot* framePhi = phiVar.frame(phiMin, phiMax, nPhiBins);
-
-	// RooPlot* frame2D = 
 	
 	// locate imported histogram on the frame
 	rooHistCosTheta.plotOn(frameCosTheta, Name("cosTheta Hist"), MarkerSize(1.5), DrawOption("P0Z"));
 
 	rooHistPhi.plotOn(framePhi, Name("rooHistPhi"), MarkerSize(1.5), DrawOption("P0Z"));
 
-	enableBinIntegrator(extendedPdfCosTheta, nCosThetaBins);
-
 	// Fit the model to the histogram
-	auto* fitResult2D = extendedPdf2D.fitTo(rooHist2D, Save(), Extended(kTRUE), Minos(kTRUE), NumCPU(3));
-	fitResult2D->Print("v");
 
-
-	auto* fitResultCosTheta = extendedPdfCosTheta.fitTo(rooHistCosTheta, Save(), Extended(kTRUE), Minos(kTRUE), NumCPU(3), Range(cosThetaMin, cosThetaMax));
+	auto* fitResultCosTheta = extendedPdfCosTheta.chi2FitTo(rooHistCosTheta, Save(), Extended(kTRUE), Minos(kTRUE), NumCPU(3), Range(cosThetaMin, cosThetaMax), SumW2Error(kFALSE), IntegrateBins(10));
 	fitResultCosTheta->Print("v");
 
 	// Put the fit model on the frame
 	extendedPdfCosTheta.plotOn(frameCosTheta, Name("rooPdfCosTheta"));
 	
 	// Draw the histogram and the fit
-	TCanvas* polarCanvas = new TCanvas(polarHist2D->GetName(), "", 1200, 600);
+	TCanvas* polarCanvas = new TCanvas(generalPolarHist->GetName(), "", 1200, 600);
 	
 	polarCanvas->Divide(2, 1);
 
@@ -191,7 +220,7 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	padCosTheta->cd();
 	
 	// add legends
-	frameCosTheta->addObject(PolarParamsText(lambdaThetaIn, lambdaPhiIn, normCosThetaVar, lambdaThetaVar, normPhiVar, lambdaPhiVar, false));
+	frameCosTheta->addObject(PolarParamsText(lambdaTheta0, lambdaPhi0, normCosThetaVar, lambdaThetaVar, normPhiVar, lambdaPhiVar, false));
 	frameCosTheta->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 	frameCosTheta->SetTitle("");
 	frameCosTheta->Draw();
@@ -211,20 +240,12 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	cout << "--------------------------------------" << endl;
 
 	// Fix lambda Theta and use this value for the phi graph fit
-	lambdaThetaVar.setConstant(kTRUE) ;
+	// lambdaThetaVar.setConstant(kTRUE) ;
 
-	/// Extract Polarization Parameters with 1D Fit (phi)	
-
-	// Import histogram into RooFit
-	
-	// Define model function
-
-	// Make a frame
-
-	enableBinIntegrator(extendedPdfPhi, nPhiBins);
+	/// Extract Polarization Parameters with 1D Fit (phi)
 
 	// Fit the model to the histogram
-	auto* fitResultPhi = extendedPdfPhi.fitTo(rooHistPhi, Save(), Extended(kTRUE), Minos(kTRUE), NumCPU(3), Range(phiMin, phiMax));
+	auto* fitResultPhi = extendedPdfPhi.chi2FitTo(rooHistPhi, Save(), Extended(kTRUE), Minos(kTRUE), NumCPU(3), Range(phiMin, phiMax), SumW2Error(kFALSE), IntegrateBins(10));
 	fitResultPhi->Print("v");
 	
 	// Put the histogram on the frame
@@ -240,7 +261,7 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	padPhi->cd();
 	
 	// add legends
-	framePhi->addObject(PolarParamsText(lambdaThetaIn, lambdaPhiIn, normCosThetaVar, lambdaThetaVar, normPhiVar, lambdaPhiVar, true));
+	framePhi->addObject(PolarParamsText(lambdaTheta0, lambdaPhi0, normCosThetaVar, lambdaThetaVar, normPhiVar, lambdaPhiVar, true));
 	framePhi->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 	framePhi->SetTitle("");
 	framePhi->Draw();
@@ -256,7 +277,7 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 
   	// save the canvas
   	gSystem->mkdir("DistributionFitsMC", kTRUE);
-  	polarCanvas-> SaveAs(Form("DistributionFitsMC/fit1D_lambdaCosTheta%.2fPhi%.2f.png", lambdaThetaIn, lambdaPhiIn), "RECREATE");
+  	polarCanvas-> SaveAs(Form("DistributionFitsMC/fit1D_lambdaCosTheta%.2fPhi%.2f.png", lambdaTheta0, lambdaPhi0), "RECREATE");
 
 	cout << "--------------------------------------" << endl;
 	cout << "Done phi fit!" << endl;
@@ -264,8 +285,8 @@ void extractPolarizationParameters1D(Double_t lambdaThetaIn = 0.88, Double_t lam
 	cout << "--------------------------------------" << endl;
 	
 	/// Print out the results
-	cout << "input      : lambdaTheta = " << lambdaThetaIn << ", lambdaPhi = " << lambdaPhiIn << endl;
-	cout << "fit results: lambdaTheta = " << lambdaThetaVar << ", lambdaPhi = " << lambdaPhiVar << endl;
+	cout << "input      : lambdaTheta = " << lambdaTheta0 << ", lambdaPhi = " << lambdaPhi0 << endl;
+	cout << "fit results: lambdaTheta = " << lambdaThetaVar << " ± " << lambdaThetaVar.getError() << ", lambdaPhi = " << lambdaPhiVar << " ± " << lambdaPhiVar.getError() << endl;
 
 	return;
 	}
