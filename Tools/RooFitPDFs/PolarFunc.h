@@ -1,7 +1,7 @@
 #include "../BasicHeaders.h"
 
 TF1* getCosThetaPolarFunc(Float_t maxYield) {
-	TF1* cosThetaPolarFunc = new TF1("PolarFunc", "[0] / (3 + [1]) * (1 + [1] * x * x)", -1, 1);
+	TF1* cosThetaPolarFunc = new TF1("cosThetaPolarFunc", "[0] / (3 + [1]) * (1 + [1] * x * x)", -1, 1);
 
 	cosThetaPolarFunc->SetParameter(0, 0.5 * maxYield);
 	cosThetaPolarFunc->SetParameter(1, 0);

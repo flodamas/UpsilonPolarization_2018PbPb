@@ -265,7 +265,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	if (LEGOplot) {
 
-		TFitResultPtr fitResults = standardCorrectedMap->Fit("polarFunc2D", "ESV");
+		TFitResultPtr fitResults = standardCorrectedMap->Fit("polarFunc2D", "ESVI");
 
 		// Fit results
 

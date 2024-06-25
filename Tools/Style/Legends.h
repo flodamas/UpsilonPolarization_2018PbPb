@@ -195,7 +195,7 @@ TPaveText* PolarParamsText(double lambThetaIn, double lambPhiIn, RooRealVar norm
 	text->SetBorderSize(0);
 	text->AddText(isSecondOrder ? Form("#lambda_{#varphi, 2D input} = %.3f", lambPhiIn) : Form("#lambda_{#theta, 2D input} = %.3f", lambThetaIn));
 	text->AddText(isSecondOrder ? Form("#lambda_{#varphi, 1D fit} = %.3f #pm %.3f", lambPhiFit.getVal(), lambPhiFit.getError()) : Form("#lambda_{#theta, 1D fit} = %.3f #pm %.3f", lambThetaFit.getVal(), lambThetaFit.getError()));
-	text->AddText(isSecondOrder ? Form("n_{#varphi, 1D fit} = %.2e #pm %.2e", normPhiFit.getVal(), normPhiFit.getError()) : Form("n_{#theta, 1D fit} = %.2e #pm %.1e", normCosThetaFit.getVal(), normCosThetaFit.getError()));
+	text->AddText(isSecondOrder ? Form("n_{1D fit} = %.2e #pm %.2e", normPhiFit.getVal(), normPhiFit.getError()) : Form("n_{1D fit} = %.2e #pm %.1e", normCosThetaFit.getVal(), normCosThetaFit.getError()));
 
 	text->SetAllWith(" ", "align", 12);
 	return text;

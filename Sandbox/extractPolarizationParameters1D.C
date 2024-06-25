@@ -288,5 +288,34 @@ void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lamb
 	cout << "input      : lambdaTheta = " << lambdaTheta0 << ", lambdaPhi = " << lambdaPhi0 << endl;
 	cout << "fit results: lambdaTheta = " << lambdaThetaVar << " ± " << lambdaThetaVar.getError() << ", lambdaPhi = " << lambdaPhiVar << " ± " << lambdaPhiVar.getError() << endl;
 
+	// using ROOT::Fit()
+
+	// Float_t maxYield = polarHistCosTheta->GetEntries();
+
+	// TF1* cosThetaPolarFuncFit = getCosThetaPolarFunc(maxYield);
+
+	// TFitResultPtr cosThetafitResults = polarHistCosTheta->Fit("cosThetaPolarFunc", "ESVIM0"); // chi2 fit to the integrated bin 
+
+	// cout << "--------------------------------------" << endl;
+	// cout << "Done costheta fit!" << endl;
+	// cout << "normalization: " << cosThetafitResults->Parameter(0) << ", lambdaTheta: " << cosThetafitResults->Parameter(1) << endl;
+	// cout << "--------------------------------------" << endl;
+
+	// cosThetafitResults->Print("v");
+
+	// TF1* phiPolarFuncFit = getPhiPolarFunc(maxYield);
+
+	// phiPolarFuncFit->SetParameter(1, cosThetafitResults->Parameter(1));
+
+	// TFitResultPtr phifitResults = polarHistPhi->Fit("phiPolarFunc", "ESVIM0"); // chi2 fit to the integrated bin 
+
+	// cout << "--------------------------------------" << endl;
+	// cout << "Done phi fit!" << endl;
+	// cout << "normalization: " << phifitResults->Parameter(0) << ", lambdaPhi: " << phifitResults->Parameter(1) << endl;
+	// cout << "--------------------------------------" << endl;
+	
+	// phifitResults->Print("v");
+
+
 	return;
 	}
