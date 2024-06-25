@@ -1,5 +1,5 @@
-#include "../Tools/Style/tdrStyle.C"
-#include "../Tools/Style/CMS_lumi.C"
+// #include "../Tools/Style/tdrStyle.C"
+// #include "../Tools/Style/CMS_lumi.C"
 
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
@@ -42,7 +42,7 @@ RooArgSet* extractMCSignalTails_asymCoreDSCB(Int_t centMin = 0, Int_t centMax = 
 	RooWorkspace* wspace = new RooWorkspace("workspace");
 	wspace->import(*allDataset);
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, centMin, centMax, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet* massDataset = ReducedMassDataset(allDataset, *wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar* massVar = wspace->var("mass");
 
@@ -73,7 +73,7 @@ RooArgSet* extractMCSignalTails_asymCoreDSCB(Int_t centMin = 0, Int_t centMax = 
 	// save signal shape parameters in a txt file to be read for data fit
 	RooArgSet* tailParams = new RooArgSet(alphaInf, orderInf, alphaSup, orderSup);
 
-	SaveMCSignalTailParameters(tailParams, outputName.Data()); // so that we don't have to refit later
+	SaveMCSignalParameters(tailParams, outputName.Data()); // so that we don't have to refit later
 
  	/// draw the fit to see if the fit is reasonable
 	auto* canvas = new TCanvas("canvas", "", 600, 600);
