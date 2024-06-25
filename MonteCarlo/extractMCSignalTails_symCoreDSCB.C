@@ -1,3 +1,5 @@
+#include "../Tools/BasicHeaders.h"
+
 #include "../Tools/Datasets/RooDataSetHelpers.h"
 
 #include "../Tools/FitShortcuts.h"
@@ -87,6 +89,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 	const char* outputName = GetSignalFitName(signalShapeName, ptMin, ptMax);
 
+	gSystem->mkdir("SignalShapeFits", kTRUE);
 	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
 
 	if (saveParams) {

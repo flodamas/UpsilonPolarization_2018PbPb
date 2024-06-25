@@ -1,3 +1,6 @@
+#ifndef ROODATASETHELPERS_H
+#define ROODATASETHELPERS_H
+
 #include "../../Tools/BasicHeaders.h"
 
 #include "../../AnalysisParameters.h"
@@ -139,3 +142,5 @@ RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int
 
 	return massDataset;
 }
+
+#endif

@@ -14,6 +14,9 @@
 
 #include "../../AnalysisParameters.h"
 
+#include "../FitShortcuts.h"
+#include "../Datasets/RooDataSetHelpers.h"
+
 #include "Legends.h"
 
 using namespace RooFit;
@@ -179,6 +182,22 @@ void enableBinIntegrator(RooAbsReal& func, int numBins) {
 	customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBins", numBins);
 	func.setIntegratorConfig(customConfig);
 	func.forceNumInt(true);
+}
+
+void enableBinIntegrator2D(RooAbsReal& func, int numBinsX, int numBinsY) {
+    // Get the current integration configuration
+    RooNumIntConfig customConfig(*func.getIntegratorConfig());
+
+    // Set the method for 1D and 2D integration
+    customConfig.method2D().setLabel("RooBinIntegrator");
+
+    // Configure the bin settings for 2D integration
+    customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBinsX", numBinsX);
+    customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBinsY", numBinsY);
+
+    // Apply the custom configuration to the function
+    func.setIntegratorConfig(customConfig);
+    func.forceNumInt(true);
 }
 
 void SaveMCSignalParameters(RooArgSet* params, const char* outputName) {
