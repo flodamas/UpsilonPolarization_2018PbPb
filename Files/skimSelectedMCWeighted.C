@@ -78,7 +78,7 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
 	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, 100, gPtUnit);
 
-	char* refFrameName = "Lab";
+	const char* refFrameName = "Lab";
 	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
