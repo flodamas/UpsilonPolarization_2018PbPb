@@ -28,7 +28,7 @@ TF1* getPhiPolarFunc(Float_t maxYield) {
 	phiPolarFunc->SetParLimits(2, -2, 2);
 
 	phiPolarFunc->SetParName(0, "normFactor");
-	phiPolarFunc->SetParName(1, "lambdaTheta");
+	phiPolarFunc->SetParName(1, "lambdaTheta2");
 	phiPolarFunc->SetParName(2, "lambdaPhi");
 
 	phiPolarFunc->SetLineWidth(3);
@@ -38,7 +38,8 @@ TF1* getPhiPolarFunc(Float_t maxYield) {
 }
 
 TF2* getGeneralPolarFunc(Float_t maxYield) {
-	TF2* generalPolarFunc = new TF2("generalPolarFunc", "[0] / (3 + [1]) * (1 + [1] * x * x + [2] * (1 - x * x) * TMath::Cos(2. * y * pi / 180.) + [3] * TMath::Sqrt(1 - x * x) * x * TMath::Cos(y * pi / 180.))", -1, 1, -180, 180);
+	// TF2* generalPolarFunc = new TF2("generalPolarFunc", "[0] / (3 + [1]) * (1 + [1] * x * x + [2] * (1 - x * x) * TMath::Cos(2. * y * pi / 180.) + [3] * TMath::Sqrt(1 - x * x) * x * TMath::Cos(y * pi / 180.))", -1, 1, -180, 180);
+	TF2* generalPolarFunc = new TF2("generalPolarFunc", "[0] / (3 + [1]) * (1 + [1] * x * x + [2] * TMath::Sin(TMath::ACos(x)) * TMath::Sin(TMath::ACos(x)) * TMath::Cos(2. * y * pi / 180.) + [3] * TMath::Sin(2 * TMath::ACos(x)) * TMath::Cos(y * pi / 180.))", -1, 1, -180, 180);
 
 	generalPolarFunc->SetParameter(0, 0.5 * maxYield);
 	generalPolarFunc->SetParameter(1, 0);
