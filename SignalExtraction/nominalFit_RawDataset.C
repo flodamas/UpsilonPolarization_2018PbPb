@@ -9,6 +9,7 @@
 #include "../Tools/Datasets/RooDataSetHelpers.h"
 #include "../Tools/RooFitPDFs/InvariantMassModels.h"
 
+#include "../MonteCarlo/AccEffHelpers.h"
 #include "../Polarization/PolarFitHelpers.h"
 
 RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {

@@ -1,3 +1,6 @@
+// when the header is included several times, to avoid the redefinition error
+#ifndef Invariant_Mass_GUARD
+#define Invariant_Mass_GUARD
 /*
 
 All RooFit PDFs and models used in many macros compiled in a single header!
@@ -27,7 +30,7 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
-	RooRealVar sigma_1S("sigma_1S", "", .04, .15);
+	RooRealVar sigma_1S("sigma_1S", "", .07, .02, .15);
 
 	RooCrystalBall signalPDF_1S("signalPDF_1S", "", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
 	RooRealVar yield1S("yield1S", "N 1S", initYield, 0, nEntries);
@@ -40,6 +43,7 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 
 	RooCrystalBall signalPDF_2S("signalPDF_2S", "", mass, mean_2S, sigma_2S, alphaInf, orderInf, alphaSup, orderSup);
 	RooRealVar yield2S("yield2S", "N 2S", initYield / 4, 0, nEntries);
+	// RooRealVar yield2S("yield2S", "N 2S", 0);
 
 	// Y(3S) signal shape, mass scaling for mean and widths
 	RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
@@ -48,7 +52,8 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 	RooFormulaVar sigma_3S("sigma_3S", "massScaling_3S*sigma_1S", RooArgSet(massScaling_3S, sigma_1S));
 
 	RooCrystalBall signalPDF_3S("signalPDF_3S", "", mass, mean_3S, sigma_3S, alphaInf, orderInf, alphaSup, orderSup);
-	RooRealVar yield3S("yield3S", "N 3S", initYield / 10, 0, nEntries);
+	RooRealVar yield3S("yield3S", "N 3S", initYield / 12, 0, nEntries);
+	// RooRealVar yield3S("yield3S", "N 3S", 0);
 
 	RooAddPdf signalModel("SymDSCBModel", "PDF of the sum of the three Y signal PDFs", {signalPDF_1S, signalPDF_2S, signalPDF_3S}, {yield1S, yield2S, yield3S});
 
@@ -94,9 +99,9 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar err_mu("err_mu", " ", 7, 0, 15);
-		RooRealVar err_sigma("err_sigma", " ", 1, 0.001, 10);
-		RooRealVar exp_lambda("exp_lambda", " ", 3, 0, 50);
+		RooRealVar err_mu("err_mu", " ", 0, 13);
+		RooRealVar err_sigma("err_sigma", " ", 0, 10);
+		RooRealVar exp_lambda("exp_lambda", " ", 0, 20);
 
 		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
 
@@ -149,3 +154,5 @@ RooAddPdf MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const 
 
 	return model;
 }
+
+#endif

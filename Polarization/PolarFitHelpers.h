@@ -76,7 +76,7 @@ Float_t correctRawYield1DHist(TH1D* standardCorrectedHist, TEfficiency* accMap, 
 	return maxYield;
 }
 
-TCanvas* drawUncertaintyPlot(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPlot2, TH1D* uncPlot3, TH1D* uncPlot4, TH1D* uncPlot5, TH1D* uncPlot6, TH1D* uncPlot7){
+TCanvas* drawUncertaintyPlot1D(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPlot2, TH1D* uncPlot3, TH1D* uncPlot4, TH1D* uncPlot5, TH1D* uncPlot6, TH1D* uncPlot7){
 
 	TCanvas *errCanvas = new TCanvas("errCanvas", "errCanvas", 650, 600);
 
@@ -230,57 +230,81 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 	return contourCanvas;
 }
 
-TCanvas* drawYieldMap(TH2D* yieldMap, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}){
+TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1){
 
-	TCanvas* yieldCanvas = new TCanvas(yieldMap->GetName(), "", 680, 600);
+	TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 680, 600);
 
-	yieldCanvas->SetRightMargin(0.18);
-	
-	gStyle->SetPadRightMargin(0.2);
+
 	// SetColorPalette(gPreferredColorPaletteName);
 	SetColorPalette("TamDragon");
 
 	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
 
-	TH2D* frameHist = new TH2D("frameHist", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
+	TH2D* frameHist = new TH2D(Form("%sframeHist", mapCosThetaPhi->GetName()), " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
 
-	frameHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-	frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
+	if (LEGO) {
+		map2DCanvas->SetLeftMargin(0.18);
+		map2DCanvas->SetRightMargin(0.09);
+
+		mapCosThetaPhi->Draw("LEGO E");
+
+		mapCosThetaPhi->SetXTitle(Form("cos #theta_{%s}", refFrameName));
+		mapCosThetaPhi->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));	
+		mapCosThetaPhi->SetZTitle(Form("Corrected #varUpsilon(%dS) Yields", iState));
+
+		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+		mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
+
+		mapCosThetaPhi->GetXaxis()->CenterTitle();
+		mapCosThetaPhi->GetYaxis()->CenterTitle();
+
+		// Set title offsets
+	    mapCosThetaPhi->GetXaxis()->SetTitleOffset(1.3); 
+	    mapCosThetaPhi->GetYaxis()->SetTitleOffset(1.5);  
+	    mapCosThetaPhi->GetZaxis()->SetTitleOffset(1.3); 
+	}
+
+	else {
+		map2DCanvas->SetRightMargin(0.18);
 	
-	frameHist->SetTitle(Form(";cos #theta_{%s};#varphi_{%s} (#circ);#varUpsilon(1S) Yields", refFrameName, refFrameName));
-	
-	yieldMap->GetZaxis()->SetTitle("#varUpsilon(1S) Yields");
-	yieldMap->GetZaxis()->SetTitleOffset(1.);
+		gStyle->SetPadRightMargin(0.2);
 
-	gPad->Modified(); 
-	gPad->Update();
+		gPad->Modified(); 
+		gPad->Update();
 
-	frameHist->Draw("COLZ");
+		frameHist->Draw("COLZ");
 
-	yieldMap->Draw("SAME LEGO");
+		mapCosThetaPhi->Draw("SAME COLZ");
 
-	frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-	frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
+		frameHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
+		frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));	
 
-	frameHist->GetXaxis()->CenterTitle();
-	frameHist->GetYaxis()->CenterTitle();
-	frameHist->GetZaxis()->CenterTitle();
+		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
 
-	frameHist->SetStats(0);
+		frameHist->GetXaxis()->CenterTitle();
+		frameHist->GetYaxis()->CenterTitle();
+		frameHist->GetZaxis()->CenterTitle();
 
-	frameHist->GetZaxis()->SetRangeUser(yieldMap->GetMinimum(), yieldMap->GetMaximum());
+		frameHist->SetStats(0);
 
-	yieldCanvas->Modified();
-    yieldCanvas->Update();
+		if (!isRange0to1) frameHist->GetZaxis()->SetRangeUser(mapCosThetaPhi->GetMinimum(), mapCosThetaPhi->GetMaximum());
+		else frameHist->GetZaxis()->SetRangeUser(0, 1);	
+	}
 
-    return yieldCanvas;
+	CMS_lumi(map2DCanvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
+
+	map2DCanvas->Modified();
+    map2DCanvas->Update();
+
+    return map2DCanvas;
 }
 
 // display the uncertainties signal extraction yield on each bin of 2D yield map
-void displayYieldUncertainties(TH2D* yieldMap, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6){
+void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6, Bool_t displayError = kFALSE){
 
-	if(!yieldMap) {
-		cout << "no yield map found!!!" << endl;
+	if(!mapCosThetaPhi) {
+		cout << "no 2D map found!!!" << endl;
 		exit(1);
 	}
 
@@ -289,21 +313,24 @@ void displayYieldUncertainties(TH2D* yieldMap, Int_t nCosThetaBins = 10, Int_t n
 		for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
 
 			// Get the yield and uncertainty values
-			Double_t yield1SVal = yieldMap->GetBinContent(iCosTheta + 1, iPhi +1);
+			Double_t binVal = mapCosThetaPhi->GetBinContent(iCosTheta + 1, iPhi +1);
 
-			Double_t yield1SUnc = yieldMap->GetBinError(iCosTheta + 1, iPhi +1);
+			Double_t binUnc = mapCosThetaPhi->GetBinError(iCosTheta + 1, iPhi +1);
 
             // Get the bin center coordinates
-            double x = yieldMap->GetXaxis()->GetBinCenter(iCosTheta + 1);
+            double x = mapCosThetaPhi->GetXaxis()->GetBinCenter(iCosTheta + 1);
 
-            double y = yieldMap->GetYaxis()->GetBinCenter(iPhi + 1);
+            double y = mapCosThetaPhi->GetYaxis()->GetBinCenter(iPhi + 1);
 
             // Create a TLatex object to write the signal extraction yield uncertainties on each bin
             TLatex latex;
             latex.SetTextSize(0.03);  // Adjust text size as needed
             latex.SetTextAlign(22);   // Center alignment
             latex.SetTextColor(kWhite);
-            latex.DrawLatex(x, y, Form("%.2f%%", yield1SUnc / yield1SVal * 100));			
+            
+            if (displayError) latex.DrawLatex(x, y, Form("%.2f%%", binUnc / binVal * 100));	
+            
+            else latex.DrawLatex(x, y, Form("%.4f", binVal));		
 		}
 	}
 }
