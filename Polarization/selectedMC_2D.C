@@ -59,7 +59,7 @@ void selectedMC_2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName =
 	//gStyle->SetTitleYOffset(1.2);
 	gStyle->SetPadRightMargin(0.18);
 	gStyle->SetTitleOffset(1.2, "z");
-	gStyle->SetPalette(gPreferredColorPalette);
+	SetColorPalette("TamDragon");
 	gStyle->SetNumberContours(256);
 
 	TCanvas* canvas = new TCanvas("canvas", "canvas", 650, 600);

@@ -30,7 +30,7 @@ RooWorkspace SetUpWorkspace(const char* filename, const char* refFrameName = "")
 	return wspace;
 }
 
-// reduce the whole dataset (N dimensions) to (invariant mass, cos theta, phi)
+// reduce the whole raw dataset (N dimensions) to (invariant mass, cos theta, phi)
 RooDataSet InvMassCosThetaPhiDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "") {
 	RooDataSet* allDataset = (RooDataSet*)wspace.data(RawDatasetName(refFrameName));
 
@@ -44,6 +44,24 @@ RooDataSet InvMassCosThetaPhiDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_
 	RooDataSet reducedDataset = *(RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass")), *(wspace.var(CosThetaVarName("CS"))), *(wspace.var(PhiVarName("CS"))), *(wspace.var(CosThetaVarName("HX"))), *(wspace.var(PhiVarName("HX")))), kinematicCut);
 
 	wspace.import(reducedDataset, RooFit::Rename(Form("reducedDataset%s", refFrameName)));
+
+	return reducedDataset;
+}
+
+// reduce the whole dataset (N dimensions) to (cos theta, phi) for a given reference frame
+RooDataSet ReducedRecoMCDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
+	RooDataSet* allDataset = (RooDataSet*)wspace.data("MCdataset");
+
+	if (allDataset == nullptr) {
+		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		return RooDataSet();
+	}
+
+	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) ", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax);
+
+	RooDataSet reducedDataset = *(RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var(CosThetaVarName(refFrameName))), *(wspace.var(PhiVarName(refFrameName)))), kinematicCut);
+
+	wspace.import(reducedDataset, RooFit::Rename(Form("RecoMCDataset%s", refFrameName)));
 
 	return reducedDataset;
 }
