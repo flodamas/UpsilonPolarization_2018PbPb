@@ -13,25 +13,33 @@
 
 /*
 
-Test the LHCb's extraction method of the polarization parameters (https://arxiv.org/abs/1709.01301) with Monte Carlo, using the reconstructed dimuon events as signal
-
-This allows to both validate the code implementation AND the acceptance x efficiency closure (1D and 2D)
+Test the LHCb's extraction method of the polarization parameters (https://arxiv.org/abs/1709.01301) with Monte Carlo, using the gen dimuon events as signal
 
 Expectation: zero polarization
 
 */
 
-void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Float_t phiMin = -180, Float_t phiMax = 180, Int_t iState = 1) {
+RooDataSet ReducedGenMCDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
+	const char* kinematicCut = Form("(rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (eventCat == 1)", gRapidityMin, gRapidityMax, ptMin, ptMax);
+
+	RooDataSet reducedDataset = *(RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var(Form("cosTheta%s", refFrameName))), *(wspace.var(Form("phi%s", refFrameName)))), kinematicCut);
+
+	wspace.import(reducedDataset, RooFit::Rename(Form("GenMCDataset%s", refFrameName)));
+
+	return reducedDataset;
+}
+
+void checkClosureGenMC(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Float_t phiMin = -180, Float_t phiMax = 180, Int_t iState = 1) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
-	Int_t nCosThetaBins = 20, nPhiBins = 20;
+	Int_t nCosThetaBins = 20, nPhiBins = 18;
 
 	/// Set up the data
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* filename = Form("../Files/Y%dSSelectedMCWeightedDataset.root", iState);
+	const char* filename = Form("../Files/Y%dSGeneratedMCDataset.root", iState);
 
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
@@ -47,7 +55,7 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	RooWorkspace wspace("workspace");
 	wspace.import(*allDataset);
 
-	auto data = ReducedRecoMCDataset(wspace, ptMin, ptMax, refFrameName);
+	auto data = ReducedGenMCDataset(allDataset, wspace, ptMin, ptMax, refFrameName);
 
 	// read variables in the reduced dataset in the workspace
 
@@ -65,30 +73,30 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	TCanvas* canvas2D = new TCanvas("canvas2D", "canvas2D", 700, 600);
 
-	TH1* histo2D = data.createHistogram("histo2D", cosTheta, Binning(nCosThetaBins, -1, 1), YVar(phi, Binning(nPhiBins, -200, 200)));
+	TH1* histo2D = data.createHistogram("histo2D", cosTheta, Binning(nCosThetaBins, -1, 1), YVar(phi, Binning(nPhiBins, -180, 180)));
 
 	histo2D->SetTitle(" ");
 	histo2D->GetXaxis()->CenterTitle();
-	histo2D->GetYaxis()->SetRangeUser(-180, 300);
+	//histo2D->GetYaxis()->SetRangeUser(-180, 300);
 	histo2D->GetYaxis()->CenterTitle();
 	histo2D->GetZaxis()->SetMaxDigits(3);
 	histo2D->Draw("COLZ");
 
 	// cosmetics
-
+	/*
 	TLegend legend(.18, .95, .45, .85);
 	legend.SetTextSize(.05);
-	legend.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	legend.SetHeader(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
 	//legend.AddEntry(histoPDF, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaTheta.getVal(), lambdaTheta.getError()), "l");
 
 	legend.DrawClone();
-
+*/
 	gPad->Update();
 
-	CMS_lumi(canvas2D, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
+	CMS_lumi(canvas2D, Form("Unpolarized #varUpsilon(%dS) gen MC", iState));
 
 	gSystem->mkdir("MCstudies", kTRUE);
-	canvas2D->SaveAs(Form("MCstudies/DistribRecoY%dSMC_%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	canvas2D->SaveAs(Form("MCstudies/DistribGenY%dSMC_%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	// definition of the fit ranges (important!)
 	cosTheta.setRange("PolaFitRange", cosThetaMin, cosThetaMax);
@@ -97,8 +105,8 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	/// Set up the likelihood function
 
 	// 1. the polarization POIs and the PDF
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.1, 1.1);
-	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.1, 1.1);
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", 0.3, -1.1, 1.1);
+	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", 0.2, -1.1, 1.1);
 	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1., 1.);
 
 	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame invariant
@@ -106,11 +114,9 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	auto polarizationPDF2D = GeneralPolarizationPDF("polarizationPDF2D", " ", cosTheta, phi, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	polarizationPDF2D.setNormRange("PolaFitRange");
 
-	//auto dataNLL = polarizationPDF2D.createNLL(data, Range("PolaFitRange"));
-
 	//dataNLL->Print("v");
 
-	// 3. the acceptance x efficiency PDF
+	// 3. the acceptance PDF
 
 	const char* mapName = CosThetaPhiTEfficiency2DName(ptMin, ptMax, refFrameName);
 
@@ -123,36 +129,24 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(mapName);
 
-	// efficiency maps
-	TFile* efficiencyFile = TFile::Open(Form("../MonteCarlo/EfficiencyMaps/%dS/EfficiencyResults.root", iState), "READ");
-	if (!efficiencyFile) {
-		cout << "Efficiency file not found. Check the directory of the file." << endl;
-		return;
-	}
-
-	auto* effMap = (TEfficiency*)efficiencyFile->Get(mapName);
-
 	/// 2. do the product
 
 	TH2* accTH2 = accMap->CreateHistogram();
-	TH2* effTH2 = effMap->CreateHistogram();
-
-	effTH2->Multiply(accTH2);
 
 	/// 3. transform into a RooDataHist, then into a RooHistPdf
 
-	RooDataHist effDataHist2D("effDataHist2D", "", {cosTheta, phi}, effTH2);
+	RooDataHist accDataHist2D("accDataHist2D", "", {cosTheta, phi}, accTH2);
 
-	RooHistPdf accEffPDF2D("effPDF2D", "", {cosTheta, phi}, effDataHist2D, 3);
-	accEffPDF2D.setNormRange("PolaFitRange");
+	RooHistPdf accPDF2D("accPDF2D", "", {cosTheta, phi}, accDataHist2D, 3);
+	accPDF2D.setNormRange("PolaFitRange");
 
-	// 3. the normalization factor
+	TCanvas* canvasAcc = new TCanvas("canvasAcc", " ", 700, 600);
+	TH1* histoAccPDF2D = accPDF2D.createHistogram("histoAccPDF2D", cosTheta, RooFit::Binning(nCosThetaBins, -1, 1), RooFit::YVar(phi, RooFit::Binning(nPhiBins, -180, 180)));
 
-	RooProdPdf productPDF2D("productPDF2D", "acc x eff x polarization PDF", polarizationPDF2D, accEffPDF2D);
+	histoAccPDF2D->Draw("COLZ");
+
+	RooProdPdf productPDF2D("productPDF2D", "acc x polarization PDF", polarizationPDF2D, accPDF2D);
 	productPDF2D.setNormRange("PolaFitRange");
-	//productPDF2D.forceNumInt(true);
-	//RooAbsReal::defaultIntegratorConfig()->setEpsAbs(1e-5);
-	//RooAbsReal::defaultIntegratorConfig()->setEpsRel(1e-5);
 
 	/// Fit the angular distibution
 
@@ -181,12 +175,14 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	cout << "Frame-invariant parameter (\"lambda tilde\") = " << lambdaTilde.getVal() << " +/- " << lambdaTilde.getPropagatedError(*compactFitResult) << endl;
 
+	//	SavePolarizationFitParameters(savedParams, "detailedViaMinimizer", fitModelName);
+
 	cout << "\nSECOND FIT METHOD: directly call fitTo() to the total PDF to enable AsymptoticError\n";
-	lambdaTheta.setVal(0.2);
+	lambdaTheta.setVal(0.3);
 	lambdaPhi.setVal(0);
 	lambdaThetaPhi.setVal(0);
 
-	auto* testResult2D = productPDF2D.fitTo(data, Save(), Range("PolaFitRange"), SumW2Error(true), PrintLevel(0), RecoverFromUndefinedRegions(10.), Offset("bin"), Optimize(true), Strategy(2));
+	auto* testResult2D = productPDF2D.fitTo(data, Save(), Range("PolaFitRange"), PrintLevel(0), Offset("bin"), RecoverFromUndefinedRegions(10.), NumCPU(3));
 
 	testResult2D->Print("v");
 }
