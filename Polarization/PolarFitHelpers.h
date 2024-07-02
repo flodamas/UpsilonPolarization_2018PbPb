@@ -1,18 +1,18 @@
+#include "../Tools/FitShortcuts.h"
+
 /// apply weights and errors to each costheta bin
 Float_t correctRawYield1DHist(TH1D* standardCorrectedHist, TEfficiency* accMap, TEfficiency* effMap, TH1D* systEff, Int_t nBins = 10, const char** bkgShapeNames = nullptr, const char** fitModelNames = nullptr) {
-
 	// initialize variables used in the loop below
 	Double_t totalRelUncHigh = 0, totalRelUncLow = 0;
 	Double_t totalUncHigh = 0, totalUncLow = 0;
 
 	TCanvas* massCanvas = 0;
-	
+
 	Float_t maxYield = 0;
-	
+
 	for (Int_t iBin = 0; iBin < nBins; iBin++) {
-		
 		Double_t weight = 0;
-		
+
 		RooRealVar* yield1S = new RooRealVar("yield1S", "", 1000);
 		RooRealVar* yield2S = new RooRealVar("yield2S", "", 100);
 		RooRealVar* yield3S = new RooRealVar("yield3S", "", 10);
@@ -48,17 +48,17 @@ Float_t correctRawYield1DHist(TH1D* standardCorrectedHist, TEfficiency* accMap, 
 
 		// set the bin contents reflecting weights
 		standardCorrectedHist->SetBinContent(iBin + 1, yield1SVal * weight);
-				
+
 		// standardCorrectedHist->SetBinError(iBin + 1, yield1SErr * weight);
 		// standardCorrectedHist->SetBinError(iBin + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh));
 		// standardCorrectedHist->SetBinError(iBin + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relEffUncHigh));
-		
+
 		// standardCorrectedHist->SetBinError(iBin + 1, yield1SUnc * weight);
 
 		// standardCorrectedHist->SetBinError(iBin + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
 
 		standardCorrectedHist->SetBinError(iBin + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
-		
+
 		// // fill uncertainty histograms
 		// statHighEff->SetBinContent(iBin + 1, relEffUncHigh);
 		// statLowEff->SetBinContent(iBin + 1, relEffUncLow);
@@ -70,15 +70,13 @@ Float_t correctRawYield1DHist(TH1D* standardCorrectedHist, TEfficiency* accMap, 
 		if ((yield1S->getVal()) * weight > maxYield) maxYield = (yield1S->getVal()) * weight;
 
 		delete yield1S;
-
 	}
 
 	return maxYield;
 }
 
-TCanvas* drawUncertaintyPlot1D(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPlot2, TH1D* uncPlot3, TH1D* uncPlot4, TH1D* uncPlot5, TH1D* uncPlot6, TH1D* uncPlot7){
-
-	TCanvas *errCanvas = new TCanvas("errCanvas", "errCanvas", 650, 600);
+TCanvas* drawUncertaintyPlot1D(const char* refFrameName, TH1D* uncPlot1, TH1D* uncPlot2, TH1D* uncPlot3, TH1D* uncPlot4, TH1D* uncPlot5, TH1D* uncPlot6, TH1D* uncPlot7) {
+	TCanvas* errCanvas = new TCanvas("errCanvas", "errCanvas", 650, 600);
 
 	uncPlot1->GetYaxis()->SetRangeUser(0, 1);
 
@@ -91,12 +89,12 @@ TCanvas* drawUncertaintyPlot1D(const char* refFrameName, TH1D* uncPlot1, TH1D* u
 	Int_t lineWidth = 6;
 
 	uncPlot1->SetLineWidth(lineWidth);
-	uncPlot1->SetLineColor(kRed+1);
+	uncPlot1->SetLineColor(kRed + 1);
 
 	uncPlot1->Draw();
 
 	uncPlot2->SetLineWidth(lineWidth);
-	uncPlot2->SetLineColor(kRed-7);
+	uncPlot2->SetLineColor(kRed - 7);
 
 	uncPlot2->Draw("SAME");
 
@@ -106,17 +104,17 @@ TCanvas* drawUncertaintyPlot1D(const char* refFrameName, TH1D* uncPlot1, TH1D* u
 	uncPlot3->Draw("SAME");
 
 	uncPlot4->SetLineWidth(lineWidth);
-	uncPlot4->SetLineColor(kAzure-9);
+	uncPlot4->SetLineColor(kAzure - 9);
 
-	uncPlot4->Draw("SAME");	
+	uncPlot4->Draw("SAME");
 
 	uncPlot5->SetLineWidth(lineWidth);
-	uncPlot5->SetLineColor(kBlue-3);
+	uncPlot5->SetLineColor(kBlue - 3);
 
 	uncPlot5->Draw("SAME");
 
 	uncPlot6->SetLineWidth(lineWidth);
-	uncPlot6->SetLineColor(kViolet-8);
+	uncPlot6->SetLineColor(kViolet - 8);
 
 	uncPlot6->Draw("SAME");
 
@@ -129,45 +127,45 @@ TCanvas* drawUncertaintyPlot1D(const char* refFrameName, TH1D* uncPlot1, TH1D* u
 }
 
 // get maximum y value of the contour plot
-double getMaxYValue(TGraph *graph) {
-    double maxY = -1e20; // Initialize with a very small value
+double getMaxYValue(TGraph* graph) {
+	double maxY = -1e20; // Initialize with a very small value
 
-    // Get the number of points in the graph
-    int nPoints = graph->GetN();
+	// Get the number of points in the graph
+	int nPoints = graph->GetN();
 
-    // Iterate through each point in the graph
-    for (int iPoint = 0; iPoint < nPoints; iPoint++) {
-        double x, y;
-        graph->GetPoint(iPoint, x, y); // Get x and y coordinates of the point
+	// Iterate through each point in the graph
+	for (int iPoint = 0; iPoint < nPoints; iPoint++) {
+		double x, y;
+		graph->GetPoint(iPoint, x, y); // Get x and y coordinates of the point
 
-        // Update the maximum y-value if the current y-value is greater
-        if (y > maxY) {
-            maxY = y;
-        }
-    }
+		// Update the maximum y-value if the current y-value is greater
+		if (y > maxY) {
+			maxY = y;
+		}
+	}
 
-    return maxY;
+	return maxY;
 }
 
 // get minimum y value of the contour plot
-double getMinYValue(TGraph *graph) {
-    double minY = 1e20; // Initialize with a very large value
+double getMinYValue(TGraph* graph) {
+	double minY = 1e20; // Initialize with a very large value
 
-    // Get the number of points in the graph
-    int nPoints = graph->GetN();
+	// Get the number of points in the graph
+	int nPoints = graph->GetN();
 
-    // Iterate through each point in the graph
-    for (int iPoint = 0; iPoint < nPoints; iPoint++) {
-        double x, y;
-        graph->GetPoint(iPoint, x, y); // Get x and y coordinates of the point
+	// Iterate through each point in the graph
+	for (int iPoint = 0; iPoint < nPoints; iPoint++) {
+		double x, y;
+		graph->GetPoint(iPoint, x, y); // Get x and y coordinates of the point
 
-        // Update the maximum y-value if the current y-value is greater
-        if (y < minY) {
-            minY = y;
-        }
-    }
+		// Update the maximum y-value if the current y-value is greater
+		if (y < minY) {
+			minY = y;
+		}
+	}
 
-    return minY;
+	return minY;
 }
 
 // draw contour plots
@@ -176,7 +174,7 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 
 	contourCanvas->SetLeftMargin(0.17);
 
-	TH2D *contourPlotFrame = new TH2D("contourPlotFrame", ";#lambda_{#theta};Normalization Factor", 20, -2, 2, 100, 0, 7000);
+	TH2D* contourPlotFrame = new TH2D("contourPlotFrame", ";#lambda_{#theta};Normalization Factor", 20, -2, 2, 100, 0, 7000);
 
 	// contour1->SetTitle(";#lambda#theta;Normalization Factor");
 
@@ -184,26 +182,26 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 	contourPlotFrame->GetYaxis()->CenterTitle();
 
 	contourPlotFrame->GetYaxis()->SetTitleOffset(1.4);
-	
+
 	contourPlotFrame->GetXaxis()->SetRangeUser(-2, 2);
 	contourPlotFrame->GetYaxis()->SetRangeUser(0, 7000);
 
 	contourPlotFrame->Draw();
 
-	if (contour3){
-		contour3->SetFillColorAlpha(kGreen-8, 0.2);
-		contour3->SetLineColor(kGreen-8);
+	if (contour3) {
+		contour3->SetFillColorAlpha(kGreen - 8, 0.2);
+		contour3->SetLineColor(kGreen - 8);
 		contour3->SetLineWidth(2);
 		contour3->Draw("FL SAME");
 	}
 
-	contour2->SetFillColorAlpha(kAzure-9, 0.7);
-	contour2->SetLineColor(kAzure-9);
+	contour2->SetFillColorAlpha(kAzure - 9, 0.7);
+	contour2->SetLineColor(kAzure - 9);
 	contour2->SetLineWidth(2);
 	contour2->Draw("FL SAME");
 
 	contour1->SetFillColorAlpha(kOrange, 0.9);
-	contour1->SetLineColor(kOrange+1);
+	contour1->SetLineColor(kOrange + 1);
 	contour1->SetLineWidth(2);
 	contour1->Draw("FL SAME");
 
@@ -219,21 +217,19 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 
 	TLegend contourLegend(.21, .54, .46, .70, NULL, "brNDC");
 	contourLegend.SetTextSize(.05);
-	
+
 	contourLegend.AddEntry(contour1, "1#sigma", "F");
-   	contourLegend.AddEntry(contour2, "2#sigma", "F");
+	contourLegend.AddEntry(contour2, "2#sigma", "F");
 
 	contourLegend.DrawClone();
 
-	gPad->Update();	
+	gPad->Update();
 
 	return contourCanvas;
 }
 
-TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1){
-
+TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1) {
 	TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 680, 600);
-
 
 	// SetColorPalette(gPreferredColorPaletteName);
 	SetColorPalette("TamDragon");
@@ -249,7 +245,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->Draw("LEGO E");
 
 		mapCosThetaPhi->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-		mapCosThetaPhi->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));	
+		mapCosThetaPhi->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 		mapCosThetaPhi->SetZTitle(Form("Corrected #varUpsilon(%dS) Yields", iState));
 
 		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
@@ -259,17 +255,17 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->GetYaxis()->CenterTitle();
 
 		// Set title offsets
-	    mapCosThetaPhi->GetXaxis()->SetTitleOffset(1.3); 
-	    mapCosThetaPhi->GetYaxis()->SetTitleOffset(1.5);  
-	    mapCosThetaPhi->GetZaxis()->SetTitleOffset(1.3); 
+		mapCosThetaPhi->GetXaxis()->SetTitleOffset(1.3);
+		mapCosThetaPhi->GetYaxis()->SetTitleOffset(1.5);
+		mapCosThetaPhi->GetZaxis()->SetTitleOffset(1.3);
 	}
 
 	else {
 		map2DCanvas->SetRightMargin(0.18);
-	
+
 		gStyle->SetPadRightMargin(0.2);
 
-		gPad->Modified(); 
+		gPad->Modified();
 		gPad->Update();
 
 		frameHist->Draw("COLZ");
@@ -277,7 +273,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->Draw("SAME COLZ");
 
 		frameHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-		frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));	
+		frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 
 		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
 		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
@@ -288,49 +284,50 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 
 		frameHist->SetStats(0);
 
-		if (!isRange0to1) frameHist->GetZaxis()->SetRangeUser(mapCosThetaPhi->GetMinimum(), mapCosThetaPhi->GetMaximum());
-		else frameHist->GetZaxis()->SetRangeUser(0, 1);	
+		if (!isRange0to1)
+			frameHist->GetZaxis()->SetRangeUser(mapCosThetaPhi->GetMinimum(), mapCosThetaPhi->GetMaximum());
+		else
+			frameHist->GetZaxis()->SetRangeUser(0, 1);
 	}
 
 	CMS_lumi(map2DCanvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
 
 	map2DCanvas->Modified();
-    map2DCanvas->Update();
+	map2DCanvas->Update();
 
-    return map2DCanvas;
+	return map2DCanvas;
 }
 
 // display the uncertainties signal extraction yield on each bin of 2D yield map
-void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6, Bool_t displayError = kFALSE){
-
-	if(!mapCosThetaPhi) {
+void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6, Bool_t displayError = kFALSE) {
+	if (!mapCosThetaPhi) {
 		cout << "no 2D map found!!!" << endl;
 		exit(1);
 	}
 
 	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
-
 		for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
-
 			// Get the yield and uncertainty values
-			Double_t binVal = mapCosThetaPhi->GetBinContent(iCosTheta + 1, iPhi +1);
+			Double_t binVal = mapCosThetaPhi->GetBinContent(iCosTheta + 1, iPhi + 1);
 
-			Double_t binUnc = mapCosThetaPhi->GetBinError(iCosTheta + 1, iPhi +1);
+			Double_t binUnc = mapCosThetaPhi->GetBinError(iCosTheta + 1, iPhi + 1);
 
-            // Get the bin center coordinates
-            double x = mapCosThetaPhi->GetXaxis()->GetBinCenter(iCosTheta + 1);
+			// Get the bin center coordinates
+			double x = mapCosThetaPhi->GetXaxis()->GetBinCenter(iCosTheta + 1);
 
-            double y = mapCosThetaPhi->GetYaxis()->GetBinCenter(iPhi + 1);
+			double y = mapCosThetaPhi->GetYaxis()->GetBinCenter(iPhi + 1);
 
-            // Create a TLatex object to write the signal extraction yield uncertainties on each bin
-            TLatex latex;
-            latex.SetTextSize(0.03);  // Adjust text size as needed
-            latex.SetTextAlign(22);   // Center alignment
-            latex.SetTextColor(kWhite);
-            
-            if (displayError) latex.DrawLatex(x, y, Form("%.2f%%", binUnc / binVal * 100));	
-            
-            else latex.DrawLatex(x, y, Form("%.4f", binVal));		
+			// Create a TLatex object to write the signal extraction yield uncertainties on each bin
+			TLatex latex;
+			latex.SetTextSize(0.03); // Adjust text size as needed
+			latex.SetTextAlign(22);  // Center alignment
+			latex.SetTextColor(kWhite);
+
+			if (displayError)
+				latex.DrawLatex(x, y, Form("%.2f%%", binUnc / binVal * 100));
+
+			else
+				latex.DrawLatex(x, y, Form("%.4f", binVal));
 		}
 	}
 }

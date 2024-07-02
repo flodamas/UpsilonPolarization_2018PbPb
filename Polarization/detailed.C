@@ -12,6 +12,8 @@
 
 #include "../MonteCarlo/AccEffHelpers.h"
 
+#include "PolarFitHelpers.h"
+
 // extraction of the polarization parameters based on the LHCb method https://arxiv.org/abs/1709.01301
 
 // MLL fit of the angular distibution of sWeighted signal events
@@ -59,21 +61,19 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 
 	RooDataSet sWeightedData = GetSpeciesSWeightedDataset(sData, Form("%dS", iState));
 
+	//	RooRealVar sWeightVar = *(RooRealVar*)wspace.var(Form("yield%dS_sw", iState));
+
 	/// Set up the likelihood function
 
 	// 1. the polarization POIs and the PDF
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.1, 1.1);
-	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.1, 1.1);
-	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1., 1.);
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", 0.2, -1.1, 1.1);
+	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -0.8, 0.8);
+	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -0.6, 0.6);
 
-	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame invariant
+	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame-invariant parameter
 
 	auto polarizationPDF = GeneralPolarizationPDF("polarizationPDF", " ", cosTheta, phi, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	polarizationPDF.setNormRange("PolaFitRange");
-
-	auto dataNLL = polarizationPDF.createNLL(sWeightedData, Range("PolaFitRange"));
-
-	//dataNLL->Print("v");
 
 	// 2. the sWeights scale factor (see LHCb measurement)
 	// inflates the uncertainties to account for the statistical fluctuations in the background subtraction
@@ -113,20 +113,21 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 	RooDataHist effDataHist("effDataHist", "", {cosTheta, phi}, effTH2);
 
 	RooHistPdf* accEffPDF = new RooHistPdf("effPDF", "", {cosTheta, phi}, effDataHist, 3);
+	accEffPDF->setNormRange("PolaFitRange");
 
 	// 3. the normalization factor
 
 	auto* productPDF = new RooProdPdf("productPDF", "acc x eff x polarization PDF", polarizationPDF, *accEffPDF);
 	productPDF->setNormRange("PolaFitRange");
 
-	auto* normFactor = productPDF->createIntegral(RooArgSet(cosTheta, phi), NormSet(RooArgSet(cosTheta, phi)), Range("PolaFitRange"));
+	//auto* normFactor = productPDF->createIntegral(RooArgSet(cosTheta, phi), NormSet(RooArgSet(cosTheta, phi)), Range("PolaFitRange"));
 
 	// 4. bind all components into a single variable
 
-	RooGenericPdf totalPDF("totalPDF", " total polarization PDF", "(@0/@1)*@2", {*productPDF, *normFactor, sPlotScaleFactor});
+	RooGenericPdf totalPDF("totalPDF", " total polarization PDF", "@0*@1", {*productPDF, sPlotScaleFactor});
 	totalPDF.setNormRange("PolaFitRange");
 
-	auto totalNLL = totalPDF.createNLL(sWeightedData, Range("PolaFitRange"), NumCPU(2));
+	auto totalNLL = totalPDF.createNLL(sWeightedData, Range("PolaFitRange"));
 
 	/// Fit the angular distibution
 
@@ -137,8 +138,8 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 	RooMinimizer minimizer(*totalNLL);
 
 	minimizer.setStrategy(2); // 1 for faster minimization, 2 for better convergence
-	minimizer.setPrintLevel(-1);
-	minimizer.setRecoverFromNaNStrength(100.);
+	minimizer.setPrintLevel(0);
+	minimizer.setRecoverFromNaNStrength(10.);
 	minimizer.optimizeConst(true);
 	minimizer.setOffsetting(true);
 	//minimizer.setVerbose(true);
@@ -164,7 +165,13 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 
 	cout << "\nSECOND FIT METHOD: directly call fitTo() to the total PDF to enable AsymptoticError\n";
 
-	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), AsymptoticError(true), PrintLevel(-1), Offset());
+	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), SumW2Error(true), PrintLevel(0), Offset("initial"), RecoverFromUndefinedRegions(10.), Strategy(2));
 
 	testResult->Print("v");
+
+	// plot likelihood scans
+
+	RooPlot* frame1 = lambdaTheta.frame(Title(" "));
+	totalPDF.plotOn(frame1, ShiftToZero());
+	//frame1->Draw();
 }

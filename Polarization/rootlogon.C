@@ -7,7 +7,7 @@ void fixOverlay() { gPad->RedrawAxis(); }
 void rootlogon() {
 	TStyle* tdrStyle = new TStyle("tdrStyle", "Style for P-TDR");
 
-	gROOT->ProcessLine(".L ../Tools/RoofitPDFs/ErrorFuncTimesExp.cxx");
+	gROOT->ProcessLine(".L ../Tools/RooFitPDFs/ErrorFuncTimesExp.cxx");
 	gROOT->ProcessLine(".L ../Tools/RooFitPDFs/CosThetaPolarizationPDF.cxx");
 	gROOT->ProcessLine(".L ../Tools/RooFitPDFs/GeneralPolarizationPDF.cxx");
 

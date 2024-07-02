@@ -1,0 +1,4 @@
+lambdaTheta =  0.0000 L(-1.1 - 1.1) 
+lambdaPhi =  0.0000 L(-1.1 - 1.1) 
+lambdaThetaPhi =  0.0000 L(-1 - 1) 
+lambdaTilde =  0.0000 L(-5 - 5) 
