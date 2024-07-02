@@ -101,7 +101,7 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.1, 1.1);
 	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1., 1.);
 
-	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame invariant
+	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame-invariant parameter
 
 	auto polarizationPDF2D = GeneralPolarizationPDF("polarizationPDF2D", " ", cosTheta, phi, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	polarizationPDF2D.setNormRange("PolaFitRange");

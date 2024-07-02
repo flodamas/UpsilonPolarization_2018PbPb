@@ -50,13 +50,15 @@
 #include "RooGaussian.h"
 #include "RooHist.h"
 #include "RooHypatia2.h"
+#include "RooHistPdf.h"
+#include "RooProdPdf.h"
+#include "RooMinimizer.h"
 #include "RooPlot.h"
 #include "RooRealProxy.h"
 #include "RooRealVar.h"
 #include "RooWorkspace.h"
 
-TFile* openFile(const char* fileName){
-
+TFile* openFile(const char* fileName) {
 	TFile* file = TFile::Open(fileName, "READ");
 	if (!file) {
 		cout << fileName << " not found. Check the directory of the file." << endl;

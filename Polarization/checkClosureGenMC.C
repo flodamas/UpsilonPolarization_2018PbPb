@@ -11,6 +11,8 @@
 
 #include "../MonteCarlo/AccEffHelpers.h"
 
+#include "PolarFitHelpers.h"
+
 /*
 
 Test the LHCb's extraction method of the polarization parameters (https://arxiv.org/abs/1709.01301) with Monte Carlo, using the gen dimuon events as signal
@@ -106,10 +108,10 @@ void checkClosureGenMC(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	// 1. the polarization POIs and the PDF
 	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", 0.3, -1.1, 1.1);
-	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", 0.2, -1.1, 1.1);
+	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.1, 1.1);
 	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1., 1.);
 
-	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame invariant
+	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame-invariant parameter
 
 	auto polarizationPDF2D = GeneralPolarizationPDF("polarizationPDF2D", " ", cosTheta, phi, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	polarizationPDF2D.setNormRange("PolaFitRange");
@@ -160,7 +162,7 @@ void checkClosureGenMC(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	minimizer.setStrategy(2); // 1 for faster minimization, 2 for better convergence
 	minimizer.setPrintLevel(0);
-	minimizer.setRecoverFromNaNStrength(1000.);
+	minimizer.setRecoverFromNaNStrength(100.);
 	minimizer.optimizeConst(true);
 	minimizer.setOffsetting(true);
 	//minimizer.setVerbose(true);
@@ -177,12 +179,22 @@ void checkClosureGenMC(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	//	SavePolarizationFitParameters(savedParams, "detailedViaMinimizer", fitModelName);
 
-	cout << "\nSECOND FIT METHOD: directly call fitTo() to the total PDF to enable AsymptoticError\n";
+	cout << "\nSECOND FIT METHOD: directly call fitTo() to the total PDF\n";
 	lambdaTheta.setVal(0.3);
 	lambdaPhi.setVal(0);
 	lambdaThetaPhi.setVal(0);
 
-	auto* testResult2D = productPDF2D.fitTo(data, Save(), Range("PolaFitRange"), PrintLevel(0), Offset("bin"), RecoverFromUndefinedRegions(10.), NumCPU(3));
+	auto* testResult2D = productPDF2D.fitTo(data, Save(), Range("PolaFitRange"), PrintLevel(0), Offset("bin"), RecoverFromUndefinedRegions(10.), NumCPU(3), Strategy(2));
 
 	testResult2D->Print("v");
+
+	// plot likelihood (and profile) scans
+
+	RooPlot* frame1 = lambdaTheta.frame(Title(" "));
+	productPDF2D.plotOn(frame1, ShiftToZero());
+
+	std::unique_ptr<RooAbsReal> pll_lambdaTheta{productPDF2D.createProfile(lambdaTheta)};
+
+	pll_lambdaTheta->plotOn(frame1, LineColor(kRed));
+	//frame1->Draw();
 }
