@@ -12,13 +12,15 @@
 #include <fstream>
 #include <cmath>
 
+#include "../Tools/BasicHeaders.h"
+
 #include "../AnalysisParameters.h"
 
 #include "../Tools/Parameters/CentralityValues.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter.root", const char* outputFileName = "TransverseCSPolarizationGen.root") {
+void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter.root", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
@@ -38,7 +40,8 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 	/// RooDataSet output: one entry = one dimuon candidate!
 
 	// weighting by event directly on the fly
-	RooRealVar eventWeightVar("eventWeight", "polarization weight", 0, 10000);
+	RooRealVar eventWeightCSVar("eventWeightCS", "polarization weight CS", 0, 10000);
+	RooRealVar eventWeightHXVar("eventWeightHX", "polarization weight HX", 0, 10000);
 
 	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
 	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, 100, gPtUnit);
@@ -49,22 +52,40 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 	RooRealVar etaMuMinusVar("etaMuMinus", "", 0, 100);
 	RooRealVar ptMuMinusVar("ptMuMinus", "negative muon pT", 0, 100, gPtUnit);
 
-	char* refFrameName = "Lab";
-	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
-	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
+	const char* refFrameNameLab = "Lab";
+	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameNameLab), CosThetaVarTitle(refFrameNameLab), -1, 1);
+	RooRealVar phiLabVar(PhiVarName(refFrameNameLab), PhiVarTitle(refFrameNameLab), -180, 180, gPhiUnit);
 
-	refFrameName = "CS";
-	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
-	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
+	const char* refFrameNameCS = "CS";
+	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameNameCS), CosThetaVarTitle(refFrameNameCS), -1, 1);
+	RooRealVar phiCSVar(PhiVarName(refFrameNameCS), PhiVarTitle(refFrameNameCS), -180, 180, gPhiUnit);
+	RooRealVar phiTildeCSVar(PhiTildeVarName(refFrameNameCS), PhiVarTitle(refFrameNameCS), -180, 180, gPhiUnit);
 
-	refFrameName = "HX";
-	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
-	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
+	const char* refFrameNameHX = "HX";
+	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameNameHX), CosThetaVarTitle(refFrameNameHX), -1, 1);
+	RooRealVar phiHXVar(PhiVarName(refFrameNameHX), PhiVarTitle(refFrameNameHX), -180, 180, gPhiUnit);
+	RooRealVar phiTildeHXVar(PhiTildeVarName(refFrameNameHX), PhiTildeVarTitle(refFrameNameHX), -180, 180, gPhiUnit);
 
-	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(eventWeightVar, yVar, ptVar, etaMuPlusVar, ptMuPlusVar, etaMuMinusVar, ptMuMinusVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"));
+	RooRealVar lambdaThetaVar("lambdaTheta", "", -1, 1);
+	RooRealVar lambdaPhiVar("lambdaPhi", "", -1, 1);
+	RooRealVar lambdaThetaPhiVar("lambdaThetaPhi", "", -1, 1);
+
+	// fix polarization extraction parameters
+	lambdaThetaVar.setVal(lambdaTheta);
+	lambdaThetaVar.setConstant(kTRUE);
+
+	lambdaPhiVar.setVal(lambdaPhi);
+	lambdaPhiVar.setConstant(kTRUE);
+
+	lambdaThetaPhiVar.setVal(lambdaThetaPhi);
+	lambdaThetaPhiVar.setConstant(kTRUE);
+
+	RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(eventWeightCSVar, yVar, ptVar, etaMuPlusVar, ptMuPlusVar, etaMuMinusVar, ptMuMinusVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"));
+	RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(eventWeightHXVar, yVar, ptVar, etaMuPlusVar, ptMuPlusVar, etaMuMinusVar, ptMuMinusVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"));
 
 	// loop variables
-	Float_t weight = 0;
+	Float_t weightCS = 0;
+	Float_t weightHX = 0;
 
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
@@ -92,11 +113,14 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 
-			weight = 1 + TMath::Power(muPlus_CS.CosTheta(), 2);
+			weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
+			weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());;
 
 			// fill the dataset
 
-			eventWeightVar = weight;
+			eventWeightCSVar = weightCS;
+			eventWeightHXVar = weightHX;
+
 			yVar = fabs(gen_QQ_LV->Rapidity());
 			ptVar = gen_QQ_LV->Pt();
 
@@ -111,19 +135,71 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 
 			cosThetaCSVar = muPlus_CS.CosTheta();
 			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
+			
+			if (cosThetaCSVar.getVal() < 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiCSVar.getVal() - 135) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
+				else phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
+			}
+
+			else if (cosThetaCSVar.getVal() > 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiCSVar.getVal() - 45) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
+				else phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
+			}
 
 			cosThetaHXVar = muPlus_HX.CosTheta();
 			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
+			
+			if (cosThetaHXVar.getVal() < 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiHXVar.getVal() - 135) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
+				else phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
+			}
 
-			dataset.add(RooArgSet(eventWeightVar, yVar, ptVar, ptMuPlusVar, etaMuPlusVar, ptMuMinusVar, etaMuMinusVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), weight);
+			else if (cosThetaHXVar.getVal() > 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiHXVar.getVal() - 45) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
+				else phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
+			}
+
+			datasetCS.add(RooArgSet(eventWeightCSVar, yVar, ptVar, ptMuPlusVar, etaMuPlusVar, ptMuMinusVar, etaMuMinusVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), weightCS);
+			datasetHX.add(RooArgSet(eventWeightHXVar, yVar, ptVar, ptMuPlusVar, etaMuPlusVar, ptMuMinusVar, etaMuMinusVar, cosThetaLabVar, phiLabVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), weightHX);
 		}
 	}
 
+	const char* outputFileName = Form("PolarizationGenLambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
+
 	TFile file(outputFileName, "RECREATE");
 
-	dataset.Write();
+	datasetCS.Write();
+	datasetHX.Write();
 
 	file.Close();
 
 	// check the dataset distributions
+}
+
+void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0){
+
+	const char* FileName = Form("PolarizationGenLambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
+
+	TFile* file = openFile(FileName);
+
+	RooDataSet* allDataset = (RooDataSet*)file->Get(Form("MCdataset%s", refFrameName));
+
+	// import the dataset to a workspace
+	RooWorkspace wspace("workspace");
+	wspace.import(*allDataset);
+
+	RooRealVar cosTheta = *wspace.var(CosThetaVarName(refFrameName));
+	RooRealVar phi = *wspace.var(PhiVarName(refFrameName));
+	RooRealVar phiTilde = *wspace.var(PhiTildeVarName(refFrameName));
+
+	RooPlot* xframe = phiTilde.frame();
+
+	allDataset->plotOn(xframe);
+
+	TCanvas* c = new TCanvas("c", "Canvas", 800, 600);
+    xframe->Draw();
 }

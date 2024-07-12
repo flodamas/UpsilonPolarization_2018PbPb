@@ -179,6 +179,15 @@ const char* PhiRangeText(const char* refFrameName = "CS", int phiMin = -180, int
 	return Form("%d < %s < %d %s", phiMin, PhiVarTitle(refFrameName), phiMax, gPhiUnit);
 }
 
+const char* gPhiTildeSymbol = "#tilde{#varphi}";
+
+const char* PhiTildeVarName(const char* refFrameName = "CS") {
+	return Form("phiTilda%s", refFrameName);
+}
+const char* PhiTildeVarTitle(const char* refFrameName = "CS") {
+	return Form("%s_{%s}", gPhiTildeSymbol, refFrameName);
+}
+
 const char* RawDatasetName(const char* refFrameName = "CS") {
 	return Form("dataset%s", refFrameName);
 }
