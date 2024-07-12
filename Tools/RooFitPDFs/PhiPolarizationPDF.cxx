@@ -25,5 +25,5 @@ PhiPolarizationPDF::PhiPolarizationPDF(const PhiPolarizationPDF& other, const ch
   lambdaPhi("lambdaPhi", this, other.lambdaPhi) {}
 
 Double_t PhiPolarizationPDF::evaluate() const {
-	return 1. + 2. * lambdaPhi / (3. + lambdaTheta) * cos(2. * phi * M_PI / 180);
+	return 1. + 2. * lambdaPhi / (3. + lambdaTheta) * std::cos(2. * phi * M_PI / 180);
 }
