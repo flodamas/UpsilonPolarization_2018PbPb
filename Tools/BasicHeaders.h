@@ -52,6 +52,7 @@
 #include "RooHypatia2.h"
 #include "RooHistPdf.h"
 #include "RooProdPdf.h"
+#include "RooNumIntConfig.h"
 #include "RooMinimizer.h"
 #include "RooPlot.h"
 #include "RooRealProxy.h"
