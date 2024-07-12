@@ -130,7 +130,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName);
 }
 
-void scanNominalFit_lowPt_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Int_t nCosThetaBins = 10, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isBkgExpTimesErr = kFALSE, Int_t ChebychevOrder = 2) {
+void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Int_t nCosThetaBins = 10, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isBkgExpTimesErr = kFALSE, Int_t ChebychevOrder = 2) {
 	// Int_t ptEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
 
 	vector<Double_t> cosThetaEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
