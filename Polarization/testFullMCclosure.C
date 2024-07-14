@@ -97,9 +97,9 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	/// Set up the likelihood function
 
 	// 1. the polarization POIs and the PDF
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.1, 1.1);
-	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.1, 1.1);
-	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1., 1.);
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1., 1.);
+	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1., 1.);
+	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -0.5, 0.5);
 
 	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame-invariant parameter
 
@@ -186,7 +186,7 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	lambdaPhi.setVal(0);
 	lambdaThetaPhi.setVal(0);
 
-	auto* testResult2D = productPDF2D.fitTo(data, Save(), Range("PolaFitRange"), SumW2Error(true), PrintLevel(0), RecoverFromUndefinedRegions(10.), Offset("bin"), Optimize(true), Strategy(2));
+	auto* testResult2D = productPDF2D.fitTo(data, Save(), Range("PolaFitRange"), AsymptoticError(true), PrintLevel(0), RecoverFromUndefinedRegions(10.), Offset("bin"), Optimize(true), Strategy(2));
 
 	testResult2D->Print("v");
 }

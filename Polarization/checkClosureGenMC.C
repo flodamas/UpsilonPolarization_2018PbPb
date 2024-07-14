@@ -144,7 +144,11 @@ void checkClosureGenMC(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	TCanvas* canvasAcc = new TCanvas("canvasAcc", " ", 700, 600);
 	TH1* histoAccPDF2D = accPDF2D.createHistogram("histoAccPDF2D", cosTheta, RooFit::Binning(nCosThetaBins, -1, 1), RooFit::YVar(phi, RooFit::Binning(nPhiBins, -180, 180)));
-
+	histoAccPDF2D->GetZaxis()->SetTitle("Acceptance PDF value");
+	histoAccPDF2D->SetTitle(" ");
+	histoAccPDF2D->GetXaxis()->CenterTitle();
+	histoAccPDF2D->GetYaxis()->CenterTitle();
+	histoAccPDF2D->GetZaxis()->SetMaxDigits(3);
 	histoAccPDF2D->Draw("COLZ");
 
 	RooProdPdf productPDF2D("productPDF2D", "acc x polarization PDF", polarizationPDF2D, accPDF2D);
