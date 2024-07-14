@@ -14,9 +14,9 @@
 #include "../ReferenceFrameTransform/Transformations.h"
 
 // return the 2D map of the relative systematic efficiency uncertainty
-TH2D* RelSystEffHist(TEfficiency hNominal, TEfficiency hTrk_systUp, TEfficiency hTrk_systDown, TEfficiency hMuId_systUp, TEfficiency hMuId_systDown, TEfficiency hTrig_systUp, TEfficiency hTrig_systDown, TEfficiency hTrk_statUp, TEfficiency hTrk_statDown, TEfficiency hMuId_statUp, TEfficiency hMuId_statDown, TEfficiency hTrig_statUp, TEfficiency hTrig_statDown) {
+TH2D* RelSystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency* hTrk_systDown, TEfficiency* hMuId_systUp, TEfficiency* hMuId_systDown, TEfficiency* hTrig_systUp, TEfficiency* hTrig_systDown, TEfficiency* hTrk_statUp, TEfficiency* hTrk_statDown, TEfficiency* hMuId_statUp, TEfficiency* hMuId_statDown, TEfficiency* hTrig_statUp, TEfficiency* hTrig_statDown) {
 	// clone one of the input efficiency map, to make sure we get the correct binning
-	TH2D* hTotalSyst = (TH2D*)hNominal.GetCopyPassedHisto(); // will rename it outside this function
+	TH2D* hTotalSyst = (TH2D*)hNominal->GetCopyPassedHisto(); // will rename it outside this function
 
 	// useful loop variables
 	int globalBin;
@@ -27,29 +27,29 @@ TH2D* RelSystEffHist(TEfficiency hNominal, TEfficiency hTrk_systUp, TEfficiency 
 
 	for (int iCosThetaBin = 1; iCosThetaBin <= hTotalSyst->GetNbinsX(); iCosThetaBin++) {
 		for (int iPhiBin = 1; iPhiBin <= hTotalSyst->GetNbinsY(); iPhiBin++) {
-			globalBin = hNominal.GetGlobalBin(iCosThetaBin, iPhiBin); // to run though the efficiency maps
+			globalBin = hNominal->GetGlobalBin(iCosThetaBin, iPhiBin); // to run though the efficiency maps
 
-			nominalEff = hNominal.GetEfficiency(globalBin);
+			nominalEff = hNominal->GetEfficiency(globalBin);
 
 			// compute the systematic uncertainties associated to the variation of the muon SF uncertainties
 
 			// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
 
 			// from muon SF systematics
-			trk_systEff = max(abs(hTrk_systUp.GetEfficiency(globalBin) - nominalEff), abs(hTrk_systDown.GetEfficiency(globalBin) - nominalEff));
+			trk_systEff = max(abs(hTrk_systUp->GetEfficiency(globalBin) - nominalEff), abs(hTrk_systDown->GetEfficiency(globalBin) - nominalEff));
 
-			muId_systEff = max(abs(hMuId_systUp.GetEfficiency(globalBin) - nominalEff), abs(hMuId_systDown.GetEfficiency(globalBin) - nominalEff));
+			muId_systEff = max(abs(hMuId_systUp->GetEfficiency(globalBin) - nominalEff), abs(hMuId_systDown->GetEfficiency(globalBin) - nominalEff));
 
-			trig_systEff = max(abs(hTrig_systUp.GetEfficiency(globalBin) - nominalEff), abs(hTrig_systDown.GetEfficiency(globalBin) - nominalEff));
+			trig_systEff = max(abs(hTrig_systUp->GetEfficiency(globalBin) - nominalEff), abs(hTrig_systDown->GetEfficiency(globalBin) - nominalEff));
 
 			systEffSquared = trk_systEff * trk_systEff + muId_systEff * muId_systEff + trig_systEff * trig_systEff;
 
 			// from muon SF statistical uncertainties
-			trk_statEff = max(abs(hTrk_statUp.GetEfficiency(globalBin) - nominalEff), abs(hTrk_statDown.GetEfficiency(globalBin) - nominalEff));
+			trk_statEff = max(abs(hTrk_statUp->GetEfficiency(globalBin) - nominalEff), abs(hTrk_statDown->GetEfficiency(globalBin) - nominalEff));
 
-			muId_statEff = max(abs(hMuId_statUp.GetEfficiency(globalBin) - nominalEff), abs(hMuId_statDown.GetEfficiency(globalBin) - nominalEff));
+			muId_statEff = max(abs(hMuId_statUp->GetEfficiency(globalBin) - nominalEff), abs(hMuId_statDown->GetEfficiency(globalBin) - nominalEff));
 
-			trig_statEff = max(abs(hTrig_statUp.GetEfficiency(globalBin) - nominalEff), abs(hTrig_statDown.GetEfficiency(globalBin) - nominalEff));
+			trig_statEff = max(abs(hTrig_statUp->GetEfficiency(globalBin) - nominalEff), abs(hTrig_statDown->GetEfficiency(globalBin) - nominalEff));
 
 			statEffSquared = trk_statEff * trk_statEff + muId_statEff * muId_statEff + trig_statEff * trig_statEff;
 
@@ -626,10 +626,10 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	legend->SetTextSize(0.042);
 
 	// Collins-Soper
-	auto* hSystCS = RelSystEffHist3D(hNominalEffCS, hCS_trk_systUp, hCS_trk_systDown, hCS_muId_systUp, hCS_muId_systDown, hCS_trig_systUp, hCS_trig_systDown, hCS_trk_statUp, hCS_trk_statDown, hCS_muId_statUp, hCS_muId_statDown, hCS_trig_statUp, hCS_trig_statDown, "CS");
+	auto* hSystCS3D = RelSystEffHist3D(hNominalEffCS, hCS_trk_systUp, hCS_trk_systDown, hCS_muId_systUp, hCS_muId_systDown, hCS_trig_systUp, hCS_trig_systDown, hCS_trk_statUp, hCS_trk_statDown, hCS_muId_statUp, hCS_muId_statDown, hCS_trig_statUp, hCS_trig_statDown, "CS");
 
 	auto* canvasCSsyst = new TCanvas("canvasCSsyst", "", 700, 600);
-	hSystCS->Draw("COLZ");
+	hSystCS3D->Draw("COLZ");
 
 	CMS_lumi(canvasCSsyst, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
 
@@ -637,15 +637,20 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	gPad->Update();
 
-	//hSystCS->GetYaxis()->SetRangeUser(-190, 240);
+	//hSystCS3D->GetYaxis()->SetRangeUser(-190, 240);
 
 	//canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS.png", gUpsilonState), "RECREATE");
 
-	// Helicity
-	auto* hSystHX = RelSystEffHist3D(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown, "HX");
+	// HelicityTEfficiency
+	auto* hSystHX2D = RelSystEffHist(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown);
+
+	auto* canvasHXsyst2D = new TCanvas("canvasHXsyst2D", "", 700, 600);
+	hSystHX2D->Draw();
+
+	auto* hSystHX3D = RelSystEffHist3D(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown, "HX");
 
 	auto* canvasHXsyst = new TCanvas("canvasHXsyst", "", 700, 600);
-	hSystHX->Draw("COLZ");
+	hSystHX3D->Draw("COLZ");
 
 	CMS_lumi(canvasHXsyst, Form("#varUpsilon(%dS) Hydjet-embedded MC", iState));
 
@@ -653,7 +658,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	gPad->Update();
 
-	//hSystHX->GetYaxis()->SetRangeUser(-190, 240);
+	//hSystHX3D->GetYaxis()->SetRangeUser(-190, 240);
 
 	//canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX.png", gUpsilonState), "RECREATE");
 
@@ -661,11 +666,13 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", gUpsilonState), kTRUE);
 	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults.root", iState);
 	TFile outputFile(outputFileName, "UPDATE");
-
+  
 	hNominalEffCS->Write();
 	hNominalEffHX->Write();
-	hSystCS->Write();
-	hSystHX->Write();
+	hSystCS3D->Write();
+	hSystHX3D->Write();
+
+	hSystHX2D->Write();
 
 	hEffCS2D->Write();
 	hEffHX2D->Write();

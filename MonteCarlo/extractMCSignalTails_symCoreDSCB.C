@@ -60,6 +60,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 	/// draw the fit to see if the fit is reasonable (we can comment it (lines 79-105) out if drawing is not necessary)
 	auto* canvas = new TCanvas("canvas", "", 600, 600);
+	
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 	pad1->SetBottomMargin(0.03);
 	pad1->Draw();
@@ -83,6 +84,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 	canvas->Modified();
 	canvas->Update();
+
 	canvas->cd();
 	pad1->Draw();
 	pad2->Draw();
@@ -99,7 +101,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 		SaveMCSignalParameters(tailParams, outputName); // so that we don't have to refit later
 	}
 
-	file->Close();
+	// file->Close();
 }
 
 void scanExtractMCSignalTails_symCoreDSCB() {

@@ -2,13 +2,13 @@
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
-#include "../Tools/Shortcuts.h"
+#include "../Tools/FitShortcuts.h"
 
 #include "../Tools/Parameters/PhysicsConstants.h"
 
 #include "../AnalysisParameters.h"
 
-#include "../Tools/CustomRoofitPDFs/ErrorFuncTimesExp.h"
+#include "../Tools/RooFitPDFs/ErrorFuncTimesExp.h"
 
 void nominalFit_lowPt_2Danalysis(Bool_t isCSframe = kTRUE) {
 	// get the skimmed dataset
@@ -41,7 +41,7 @@ void nominalFit_lowPt_2Danalysis(Bool_t isCSframe = kTRUE) {
 	RooRealVar* alphaSup = new RooRealVar("alphaSup", "", 1);
 	RooRealVar* orderSup = new RooRealVar("orderSup", "", 1);
 
-	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, "symCoreDSCB", gCentralityBinMin, gCentralityBinMax, gPtMin, gPtMax);
+	RooArgSet tailParams = GetMCSignalTailParameters(alphaInf, orderInf, alphaSup, orderSup, "symCoreDSCB", gPtMin, gPtMax);
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.3, 9.6);
