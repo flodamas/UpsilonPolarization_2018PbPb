@@ -77,6 +77,7 @@ TPad* GetPadPullDistribution(TH1* dataHist, TF1* fitFunction, TFitResultPtr fitR
 	pullHist->GetYaxis()->SetLabelSize(0.15);
 	pullHist->GetYaxis()->CenterTitle();
 
+	pullHist->GetXaxis()->SetTitle(dataHist->GetXaxis()->GetTitle());
 	pullHist->GetXaxis()->SetTitleSize(0.17);	
 	pullHist->GetXaxis()->SetLabelSize(0.15);
 	pullHist->GetXaxis()->CenterTitle();
@@ -409,7 +410,7 @@ void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lamb
 	cout << "normalization: " << phiTildefitResults->Parameter(0) << ", lambdaPhiTilde: " << phiTildefitResults->Parameter(2) << endl;
 	cout << "--------------------------------------" << endl;
 	
-	phifitResults->Print("v");
+	phiTildefitResults->Print("v");
 
 	// draw the histogram and the fit
 	TCanvas* polarCanvas1D = new TCanvas("polarCanvas1D", "", 1500, 600);
@@ -509,7 +510,7 @@ void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lamb
 	TPad* padPhiTildePull = GetPadPullDistribution(polarHistPhiTilde, phiTildePolarFuncFit, phiTildefitResults);
 
 	gSystem->mkdir("DistributionFitsMC", kTRUE);
-  	polarCanvas1D->SaveAs(Form("DistributionFitsMC/fit1D_lambdaCosTheta%.2fPhi%.2f.png", lambdaTheta0, lambdaPhi0), "RECREATE");
+  	polarCanvas1D->SaveAs(Form("DistributionFitsMC/fit1D_lambdaCosTheta%.2fPhi%.2fThetaPhi%.2f.png", lambdaTheta0, lambdaPhi0, lambdaThetaPhi0), "RECREATE");
 
 	return;
 }
