@@ -64,13 +64,15 @@ TPad* GetPadPullDistribution(TH1* dataHist, TF1* fitFunction, TFitResultPtr fitR
     TPad* bottomPad = new TPad("bottomPad", "bottomPad", 0, 0.0, 1, .25);
     bottomPad->SetTopMargin(0.015);
 	bottomPad->SetBottomMargin(0.4);
+	bottomPad->SetRightMargin(0.01);
+	bottomPad->SetLeftMargin(0.13);
 	bottomPad->SetTicks(1, 1);
 	bottomPad->Draw();
 	bottomPad->cd();
 
 	pullHist->SetTitle(" ");
 	
-	pullHist->GetYaxis()->SetTitleOffset(0.35);
+	pullHist->GetYaxis()->SetTitleOffset(0.3);
 	pullHist->GetYaxis()->SetTitle("Pull");
 	
 	pullHist->GetYaxis()->SetTitleSize(0.17);
@@ -85,8 +87,8 @@ TPad* GetPadPullDistribution(TH1* dataHist, TF1* fitFunction, TFitResultPtr fitR
 	pullHist->GetYaxis()->SetTickSize(0.03);
 	pullHist->GetXaxis()->SetTickSize(0.1);
 
-	pullHist->SetMaximum(10.5);
-	pullHist->SetMinimum(-10.5);
+	pullHist->SetMaximum(9.5);
+	pullHist->SetMinimum(-9.5);
     
 	pullHist->SetMarkerStyle(8);
 	pullHist->SetMarkerSize(1);
@@ -413,14 +415,16 @@ void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lamb
 	phiTildefitResults->Print("v");
 
 	// draw the histogram and the fit
-	TCanvas* polarCanvas1D = new TCanvas("polarCanvas1D", "", 1500, 600);
-	
+	TCanvas* polarCanvas1D = new TCanvas("polarCanvas1D", "", 1350, 500);
+
 	polarCanvas1D->Divide(3, 1);
 
 	polarCanvas1D->cd(1);
 
 	TPad* padCosTheta = new TPad("padCosTheta", "padCosTheta", 0, 0.25, 1, 1.0);
 	padCosTheta->SetBottomMargin(0.03);
+	padCosTheta->SetRightMargin(0.01);
+	padCosTheta->SetLeftMargin(0.13);
 	padCosTheta->SetTicks(1, 1);
 	padCosTheta->Draw();
 	padCosTheta->cd();
@@ -432,6 +436,9 @@ void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lamb
 	polarHistCosTheta->SetMarkerColor(kBlack);
 	
 	polarHistCosTheta->GetXaxis()->SetLabelSize(0);
+
+	polarHistCosTheta->GetYaxis()->SetTitle(Form("Events / (%.1f)", (cosThetaMax - cosThetaMin) / nCosThetaBins));
+	polarHistCosTheta->GetYaxis()->SetTitleOffset(1.1);
 
 	polarHistCosTheta->Draw("PE");
 
@@ -452,6 +459,8 @@ void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lamb
 
 	TPad* padPhi = new TPad("padPhi", "padPhi", 0, 0.25, 1, 1.0);
 	padPhi->SetBottomMargin(0.03);
+	padPhi->SetRightMargin(0.01);
+	padPhi->SetLeftMargin(0.13);
 	padPhi->SetTicks(1, 1);
 	padPhi->Draw();
 	padPhi->cd();
@@ -463,6 +472,9 @@ void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lamb
 	polarHistPhi->SetMarkerColor(kBlack);
 	
 	polarHistPhi->GetXaxis()->SetLabelSize(0);
+
+	polarHistPhi->GetYaxis()->SetTitle(Form("Events / (%.1f)", (phiMax - phiMin) / nPhiBins));
+	polarHistPhi->GetYaxis()->SetTitleOffset(1.1);
 
 	polarHistPhi->Draw("PE");
 
@@ -483,6 +495,8 @@ void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lamb
 
 	TPad* padPhiTilde = new TPad("padPhiTilde", "padPhiTilde", 0, 0.25, 1, 1.0);
 	padPhiTilde->SetBottomMargin(0.03);
+	padPhiTilde->SetRightMargin(0.01);
+	padPhiTilde->SetLeftMargin(0.13);
 	padPhiTilde->SetTicks(1, 1);
 	padPhiTilde->Draw();
 	padPhiTilde->cd();
@@ -494,6 +508,9 @@ void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lamb
 	polarHistPhiTilde->SetMarkerColor(kBlack);
 	
 	polarHistPhiTilde->GetXaxis()->SetLabelSize(0);
+
+	polarHistPhiTilde->GetYaxis()->SetTitle(Form("Events / (%.1f)", (phiMax - phiMin) / nPhiBins));
+	polarHistPhiTilde->GetYaxis()->SetTitleOffset(1.1);
 
 	polarHistPhiTilde->Draw("PE");
 
