@@ -332,7 +332,7 @@ void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, Int
 	// return generalPolarHist;
 }
 
-void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lambdaPhi0 = -0.8, Double_t lambdaThetaPhi0 = 0, Double_t n0 = 1e7) {  
+void extractPolarizationParameters1D_genMC(Double_t lambdaTheta0 = 0.88, Double_t lambdaPhi0 = -0.8, Double_t lambdaThetaPhi0 = 0, Double_t n0 = 1e7) {  
 
 	/// Generate a Toy Data (This part can be replaced by data)
 	
