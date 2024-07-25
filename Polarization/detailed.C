@@ -66,7 +66,7 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 	/// Set up the likelihood function
 
 	// 1. the polarization POIs and the PDF
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", 0.2, -1.1, 1.1);
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.2, 1.2);
 	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -0.8, 0.8);
 	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -0.6, 0.6);
 
@@ -165,13 +165,19 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 
 	cout << "\nSECOND FIT METHOD: directly call fitTo() to the total PDF to enable AsymptoticError\n";
 
-	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), SumW2Error(true), PrintLevel(0), Offset("initial"), RecoverFromUndefinedRegions(10.), Strategy(2));
+	auto* testResult = totalPDF.fitTo(sWeightedData, Save(), Range("PolaFitRange"), SumW2Error(true), PrintLevel(0), Offset("initial"), RecoverFromUndefinedRegions(10.), Strategy(1));
 
 	testResult->Print("v");
 
 	// plot likelihood scans
+	auto canvasLambdaTheta = new TCanvas("canvasLambdaTheta", " ", 600, 600);
+	RooPlot* frameLambdaTheta = lambdaTheta.frame(Title(" "));
+	totalNLL->plotOn(frameLambdaTheta, ShiftToZero());
+	frameLambdaTheta->Draw();
 
-	RooPlot* frame1 = lambdaTheta.frame(Title(" "));
-	totalPDF.plotOn(frame1, ShiftToZero());
-	//frame1->Draw();
+	auto canvasLambdaPhi = new TCanvas("canvasLambdaPhi", " ", 600, 600);
+
+	RooPlot* frameLambdaPhi = lambdaPhi.frame(Title(" "));
+	totalNLL->plotOn(frameLambdaPhi, ShiftToZero());
+	frameLambdaPhi->Draw();
 }

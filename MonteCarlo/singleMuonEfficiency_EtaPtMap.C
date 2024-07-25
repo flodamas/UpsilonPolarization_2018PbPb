@@ -12,6 +12,8 @@
 #include <fstream>
 #include <cmath>
 
+#include "../Tools/Style/Legends.h"
+
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
@@ -77,7 +79,9 @@ void singleMuonEfficiency_EtaPtMap() {
 
 	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
 
-	writeExtraText = false;
+	writeExtraText = true;
+	extraText = "       Internal";
+
 	/// OniaTree variables
 
 	Float_t Gen_weight;
@@ -149,7 +153,7 @@ void singleMuonEfficiency_EtaPtMap() {
 
 		eventWeight = Gen_weight * FindNcoll(Centrality);
 
-		// loop over all gen upsilons
+		// loop over all gen muons
 		for (int iGen = 0; iGen < Gen_mu_size; iGen++) {
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(iGen);
 
@@ -190,8 +194,7 @@ void singleMuonEfficiency_EtaPtMap() {
 	gStyle->SetTitleYOffset(.9);
 	gStyle->SetPadLeftMargin(.13);
 	gStyle->SetPadRightMargin(0.18);
-	gStyle->SetPalette(kRainBow);
-	gStyle->SetNumberContours(256);
+	//SetColorPalette(gEfficiencyColorPaletteName);
 
 	setGuillaumePalette();
 
@@ -204,11 +207,10 @@ void singleMuonEfficiency_EtaPtMap() {
 	legend->AddEntry(triggerAcc, "acceptance for 2018 PbPb data", "l");
 	legend->Draw();
 
-	CMS_lumi(canvas, "#varUpsilon(1S) Pythia 8, Hydjet-embedded MC");
+	CMS_lumi(canvas, "#varUpsilon(1S) Hydjet-embedded MC");
 
 	gPad->Update();
 
-	//effMap->GetPaintedHistogram()->GetYaxis()->SetRangeUser(-190, 240);
 	hEffMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
 	canvas->SaveAs("EfficiencyMaps/SingleMuonTotalEfficiency.png", "RECREATE");
