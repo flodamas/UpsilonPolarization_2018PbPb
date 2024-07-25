@@ -107,9 +107,9 @@ void checkClosureGenMC(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	/// Set up the likelihood function
 
 	// 1. the polarization POIs and the PDF
-	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", 0.3, -1.1, 1.1);
-	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.1, 1.1);
-	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1., 1.);
+	RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", 0.3, -0.8, 0.8);
+	RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -0.8, 0.8);
+	RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -0.8, 0.8);
 
 	RooFormulaVar lambdaTilde("lambdaTilde", "(@0 + 3*@1)/ (1-@1)", {lambdaTheta, lambdaPhi}); // frame-invariant parameter
 
@@ -184,9 +184,9 @@ void checkClosureGenMC(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	//	SavePolarizationFitParameters(savedParams, "detailedViaMinimizer", fitModelName);
 
 	cout << "\nSECOND FIT METHOD: directly call fitTo() to the total PDF\n";
-	lambdaTheta.setVal(0.3);
-	lambdaPhi.setVal(0);
-	lambdaThetaPhi.setVal(0);
+	//	lambdaTheta.setVal(0.3);
+	//	lambdaPhi.setVal(0);
+	//	lambdaThetaPhi.setVal(0);
 
 	auto* testResult2D = productPDF2D.fitTo(data, Save(), Range("PolaFitRange"), PrintLevel(0), Offset("bin"), RecoverFromUndefinedRegions(10.), NumCPU(3), Strategy(2));
 
@@ -199,6 +199,6 @@ void checkClosureGenMC(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	std::unique_ptr<RooAbsReal> pll_lambdaTheta{productPDF2D.createProfile(lambdaTheta)};
 
-	pll_lambdaTheta->plotOn(frame1, LineColor(kRed));
-	//frame1->Draw();
+	//pll_lambdaTheta->plotOn(frame1, LineColor(kRed));
+	frame1->Draw();
 }
