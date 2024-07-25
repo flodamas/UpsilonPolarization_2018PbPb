@@ -37,6 +37,26 @@ TF1* getPhiPolarFunc(Float_t maxYield) {
 	return phiPolarFunc;
 }
 
+TF1* getPhiTildePolarFunc(Float_t maxYield) {
+	TF1* phiTildePolarFunc = new TF1("phiTildePolarFunc", "[0] * (1. + sqrt(2.) * [2] / (3. + [1]) * TMath::Cos(x * pi / 180.))", -180, 180);
+
+	phiTildePolarFunc->SetParameter(0, 0.5 * maxYield);
+	phiTildePolarFunc->SetParameter(1, 0);
+	phiTildePolarFunc->SetParameter(2, 0);
+
+	phiTildePolarFunc->SetParLimits(1, -2, 2);
+	phiTildePolarFunc->SetParLimits(2, -2, 2);
+
+	phiTildePolarFunc->SetParName(0, "normFactor");
+	phiTildePolarFunc->SetParName(1, "lambdaTheta3");
+	phiTildePolarFunc->SetParName(2, "lambdaPhiTilde");
+
+	phiTildePolarFunc->SetLineWidth(3);
+	phiTildePolarFunc->SetLineColor(kRed + 1);
+
+	return phiTildePolarFunc;
+}
+
 TF2* getGeneralPolarFunc(Float_t maxYield) {
 	// TF2* generalPolarFunc = new TF2("generalPolarFunc", "[0] / (3 + [1]) * (1 + [1] * x * x + [2] * (1 - x * x) * TMath::Cos(2. * y * pi / 180.) + [3] * TMath::Sqrt(1 - x * x) * x * TMath::Cos(y * pi / 180.))", -1, 1, -180, 180);
 	TF2* generalPolarFunc = new TF2("generalPolarFunc", "[0] / (3 + [1]) * (1 + [1] * x * x + [2] * TMath::Sin(TMath::ACos(x)) * TMath::Sin(TMath::ACos(x)) * TMath::Cos(2. * y * pi / 180.) + [3] * TMath::Sin(2 * TMath::ACos(x)) * TMath::Cos(y * pi / 180.))", -1, 1, -180, 180);
