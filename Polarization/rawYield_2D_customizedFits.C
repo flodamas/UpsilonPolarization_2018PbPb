@@ -20,7 +20,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState) {
+void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -67,6 +67,12 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	// bkgShapeName[3][0] = "ChebychevOrder1";
 	// bkgShapeName[3][5] = "ChebychevOrder1";
+
+	// bkgShapeName[1][1] = "ChebychevOrder1";
+	// bkgShapeName[2][1] = "ChebychevOrder1";
+	// bkgShapeName[2][2] = "ChebychevOrder1";
+	// bkgShapeName[3][2] = "ChebychevOrder1";
+
 
 	// fill the background shape array with ExpTimesErr
 	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
@@ -159,8 +165,11 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			double relAccUncHigh = accMapCosThetaPhi->GetEfficiencyErrorUp(iGlobalBin) / acceptance;
 			double relAccUncLow = accMapCosThetaPhi->GetEfficiencyErrorLow(iGlobalBin) / acceptance;
 
-			totalRelUncHigh = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncHigh), relAccUncHigh);
-			totalRelUncLow = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncLow), relAccUncLow);
+			// totalRelUncHigh = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncHigh), relAccUncHigh);
+			// totalRelUncLow = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncLow), relAccUncLow);
+
+			totalRelUncHigh = TMath::Hypot(relEffUncHigh, relAccUncHigh);
+			totalRelUncLow = TMath::Hypot(relEffUncLow, relAccUncLow);
 
 			totalUncHigh = totalRelUncHigh * efficiency * acceptance;
 			totalUncLow = totalRelUncLow * efficiency * acceptance;
@@ -191,8 +200,10 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 			// yieldMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 
-			standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
+			// standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 		
+			standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
+
 			// fill uncertainty histograms
 			relSystEffCosThetaPhi->SetBinContent(iCosTheta +1, iPhi + 1, relSystUnc);
 			statHighEffCosThetaPhi->SetBinContent(iCosTheta + 1, iPhi + 1, relEffUncHigh);
@@ -207,7 +218,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	}
 
 	/// Polarization fit
-	// with Root Fit function
+	// with Root Fit function (E: minos on, S: save results, V: Verbose, I: integral, M: imporve algorithm, R: specificed range)
 
 	// TVirtualFitter::SetDefaultFitter("Minuit");
 
@@ -232,14 +243,12 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
     // draw yield map before applying corrections
 
-	Bool_t LEGOplot = kTRUE;
-
 	TCanvas* yieldCanvas = draw2DMap(yieldMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, LEGOplot);
 
 	yieldMap->GetZaxis()->SetTitle("#varUpsilon(1S) Yields");
 	yieldMap->GetZaxis()->SetTitleOffset(1.);
 
-	yieldCanvas->SetLogz();
+	// yieldCanvas->SetLogz(); // useful when the one of the bins has an exceptionally high value :')
 
 	if (!LEGOplot) display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE);
 
@@ -247,6 +256,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	yieldCanvas->Modified();
 	yieldCanvas->Update();
+
+	// draw yield map corrected by acceptance and efficiency  
 
 	TCanvas* correctedMapCanvas = draw2DMap(standardCorrectedMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, LEGOplot);
 
@@ -261,11 +272,13 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	kinematicsText->Draw("SAME");
 
-	TF2* polarFunc2D = generalPolarFunc(maxYield);
+	/// fit!!!
+
+	TF2* polarFunc2D = getGeneralPolarFunc(maxYield);
 
 	if (LEGOplot) {
 
-		TFitResultPtr fitResults = standardCorrectedMap->Fit("polarFunc2D", "ESVI");
+		TFitResultPtr fitResults = standardCorrectedMap->Fit("generalPolarFunc", "ESVIMR");
 
 		// Fit results
 
@@ -284,12 +297,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		double lambdaThetaPhiVal = fitResults->Parameter(3);
 		double lambdaThetaPhiErr = fitResults->ParError(3);
 
-		// correctedMapCanvas->Modified();
-		// correctedMapCanvas->Update();
-
 		TLegend legend2(.17, .60, .28, .84);
 		legend2.SetTextSize(.05);
-		// legend2.SetHeader(Form("centrality %d-%d%%, %d < p_{T}^{#mu#mu} < %d GeV/c", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 		legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
 		legend2.AddEntry(polarFunc2D, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr), "l");
 		legend2.AddEntry((TObject*)0, Form("                       #lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr), "");

@@ -71,14 +71,16 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	refFrameName = (char*)"CS";
 	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
+	RooRealVar phiTildeCSVar(PhiTildeVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooDataSet datasetCS(RawDatasetName(refFrameName), "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
+	RooDataSet datasetCS(RawDatasetName(refFrameName), "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar));
 
 	refFrameName = (char*)"HX";
 	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
+	RooRealVar phiTildeHXVar(PhiTildeVarName(refFrameName), PhiTildeVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooDataSet datasetHX(RawDatasetName(refFrameName), "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
+	RooDataSet datasetHX(RawDatasetName(refFrameName), "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar));
 
 	RooDataSet dataset(RawDatasetName(""), "skimmed dataset for both CS and HX frames", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
 
@@ -164,13 +166,37 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 			cosThetaCSVar = muPlus_CS.CosTheta();
 			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
 
-			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar));
+			if (cosThetaCSVar.getVal() < 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiCSVar.getVal() - 135) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
+				else phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
+			}
+
+			else if (cosThetaCSVar.getVal() > 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiCSVar.getVal() - 45) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
+				else phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
+			}
+
+			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar));
 
 			// Helicity
 			cosThetaHXVar = muPlus_HX.CosTheta();
 			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
 
-			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar));
+			if (cosThetaHXVar.getVal() < 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiHXVar.getVal() - 135) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
+				else phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
+			}
+
+			else if (cosThetaHXVar.getVal() > 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiHXVar.getVal() - 45) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
+				else phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
+			}
+
+			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar));
 
 			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
 

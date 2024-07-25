@@ -216,8 +216,9 @@ TH2D* generateGeneralPolarizationHist(Int_t nCosThetaBins, Float_t cosThetaMin, 
 
 void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, Int_t nCosThetaBins, Float_t cosThetaMin, Float_t cosThetaMax, Int_t nPhiBins, Float_t phiMin, Float_t phiMax, Double_t lambdaTheta = 0.88, Double_t lambdaPhi = -0.8, Double_t lambdaThetaPhi = 0){
 
+	// Gen without any filter
 	const char* mcFileName = Form("../Files/Y1SGenNoFilterMCDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
-	
+
 	TFile* mcFile = openFile(mcFileName);
 
 	const char* refFrameName = "HX";
@@ -331,7 +332,7 @@ void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, Int
 	// return generalPolarHist;
 }
 
-void extractPolarizationParameters1D(Double_t lambdaTheta0 = 0.88, Double_t lambdaPhi0 = -0.8, Double_t lambdaThetaPhi0 = 0, Double_t n0 = 1e7) {  
+void extractPolarizationParameters1D_genMC(Double_t lambdaTheta0 = 0.88, Double_t lambdaPhi0 = -0.8, Double_t lambdaThetaPhi0 = 0, Double_t n0 = 1e7) {  
 
 	/// Generate a Toy Data (This part can be replaced by data)
 	
