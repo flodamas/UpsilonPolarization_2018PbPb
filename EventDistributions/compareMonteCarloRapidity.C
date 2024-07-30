@@ -8,7 +8,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-TEfficiency* getNoFilterGenPt(Int_t iState = 1){
+TEfficiency* getNoFilterGenRapidity(Int_t iState = 1){
 
 	// Read GenOnly Nofilter file
 	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);	
@@ -36,7 +36,7 @@ TEfficiency* getNoFilterGenPt(Int_t iState = 1){
 	OniaTree->SetBranchAddress("Gen_QQ_mumi_4mom", &Gen_QQ_mumi_4mom);
 	OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
 
-	TEfficiency* hAccPt = new TEfficiency("", ";p^{#varUpsilon}_{T} (GeV/c);Acceptance of #varUpsilon(1S)", NPtFineBins, gPtFineBinning);
+	TEfficiency* hAccRapidity = new TEfficiency("", ";y^{#varUpsilon};Acceptance of #varUpsilon(1S)", 50, -3.5, 3.5);
 
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
@@ -68,15 +68,15 @@ TEfficiency* getNoFilterGenPt(Int_t iState = 1){
 
 			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > gMuonPtCut) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > gMuonPtCut);
 
-			hAccPt->Fill(withinAcceptance, gen_QQ_LV->Pt());
+			hAccRapidity->Fill(withinAcceptance, gen_QQ_LV->Rapidity());
 		}
 
 	}
 	
-	return hAccPt;
+	return hAccRapidity;
 }
 
-TEfficiency* getHydjetGenPt(Int_t iState = 1){
+TEfficiency* getHydjetGenRapidity(Int_t iState = 1){
 
 	// Read Gen from Hydjet MC
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);	
@@ -117,7 +117,7 @@ TEfficiency* getHydjetGenPt(Int_t iState = 1){
 	OniaTree->SetBranchAddress("Gen_QQ_mupl_idx", Gen_QQ_mupl_idx);
 	OniaTree->SetBranchAddress("Gen_QQ_mumi_idx", Gen_QQ_mumi_idx);
 
-	TEfficiency* hAccPt = new TEfficiency("", ";p^{#varUpsilon}_{T} (GeV/c);Acceptance of #varUpsilon(1S)", NPtFineBins, gPtFineBinning);
+	TEfficiency* hAccRapidity = new TEfficiency("", ";y^{#varUpsilon};Acceptance of #varUpsilon(1S)", 50, -3.5, 3.5);
 
 	// loop variables
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
@@ -150,46 +150,46 @@ TEfficiency* getHydjetGenPt(Int_t iState = 1){
 
 			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > gMuonPtCut) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > gMuonPtCut);
 
-			hAccPt->Fill(withinAcceptance, gen_QQ_LV->Pt());
+			hAccRapidity->Fill(withinAcceptance, gen_QQ_LV->Rapidity());
 		}
 	}
 
-	return hAccPt;
+	return hAccRapidity;
 }
 
 
-void compareMonteCarloPt(Int_t iState = 1) {
+void compareMonteCarloRapidity(Int_t iState = 1) {
 
 	// Put the text, "CMS Internal", on the right top of the plot
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
-	TEfficiency* hAccNoFilterGenPt = getNoFilterGenPt(iState);
+	TEfficiency* hAccNoFilterGenRapidity = getNoFilterGenRapidity(iState);
 
-	TEfficiency* hAccHydjetGenPt = getHydjetGenPt(iState);
+	TEfficiency* hAccHydjetGenRapidity = getHydjetGenRapidity(iState);
 
-	TH1D* hPassedNoFilterGenPt = (TH1D*) hAccNoFilterGenPt->GetPassedHistogram();
-	TH1D* hTotalNoFilterGenPt = (TH1D*) hAccNoFilterGenPt->GetTotalHistogram();
+	TH1D* hPassedNoFilterGenRapidity = (TH1D*) hAccNoFilterGenRapidity->GetPassedHistogram();
+	TH1D* hTotalNoFilterGenRapidity = (TH1D*) hAccNoFilterGenRapidity->GetTotalHistogram();
 
-	TH1D* hPassedHydjetGenPt = (TH1D*) hAccHydjetGenPt->GetPassedHistogram();
-	TH1D* hTotalHydjetGenPt = (TH1D*) hAccHydjetGenPt->GetTotalHistogram();
+	TH1D* hPassedHydjetGenRapidity = (TH1D*) hAccHydjetGenRapidity->GetPassedHistogram();
+	TH1D* hTotalHydjetGenRapidity = (TH1D*) hAccHydjetGenRapidity->GetTotalHistogram();
 
-	TH1D* hPassedNoFilterGenPtCopy = (TH1D*) hPassedNoFilterGenPt->Clone();
-	TH1D* hTotalNoFilterGenPtCopy = (TH1D*) hTotalNoFilterGenPt->Clone();
+	TH1D* hPassedNoFilterGenRapidityCopy = (TH1D*) hPassedNoFilterGenRapidity->Clone();
+	TH1D* hTotalNoFilterGenRapidityCopy = (TH1D*) hTotalNoFilterGenRapidity->Clone();
 
-	TH1D* hPassedHydjetGenPtCopy = (TH1D*) hPassedHydjetGenPt->Clone();
-	TH1D* hTotalHydjetGenPtCopy = (TH1D*) hTotalHydjetGenPt->Clone();
+	TH1D* hPassedHydjetGenRapidityCopy = (TH1D*) hPassedHydjetGenRapidity->Clone();
+	TH1D* hTotalHydjetGenRapidityCopy = (TH1D*) hTotalHydjetGenRapidity->Clone();
 
 	auto canvas = new TCanvas("canvas", "", 1200, 600);
 
 	canvas->Divide(2);
 	canvas->cd(1);
 
-	gPad->SetLeftMargin(0.21);
-	gPad->SetRightMargin(0.03);
+	gPad->SetLeftMargin(0.2);
+	gPad->SetRightMargin(0.015);
 	gPad->SetTopMargin(0.07);
 
-	TH1D* hAccDummy = new TH1D("hAccDummy", ";p^{#varUpsilon}_{T} (GeV/c);Acceptance of #varUpsilon(1S)", NPtFineBins, gPtFineBinning);
+	TH1D* hAccDummy = new TH1D("hAccDummy", ";y^{#varUpsilon};Acceptance of #varUpsilon(1S)", 50, -3., 3.);
 
 	hAccDummy->GetXaxis()->SetTitleSize(0.075);
 
@@ -199,94 +199,95 @@ void compareMonteCarloPt(Int_t iState = 1) {
 
 	hAccDummy->GetYaxis()->SetRangeUser(0, 1);
 
-	hAccNoFilterGenPt->SetLineColor(kRed + 1);
-	hAccNoFilterGenPt->SetMarkerStyle(8);
-	hAccNoFilterGenPt->SetMarkerColor(kRed + 1);
-	hAccNoFilterGenPt->SetLineWidth(2);
+	hAccNoFilterGenRapidity->SetLineColor(kRed + 1);
+	hAccNoFilterGenRapidity->SetMarkerStyle(8);
+	hAccNoFilterGenRapidity->SetMarkerColor(kRed + 1);
+	hAccNoFilterGenRapidity->SetLineWidth(2);
 
-	hAccHydjetGenPt->SetLineColor(kAzure + 1);
-	hAccHydjetGenPt->SetMarkerStyle(8);
-	hAccHydjetGenPt->SetMarkerColor(kAzure + 1);
-	hAccHydjetGenPt->SetLineWidth(2);
+	hAccHydjetGenRapidity->SetLineColor(kAzure + 1);
+	hAccHydjetGenRapidity->SetMarkerStyle(8);
+	hAccHydjetGenRapidity->SetMarkerColor(kAzure + 1);
+	hAccHydjetGenRapidity->SetLineWidth(2);
 
 	hAccDummy->Draw();
 
-	hAccNoFilterGenPt->Draw("P SAME");
+	hAccNoFilterGenRapidity->Draw("P SAME");
 
-	hAccHydjetGenPt->Draw("P SAME");
+	hAccHydjetGenRapidity->Draw("P SAME");
 
 	TLegend* legend = new TLegend(.22, .9, .52, .8);
 	legend->SetTextSize(.05);
-	legend->AddEntry(hAccHydjetGenPt, "Hydjet Gen", "lep");
-	legend->AddEntry(hAccNoFilterGenPt, "No Filter Gen", "lep");
+	legend->AddEntry(hAccHydjetGenRapidity, "Hydjet Gen", "lep");
+	legend->AddEntry(hAccNoFilterGenRapidity, "No Filter Gen", "lep");
 
 	legend->Draw();
 
 	canvas->cd(2);
 
-	gPad->SetLeftMargin(0.21);
-	gPad->SetRightMargin(0.03);
+	gPad->SetLeftMargin(0.2);
+	gPad->SetRightMargin(0.015);
 	gPad->SetTopMargin(0.07);
 
-	hPassedNoFilterGenPtCopy->Scale(1. / hPassedNoFilterGenPt->Integral(), "Width");
-	hTotalNoFilterGenPtCopy->Scale(1. / hTotalNoFilterGenPt->Integral(), "Width");
+	hPassedNoFilterGenRapidityCopy->Scale(1. / hPassedNoFilterGenRapidity->Integral(), "Width");
+	hTotalNoFilterGenRapidityCopy->Scale(1. / hTotalNoFilterGenRapidity->Integral(), "Width");
 
-	hPassedHydjetGenPtCopy->Scale(1. / hPassedHydjetGenPt->Integral(), "Width");
-	hTotalHydjetGenPtCopy->Scale(1. / hTotalHydjetGenPt->Integral(), "Width");
+	hPassedHydjetGenRapidityCopy->Scale(1. / hPassedHydjetGenRapidity->Integral(), "Width");
+	hTotalHydjetGenRapidityCopy->Scale(1. / hTotalHydjetGenRapidity->Integral(), "Width");
 
-	TH1D* hDummy = new TH1D("hDummy", ";p^{#varUpsilon}_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T} (GeV/c)^{-1}", NPtFineBins, gPtFineBinning);
+
+	TH1D* hDummy = new TH1D("hDummy", ";y^{#varUpsilon};dN(#varUpsilon(1S)) / y", 50, -3., 3.);
 
 	hDummy->GetXaxis()->SetTitleSize(0.075);
 
-	hDummy->GetYaxis()->SetTitleOffset(1.4);
+	hDummy->GetYaxis()->SetTitleOffset(1.1);
 	hDummy->GetYaxis()->SetTitleSize(0.075);
 	hDummy->GetYaxis()->SetLabelSize(0.065);
 
-	hDummy->GetYaxis()->SetRangeUser(0, hTotalNoFilterGenPtCopy->GetMaximum() * 1.2);
+	hDummy->GetYaxis()->SetRangeUser(0, hTotalHydjetGenRapidityCopy->GetMaximum() * 1.6);
 
-	// hDummy->GetYaxis()->SetMaxDigits(2);
+	hDummy->GetYaxis()->SetMaxDigits(2);
 
-	hTotalNoFilterGenPtCopy->SetLineColor(kRed + 1);
-	hTotalNoFilterGenPtCopy->SetMarkerStyle(8);
-	hTotalNoFilterGenPtCopy->SetMarkerColor(kRed + 1);
-	hTotalNoFilterGenPtCopy->SetLineWidth(2);
+	hTotalNoFilterGenRapidityCopy->SetLineColor(kRed + 1);
+	hTotalNoFilterGenRapidityCopy->SetMarkerStyle(8);
+	hTotalNoFilterGenRapidityCopy->SetMarkerColor(kRed + 1);
+	hTotalNoFilterGenRapidityCopy->SetLineWidth(2);
 
-	hPassedNoFilterGenPtCopy->SetLineColor(kPink - 4);
-	hPassedNoFilterGenPtCopy->SetMarkerStyle(8);
-	hPassedNoFilterGenPtCopy->SetMarkerColor(kPink - 4);
-	hPassedNoFilterGenPtCopy->SetLineWidth(2);
+	hPassedNoFilterGenRapidityCopy->SetLineColor(kPink - 4);
+	hPassedNoFilterGenRapidityCopy->SetMarkerStyle(8);
+	hPassedNoFilterGenRapidityCopy->SetMarkerColor(kPink - 4);
+	hPassedNoFilterGenRapidityCopy->SetLineWidth(2);
 
-	hTotalHydjetGenPtCopy->SetLineColor(kAzure + 1);
-	hTotalHydjetGenPtCopy->SetMarkerStyle(8);
-	hTotalHydjetGenPtCopy->SetMarkerColor(kAzure + 1);
-	hTotalHydjetGenPtCopy->SetLineWidth(2);
+	hTotalHydjetGenRapidityCopy->SetLineColor(kAzure + 1);
+	hTotalHydjetGenRapidityCopy->SetMarkerStyle(8);
+	hTotalHydjetGenRapidityCopy->SetMarkerColor(kAzure + 1);
+	hTotalHydjetGenRapidityCopy->SetLineWidth(2);
 
-	hPassedHydjetGenPtCopy->SetLineColor(kCyan - 3);
-	hPassedHydjetGenPtCopy->SetMarkerStyle(8);
-	hPassedHydjetGenPtCopy->SetMarkerColor(kCyan - 3);
-	hPassedHydjetGenPtCopy->SetLineWidth(2);
+	hPassedHydjetGenRapidityCopy->SetLineColor(kCyan - 3);
+	hPassedHydjetGenRapidityCopy->SetMarkerStyle(8);
+	hPassedHydjetGenRapidityCopy->SetMarkerColor(kCyan - 3);
+	hPassedHydjetGenRapidityCopy->SetLineWidth(2);
 
 	hDummy->Draw();
 
-	hTotalNoFilterGenPtCopy->Draw("PE SAME");
+	hTotalNoFilterGenRapidityCopy->Draw("PE SAME");
 
-	hPassedNoFilterGenPtCopy->Draw("PE SAME");
+	hPassedNoFilterGenRapidityCopy->Draw("PE SAME");
 
-	hTotalHydjetGenPtCopy->Draw("PE SAME");
+	hTotalHydjetGenRapidityCopy->Draw("PE SAME");
 
-	hPassedHydjetGenPtCopy->Draw("PE SAME");
+	hPassedHydjetGenRapidityCopy->Draw("PE SAME");
 
-	TLegend* legend2 = new TLegend(.42, .9, .72, .6);
+	TLegend* legend2 = new TLegend(.42, .9, .72, .66);
 	legend2->SetTextSize(.05);
 	
-	legend2->AddEntry(hTotalHydjetGenPtCopy, "Hydjet denominator", "lep");
-	legend2->AddEntry(hPassedHydjetGenPtCopy, "Hydjet numerator", "lep");
-	
-	legend2->AddEntry(hTotalNoFilterGenPtCopy, "No Filter denominator", "lep");
-	legend2->AddEntry(hPassedNoFilterGenPtCopy, "No Filter numerator", "lep");
+	legend2->AddEntry(hTotalHydjetGenRapidityCopy, "Hydjet denominator", "lep");
+	legend2->AddEntry(hPassedHydjetGenRapidityCopy, "Hydjet numerator", "lep");
+
+	legend2->AddEntry(hTotalNoFilterGenRapidityCopy, "No Filter denominator", "lep");
+	legend2->AddEntry(hPassedNoFilterGenRapidityCopy, "No Filter numerator", "lep");
 
 	legend2->Draw();
 
 	gSystem->mkdir("plots", kTRUE);
-	canvas->SaveAs("plots/MCPtAcceptance.png", "RECREATE");
+	canvas->SaveAs("plots/MCRapidityAcceptance.png", "RECREATE");
 }
