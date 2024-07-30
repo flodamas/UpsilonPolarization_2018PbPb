@@ -9,7 +9,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iState = 1) {
+void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	TCanvas* canvas = new TCanvas(accMap->GetName(), "", 700, 600);
 	accMap->Draw("COLZ");
 
@@ -20,6 +20,7 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 	legend.SetTextSize(0.05);
 	legend.DrawLatexNDC(.48, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	legend.DrawLatexNDC(.48, .72, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
 	gPad->Update();
 
@@ -30,10 +31,10 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 	accMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accMap->GetName()), "RECREATE");
+	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f.png", iState, accMap->GetName(), lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
 }
 
-void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t iState = 1) {
+void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	TCanvas* canvas = new TCanvas(accHist->GetName(), "", 600, 600);
 	canvas->SetRightMargin(0.05);
 
@@ -52,6 +53,7 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	legend.SetTextSize(0.05);
 	legend.DrawLatexNDC(.55, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	legend.DrawLatexNDC(.55, .72, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
 	if (strstr(accHist->GetName(), "CS")) frameHist->SetXTitle(CosThetaVarTitle("CS"));
 	else frameHist->SetXTitle(CosThetaVarTitle("HX"));
@@ -67,7 +69,7 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
 
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accHist->GetName()), "RECREATE");
+	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f.png", iState, accHist->GetName(), lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
 }
 
 const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
@@ -77,9 +79,13 @@ const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
 // (cos theta, phi) acceptance maps based on Y events generated without any decay kinematic cut
 // MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/ (This file was deleted:/)
 
-void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1) {
-	// Read GenOnly Nofilter file
-	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
+void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
+	// // Read GenOnly Nofilter file
+	// const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	
+	// Read GenOnly Nofilter file with polarization weights
+	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);	
+
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -108,9 +114,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
 
 	// (cos theta, phi, pT) 3D maps for final acceptance correction, variable size binning for the stats
-	TEfficiency* accMatrixCS = TEfficiency3D(NominalTEfficiency3DName("CS"), "CS", iState);
+	TEfficiency* accMatrixCS = TEfficiency3D(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", NominalTEfficiency3DName("CS"), lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
 
-	TEfficiency* accMatrixHX = TEfficiency3D(NominalTEfficiency3DName("HX"), "HX", iState);
+	TEfficiency* accMatrixHX = TEfficiency3D(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", NominalTEfficiency3DName("HX"), lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
 
 	// (cos theta, phi) 2D distribution maps for Lab, CS and HX frames
 
@@ -119,9 +125,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	TEfficiency* hGranularHX = CosThetaPhiAcceptance2D(ptMin, ptMax, "HX");
 
 	// actual analysis binning (defined in AnalysisParameters.h)
-	TEfficiency* hAnalysisLab = new TEfficiency(Form("AnalysisLab_pt%dto%d", ptMin, ptMax), Acceptance2DAxisTitle("Lab"), NCosThetaBinsLab, CosThetaBinningLab, NPhiBinsLab, PhiBinningLab);
-	TEfficiency* hAnalysisCS = new TEfficiency(Form("AnalysisCS_pt%dto%d", ptMin, ptMax), Acceptance2DAxisTitle("CS"), NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
-	TEfficiency* hAnalysisHX = new TEfficiency(Form("AnalysisHX_pt%dto%d", ptMin, ptMax), Acceptance2DAxisTitle("HX"), NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hAnalysisLab = new TEfficiency(Form("AnalysisLab_pt%dto%d_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi), Acceptance2DAxisTitle("Lab"), NCosThetaBinsLab, CosThetaBinningLab, NPhiBinsLab, PhiBinningLab);
+	TEfficiency* hAnalysisCS = new TEfficiency(Form("AnalysisCS_pt%dto%d_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi), Acceptance2DAxisTitle("CS"), NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hAnalysisHX = new TEfficiency(Form("AnalysisHX_pt%dto%d_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi), Acceptance2DAxisTitle("HX"), NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 
 	// vs cos theta, for investigation
 
@@ -136,6 +142,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	Bool_t withinAcceptance;
 
 	Double_t cosThetaCS, phiCS, cosThetaHX, phiHX;
+
+	Float_t weightCS = 0, weightHX = 0;
 
 	Long64_t totEntries = OniaTree->GetEntries();
 
@@ -165,28 +173,40 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			cosThetaCS = muPlus_CS.CosTheta();
 			phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
 
-			accMatrixCS->Fill(withinAcceptance, cosThetaCS, phiCS, gen_QQ_LV->Pt());
+			weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
+
+			accMatrixCS->FillWeighted(withinAcceptance, weightCS, cosThetaCS, phiCS, gen_QQ_LV->Pt());
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 
 			cosThetaHX = muPlus_HX.CosTheta();
 			phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
 
-			accMatrixHX->Fill(withinAcceptance, cosThetaHX, phiHX, gen_QQ_LV->Pt());
+			weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+
+			accMatrixHX->FillWeighted(withinAcceptance, weightHX, cosThetaHX, phiHX, gen_QQ_LV->Pt());
 
 			if (gen_QQ_LV->Pt() > ptMin && gen_QQ_LV->Pt() < ptMax) { // pt bin of interest for the other distributions
 
-				hGranularCS->Fill(withinAcceptance, cosThetaCS, phiCS);
-				hAnalysisCS->Fill(withinAcceptance, cosThetaCS, phiCS);
+				hGranularCS->FillWeighted(withinAcceptance, weightCS, cosThetaCS, phiCS);
+				hAnalysisCS->FillWeighted(withinAcceptance, weightHX, cosThetaCS, phiCS);
 
-				hGranularHX->Fill(withinAcceptance, cosThetaHX, phiHX);
-				hAnalysisHX->Fill(withinAcceptance, cosThetaHX, phiHX);
+				hGranularHX->FillWeighted(withinAcceptance, weightCS, cosThetaHX, phiHX);
+				hAnalysisHX->FillWeighted(withinAcceptance, weightHX, cosThetaHX, phiHX);
 
 				hGranularLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
 				hAnalysisLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
 
-				hAccCS1D->Fill(withinAcceptance, cosThetaCS);
-				hAccHX1D->Fill(withinAcceptance, cosThetaHX);
+				hAccCS1D->FillWeighted(withinAcceptance, weightCS, cosThetaCS);
+				hAccHX1D->FillWeighted(withinAcceptance, weightHX, cosThetaHX);
+
+				// cout << "withinAcceptance: " << withinAcceptance << endl;
+				// cout << "weightHX: " << weightHX << endl;
+				// cout << "cosThetaHX: " << cosThetaHX << endl;
+
+				// TH1* passedHist = (TH1*)hAccHX1D->GetPassedHistogram();
+				// cout << passedHist->FindBin(cosThetaHX) << endl;
+				// cout << passedHist->GetBinContent(passedHist->FindBin(cosThetaHX)) << endl;
 			}
 		}
 	}

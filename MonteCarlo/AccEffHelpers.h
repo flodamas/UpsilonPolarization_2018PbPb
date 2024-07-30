@@ -97,12 +97,12 @@ TEfficiency* CosThetaPhiTEfficiency2D(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	return tEff;
 }
 
-TEfficiency* CosThetaPhiAcceptance2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS") {
+TEfficiency* CosThetaPhiAcceptance2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	const char* name = CosThetaPhiTEfficiency2DName(ptMin, ptMax, refFrameName);
 
 	const char* title = Form(";%s;%s;acceptance", CosThetaVarTitle(refFrameName), PhiAxisTitle(refFrameName));
 
-	TEfficiency* tEff = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax);
+	TEfficiency* tEff = new TEfficiency(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", name, lambdaTheta, lambdaPhi, lambdaThetaPhi), title, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax);
 	
 	tEff->SetStatisticOption(gTEffStatOption);
 

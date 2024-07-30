@@ -8,7 +8,11 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDrumMB_miniAOD.root", const char* outputFileName = "MCUpsilonSkimmedWeightedDataset.root") {
+void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
+	const char* inputFileName = Form("OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
+
+	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
@@ -60,6 +64,8 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
+	TFile file(outputFileName, "RECREATE");
+
 	/// Count the number of reconstructed Y(1S) events on the fly (for reweighting of the MC reco pT spectra)
 
 	const char* histoTitle = Form(";%s;dN(#varUpsilon(1S)) / d%s (%s)", gPtAxisTitle, gPtVarName, gPtUnit);
@@ -74,7 +80,8 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	// weighting by event directly on the fly
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 	//RooRealVar nCollVar("nColl", "estimated number of binary nucleon-nucleon scatterings", 0, 2200);
-	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight x muon scale factors)", 0, 100000);
+	RooRealVar eventWeightCSVar("eventWeightCS", "event-by-event weight (Ncoll x MC gen weight x muon scale factors x polarization in CS)", 0, 100000);
+	RooRealVar eventWeightHXVar("eventWeightHX", "event-by-event weight (Ncoll x MC gen weight x muon scale factors x polarization in HX)", 0, 100000);
 
 	Float_t lowMassCut = 8, highMassCut = 11;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
@@ -90,15 +97,32 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	refFrameName = "CS";
 	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
+	RooRealVar phiTildeCSVar(PhiTildeVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
 	refFrameName = "HX";
 	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
+	RooRealVar phiTildeHXVar(PhiTildeVarName(refFrameName), PhiTildeVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), RooFit::WeightVar("eventWeight"), RooFit::StoreAsymError(RooArgSet(eventWeightVar)));
+	RooRealVar lambdaThetaVar("lambdaTheta", "", -1, 1);
+	RooRealVar lambdaPhiVar("lambdaPhi", "", -1, 1);
+	RooRealVar lambdaThetaPhiVar("lambdaThetaPhi", "", -1, 1);
+
+	// fix polarization extraction parameters
+	lambdaThetaVar.setVal(lambdaTheta);
+	lambdaThetaVar.setConstant(kTRUE);
+
+	lambdaPhiVar.setVal(lambdaPhi);
+	lambdaPhiVar.setConstant(kTRUE);
+
+	lambdaThetaPhiVar.setVal(lambdaThetaPhi);
+	lambdaThetaPhiVar.setConstant(kTRUE);
+
+	RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
+	RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
 
 	// loop variables
-	Float_t nColl, weight = 0, errorWeightDown = 0, errorWeightUp = 0;
+	Float_t nColl, weight = 0, errorWeightDown = 0, errorWeightUp = 0, totalWeightCS = 0, totalWeightHX = 0, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0;
 
 	// for muon scale factors
 	int indexNominal = 0;
@@ -163,6 +187,9 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 			double Reco_mumi_eta = Reco_mumi_4mom->Eta();
 			double Reco_mumi_pt = Reco_mumi_4mom->Pt();
+
+			/// reweight for the data/MC reco pT spectrum discrepancies
+			dimuonPtWeight = Get_RecoPtWeight(Reco_QQ_4mom->Rapidity(), Reco_QQ_4mom->Pt());
 
 			if (fabs(Reco_mumi_4mom->Eta()) > 2.4) continue;
 			if (Reco_mumi_4mom->Pt() < gMuonPtCut) continue;
@@ -280,7 +307,7 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 			/// now the overall event weight
 
-			weight = nColl * Gen_weight * dimuWeight_nominal;
+			weight = nColl * Gen_weight * dimuonPtWeight * dimuWeight_nominal;
 
 			// propagate the scale factor uncertainties to the weight
 
@@ -298,9 +325,17 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 			// fill the dataset
 			centVar = Centrality;
 
-			eventWeightVar = weight;
+			polarWeightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
+			polarWeightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
 
-			eventWeightVar.setAsymError(errorWeightDown, errorWeightUp);
+			totalWeightCS = weight * polarWeightCS;
+			totalWeightHX = weight * polarWeightHX; 
+
+			eventWeightCSVar = weight * polarWeightCS;
+			eventWeightHXVar = weight * polarWeightHX;
+
+			eventWeightCSVar.setAsymError(errorWeightDown, errorWeightUp);
+			eventWeightHXVar.setAsymError(errorWeightDown, errorWeightUp);
 
 			massVar = Reco_QQ_4mom->M();
 			yVar = fabs(Reco_QQ_4mom->Rapidity());
@@ -314,10 +349,35 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 			cosThetaCSVar = muPlus_CS.CosTheta();
 			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
 
+			if (cosThetaCSVar.getVal() < 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiCSVar.getVal() - 135) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
+				else phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
+			}
+
+			else if (cosThetaCSVar.getVal() > 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiCSVar.getVal() - 45) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
+				else phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
+			}
+
 			cosThetaHXVar = muPlus_HX.CosTheta();
 			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
 
-			dataset.add(RooArgSet(centVar, eventWeightVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar), weight, errorWeightDown, errorWeightUp);
+			if (cosThetaHXVar.getVal() < 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiHXVar.getVal() - 135) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
+				else phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
+			}
+
+			else if (cosThetaHXVar.getVal() > 0) {
+				// if phi value is smaller than -pi, add 2pi
+				if ((phiHXVar.getVal() - 45) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
+				else phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
+			}
+
+			datasetCS.add(RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);
+			datasetHX.add(RooArgSet(centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightHX, errorWeightDown, errorWeightUp);
 
 			// fill the graphs for reco events
 
@@ -334,9 +394,8 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	hReco1S_absy0to1p2->Scale(1. / hReco1S_absy0to1p2->Integral(), "width");
 	hReco1S_absy1p2to2p4->Scale(1. / hReco1S_absy1p2to2p4->Integral(), "width");
 
-	TFile file(outputFileName, "RECREATE");
-
-	dataset.Write();
+	datasetCS.Write();
+	datasetHX.Write();
 
 	hReco1S_absy0to1p2->Write();
 
@@ -348,4 +407,43 @@ void skimRecoUpsilonMC(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	     << "Number of reconstructed upsilons = " << nRecoCand << endl;
 
 	return;
+}
+
+// check the dataset distributions
+
+void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0){
+
+	const char* FileName = Form("Y1SReconstructedMCWeightedDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
+
+	TFile* file = openFile(FileName);
+
+	RooDataSet* allDataset = (RooDataSet*)file->Get(Form("MCdataset%s", refFrameName));
+
+	// import the dataset to a workspace
+	RooWorkspace wspace("workspace");
+	wspace.import(*allDataset);
+
+	RooRealVar cosTheta = *wspace.var(CosThetaVarName(refFrameName));
+	RooRealVar phi = *wspace.var(PhiVarName(refFrameName));
+	RooRealVar phiTilde = *wspace.var(PhiTildeVarName(refFrameName));
+
+	RooPlot* cosThetaframe = cosTheta.frame();
+	RooPlot* phiframe = phi.frame();
+	RooPlot* phiTildeframe = phiTilde.frame();
+
+	allDataset->plotOn(cosThetaframe);
+	allDataset->plotOn(phiframe);
+	allDataset->plotOn(phiTildeframe);
+
+	TCanvas* c = new TCanvas("c", "Canvas", 1200, 600);
+	c->Divide(3);
+
+	c->cd(1);
+    cosThetaframe->Draw();
+
+    c->cd(2);
+    phiframe->Draw();
+
+    c->cd(3);
+    phiTildeframe->Draw();
 }
