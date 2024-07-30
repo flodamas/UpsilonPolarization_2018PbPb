@@ -137,7 +137,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
 
-	Float_t nColl, weight = 0, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0, errorWeightDown = 0, errorWeightUp = 0;
+	Float_t nColl, weight = 0, totalWeightCS = 0, totalWeightHX = 0, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0, errorWeightDown = 0, errorWeightUp = 0;
 
 	// for muon scale factors
 	int indexNominal = 0;
@@ -365,6 +365,9 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			polarWeightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
 			polarWeightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
 
+			totalWeightCS = weight * polarWeightCS;
+			totalWeightHX = weight * polarWeightHX; 
+
 			eventWeightCSVar = weight * polarWeightCS;
 			eventWeightHXVar = weight * polarWeightHX;
 
@@ -410,8 +413,8 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 				else phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
-			datasetCS.add(RooArgSet(recoCat, centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), polarWeightCS, errorWeightDown, errorWeightUp);
-			datasetHX.add(RooArgSet(recoCat, centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), polarWeightHX, errorWeightDown, errorWeightUp);
+			datasetCS.add(RooArgSet(recoCat, centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);
+			datasetHX.add(RooArgSet(recoCat, centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightHX, errorWeightDown, errorWeightUp);
 		}
 	}
 
@@ -447,10 +450,23 @@ void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Doub
 	RooRealVar phi = *wspace.var(PhiVarName(refFrameName));
 	RooRealVar phiTilde = *wspace.var(PhiTildeVarName(refFrameName));
 
-	RooPlot* xframe = phiTilde.frame();
+	RooPlot* cosThetaframe = cosTheta.frame();
+	RooPlot* phiframe = phi.frame();
+	RooPlot* phiTildeframe = phiTilde.frame();
 
-	allDataset->plotOn(xframe);
+	allDataset->plotOn(cosThetaframe);
+	allDataset->plotOn(phiframe);
+	allDataset->plotOn(phiTildeframe);
 
-	TCanvas* c = new TCanvas("c", "Canvas", 800, 600);
-    xframe->Draw();
+	TCanvas* c = new TCanvas("c", "Canvas", 1200, 600);
+	c->Divide(3);
+
+	c->cd(1);
+    cosThetaframe->Draw();
+
+    c->cd(2);
+    phiframe->Draw();
+
+    c->cd(3);
+    phiTildeframe->Draw();
 }
