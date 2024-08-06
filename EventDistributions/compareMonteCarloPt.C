@@ -5,6 +5,7 @@
 #include "../MonteCarlo/AccEffHelpers.h"
 
 #include "../Tools/Style/Legends.h"
+#include "../Tools/Parameters/CentralityValues.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
@@ -134,6 +135,8 @@ TEfficiency* getHydjetGenPt(Int_t iState = 1){
 
 	Long64_t totEntries = OniaTree->GetEntries();
 
+	double eventWeight;
+
 	// Loop over the events
 	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
 		if (iEvent % 10000 == 0) {
@@ -144,7 +147,9 @@ TEfficiency* getHydjetGenPt(Int_t iState = 1){
 
 		OniaTree->GetEntry(iEvent);
 
-		// if (Centrality >= 2 * gCentralityBinMax) continue;
+		if (Centrality >= 2 * gCentralityBinMax) continue;
+
+		eventWeight = (Gen_weight * FindNcoll(Centrality));
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
@@ -152,10 +157,10 @@ TEfficiency* getHydjetGenPt(Int_t iState = 1){
 
 			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue; // upsilon within fiducial region
 
-			// // go to reco level
-			// Int_t iReco = Gen_QQ_whichRec[iGen];
+			// go to reco level
+			Int_t iReco = Gen_QQ_whichRec[iGen];
 
-			// if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
+			if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
 
 			// single-muon acceptance cuts
 			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
@@ -163,7 +168,7 @@ TEfficiency* getHydjetGenPt(Int_t iState = 1){
 
 			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > gMuonPtCut) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > gMuonPtCut);
 
-			hAccPt->Fill(withinAcceptance, gen_QQ_LV->Pt());
+			hAccPt->FillWeighted(withinAcceptance, eventWeight, gen_QQ_LV->Pt());
 		}
 	}
 
@@ -193,7 +198,7 @@ void compareMonteCarloPt(Int_t iState = 1) {
 	TH1D* hPassedHydjetGenPtCopy = (TH1D*) hPassedHydjetGenPt->Clone();
 	TH1D* hTotalHydjetGenPtCopy = (TH1D*) hTotalHydjetGenPt->Clone();
 
-	auto canvas = new TCanvas("canvas", "", 1200, 600);
+	auto canvas = new TCanvas("canvas", "", 1200, 700);
 
 	canvas->Divide(2);
 	canvas->cd(1);
@@ -237,9 +242,19 @@ void compareMonteCarloPt(Int_t iState = 1) {
 
 	canvas->cd(2);
 
-	gPad->SetLeftMargin(0.21);
+	gPad->SetLeftMargin(0.1);
 	gPad->SetRightMargin(0.03);
 	gPad->SetTopMargin(0.07);
+
+	TPad* pad1 = new TPad("pad1", "pad1", 0., 0.3, 1, 1.0);
+	pad1->SetBottomMargin(0.04);
+	pad1->SetLeftMargin(0.2);
+	pad1->SetTopMargin(0.1);
+	pad1->Draw();
+	pad1->cd();
+
+	double NoFilterSum = hTotalNoFilterGenPt->Integral();
+	double HydjetSum = hTotalHydjetGenPt->Integral();
 
 	hPassedNoFilterGenPtCopy->Scale(1. / hPassedNoFilterGenPt->Integral(), "Width");
 	hTotalNoFilterGenPtCopy->Scale(1. / hTotalNoFilterGenPt->Integral(), "Width");
@@ -247,11 +262,15 @@ void compareMonteCarloPt(Int_t iState = 1) {
 	hPassedHydjetGenPtCopy->Scale(1. / hPassedHydjetGenPt->Integral(), "Width");
 	hTotalHydjetGenPtCopy->Scale(1. / hTotalHydjetGenPt->Integral(), "Width");
 
+	TH1D* hPassedRatio = (TH1D*) hPassedHydjetGenPtCopy->Clone();
+	hPassedRatio->Divide(hPassedNoFilterGenPtCopy);
+
 	TH1D* hDummy = new TH1D("hDummy", ";p^{#varUpsilon}_{T} (GeV/c);dN(#varUpsilon(1S)) / dp_{T} (GeV/c)^{-1}", NPtFineBins, gPtFineBinning);
 
-	hDummy->GetXaxis()->SetTitleSize(0.075);
+	hDummy->GetXaxis()->SetTitleSize(0.077);
+	hDummy->GetXaxis()->SetLabelSize(0.);
 
-	hDummy->GetYaxis()->SetTitleOffset(1.4);
+	hDummy->GetYaxis()->SetTitleOffset(1.2);
 	hDummy->GetYaxis()->SetTitleSize(0.075);
 	hDummy->GetYaxis()->SetLabelSize(0.065);
 
@@ -289,7 +308,7 @@ void compareMonteCarloPt(Int_t iState = 1) {
 
 	hPassedHydjetGenPtCopy->Draw("PE SAME");
 
-	TLegend* legend2 = new TLegend(.42, .9, .72, .6);
+	TLegend* legend2 = new TLegend(.5, .85, .8, .55);
 	legend2->SetTextSize(.05);
 	
 	legend2->AddEntry(hTotalHydjetGenPtCopy, "Hydjet denominator", "lep");
@@ -299,6 +318,36 @@ void compareMonteCarloPt(Int_t iState = 1) {
 	legend2->AddEntry(hPassedNoFilterGenPtCopy, "No Filter numerator", "lep");
 
 	legend2->Draw();
+
+	// ratio plot
+	canvas->cd(2);
+
+	TPad* pad2 = new TPad("bottomPad", "bottomPad", 0, 0.0, 1, .31);
+	pad2->SetTopMargin(0.025);
+	pad2->SetBottomMargin(0.3);
+	pad2->SetLeftMargin(0.2);
+	pad2->SetTicks(1, 1);
+	pad2->Draw();
+	pad2->cd();
+
+	hPassedRatio->SetTitle(" ");
+	hPassedRatio->GetYaxis()->SetTitleOffset(0.5);
+	hPassedRatio->GetYaxis()->SetTitle("#splitline{Hydjet /}{NoFilter}");
+	hPassedRatio->GetYaxis()->SetTitleSize(0.15);
+	hPassedRatio->GetYaxis()->SetLabelSize(0.15);
+	hPassedRatio->GetYaxis()->CenterTitle();
+
+	hPassedRatio->GetXaxis()->SetTitle("p^{#varUpsilon}_{T} (GeV/c)");
+	hPassedRatio->GetXaxis()->SetLabelSize(0.15);
+	hPassedRatio->GetXaxis()->SetTitleSize(0.15);
+	hPassedRatio->GetXaxis()->SetTickSize(0.06);
+
+	hPassedRatio->GetYaxis()->SetNdivisions(505);
+	
+	hPassedRatio->Draw("PZ");
+
+	hPassedRatio->SetMinimum(0.);
+	hPassedRatio->SetMaximum(4.);
 
 	gSystem->mkdir("plots", kTRUE);
 	canvas->SaveAs("plots/MCPtAcceptance.png", "RECREATE");
