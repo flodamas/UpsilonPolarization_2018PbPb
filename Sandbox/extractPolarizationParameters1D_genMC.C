@@ -261,11 +261,15 @@ void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, Int
 
 	TCanvas* mc2DCanvas = new TCanvas("mc2DCanvas", "mc2DCanvas", 1250, 600);
 
+	SetColorPalette(gPreferredColorPaletteName);
+
 	mc2DCanvas->Divide(2);
 
 	mc2DCanvas->cd(1);
 
     gPad->SetRightMargin(0.18);
+
+	hdummy->GetZaxis()->SetRangeUser(0, generalPolarHist->GetMaximum());
 
 	hdummy->Draw("COLZ");
 
@@ -284,8 +288,6 @@ void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, Int
 
 	gPad->SetTopMargin(0.05);
 
-	hdummy->Draw("LEGO");
-
 	generalPolarHist->Draw("LEGO SAME");
 
 	generalPolarFuncFit->Draw("SURFACE SAME");
@@ -294,9 +296,14 @@ void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, Int
 	mc2DCanvas->SetTopMargin(.15);
 	mc2DCanvas->SetLeftMargin(.1);
 
-	hdummy->GetZaxis()->SetRangeUser(0, generalPolarHist->GetMaximum());
-
+	generalPolarHist->GetZaxis()->SetRangeUser(0, generalPolarHist->GetMaximum() * 1.1);
 	generalPolarHist->GetZaxis()->SetMaxDigits(3);
+
+	generalPolarHist->SetStats(0);
+
+	generalPolarFuncFit->SetRange(-1, -180, 0, 1, 180, generalPolarFuncFit->GetMaximum() * 1.1);
+	generalPolarFuncFit->SetMaximum(generalPolarFuncFit->GetMaximum());
+	generalPolarFuncFit->SetMinimum(0);
 
 	// Styles of the texts in the plot
 	TLatex* legend2 = new TLatex();
@@ -318,8 +325,6 @@ void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, Int
 
 	hdummy->GetYaxis()->SetTitleOffset(1.5);
 	hdummy->GetYaxis()->CenterTitle();
-
-	SetColorPalette(gPreferredColorPaletteName);
 
 	gPad->Update();
 
