@@ -168,8 +168,8 @@ Float_t correctMC1DHist(TH1D* projectionHist, TH1D* correctedHist, TEfficiency* 
 		double efficiency = effMap->GetEfficiency(iBin + 1);
 
 		// calculate weight
-		weight = 1. / (acceptance * efficiency);
-		// weight = 1. ;
+		// weight = 1. / (acceptance * efficiency);
+		weight = 1. ;
 
 		// propagate both scale factor uncertainties and efficiency stat errors to the weight
 		double relSystUnc = systEff->GetBinContent(iBin + 1);
@@ -225,7 +225,7 @@ Float_t correctMC1DHist(TH1D* projectionHist, TH1D* correctedHist, TEfficiency* 
 	return maxMCVal;
 }
 
-void correctMC2DHist(TH2D* projectionHist, TH2D* correctedHist, TEfficiency* accMap, TEfficiency* effMap, TH2D* systEff, Int_t nCosThetaBins, Int_t nPhiBins) {
+void correctMC2DHist(TH2D* polarizationHist, TH2D* correctedHist, TEfficiency* accMap, TEfficiency* effMap, TH2D* systEff, Int_t nCosThetaBins, Int_t nPhiBins) {
 
 	TH2D* hTotalCosThetaPhi = (TH2D*)accMap->GetTotalHistogram();
 
@@ -253,10 +253,8 @@ void correctMC2DHist(TH2D* projectionHist, TH2D* correctedHist, TEfficiency* acc
 			double efficiency = effMap->GetEfficiency(iGlobalBin);
 
 			// calculate weight
-			if (acceptance == 0 || efficiency == 0) weight = 0;
+			if (acceptance == 0 || efficiency == 0) weight = 1.;
 			else weight = 1. / (acceptance * efficiency);
-
-			// else weight = 1;
 
 			// weightMap->SetBinContent(iCosTheta + 1, iPhi + 1, weight);
 
@@ -278,9 +276,12 @@ void correctMC2DHist(TH2D* projectionHist, TH2D* correctedHist, TEfficiency* acc
 			totalUncHigh = totalRelUncHigh * efficiency * acceptance;
 			totalUncLow = totalRelUncLow * efficiency * acceptance;
 
-			double recoMCVal = projectionHist->GetBinContent(iCosTheta + 1, iPhi + 1);
+			double recoMCVal = polarizationHist->GetBinContent(iCosTheta + 1, iPhi + 1);
 
-			double recoMCUnc = projectionHist->GetBinError(iCosTheta + 1, iPhi + 1);
+			double recoMCUnc = polarizationHist->GetBinError(iCosTheta + 1, iPhi + 1);
+
+			cout << "recoMCVal: " << recoMCVal << endl;
+			cout << "recoMCUnc: " << recoMCUnc << endl;
 
 			// set the bin contents reflecting weights
 			// yield with acceptance x efficiency correction
@@ -289,6 +290,7 @@ void correctMC2DHist(TH2D* projectionHist, TH2D* correctedHist, TEfficiency* acc
 			// standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 		
 			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(recoMCUnc / recoMCVal, totalRelUncHigh) * recoMCVal * weight);
+			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(recoMCUnc / recoMCVal, totalRelUncHigh));
 
 			// // fill uncertainty histograms
 			// relSystEffCosThetaPhi->SetBinContent(iCosTheta +1, iPhi + 1, relSystUnc);
@@ -328,15 +330,21 @@ void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, con
 	for (Int_t iEvent = 0; iEvent < allDataset->numEntries(); iEvent++) {
 		const RooArgSet* iRooArgSet = allDataset->get(iEvent);
 		
-		Double_t cosThetaVal = ((RooRealVar*)iRooArgSet->find(CosThetaVarName(refFrameName)))->getVal();
-		Double_t phiVal = ((RooRealVar*)iRooArgSet->find(PhiVarName(refFrameName)))->getVal();
-		Double_t phiTildeVal = ((RooRealVar*)iRooArgSet->find(PhiTildeVarName(refFrameName)))->getVal();
+		Double_t cosThetaVal = ((RooRealVar*) iRooArgSet->find(CosThetaVarName(refFrameName)))->getVal();
+		Double_t phiVal = ((RooRealVar*) iRooArgSet->find(PhiVarName(refFrameName)))->getVal();
+		Double_t phiTildeVal = ((RooRealVar*) iRooArgSet->find(PhiTildeVarName(refFrameName)))->getVal();
 		Double_t weight = allDataset->weight();
 
 		generalPolarHist->Fill(cosThetaVal, phiVal, weight);
 		generalPolarTildeHist->Fill(cosThetaVal, phiTildeVal, weight);
 	}	
 
+	for (int iCosTheta = 1; iCosTheta <= nCosThetaBins; iCosTheta++) {
+		for (int iPhi = 1; iPhi <= nPhiBins; iPhi++) { 
+			cout << "BinError: " << generalPolarHist->GetBinError(iCosTheta, iPhi) << endl;
+			cout << "BinValue: " << generalPolarHist->GetBinContent(iCosTheta, iPhi) << endl;
+		}
+	}
 	// get acceptance and efficiency 3D map
 	auto* accMap = getAcceptance3DMap(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi); 
 	auto* effMap = getEfficiency3DMap(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi); 
@@ -389,8 +397,6 @@ void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, con
 
 	gPad->SetTopMargin(0.05);
 
-	// hdummy->Draw("LEGO");
-
 	correctedPolarHist->Draw("LEGO");
 
 	generalPolarFuncFit->Draw("SURFACE SAME");
@@ -401,7 +407,13 @@ void getPolarizedMCHist(TH2D* generalPolarHist, TH2D* generalPolarTildeHist, con
 
 	hdummy->GetZaxis()->SetRangeUser(0, correctedPolarHist->GetMaximum());
 
+	correctedPolarHist->SetStats(0);
+
 	correctedPolarHist->GetZaxis()->SetMaxDigits(3);
+
+	generalPolarFuncFit->SetRange(-1, -180, 0, 1, 180, generalPolarFuncFit->GetMaximum() * 1.1);
+	generalPolarFuncFit->SetMaximum(generalPolarFuncFit->GetMaximum());
+	generalPolarFuncFit->SetMinimum(0);
 
 	// Styles of the texts in the plot
 	TLatex* legend2 = new TLatex();
@@ -493,186 +505,186 @@ void extractPolarizationParameters1D_recoMC(Int_t ptMin = 0, Int_t ptMax = 30, c
 	cout << "number of entries: " <<  nEntries << endl;
 	cout << "--------------------------------------" << endl;
 
-	/// Make 2D histograms to 1D 
-	// (integrate over phi, that is, costheta graph)
-	TH1D* polarHistCosTheta = generalPolarHist->ProjectionX("cos #theta", 0, nPhiBins); // arguments: (name, firstybin, lastybin)
+	// /// Make 2D histograms to 1D 
+	// // (integrate over phi, that is, costheta graph)
+	// TH1D* polarHistCosTheta = generalPolarHist->ProjectionX("cos #theta", 0, nPhiBins); // arguments: (name, firstybin, lastybin)
 
-	// (integrate over cosTheta, that is, phi graph)
-	TH1D* polarHistPhi = generalPolarHist->ProjectionY("#varphi", 0, nCosThetaBins);
+	// // (integrate over cosTheta, that is, phi graph)
+	// TH1D* polarHistPhi = generalPolarHist->ProjectionY("#varphi", 0, nCosThetaBins);
 
-	TH1D* polarHistPhiTilde = generalPolarTildeHist->ProjectionY("#tilde{#varphi}", 0, nCosThetaBins);
+	// TH1D* polarHistPhiTilde = generalPolarTildeHist->ProjectionY("#tilde{#varphi}", 0, nCosThetaBins);
 
-	/// apply weights and errors to each costheta bin
+	// /// apply weights and errors to each costheta bin
 
-	TH1D* correctedHistCosTheta = new TH1D("correctedHistCosTheta", " ", nCosThetaBins, cosThetaBinEdges.data());
+	// TH1D* correctedHistCosTheta = new TH1D("correctedHistCosTheta", " ", nCosThetaBins, cosThetaBinEdges.data());
 
-	TH1D* correctedHistPhi = new TH1D("correctedHistPhi", " ", nPhiBins, phiBinEdges.data());
+	// TH1D* correctedHistPhi = new TH1D("correctedHistPhi", " ", nPhiBins, phiBinEdges.data());
 
-	Float_t maxYieldCosTheta = correctMC1DHist(polarHistCosTheta, correctedHistCosTheta, accHistCosTheta, effHistCosTheta, systEffCosTheta, nCosThetaBins);
+	// Float_t maxYieldCosTheta = correctMC1DHist(polarHistCosTheta, correctedHistCosTheta, accHistCosTheta, effHistCosTheta, systEffCosTheta, nCosThetaBins);
 	
-	Float_t maxYieldPhi = correctMC1DHist(polarHistPhi, correctedHistPhi, accHistPhi, effHistPhi, systEffPhi, nPhiBins);
+	// Float_t maxYieldPhi = correctMC1DHist(polarHistPhi, correctedHistPhi, accHistPhi, effHistPhi, systEffPhi, nPhiBins);
 
-	/// using ROOT::Fit()
+	// /// using ROOT::Fit()
 
-	// perform fit of cosTheta graph 
-	Float_t maxYield = polarHistCosTheta->GetEntries();
+	// // perform fit of cosTheta graph 
+	// Float_t maxYield = polarHistCosTheta->GetEntries();
 
-	TF1* cosThetaPolarFuncFit = getCosThetaPolarFunc(maxYield);
+	// TF1* cosThetaPolarFuncFit = getCosThetaPolarFunc(maxYield);
 
-	TFitResultPtr cosThetafitResults = correctedHistCosTheta->Fit("cosThetaPolarFunc", "ESVIMR0"); // chi2 fit to the integrated bin 
+	// TFitResultPtr cosThetafitResults = correctedHistCosTheta->Fit("cosThetaPolarFunc", "ESVIMR0"); // chi2 fit to the integrated bin 
 
-	cout << "--------------------------------------" << endl;
-	cout << "Done costheta fit!" << endl;
-	cout << "normalization: " << cosThetafitResults->Parameter(0) << ", lambdaTheta: " << cosThetafitResults->Parameter(1) << endl;
-	cout << "--------------------------------------" << endl;
+	// cout << "--------------------------------------" << endl;
+	// cout << "Done costheta fit!" << endl;
+	// cout << "normalization: " << cosThetafitResults->Parameter(0) << ", lambdaTheta: " << cosThetafitResults->Parameter(1) << endl;
+	// cout << "--------------------------------------" << endl;
 
-	cosThetafitResults->Print("v");
+	// cosThetafitResults->Print("v");
 
-	TF1* phiPolarFuncFit = getPhiPolarFunc(maxYield);
+	// TF1* phiPolarFuncFit = getPhiPolarFunc(maxYield);
 
-	// fix the extracted lambdaTheta value
-	// phiPolarFuncFit->SetParameter(1, cosThetafitResults->Parameter(1));
-	phiPolarFuncFit->FixParameter(1, cosThetafitResults->Parameter(1));
+	// // fix the extracted lambdaTheta value
+	// // phiPolarFuncFit->SetParameter(1, cosThetafitResults->Parameter(1));
+	// phiPolarFuncFit->FixParameter(1, cosThetafitResults->Parameter(1));
 
-	// perform fit of phi graph 
-	TFitResultPtr phifitResults = correctedHistPhi->Fit("phiPolarFunc", "ESVIMR0"); // chi2 fit to the integrated bin 
+	// // perform fit of phi graph 
+	// TFitResultPtr phifitResults = correctedHistPhi->Fit("phiPolarFunc", "ESVIMR0"); // chi2 fit to the integrated bin 
 
-	cout << "--------------------------------------" << endl;
-	cout << "Done phi fit!" << endl;
-	cout << "normalization: " << phifitResults->Parameter(0) << ", lambdaPhi: " << phifitResults->Parameter(2) << endl;
-	cout << "--------------------------------------" << endl;
+	// cout << "--------------------------------------" << endl;
+	// cout << "Done phi fit!" << endl;
+	// cout << "normalization: " << phifitResults->Parameter(0) << ", lambdaPhi: " << phifitResults->Parameter(2) << endl;
+	// cout << "--------------------------------------" << endl;
 	
-	phifitResults->Print("v");
+	// phifitResults->Print("v");
 
-	TF1* phiTildePolarFuncFit = getPhiTildePolarFunc(maxYield);
+	// TF1* phiTildePolarFuncFit = getPhiTildePolarFunc(maxYield);
 
-	// fix the extracted lambdaTheta value
-	phiTildePolarFuncFit->FixParameter(1, cosThetafitResults->Parameter(1));
+	// // fix the extracted lambdaTheta value
+	// phiTildePolarFuncFit->FixParameter(1, cosThetafitResults->Parameter(1));
 
-	// perform fit of phi graph 
-	TFitResultPtr phiTildefitResults = polarHistPhiTilde->Fit("phiTildePolarFunc", "ESVIMR0"); // chi2 fit to the integrated bin 
+	// // perform fit of phi graph 
+	// TFitResultPtr phiTildefitResults = polarHistPhiTilde->Fit("phiTildePolarFunc", "ESVIMR0"); // chi2 fit to the integrated bin 
 
-	cout << "--------------------------------------" << endl;
-	cout << "Done phiTilde fit!" << endl;
-	cout << "normalization: " << phiTildefitResults->Parameter(0) << ", lambdaPhiTilde: " << phiTildefitResults->Parameter(2) << endl;
-	cout << "--------------------------------------" << endl;
+	// cout << "--------------------------------------" << endl;
+	// cout << "Done phiTilde fit!" << endl;
+	// cout << "normalization: " << phiTildefitResults->Parameter(0) << ", lambdaPhiTilde: " << phiTildefitResults->Parameter(2) << endl;
+	// cout << "--------------------------------------" << endl;
 	
-	phiTildefitResults->Print("v");
+	// phiTildefitResults->Print("v");
 
-	// draw the histogram and the fit
-	TCanvas* polarCanvas1D = new TCanvas("polarCanvas1D", "", 1350, 500);
+	// // draw the histogram and the fit
+	// TCanvas* polarCanvas1D = new TCanvas("polarCanvas1D", "", 1350, 500);
 
-	polarCanvas1D->Divide(3, 1);
+	// polarCanvas1D->Divide(3, 1);
 
-	polarCanvas1D->cd(1);
+	// polarCanvas1D->cd(1);
 
-	TPad* padCosTheta = new TPad("padCosTheta", "padCosTheta", 0, 0.25, 1, 1.0);
-	padCosTheta->SetBottomMargin(0.03);
-	padCosTheta->SetRightMargin(0.01);
-	padCosTheta->SetLeftMargin(0.13);
-	padCosTheta->SetTicks(1, 1);
-	padCosTheta->Draw();
-	padCosTheta->cd();
+	// TPad* padCosTheta = new TPad("padCosTheta", "padCosTheta", 0, 0.25, 1, 1.0);
+	// padCosTheta->SetBottomMargin(0.03);
+	// padCosTheta->SetRightMargin(0.01);
+	// padCosTheta->SetLeftMargin(0.13);
+	// padCosTheta->SetTicks(1, 1);
+	// padCosTheta->Draw();
+	// padCosTheta->cd();
 
-	correctedHistCosTheta->SetMinimum(0);
+	// correctedHistCosTheta->SetMinimum(0);
 
-	correctedHistCosTheta->SetMarkerStyle(8);
-	correctedHistCosTheta->SetMarkerSize(1.5);
-	correctedHistCosTheta->SetMarkerColor(kBlack);
+	// correctedHistCosTheta->SetMarkerStyle(8);
+	// correctedHistCosTheta->SetMarkerSize(1.5);
+	// correctedHistCosTheta->SetMarkerColor(kBlack);
 	
-	correctedHistCosTheta->GetXaxis()->SetLabelSize(0);
+	// correctedHistCosTheta->GetXaxis()->SetLabelSize(0);
 
-	correctedHistCosTheta->GetYaxis()->SetTitle(Form("Events / (%.1f)", (cosThetaMax - cosThetaMin) / nCosThetaBins));
-	correctedHistCosTheta->GetYaxis()->SetTitleOffset(1.1);
+	// correctedHistCosTheta->GetYaxis()->SetTitle(Form("Events / (%.1f)", (cosThetaMax - cosThetaMin) / nCosThetaBins));
+	// correctedHistCosTheta->GetYaxis()->SetTitleOffset(1.1);
 
-	correctedHistCosTheta->Draw("PE");
+	// correctedHistCosTheta->Draw("PE");
 
-	cosThetaPolarFuncFit->Draw("SAME");
+	// cosThetaPolarFuncFit->Draw("SAME");
 
-  	padCosTheta->Draw();
+  	// padCosTheta->Draw();
 
-  	TPaveStats* cosThetaStatbox = positionStatBox(correctedHistCosTheta);
-  	cosThetaStatbox->Draw();
+  	// TPaveStats* cosThetaStatbox = positionStatBox(correctedHistCosTheta);
+  	// cosThetaStatbox->Draw();
 
-	polarCanvas1D->cd(1);
+	// polarCanvas1D->cd(1);
 
-	// pull Distribution
-	TPad* padCosThetaPull = getPadPullDistribution(correctedHistCosTheta, cosThetaPolarFuncFit, cosThetafitResults);
+	// // pull Distribution
+	// TPad* padCosThetaPull = getPadPullDistribution(correctedHistCosTheta, cosThetaPolarFuncFit, cosThetafitResults);
 
-	// phi graph
-	polarCanvas1D->cd(2);
+	// // phi graph
+	// polarCanvas1D->cd(2);
 
-	TPad* padPhi = new TPad("padPhi", "padPhi", 0, 0.25, 1, 1.0);
-	padPhi->SetBottomMargin(0.03);
-	padPhi->SetRightMargin(0.01);
-	padPhi->SetLeftMargin(0.13);
-	padPhi->SetTicks(1, 1);
-	padPhi->Draw();
-	padPhi->cd();
+	// TPad* padPhi = new TPad("padPhi", "padPhi", 0, 0.25, 1, 1.0);
+	// padPhi->SetBottomMargin(0.03);
+	// padPhi->SetRightMargin(0.01);
+	// padPhi->SetLeftMargin(0.13);
+	// padPhi->SetTicks(1, 1);
+	// padPhi->Draw();
+	// padPhi->cd();
 
-	correctedHistPhi->SetMinimum(0);
+	// correctedHistPhi->SetMinimum(0);
 
-	correctedHistPhi->SetMarkerStyle(8);
-	correctedHistPhi->SetMarkerSize(1.5);
-	correctedHistPhi->SetMarkerColor(kBlack);
+	// correctedHistPhi->SetMarkerStyle(8);
+	// correctedHistPhi->SetMarkerSize(1.5);
+	// correctedHistPhi->SetMarkerColor(kBlack);
 	
-	correctedHistPhi->GetXaxis()->SetLabelSize(0);
+	// correctedHistPhi->GetXaxis()->SetLabelSize(0);
 
-	correctedHistPhi->GetYaxis()->SetTitle(Form("Events / (%.1f)", (Double_t)((phiMax - phiMin) / nPhiBins)));
-	correctedHistPhi->GetYaxis()->SetTitleOffset(1.1);
+	// correctedHistPhi->GetYaxis()->SetTitle(Form("Events / (%.1f)", (Double_t)((phiMax - phiMin) / nPhiBins)));
+	// correctedHistPhi->GetYaxis()->SetTitleOffset(1.1);
 
-	correctedHistPhi->Draw("PE");
+	// correctedHistPhi->Draw("PE");
 
-	phiPolarFuncFit->Draw("SAME");
+	// phiPolarFuncFit->Draw("SAME");
   	
-  	padPhi->Draw();
+  	// padPhi->Draw();
 
-  	TPaveStats* phiStatbox = positionStatBox(correctedHistPhi);
-  	phiStatbox->Draw();
+  	// TPaveStats* phiStatbox = positionStatBox(correctedHistPhi);
+  	// phiStatbox->Draw();
 
-	polarCanvas1D->cd(2);
+	// polarCanvas1D->cd(2);
 
-	// pull Distribution
-	TPad* padPhiPull = getPadPullDistribution(correctedHistPhi, phiPolarFuncFit, phifitResults);
+	// // pull Distribution
+	// TPad* padPhiPull = getPadPullDistribution(correctedHistPhi, phiPolarFuncFit, phifitResults);
 
-	// phi tilde graph
-	polarCanvas1D->cd(3);
+	// // phi tilde graph
+	// polarCanvas1D->cd(3);
 
-	TPad* padPhiTilde = new TPad("padPhiTilde", "padPhiTilde", 0, 0.25, 1, 1.0);
-	padPhiTilde->SetBottomMargin(0.03);
-	padPhiTilde->SetRightMargin(0.01);
-	padPhiTilde->SetLeftMargin(0.13);
-	padPhiTilde->SetTicks(1, 1);
-	padPhiTilde->Draw();
-	padPhiTilde->cd();
+	// TPad* padPhiTilde = new TPad("padPhiTilde", "padPhiTilde", 0, 0.25, 1, 1.0);
+	// padPhiTilde->SetBottomMargin(0.03);
+	// padPhiTilde->SetRightMargin(0.01);
+	// padPhiTilde->SetLeftMargin(0.13);
+	// padPhiTilde->SetTicks(1, 1);
+	// padPhiTilde->Draw();
+	// padPhiTilde->cd();
 
-	polarHistPhiTilde->SetMinimum(0);
+	// polarHistPhiTilde->SetMinimum(0);
 
-	polarHistPhiTilde->SetMarkerStyle(8);
-	polarHistPhiTilde->SetMarkerSize(1.5);
-	polarHistPhiTilde->SetMarkerColor(kBlack);
+	// polarHistPhiTilde->SetMarkerStyle(8);
+	// polarHistPhiTilde->SetMarkerSize(1.5);
+	// polarHistPhiTilde->SetMarkerColor(kBlack);
 	
-	polarHistPhiTilde->GetXaxis()->SetLabelSize(0);
+	// polarHistPhiTilde->GetXaxis()->SetLabelSize(0);
 
-	polarHistPhiTilde->GetYaxis()->SetTitle(Form("Events / (%.1f)", (Double_t)((phiMax - phiMin) / nPhiBins)));
-	polarHistPhiTilde->GetYaxis()->SetTitleOffset(1.1);
+	// polarHistPhiTilde->GetYaxis()->SetTitle(Form("Events / (%.1f)", (Double_t)((phiMax - phiMin) / nPhiBins)));
+	// polarHistPhiTilde->GetYaxis()->SetTitleOffset(1.1);
 
-	polarHistPhiTilde->Draw("PE");
+	// polarHistPhiTilde->Draw("PE");
 
-	phiTildePolarFuncFit->Draw("SAME");
+	// phiTildePolarFuncFit->Draw("SAME");
   	
-  	padPhiTilde->Draw();
+  	// padPhiTilde->Draw();
 
-  	TPaveStats* phiTildeStatbox = positionStatBox(polarHistPhiTilde);
-  	phiTildeStatbox->Draw();
+  	// TPaveStats* phiTildeStatbox = positionStatBox(polarHistPhiTilde);
+  	// phiTildeStatbox->Draw();
 
-	polarCanvas1D->cd(3);
+	// polarCanvas1D->cd(3);
 
-	// pull Distribution
-	TPad* padPhiTildePull = getPadPullDistribution(polarHistPhiTilde, phiTildePolarFuncFit, phiTildefitResults);
+	// // pull Distribution
+	// TPad* padPhiTildePull = getPadPullDistribution(polarHistPhiTilde, phiTildePolarFuncFit, phiTildefitResults);
 
-	gSystem->mkdir("DistributionFitsMC", kTRUE);
-  	polarCanvas1D->SaveAs(Form("DistributionFitsMC/RecoMC_fit1D_lambdaCosTheta%.2fPhi%.2fThetaPhi%.2f.png", lambdaTheta0, lambdaPhi0, lambdaThetaPhi0), "RECREATE");
+	// gSystem->mkdir("DistributionFitsMC", kTRUE);
+  	// polarCanvas1D->SaveAs(Form("DistributionFitsMC/RecoMC_fit1D_lambdaCosTheta%.2fPhi%.2fThetaPhi%.2f.png", lambdaTheta0, lambdaPhi0, lambdaThetaPhi0), "RECREATE");
 
 	return;
 }
