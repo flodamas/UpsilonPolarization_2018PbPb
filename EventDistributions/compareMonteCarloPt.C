@@ -98,15 +98,19 @@ TEfficiency* getHydjetGenPt(Int_t iState = 1){
 	TClonesArray* Gen_QQ_4mom = nullptr;
 	TClonesArray* Gen_mu_4mom = nullptr;
 
+	Int_t Centrality;
+
 	Short_t Gen_QQ_whichRec[1000];
 
 	Short_t Gen_QQ_mupl_idx[1000];
 	Short_t Gen_QQ_mumi_idx[1000];
 
 	Short_t Gen_QQ_size;
+	Short_t Reco_QQ_sign[1000];
 
 	// event variables
 	OniaTree->SetBranchAddress("Gen_weight", &Gen_weight);
+	OniaTree->SetBranchAddress("Centrality", &Centrality);
 
 	// gen-level variables
 	OniaTree->SetBranchAddress("Gen_QQ_size", &Gen_QQ_size);
@@ -116,6 +120,8 @@ TEfficiency* getHydjetGenPt(Int_t iState = 1){
 	OniaTree->SetBranchAddress("Gen_mu_4mom", &Gen_mu_4mom);
 	OniaTree->SetBranchAddress("Gen_QQ_mupl_idx", Gen_QQ_mupl_idx);
 	OniaTree->SetBranchAddress("Gen_QQ_mumi_idx", Gen_QQ_mumi_idx);
+
+	OniaTree->SetBranchAddress("Reco_QQ_sign", &Reco_QQ_sign);
 
 	TEfficiency* hAccPt = new TEfficiency("", ";p^{#varUpsilon}_{T} (GeV/c);Acceptance of #varUpsilon(1S)", NPtFineBins, gPtFineBinning);
 
@@ -138,11 +144,18 @@ TEfficiency* getHydjetGenPt(Int_t iState = 1){
 
 		OniaTree->GetEntry(iEvent);
 
+		// if (Centrality >= 2 * gCentralityBinMax) continue;
+
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
 			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
 
 			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue; // upsilon within fiducial region
+
+			// // go to reco level
+			// Int_t iReco = Gen_QQ_whichRec[iGen];
+
+			// if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
 
 			// single-muon acceptance cuts
 			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
