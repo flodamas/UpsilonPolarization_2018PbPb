@@ -55,7 +55,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	std::string bkgShapeName[nCosThetaBinsMax][nPhiBinsMax];
 
 	// fill the background shape array with ChebychevOrder2
-	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
+	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
 
 	// exceptions
 	// bkgShapeName[1][1] = "ChebychevOrder1";
@@ -73,9 +73,14 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// bkgShapeName[2][2] = "ChebychevOrder1";
 	// bkgShapeName[3][2] = "ChebychevOrder1";
 
+	// 12 < pT < 20
+	bkgShapeName[1][4] = "ChebychevOrder1";
+	bkgShapeName[3][4] = "ChebychevOrder0";
+	bkgShapeName[4][0] = "ChebychevOrder1";
+	bkgShapeName[4][1] = "ChebychevOrder0";
 
 	// fill the background shape array with ExpTimesErr
-	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
+	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
 
 	// // exceptions
 	// bkgShapeName[3][0] = "ChebychevOrder1";
@@ -152,7 +157,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			double efficiency = effMapCosThetaPhi->GetEfficiency(iGlobalBin);
 
 			// calculate weight
-			weight = 1. / (acceptance * efficiency);
+			if (acceptance = 0 || efficiency = 0) weight = 0.;
+			else weight = 1. / (acceptance * efficiency);
 
 			weightMap->SetBinContent(iCosTheta + 1, iPhi + 1, weight);
 
@@ -194,7 +200,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			// yieldMap->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh));
 			// yieldMap->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relEffUncHigh));
 			
-			yieldMap->SetBinError(iCosTheta + 1, iPhi +1, yield1SUnc);
+			yieldMap->SetBinError(iCosTheta + 1, iPhi + 1, yield1SUnc);
 
 			// yieldMap->SetBinError(iCosTheta + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
 
@@ -205,7 +211,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 
 			// fill uncertainty histograms
-			relSystEffCosThetaPhi->SetBinContent(iCosTheta +1, iPhi + 1, relSystUnc);
+			relSystEffCosThetaPhi->SetBinContent(iCosTheta + 1, iPhi + 1, relSystUnc);
 			statHighEffCosThetaPhi->SetBinContent(iCosTheta + 1, iPhi + 1, relEffUncHigh);
 			statLowEffCosThetaPhi->SetBinContent(iCosTheta + 1, iPhi + 1, relEffUncLow);
 			statHighAccCosThetaPhi->SetBinContent(iCosTheta + 1, iPhi + 1, relAccUncHigh);
