@@ -15,7 +15,7 @@
 void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	const char* inputFileName = Form("OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 
-	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDatasetTest_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
@@ -161,6 +161,8 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
 		}
 
+		if (iEvent == 10000) break;
+		
 		OniaTree->GetEntry(iEvent);
 
 		// event selection
@@ -349,6 +351,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			double dimuWeightDownError_squared = pow(dimuWeight_trk_statDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_muId_statDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_trig_statDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_trk_systDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_muId_systDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_trig_systDown - dimuWeight_nominal, 2.0);
 
 			errorWeightDown = weight * sqrt(dimuWeightDownError_squared);
+			cout << "errorWeightDown: " << errorWeightDown << endl;
 
 			//cout << "Weight from muon scale factors = " << dimuWeight_nominal << " - " << sqrt(dimuWeightDownError_squared) << " (" << 100. * sqrt(dimuWeightDownError_squared) / dimuWeight_nominal << "% relative)" << endl;
 
@@ -356,6 +359,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 			errorWeightUp = weight * sqrt(dimuWeightUpError_squared);
 
+			cout << "errorWeightUp: " << errorWeightUp << endl;
 			// fill the dataset
 
 			recoCat.setLabel((allGood) ? "selected" : "rejected");
@@ -469,4 +473,5 @@ void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Doub
 
     c->cd(3);
     phiTildeframe->Draw();
+
 }
