@@ -83,6 +83,9 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 	RooRealVar eventWeightCSVar("eventWeightCS", "event-by-event weight (Ncoll x MC gen weight x muon scale factors x polarization in CS)", 0, 100000);
 	RooRealVar eventWeightHXVar("eventWeightHX", "event-by-event weight (Ncoll x MC gen weight x muon scale factors x polarization in HX)", 0, 100000);
 
+	RooRealVar errorWeightUpVar("errorWeightUp", "event-by-event error up", 0, 100000);
+	RooRealVar errorWeightDownVar("errorWeightDown", "event-by-event error down", 0, 100000);
+
 	Float_t lowMassCut = 8, highMassCut = 11;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
@@ -118,8 +121,8 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 	lambdaThetaPhiVar.setVal(lambdaThetaPhi);
 	lambdaThetaPhiVar.setConstant(kTRUE);
 
-	RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
-	RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
+	RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, eventWeightCSVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
+	RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, eventWeightHXVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
 
 	// loop variables
 	Float_t nColl, weight = 0, errorWeightDown = 0, errorWeightUp = 0, totalWeightCS = 0, totalWeightHX = 0, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0;
@@ -337,6 +340,9 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 			eventWeightCSVar.setAsymError(errorWeightDown, errorWeightUp);
 			eventWeightHXVar.setAsymError(errorWeightDown, errorWeightUp);
 
+			errorWeightUpVar = errorWeightUp;
+			errorWeightDownVar = errorWeightDown;
+
 			massVar = Reco_QQ_4mom->M();
 			yVar = fabs(Reco_QQ_4mom->Rapidity());
 			ptVar = Reco_QQ_4mom->Pt();
@@ -376,8 +382,8 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 				else phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
-			datasetCS.add(RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);
-			datasetHX.add(RooArgSet(centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightHX, errorWeightDown, errorWeightUp);
+			datasetCS.add(RooArgSet(centVar, eventWeightCSVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);
+			datasetHX.add(RooArgSet(centVar, eventWeightHXVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightHX, errorWeightDown, errorWeightUp);
 
 			// fill the graphs for reco events
 
