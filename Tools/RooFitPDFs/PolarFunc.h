@@ -80,3 +80,44 @@ TF2* getGeneralPolarFunc(Float_t maxYield) {
 
 	return generalPolarFunc;
 }
+
+double discontPolarFunc(double *xy, double *par) {
+	double x = xy[0];
+	double y = xy[1];
+
+	double normFactor = par[0];
+	double lambdaTheta = par[1];
+	double lambdaPhi = par[2];
+	double lambdaThetaPhi = par[3];
+
+	if (fabs(y) < 36) {
+		return 0;
+	}
+	else {
+		return normFactor / (3 + lambdaTheta) * (1 + lambdaTheta * x * x + lambdaPhi * (1 - x * x) * TMath::Cos(2. * y * TMath::Pi() / 180.) + lambdaThetaPhi * TMath::Sqrt(1 - x * x) * x * TMath::Cos(y * TMath::Pi() / 180.));
+	}
+}
+
+TF2* getDiscontPolarFunc(Float_t maxYield) {
+	TF2* generalPolarFunc = new TF2("generalPolarFunc", &discontPolarFunc,  -1, 1, -180, 180, 4);
+
+	generalPolarFunc->SetParameter(0, 0.5 * maxYield);
+	generalPolarFunc->SetParameter(1, 0);
+	generalPolarFunc->SetParameter(2, 0);
+	generalPolarFunc->SetParameter(3, 0);
+ 
+	generalPolarFunc->SetParLimits(1, -2, 2);
+	generalPolarFunc->SetParLimits(2, -2, 2);
+	generalPolarFunc->SetParLimits(3, -2, 2);
+
+	generalPolarFunc->SetParName(0, "normFactor");
+	generalPolarFunc->SetParName(1, "lambdaTheta");
+	generalPolarFunc->SetParName(2, "lambdaPhi");
+	generalPolarFunc->SetParName(3, "lambdaThetaPhi");
+
+	TCanvas* canvas = new TCanvas("canvas", "canvas", 600, 500);
+
+	generalPolarFunc->Draw("COLZ");
+
+	return generalPolarFunc;
+}
