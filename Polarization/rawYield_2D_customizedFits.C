@@ -157,7 +157,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			double efficiency = effMapCosThetaPhi->GetEfficiency(iGlobalBin);
 
 			// calculate weight
-			if (acceptance = 0 || efficiency = 0) weight = 0.;
+			if (acceptance == 0 || efficiency == 0) weight = 0.;
 			else weight = 1. / (acceptance * efficiency);
 
 			weightMap->SetBinContent(iCosTheta + 1, iPhi + 1, weight);
