@@ -54,36 +54,36 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	std::string bkgShapeName[nCosThetaBinsMax][nPhiBinsMax];
 
-	// // fill the background shape array with ChebychevOrder2
-	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
-
-	// // exceptions
-	// // bkgShapeName[1][1] = "ChebychevOrder1";
-	// // bkgShapeName[1][3] = "ChebychevOrder1";
-	// // bkgShapeName[1][4] = "ChebychevOrder1";
-	// // bkgShapeName[1][5] = "ChebychevOrder1";
-
-	// // bkgShapeName[2][2] = "ChebychevOrder1";
-
-	// // bkgShapeName[3][0] = "ChebychevOrder1";
-	// // bkgShapeName[3][5] = "ChebychevOrder1";
-
-	// // bkgShapeName[1][1] = "ChebychevOrder1";
-	// // bkgShapeName[2][1] = "ChebychevOrder1";
-	// // bkgShapeName[2][2] = "ChebychevOrder1";
-	// // bkgShapeName[3][2] = "ChebychevOrder1";
-
-	// // CS, 12 < pT < 20
-	// bkgShapeName[1][4] = "ChebychevOrder1";
-	// bkgShapeName[3][4] = "ChebychevOrder0";
-	// bkgShapeName[4][0] = "ChebychevOrder1";
-	// bkgShapeName[4][1] = "ChebychevOrder0";
-
-	// fill the background shape array with ExpTimesErr
-	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
+	// fill the background shape array with ChebychevOrder2
+	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
 
 	// exceptions
+	// bkgShapeName[1][1] = "ChebychevOrder1";
+	// bkgShapeName[1][3] = "ChebychevOrder1";
+	// bkgShapeName[1][4] = "ChebychevOrder1";
+	// bkgShapeName[1][5] = "ChebychevOrder1";
+
+	// bkgShapeName[2][2] = "ChebychevOrder1";
+
 	// bkgShapeName[3][0] = "ChebychevOrder1";
+	// bkgShapeName[3][5] = "ChebychevOrder1";
+
+	// bkgShapeName[1][1] = "ChebychevOrder1";
+	// bkgShapeName[2][1] = "ChebychevOrder1";
+	// bkgShapeName[2][2] = "ChebychevOrder1";
+	// bkgShapeName[3][2] = "ChebychevOrder1";
+
+	// CS, 12 < pT < 20
+	bkgShapeName[1][4] = "ChebychevOrder1";
+	bkgShapeName[3][4] = "ChebychevOrder0";
+	bkgShapeName[4][0] = "ChebychevOrder1";
+	bkgShapeName[4][1] = "ChebychevOrder0";
+
+	// // fill the background shape array with ExpTimesErr
+	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
+
+	// // exceptions
+	// // bkgShapeName[3][0] = "ChebychevOrder1";
 
 	/// "Standard" procedure: extract the yields per bin
 	TH2D* yieldMap = new TH2D("yieldMap", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
@@ -304,12 +304,39 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		double lambdaThetaPhiVal = fitResults->Parameter(3);
 		double lambdaThetaPhiErr = fitResults->ParError(3);
 
-		TLegend legend2(.17, .60, .28, .84);
+		double lambdaTildeVal = (lambdaThetaVal + 3. * lambdaPhiVal) / (1. - lambdaPhiVal); 
+		double lambdaTildeErr = TMath::Hypot(1. / (1. - lambdaPhiVal) * lambdaPhiErr, (3. - lambdaThetaVal - 6. * lambdaPhiVal) / TMath::Power((1. - lambdaPhiVal), 2) * lambdaPhiErr);
+
+		RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.2, 1.2);
+		RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.2, 1.2);
+		RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1.2, 1.2);
+		RooRealVar lambdaTilde("lambdaTilde", "lambdaTilde", -1.2, 1.2);
+
+		lambdaTheta.setVal(lambdaThetaVal);
+		lambdaTheta.setError(lambdaThetaErr);
+
+		lambdaPhi.setVal(lambdaPhiVal);
+		lambdaPhi.setError(lambdaPhiErr);
+
+		lambdaThetaPhi.setVal(lambdaThetaPhiVal);
+		lambdaThetaPhi.setError(lambdaThetaPhiErr);
+
+		lambdaTilde.setVal(lambdaTildeVal);
+		lambdaTilde.setError(lambdaTildeErr);
+
+		RooArgSet* savedParams = new RooArgSet(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde);
+
+		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
+		SavePolarizationFitParameters(savedParams, "rootFit", fitModelName);
+
+		TLegend legend2(.17, .55, .28, .84);
 		legend2.SetTextSize(.05);
 		legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
 		legend2.AddEntry(polarFunc2D, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr), "l");
 		legend2.AddEntry((TObject*)0, Form("                       #lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr), "");
 		legend2.AddEntry((TObject*)0, Form("                       #lambda_{#theta#varphi} = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr), "");
+		legend2.AddEntry((TObject*)0, Form("                       #tilde{#lambda} = %.2f #pm %.2f", lambdaTildeVal, lambdaTildeErr), "");
 		legend2.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
 
 		legend2.DrawClone();
