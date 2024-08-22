@@ -382,6 +382,30 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	return signalYields;
 }
 
+RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooRealVar* lambdaThetaPhi, RooRealVar* lambdaTilde, const char* methodName, const char* modelName) {
+	RooArgSet polarParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
+
+	char paramsFileName[512];
+	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s.txt", methodName, modelName);
+
+	cout << paramsFileName << endl;
+	if (fopen(paramsFileName, "r")) {
+		cout << endl
+		     << "Found" << paramsFileName << " file, will read polarization parameters from it" << endl;
+		polarParams.readFromFile(paramsFileName);
+	} else {
+		cout << endl
+		     << paramsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << endl;
+		exit(1);
+	}
+
+	cout << endl
+	     << "Polarization parameter values:" << endl;
+	polarParams.Print("v");
+
+	return polarParams;
+}
+
 void SaveCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName) {
 	gSystem->mkdir("InvMassFits", kTRUE);
 	canvasName->SaveAs(Form("InvMassFits/CorrectedData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");

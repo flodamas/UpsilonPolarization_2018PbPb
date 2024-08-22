@@ -106,18 +106,14 @@ TF2* getDiscontPolarFunc(Float_t maxYield) {
 	generalPolarFunc->SetParameter(2, 0);
 	generalPolarFunc->SetParameter(3, 0);
  
-	generalPolarFunc->SetParLimits(1, -2, 2);
-	generalPolarFunc->SetParLimits(2, -2, 2);
-	generalPolarFunc->SetParLimits(3, -2, 2);
+	generalPolarFunc->SetParLimits(1, -1.2, 1.2);
+	generalPolarFunc->SetParLimits(2, -1.2, 1.2);
+	generalPolarFunc->SetParLimits(3, -1.2, 1.2);
 
 	generalPolarFunc->SetParName(0, "normFactor");
 	generalPolarFunc->SetParName(1, "lambdaTheta");
 	generalPolarFunc->SetParName(2, "lambdaPhi");
 	generalPolarFunc->SetParName(3, "lambdaThetaPhi");
-
-	TCanvas* canvas = new TCanvas("canvas", "canvas", 600, 500);
-
-	generalPolarFunc->Draw("COLZ");
 
 	return generalPolarFunc;
 }
