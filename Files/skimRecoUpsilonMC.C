@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../Tools/Parameters/PhaseSpace.h"
+
 #include "../Tools/Parameters/CentralityValues.h"
 #include "../Tools/Parameters/EfficiencyWeights.h"
 #include "../Tools/Parameters/MuonScaleFactors.h"
@@ -181,13 +183,16 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 			// acceptance
 
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
+
+			if (!MuonSimpleAcc(*Reco_mupl_4mom)) continue;
+
 			double Reco_mupl_eta = Reco_mupl_4mom->Eta();
 			double Reco_mupl_pt = Reco_mupl_4mom->Pt();
 
-			if (fabs(Reco_mupl_4mom->Eta()) > 2.4) continue;
-			if (Reco_mupl_4mom->Pt() < gMuonPtCut) continue;
-
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
+
+			if (!MuonSimpleAcc(*Reco_mumi_4mom)) continue;
+
 			double Reco_mumi_eta = Reco_mumi_4mom->Eta();
 			double Reco_mumi_pt = Reco_mumi_4mom->Pt();
 
@@ -332,7 +337,7 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 			polarWeightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
 
 			totalWeightCS = weight * polarWeightCS;
-			totalWeightHX = weight * polarWeightHX; 
+			totalWeightHX = weight * polarWeightHX;
 
 			eventWeightCSVar = weight * polarWeightCS;
 			eventWeightHXVar = weight * polarWeightHX;
@@ -357,14 +362,18 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 
 			if (cosThetaCSVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiCSVar.getVal() - 135) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
-				else phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
+				if ((phiCSVar.getVal() - 135) < -180)
+					phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
+				else
+					phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
 			}
 
 			else if (cosThetaCSVar.getVal() > 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiCSVar.getVal() - 45) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
-				else phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
+				if ((phiCSVar.getVal() - 45) < -180)
+					phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
+				else
+					phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
 			}
 
 			cosThetaHXVar = muPlus_HX.CosTheta();
@@ -372,14 +381,18 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 
 			if (cosThetaHXVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiHXVar.getVal() - 135) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
-				else phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
+				if ((phiHXVar.getVal() - 135) < -180)
+					phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
+				else
+					phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
 			}
 
 			else if (cosThetaHXVar.getVal() > 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiHXVar.getVal() - 45) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
-				else phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
+				if ((phiHXVar.getVal() - 45) < -180)
+					phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
+				else
+					phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
 			datasetCS.add(RooArgSet(centVar, eventWeightCSVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);
@@ -417,8 +430,7 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 
 // check the dataset distributions
 
-void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0){
-
+void draw2DHist(const char* refFrameName = "CS", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	const char* FileName = Form("Y1SReconstructedMCWeightedDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* file = openFile(FileName);
@@ -445,11 +457,11 @@ void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Doub
 	c->Divide(3);
 
 	c->cd(1);
-    cosThetaframe->Draw();
+	cosThetaframe->Draw();
 
-    c->cd(2);
-    phiframe->Draw();
+	c->cd(2);
+	phiframe->Draw();
 
-    c->cd(3);
-    phiTildeframe->Draw();
+	c->cd(3);
+	phiTildeframe->Draw();
 }
