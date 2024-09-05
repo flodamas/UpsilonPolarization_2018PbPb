@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../Tools/Parameters/PhaseSpace.h"
+
 #include "AccEffHelpers.h"
 
 //#include "../Tools/Style/FitDistributions.h"
@@ -41,7 +43,7 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	// empty frame for the axes
 	TH1D* frameHist = new TH1D("frameHist", "", NCosThetaBinsHX, CosThetaBinningHX);
 
-	frameHist->Draw(); 
+	frameHist->Draw();
 
 	accHist->SetLineWidth(3);
 	accHist->Draw("PL E0 SAME");
@@ -55,11 +57,13 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 	legend.DrawLatexNDC(.55, .72, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
-	if (strstr(accHist->GetName(), "CS")) frameHist->SetXTitle(CosThetaVarTitle("CS"));
-	else frameHist->SetXTitle(CosThetaVarTitle("HX"));
+	if (strstr(accHist->GetName(), "CS"))
+		frameHist->SetXTitle(CosThetaVarTitle("CS"));
+	else
+		frameHist->SetXTitle(CosThetaVarTitle("HX"));
 
 	frameHist->SetYTitle(TEfficiencyAccMainTitle(iState));
-	
+
 	frameHist->GetXaxis()->CenterTitle();
 	frameHist->GetYaxis()->CenterTitle();
 
@@ -82,9 +86,9 @@ const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
 void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	// // Read GenOnly Nofilter file
 	// const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-	
+
 	// Read GenOnly Nofilter file with polarization weights
-	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);	
+	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -165,7 +169,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
-			withinAcceptance = (fabs(gen_mupl_LV->Eta()) < 2.4) && (gen_mupl_LV->Pt() > gMuonPtCut) && (fabs(gen_mumi_LV->Eta()) < 2.4) && (gen_mumi_LV->Pt() > gMuonPtCut);
+			withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV);
 
 			// Reference frame transformations
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);

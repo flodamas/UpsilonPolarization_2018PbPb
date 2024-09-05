@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../Tools/Parameters/PhaseSpace.h"
+
 #include "AccEffHelpers.h"
 
 //#include "../Tools/Style/FitDistributions.h"
@@ -156,7 +158,7 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	// empty frame for the axes
 	TH1D* frameHist = new TH1D("frameHist", "", NCosThetaBinsHX, CosThetaBinningHX);
 
-	frameHist->Draw(); 
+	frameHist->Draw();
 
 	effHist->SetLineWidth(3);
 	effHist->Draw("PL E0 SAME");
@@ -169,11 +171,13 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	legend.DrawLatexNDC(.55, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
-	if (strstr(effHist->GetName(), "CS")) frameHist->SetXTitle(CosThetaVarTitle("CS"));
-	else frameHist->SetXTitle(CosThetaVarTitle("HX"));
+	if (strstr(effHist->GetName(), "CS"))
+		frameHist->SetXTitle(CosThetaVarTitle("CS"));
+	else
+		frameHist->SetXTitle(CosThetaVarTitle("HX"));
 
 	frameHist->SetYTitle(TEfficiencyMainTitle(iState));
-	
+
 	frameHist->GetXaxis()->CenterTitle();
 	frameHist->GetYaxis()->CenterTitle();
 
@@ -377,16 +381,12 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 			// positive muon first
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
-			if (genLorentzVector->Pt() < gMuonPtCut) continue;
-
-			if (fabs(genLorentzVector->Eta()) > 2.4) continue;
+			if (!MuonSimpleAcc(*genLorentzVector)) continue;
 
 			// then negative muon
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
-			if (genLorentzVector->Pt() < gMuonPtCut) continue;
-
-			if (fabs(genLorentzVector->Eta()) > 2.4) continue;
+			if (!MuonSimpleAcc(*genLorentzVector)) continue;
 
 			// go to reco level
 			Int_t iReco = Gen_QQ_whichRec[iGen];
@@ -503,8 +503,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				// cout << "eventWeight: " << eventWeight << endl;
 				// cout << "dimuonPtWeight: " << dimuonPtWeight << endl;
 				// cout << "dimuWeight_nominal: " << dimuWeight_nominal << endl;
-				// cout << "weightCS: " << weightCS << endl;	
-				// cout << "totalWeightCS: " << totalWeightCS << endl;		
+				// cout << "weightCS: " << weightCS << endl;
+				// cout << "totalWeightCS: " << totalWeightCS << endl;
 
 				hNominalEffCS->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
 				hNominalEffHX->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
@@ -691,7 +691,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", gUpsilonState), kTRUE);
 	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults.root", iState);
 	TFile outputFile(outputFileName, "UPDATE");
-  
+
 	hNominalEffCS->Write();
 	hNominalEffHX->Write();
 	hSystCS3D->Write();

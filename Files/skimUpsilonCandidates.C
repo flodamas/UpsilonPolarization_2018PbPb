@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../Tools/Parameters/PhaseSpace.h"
+
 #include "../ReferenceFrameTransform/Transformations.h"
 
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
@@ -133,13 +135,11 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 
-			if (fabs(Reco_mupl_4mom->Eta()) > 2.4) continue;
-			if (Reco_mupl_4mom->Pt() < gMuonPtCut) continue;
+			if (!MuonSimpleAcc(*Reco_mupl_4mom)) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
-			if (fabs(Reco_mumi_4mom->Eta()) > 2.4) continue;
-			if (Reco_mumi_4mom->Pt() < gMuonPtCut) continue;
+			if (!MuonSimpleAcc(*Reco_mumi_4mom)) continue;
 
 			// get positive muon's coordinates in the studied reference frames
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);
@@ -168,14 +168,18 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			if (cosThetaCSVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiCSVar.getVal() - 135) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
-				else phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
+				if ((phiCSVar.getVal() - 135) < -180)
+					phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
+				else
+					phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
 			}
 
 			else if (cosThetaCSVar.getVal() > 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiCSVar.getVal() - 45) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
-				else phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
+				if ((phiCSVar.getVal() - 45) < -180)
+					phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
+				else
+					phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
 			}
 
 			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar));
@@ -186,14 +190,18 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			if (cosThetaHXVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiHXVar.getVal() - 135) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
-				else phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
+				if ((phiHXVar.getVal() - 135) < -180)
+					phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
+				else
+					phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
 			}
 
 			else if (cosThetaHXVar.getVal() > 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiHXVar.getVal() - 45) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
-				else phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
+				if ((phiHXVar.getVal() - 45) < -180)
+					phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
+				else
+					phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
 			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar));
