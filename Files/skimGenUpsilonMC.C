@@ -1,17 +1,3 @@
-#include "TROOT.h"
-#include "TStyle.h"
-#include "TFile.h"
-#include "TNtuple.h"
-#include "TRandom3.h"
-#include "TVector3.h"
-#include "TRotation.h"
-#include "TLorentzVector.h"
-#include "TClonesArray.h"
-
-#include <iostream>
-#include <fstream>
-#include <cmath>
-
 #include "../Tools/BasicHeaders.h"
 
 #include "../AnalysisParameters.h"
