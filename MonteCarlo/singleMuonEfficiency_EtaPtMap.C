@@ -50,12 +50,15 @@ TLine* MyLine(float x1, float y1, float x2, float y2, Color_t lineColor = kBlack
 TLine* drawTrigger2018acc(float etaMin = 1., float ptMax = 3., Color_t lineColor = kMagenta, int lineStyle = 1, int lineWidth = 3) {
 	float eta1 = 1.2, eta2 = 2.1, eta3 = 2.4;
 
-	float pt1 = 3.5, pt2 = 1.5;
+	float pt1 = 3.5, pt1prime = 5.47 - 1.89 * eta1, pt2 = 1.5;
 
 	auto* line1 = MyLine(etaMin, pt1, eta1, pt1, lineColor, lineStyle, lineWidth);
 	if (pt1 < ptMax && etaMin < eta1) line1->Draw("l");
 
-	auto* line2 = MyLine(eta1, pt1, eta2, pt2, lineColor, lineStyle, lineWidth);
+	auto* line2prime = MyLine(eta1, pt1, eta1, pt1prime, lineColor, lineStyle, lineWidth);
+	if (pt1prime < ptMax) line2prime->Draw("l");	
+
+	auto* line2 = MyLine(eta1, pt1prime, eta2, pt2, lineColor, lineStyle, lineWidth);
 	if (pt2 < ptMax) line2->Draw("l");
 
 	auto* line3 = MyLine(eta2, pt2, eta3, pt2, lineColor, lineStyle, lineWidth);
@@ -203,7 +206,7 @@ void singleMuonEfficiency_EtaPtMap() {
 
 	auto* triggerAcc = drawTrigger2018acc(0, 6);
 
-	auto* legend = new TLegend(.17, .25, .4, .2);
+	auto* legend = new TLegend(.14, .25, .38, .2);
 	legend->AddEntry(triggerAcc, "acceptance for 2018 PbPb data", "l");
 	legend->Draw();
 
