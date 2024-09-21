@@ -285,7 +285,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		frameHist->SetStats(0);
 
 		if (!isRange0to1)
-			frameHist->GetZaxis()->SetRangeUser(mapCosThetaPhi->GetMinimum(), mapCosThetaPhi->GetMaximum());
+			frameHist->GetZaxis()->SetRangeUser(0, mapCosThetaPhi->GetMaximum());
 		else
 			frameHist->GetZaxis()->SetRangeUser(0, 1);
 	}
