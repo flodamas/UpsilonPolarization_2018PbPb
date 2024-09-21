@@ -337,20 +337,20 @@ Double_t ComputeSignalSignificance(RooWorkspace& wspace, Int_t iState = 1) {
 	return signalYield / sqrt(signalYield + bkgYield);
 }
 
-void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName) {
+void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName, const char* extraString = "") {
 	gSystem->mkdir("../SignalExtraction/SignalYields/", kTRUE);
-	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName));
+	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/%s_%s%s.txt", bkgShapeName, fitModelName, extraString));
 }
 
-void SaveRawDataSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName) {
+void SaveRawDataSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName, const char* extraString = "") {
 	gSystem->mkdir("../SignalExtraction/SignalYields/", kTRUE);
-	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/RawData_%s_%s.txt", bkgShapeName, fitModelName));
+	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/RawData_%s_%s%s.txt", bkgShapeName, fitModelName, extraString));
 }
 
-void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName, const char* modelName) {
+void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName, const char* modelName, const char* extraString = "") {
 	gSystem->mkdir("../Polarization/ParametersResults/", kTRUE);
 
-	const char* fileName = Form("../Polarization/ParametersResults/%s_%s.txt", methodName, modelName);
+	const char* fileName = Form("../Polarization/ParametersResults/%s_%s%s.txt", methodName, modelName, extraString);
 	parameters->writeToFile(fileName);
 
 	auto list = parameters->contentsString();
@@ -358,11 +358,11 @@ void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName
 	cout << "\n[Polarization] fit results for parameters (" << list << ") saved in " << fileName << endl;
 }
 
-RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName) {
+RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName, const char* extraString = "") {
 	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
 	char yieldsFileName[512];
-	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/SignalYields/%s_%s.txt", bkgShapeName, fitModelName);
+	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/SignalYields/%s_%s%s.txt", bkgShapeName, fitModelName, estraString);
 
 	cout << yieldsFileName << endl;
 	if (fopen(yieldsFileName, "r")) {
@@ -382,11 +382,11 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	return signalYields;
 }
 
-RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooRealVar* lambdaThetaPhi, RooRealVar* lambdaTilde, const char* methodName, const char* modelName) {
+RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooRealVar* lambdaThetaPhi, RooRealVar* lambdaTilde, const char* methodName, const char* modelName, const char* extraString = "") {
 	RooArgSet polarParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
 
 	char paramsFileName[512];
-	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s.txt", methodName, modelName);
+	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s%s.txt", methodName, modelName, extraString);
 
 	cout << paramsFileName << endl;
 	if (fopen(paramsFileName, "r")) {
@@ -411,9 +411,9 @@ void SaveCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitMo
 	canvasName->SaveAs(Form("InvMassFits/CorrectedData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
 }
 
-void SaveRawDataCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName) {
+void SaveRawDataCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName, const char* extraString = "") {
 	gSystem->mkdir("InvMassFits", kTRUE);
-	canvasName->SaveAs(Form("InvMassFits/RawData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
+	canvasName->SaveAs(Form("InvMassFits/RawData_%s_%s%s.png", bkgShapeName, fitModelName, extraString), "RECREATE");
 }
 
 void calculateChi2(TH1D* standardCorrectedHist, TF1* PolarFunc, Int_t nCosThetaBins = 10) {

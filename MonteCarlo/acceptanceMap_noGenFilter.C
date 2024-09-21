@@ -33,7 +33,7 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 	accMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f.png", iState, accMap->GetName(), lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
+	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f_2018Acc.png", iState, accMap->GetName(), lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
 }
 
 void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
@@ -73,7 +73,7 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
 
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f.png", iState, accHist->GetName(), lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
+	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f_2018Acc.png", iState, accHist->GetName(), lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
 }
 
 const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
@@ -169,8 +169,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
-			withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV);
-
+			// withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV);
+			withinAcceptance = MuonWithin2018PbPbAcc(*gen_mupl_LV) && MuonWithin2018PbPbAcc(*gen_mumi_LV);
+			
 			// Reference frame transformations
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
 
@@ -237,7 +238,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 
 	/// save the results in a file for later usage
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults.root", iState);
+	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults_2018Acc.root", iState);
 	TFile outputFile(outputFileName, "UPDATE");
 
 	accMatrixCS->Write();
