@@ -176,9 +176,16 @@ TH2D* generateGeneralPolarizationHist(Int_t nCosThetaBins, Float_t cosThetaMin, 
 	polarCanvas2D->SetTopMargin(.15);
 	polarCanvas2D->SetLeftMargin(.1);
 
-	hdummy->GetZaxis()->SetRangeUser(0, generalPolarHist->GetMaximum());
+	Double_t maxYaxis = generalPolarHist->GetMaximum() * 1.4;
+
+	hdummy->GetZaxis()->SetRangeUser(0, maxYaxis);
 
 	generalPolarHist->GetZaxis()->SetMaxDigits(3);
+	generalPolarHist->GetZaxis()->SetRangeUser(0, maxYaxis);
+
+	generalPolarHist->SetRange(-1, -180, 0, 1, 180, maxYaxis);
+	generalPolarHist->SetMaximum(maxYaxis);
+	generalPolarHist->SetMinimum(0);
 
 	// Styles of the texts in the plot
 	TLatex* legend2 = new TLatex();

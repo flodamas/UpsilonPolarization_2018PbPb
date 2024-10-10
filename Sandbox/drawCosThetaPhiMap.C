@@ -2,7 +2,7 @@
 
 #include "../AnalysisParameters.h"
 
-TH2* DrawCosThetaPhiDistribution(RooDataSet* dataset, RooWorkspace& wspace, const char* frameAcronym = "CS", Int_t ptMin = 0, Int_t ptMax = 30) {
+TH2* DrawCosThetaPhiDistribution(RooDataSet* dataset, RooWorkspace& wspace, const char* frameAcronym = "CS", Int_t ptMin = 0, Int_t ptMax = 30, const char* extraString = "") {
 	Double_t massMin = 9., massMax = 11.;
 
 	Int_t nCosThetaBins = 20;
@@ -11,7 +11,7 @@ TH2* DrawCosThetaPhiDistribution(RooDataSet* dataset, RooWorkspace& wspace, cons
 	Int_t nPhiBins = 25;
 	Float_t phiMin = -200, phiMax = 300;
 
-	const char* histoName = Form("%s_cent%dto%d_pt%dto%dGeV", frameAcronym, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
+	const char* histoName = Form("%s_cent%dto%d_pt%dto%dGeV%s", frameAcronym, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, extraString);
 
 	wspace.import(*dataset);
 	RooRealVar cosThetaVar = *wspace.var(Form("cosTheta%s", frameAcronym));
@@ -50,7 +50,7 @@ TH2* DrawCosThetaPhiDistribution(RooDataSet* dataset, RooWorkspace& wspace, cons
 	return histo;
 }
 
-void drawCosThetaPhiMap(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/UpsilonSkimmedDataset.root") {
+void drawCosThetaPhiMap(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/UpsilonSkimmedDataset.root", const char* extraString = "") {
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -75,9 +75,9 @@ void drawCosThetaPhiMap(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename 
 	/// Draw and save the number of events(signal+background) plots in the 2D (costheta, phi) space
 	RooWorkspace wspace("workspace");
 
-	TH2* histoCS = DrawCosThetaPhiDistribution((RooDataSet*)f->Get("datasetCS"), wspace, "CS", ptMin, ptMax);
+	TH2* histoCS = DrawCosThetaPhiDistribution((RooDataSet*)f->Get("datasetCS"), wspace, "CS", ptMin, ptMax, extraString);
 
-	TH2* histoHX = DrawCosThetaPhiDistribution((RooDataSet*)f->Get("datasetHX"), wspace, "HX", ptMin, ptMax);
+	TH2* histoHX = DrawCosThetaPhiDistribution((RooDataSet*)f->Get("datasetHX"), wspace, "HX", ptMin, ptMax, extraString);
 
 	/// save the results in a file for later usage
 	gSystem->mkdir("frame_distrib", kTRUE);
@@ -92,8 +92,8 @@ void drawCosThetaPhiMap(Int_t ptMin = 0, Int_t ptMax = 30, const char* filename 
 	     << "CosTheta-Phi maps saved in " << outputFile.GetName() << endl;
 }
 
-void scanDrawCosThetaPhiMap(const char* filename = "../Files/UpsilonSkimmedDataset.root") {
+void scanDrawCosThetaPhiMap(const char* filename = "../Files/UpsilonSkimmedDataset.root", const char* extraString = "") {
 	for (Int_t idx = 0; idx < NPtBins; idx++) {
-		drawCosThetaPhiMap(gPtBinning[idx], gPtBinning[idx + 1], filename);
+		drawCosThetaPhiMap(gPtBinning[idx], gPtBinning[idx + 1], filename, extraString);
 	}
 }
