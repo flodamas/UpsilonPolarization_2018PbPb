@@ -148,7 +148,7 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, int iState
 	effMap->GetPaintedHistogram()->GetYaxis()->CenterTitle();
 
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effMap->GetName()), "RECREATE");
+	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s_2018Acc.png", iState, effMap->GetName()), "RECREATE");
 }
 
 void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t iState = gUpsilonState) {
@@ -187,7 +187,7 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
 
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effHist->GetName()), "RECREATE");
+	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s_2018Acc.png", iState, effHist->GetName()), "RECREATE");
 }
 
 // create the (cos theta, phi) map of the total efficiency (fully reweighted) for a given pT range
@@ -381,12 +381,14 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 			// positive muon first
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
-			if (!MuonSimpleAcc(*genLorentzVector)) continue;
+			// if (!MuonSimpleAcc(*genLorentzVector)) continue;
+			if (!MuonWithin2018PbPbAcc(*genLorentzVector)) continue;
 
 			// then negative muon
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
-			if (!MuonSimpleAcc(*genLorentzVector)) continue;
+			// if (!MuonSimpleAcc(*genLorentzVector)) continue;
+			if (!MuonWithin2018PbPbAcc(*genLorentzVector)) continue;
 
 			// go to reco level
 			Int_t iReco = Gen_QQ_whichRec[iGen];
@@ -689,7 +691,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", gUpsilonState), kTRUE);
-	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults.root", iState);
+	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults_2018Acc.root", iState);
 	TFile outputFile(outputFileName, "UPDATE");
 
 	hNominalEffCS->Write();
