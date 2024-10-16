@@ -162,7 +162,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 		}
 
 		if (iEvent == 10000) break;
-		
+
 		OniaTree->GetEntry(iEvent);
 
 		// event selection
@@ -186,16 +186,12 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			// positive muon first
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
-			if (genLorentzVector->Pt() < gMuonPtCut) continue;
-
-			if (fabs(genLorentzVector->Eta()) > 2.4) continue;
+			if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;
 
 			// then negative muon
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
-			if (genLorentzVector->Pt() < gMuonPtCut) continue;
-
-			if (fabs(genLorentzVector->Eta()) > 2.4) continue;
+			if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;
 
 			// go to reco level
 			Int_t iReco = Gen_QQ_whichRec[iGen];
@@ -370,7 +366,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			polarWeightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
 
 			totalWeightCS = weight * polarWeightCS;
-			totalWeightHX = weight * polarWeightHX; 
+			totalWeightHX = weight * polarWeightHX;
 
 			eventWeightCSVar = weight * polarWeightCS;
 			eventWeightHXVar = weight * polarWeightHX;
@@ -392,14 +388,18 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 			if (cosThetaCSVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiCSVar.getVal() - 135) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
-				else phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
+				if ((phiCSVar.getVal() - 135) < -180)
+					phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
+				else
+					phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
 			}
 
 			else if (cosThetaCSVar.getVal() > 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiCSVar.getVal() - 45) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
-				else phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
+				if ((phiCSVar.getVal() - 45) < -180)
+					phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
+				else
+					phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
 			}
 
 			cosThetaHXVar = muPlus_HX.CosTheta();
@@ -407,14 +407,18 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 			if (cosThetaHXVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiHXVar.getVal() - 135) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
-				else phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
+				if ((phiHXVar.getVal() - 135) < -180)
+					phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
+				else
+					phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
 			}
 
 			else if (cosThetaHXVar.getVal() > 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiHXVar.getVal() - 45) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
-				else phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
+				if ((phiHXVar.getVal() - 45) < -180)
+					phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
+				else
+					phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
 			datasetCS.add(RooArgSet(recoCat, centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);
@@ -438,8 +442,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 // check the dataset distributions
 
-void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0){
-
+void draw2DHist(const char* refFrameName = "CS", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	const char* FileName = Form("Y1SReconstructedMCWeightedDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* file = openFile(FileName);
@@ -466,12 +469,11 @@ void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Doub
 	c->Divide(3);
 
 	c->cd(1);
-    cosThetaframe->Draw();
+	cosThetaframe->Draw();
 
-    c->cd(2);
-    phiframe->Draw();
+	c->cd(2);
+	phiframe->Draw();
 
-    c->cd(3);
-    phiTildeframe->Draw();
-
+	c->cd(3);
+	phiTildeframe->Draw();
 }

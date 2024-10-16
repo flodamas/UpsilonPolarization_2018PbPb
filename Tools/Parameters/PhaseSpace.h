@@ -14,8 +14,8 @@ Bool_t MuonSimpleAcc(const TLorentzVector& muonLV) {
 	return (fabs(eta) < 2.4 && pt > 3.5);
 }
 
-Bool_t MuonCustomAcc(const TLorentzVector& muonLV) {
+Bool_t MuonUpsilonTriggerAcc(const TLorentzVector& muonLV) {
 	if (!MuonWithin2018PbPbAcc(muonLV)) return false; // minimal condition in any case
 
-	return muonLV.Pt() > 3.;
+	return muonLV.Pt() > 2.5; // threshold applied at L3
 }

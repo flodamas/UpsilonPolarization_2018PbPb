@@ -154,13 +154,13 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 			double Reco_mupl_eta = Reco_mupl_4mom->Eta();
 			double Reco_mupl_pt = Reco_mupl_4mom->Pt();
 
-			if (!MuonSimpleAcc(*Reco_mupl_4mom)) continue;
+			if (!MuonUpsilonTriggerAcc(*Reco_mupl_4mom)) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 			double Reco_mumi_eta = Reco_mumi_4mom->Eta();
 			double Reco_mumi_pt = Reco_mumi_4mom->Pt();
 
-			if (!MuonSimpleAcc(*Reco_mumi_4mom)) continue;
+			if (!MuonUpsilonTriggerAcc(*Reco_mumi_4mom)) continue;
 
 			// global AND tracker muons
 			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;

@@ -184,23 +184,11 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 
-			if (!MuonSimpleAcc(*Reco_mupl_4mom)) continue;
-
-			double Reco_mupl_eta = Reco_mupl_4mom->Eta();
-			double Reco_mupl_pt = Reco_mupl_4mom->Pt();
+			if (!MuonUpsilonTriggerAcc(*Reco_mupl_4mom)) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
-			if (!MuonSimpleAcc(*Reco_mumi_4mom)) continue;
-
-			double Reco_mumi_eta = Reco_mumi_4mom->Eta();
-			double Reco_mumi_pt = Reco_mumi_4mom->Pt();
-
-			/// reweight for the data/MC reco pT spectrum discrepancies
-			dimuonPtWeight = Get_RecoPtWeight(Reco_QQ_4mom->Rapidity(), Reco_QQ_4mom->Pt());
-
-			if (fabs(Reco_mumi_4mom->Eta()) > 2.4) continue;
-			if (Reco_mumi_4mom->Pt() < gMuonPtCut) continue;
+			if (!MuonUpsilonTriggerAcc(*Reco_mumi_4mom)) continue;
 
 			// global AND tracker muons
 			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
@@ -214,6 +202,12 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*Reco_QQ_4mom, *Reco_mupl_4mom);
+
+			double Reco_mupl_eta = Reco_mupl_4mom->Eta();
+			double Reco_mupl_pt = Reco_mupl_4mom->Pt();
+
+			double Reco_mumi_eta = Reco_mumi_4mom->Eta();
+			double Reco_mumi_pt = Reco_mumi_4mom->Pt();
 
 			/// muon scale factors
 
@@ -314,6 +308,9 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 			dimuWeight_trig_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_statDown;
 
 			/// now the overall event weight
+
+			// reweight for the data/MC reco pT spectrum discrepancies
+			dimuonPtWeight = Get_RecoPtWeight(Reco_QQ_4mom->Rapidity(), Reco_QQ_4mom->Pt());
 
 			weight = nColl * Gen_weight * dimuonPtWeight * dimuWeight_nominal;
 
