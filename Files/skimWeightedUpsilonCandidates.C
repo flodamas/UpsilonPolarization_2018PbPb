@@ -153,13 +153,11 @@ void skimWeightedUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD
 
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 
-			if (fabs(Reco_mupl_4mom->Eta()) > 2.4) continue;
-			if (Reco_mupl_4mom->Pt() < gMuonPtCut) continue;
+			if (!MuonUpsilonTriggerAcc(*Reco_mupl_4mom)) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
-			if (fabs(Reco_mumi_4mom->Eta()) > 2.4) continue;
-			if (Reco_mumi_4mom->Pt() < gMuonPtCut) continue;
+			if (!MuonUpsilonTriggerAcc(*Reco_mumi_4mom)) continue;
 
 			// get positive muon's coordinates in the studied reference frames
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);

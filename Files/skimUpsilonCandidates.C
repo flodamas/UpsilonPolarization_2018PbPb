@@ -136,12 +136,12 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 
 			// if (!MuonSimpleAcc(*Reco_mupl_4mom)) continue;
-			if (!MuonWithin2018PbPbAcc(*Reco_mupl_4mom)) continue;
+			if (!MuonUpsilonTriggerAcc(*Reco_mupl_4mom)) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
 			// if (!MuonSimpleAcc(*Reco_mumi_4mom)) continue;
-			if (!MuonWithin2018PbPbAcc(*Reco_mumi_4mom)) continue;
+			if (!MuonUpsilonTriggerAcc(*Reco_mumi_4mom)) continue;
 
 			// get positive muon's coordinates in the studied reference frames
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);
