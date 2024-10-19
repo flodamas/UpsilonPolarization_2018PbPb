@@ -9,9 +9,8 @@
 
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
-void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, bool saveParams = true) {
+void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCDataset_TriggerAcc.root", bool saveParams = true) {
 	/// open the MC skimmed file
-	const char* filename = "../Files/Y1SSelectedMCWeightedDataset.root";
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -60,7 +59,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 	/// draw the fit to see if the fit is reasonable (we can comment it (lines 79-105) out if drawing is not necessary)
 	auto* canvas = new TCanvas("canvas", "", 600, 600);
-	
+
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 	pad1->SetBottomMargin(0.03);
 	pad1->Draw();
