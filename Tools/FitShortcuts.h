@@ -11,10 +11,10 @@
 using namespace RooFit;
 
 // for data
-RooFitResult* RawInvariantMassFit(RooDataSet& data, RooAddPdf model, RooArgSet varsForMinos = RooArgSet()) {
+RooFitResult* RawInvariantMassFit(RooDataSet data, RooAddPdf model, RooArgSet varsForMinos = RooArgSet(), float massMin = MassBinMin, float massMax = MassBinMax) {
 	if (BeVerbose) cout << "\nFitting the raw invariant mass distribution...\n";
 
-	auto* fitResult = model.fitTo(data, Save(), Extended(true), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), Minos(varsForMinos));
+	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), NumCPU(NCPUs), Range("MassFitRange"), Minos(varsForMinos));
 	// only run Minos over the parsed variables
 
 	if (BeVerbose) fitResult->Print("v");
@@ -38,7 +38,7 @@ RooFitResult* WeightedInvariantMassFit(RooDataSet& data, RooAddPdf model, float 
 RooFitResult* MCWeightedInvariantMassFit(RooDataSet& data, RooCrystalBall model, float massMin = MassBinMin, float massMax = MassBinMax) {
 	if (BeVerbose) cout << "\nFitting the MC invariant mass distribution with weighted entries...\n\n";
 
-	auto* fitResult = model.fitTo(data, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
+	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 	if (BeVerbose) fitResult->Print("v");
 
@@ -59,7 +59,7 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet& massDataset, Float_t 
 	if (BeVerbose) cout << endl
 		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << endl;
 
-	auto* fitResult = MCWeightedInvariantMassFit(massDataset, signal);
+	auto* fitResult = MCWeightedInvariantMassFit(massDataset, signal, massMin, massMax);
 
 	wspace.import(signal);
 
@@ -362,7 +362,7 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
 	char yieldsFileName[512];
-	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/SignalYields/%s_%s%s.txt", bkgShapeName, fitModelName, estraString);
+	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/SignalYields/%s_%s%s.txt", bkgShapeName, fitModelName, extraString);
 
 	cout << yieldsFileName << endl;
 	if (fopen(yieldsFileName, "r")) {

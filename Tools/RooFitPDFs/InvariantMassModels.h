@@ -100,10 +100,22 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
 		RooRealVar err_mu("err_mu", " ", 0, 13);
-		RooRealVar err_sigma("err_sigma", " ", 0, 10);
-		RooRealVar exp_lambda("exp_lambda", " ", 0, 20);
+		RooRealVar err_sigma("err_sigma", " ", 1, 0, 10);
+		RooRealVar exp_lambda("exp_lambda", " ", 10, 0, 500);
 
 		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
+
+		RooAddPdf bkgModel("bkgModel", "PDF of the backgroud", {bkgPDF}, {yieldBkg});
+
+		wspace.import(bkgModel, RecycleConflictNodes());
+
+		return bkgModel;
+	}
+
+	else if (strcmp(bkgShapeName, "Exponential") == 0) {
+		RooRealVar exp_lambda("exp_lambda", " ", -10, 10);
+
+		RooExponential bkgPDF("bkgPDF", " ", invMass, exp_lambda);
 
 		RooAddPdf bkgModel("bkgModel", "PDF of the backgroud", {bkgPDF}, {yieldBkg});
 

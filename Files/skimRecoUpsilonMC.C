@@ -10,10 +10,12 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
+// Reconstructed Y events with minimal weighting (e.g. no polarization) in order to estimate the reweighting of the dimuon pT spectrum
+
+void skimRecoUpsilonMC(Int_t iState = 1) {
 	const char* inputFileName = Form("OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 
-	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	const char* outputFileName = Form("Y%dSReconstructedMCDataset%s.root", iState, gMuonAccName);
 
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
@@ -82,8 +84,8 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 	// weighting by event directly on the fly
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 	//RooRealVar nCollVar("nColl", "estimated number of binary nucleon-nucleon scatterings", 0, 2200);
-	RooRealVar eventWeightCSVar("eventWeightCS", "event-by-event weight (Ncoll x MC gen weight x muon scale factors x polarization in CS)", 0, 100000);
-	RooRealVar eventWeightHXVar("eventWeightHX", "event-by-event weight (Ncoll x MC gen weight x muon scale factors x polarization in HX)", 0, 100000);
+	RooRealVar eventWeightVar("eventWeight", "event-by-event weight (Ncoll x MC gen weight x muon scale factors)", 0, 100000);
+	//RooRealVar eventWeightHXVar("eventWeightHX", "event-by-event weight (Ncoll x MC gen weight x muon scale factors)", 0, 100000);
 
 	RooRealVar errorWeightUpVar("errorWeightUp", "event-by-event error up", 0, 100000);
 	RooRealVar errorWeightDownVar("errorWeightDown", "event-by-event error down", 0, 100000);
@@ -109,25 +111,13 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar phiTildeHXVar(PhiTildeVarName(refFrameName), PhiTildeVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooRealVar lambdaThetaVar("lambdaTheta", "", -1, 1);
-	RooRealVar lambdaPhiVar("lambdaPhi", "", -1, 1);
-	RooRealVar lambdaThetaPhiVar("lambdaThetaPhi", "", -1, 1);
+	RooDataSet dataset("MCdataset", "skimmed MC dataset", RooArgSet(centVar, eventWeightVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeight"), RooFit::StoreAsymError(RooArgSet(eventWeightVar)));
 
-	// fix polarization extraction parameters
-	lambdaThetaVar.setVal(lambdaTheta);
-	lambdaThetaVar.setConstant(kTRUE);
-
-	lambdaPhiVar.setVal(lambdaPhi);
-	lambdaPhiVar.setConstant(kTRUE);
-
-	lambdaThetaPhiVar.setVal(lambdaThetaPhi);
-	lambdaThetaPhiVar.setConstant(kTRUE);
-
-	RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, eventWeightCSVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
-	RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, eventWeightHXVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
+	//RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, eventWeightCSVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
+	//RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, eventWeightHXVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
 
 	// loop variables
-	Float_t nColl, weight = 0, errorWeightDown = 0, errorWeightUp = 0, totalWeightCS = 0, totalWeightHX = 0, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0;
+	Float_t nColl, weight = 0, errorWeightDown = 0, errorWeightUp = 0, totalWeight = 0;
 
 	// for muon scale factors
 	int indexNominal = 0;
@@ -309,10 +299,7 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 
 			/// now the overall event weight
 
-			// reweight for the data/MC reco pT spectrum discrepancies
-			dimuonPtWeight = Get_RecoPtWeight(Reco_QQ_4mom->Rapidity(), Reco_QQ_4mom->Pt());
-
-			weight = nColl * Gen_weight * dimuonPtWeight * dimuWeight_nominal;
+			weight = nColl * Gen_weight * dimuWeight_nominal;
 
 			// propagate the scale factor uncertainties to the weight
 
@@ -327,20 +314,19 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 
 			errorWeightUp = weight * sqrt(dimuWeightUpError_squared);
 
+			//cout << "\nEvent weight = " << weight << " + " << errorWeightUp << " - " << errorWeightDown << endl;
+
 			// fill the dataset
 			centVar = Centrality;
 
-			polarWeightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
-			polarWeightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+			totalWeight = weight;
+			//totalWeightHX = weight;
 
-			totalWeightCS = weight * polarWeightCS;
-			totalWeightHX = weight * polarWeightHX;
+			eventWeightVar = totalWeight;
+			//eventWeightHXVar = totalWeightHX;
 
-			eventWeightCSVar = weight * polarWeightCS;
-			eventWeightHXVar = weight * polarWeightHX;
-
-			eventWeightCSVar.setAsymError(errorWeightDown, errorWeightUp);
-			eventWeightHXVar.setAsymError(errorWeightDown, errorWeightUp);
+			eventWeightVar.setAsymError(errorWeightDown, errorWeightUp);
+			//eventWeightHXVar.setAsymError(errorWeightDown, errorWeightUp);
 
 			errorWeightUpVar = errorWeightUp;
 			errorWeightDownVar = errorWeightDown;
@@ -392,8 +378,8 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 					phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
-			datasetCS.add(RooArgSet(centVar, eventWeightCSVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);
-			datasetHX.add(RooArgSet(centVar, eventWeightHXVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightHX, errorWeightDown, errorWeightUp);
+			dataset.add(RooArgSet(centVar, eventWeightVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeight, errorWeightDown, errorWeightUp);
+			//datasetHX.add(RooArgSet(centVar, eventWeightHXVar, errorWeightUpVar, errorWeightDownVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightHX, errorWeightDown, errorWeightUp);
 
 			// fill the graphs for reco events
 
@@ -410,8 +396,8 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 	hReco1S_absy0to1p2->Scale(1. / hReco1S_absy0to1p2->Integral(), "width");
 	hReco1S_absy1p2to2p4->Scale(1. / hReco1S_absy1p2to2p4->Integral(), "width");
 
-	datasetCS.Write();
-	datasetHX.Write();
+	dataset.Write();
+	//	datasetHX.Write();
 
 	hReco1S_absy0to1p2->Write();
 
@@ -427,12 +413,12 @@ void skimRecoUpsilonMC(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lamb
 
 // check the dataset distributions
 
-void draw2DHist(const char* refFrameName = "CS", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
-	const char* FileName = Form("Y1SReconstructedMCWeightedDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
+void draw2DHist(const char* refFrameName = "CS") {
+	const char* FileName = "Y1SReconstructedMCDataset.root";
 
 	TFile* file = openFile(FileName);
 
-	RooDataSet* allDataset = (RooDataSet*)file->Get(Form("MCdataset%s", refFrameName));
+	RooDataSet* allDataset = (RooDataSet*)file->Get("MCdataset");
 
 	// import the dataset to a workspace
 	RooWorkspace wspace("workspace");
