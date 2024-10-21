@@ -118,7 +118,7 @@ TH3D* RelSystEffHist3D(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficie
 		}
 	}
 
-	hTotalSyst->SetName(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", RelativeSystTEfficiency3DName(refFrameName), lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	hTotalSyst->SetName(RelativeSystTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi));
 	hTotalSyst->SetTitle(Form("Relative efficiency uncertainty;%s", TEfficiency3DAxisTitle(refFrameName)));
 
 	return hTotalSyst;
@@ -148,53 +148,14 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, int iState
 	effMap->GetPaintedHistogram()->GetYaxis()->CenterTitle();
 
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s_2018Acc.png", iState, effMap->GetName()), "RECREATE");
-}
-
-void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t iState = gUpsilonState) {
-	TCanvas* canvas = new TCanvas(effHist->GetName(), "", 600, 600);
-	canvas->SetRightMargin(0.05);
-
-	// empty frame for the axes
-	TH1D* frameHist = new TH1D("frameHist", "", NCosThetaBinsHX, CosThetaBinningHX);
-
-	frameHist->Draw();
-
-	effHist->SetLineWidth(3);
-	effHist->Draw("PL E0 SAME");
-
-	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
-
-	TLatex legend;
-	legend.SetTextAlign(22);
-	legend.SetTextSize(0.05);
-	legend.DrawLatexNDC(.55, .88, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
-	legend.DrawLatexNDC(.55, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-
-	if (strstr(effHist->GetName(), "CS"))
-		frameHist->SetXTitle(CosThetaVarTitle("CS"));
-	else
-		frameHist->SetXTitle(CosThetaVarTitle("HX"));
-
-	frameHist->SetYTitle(TEfficiencyMainTitle(iState));
-
-	frameHist->GetXaxis()->CenterTitle();
-	frameHist->GetYaxis()->CenterTitle();
-
-	frameHist->GetXaxis()->SetRangeUser(-1, 1);
-	frameHist->GetYaxis()->SetRangeUser(0, 1);
-
-	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
-
-	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s_2018Acc.png", iState, effHist->GetName()), "RECREATE");
+	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effMap->GetName()), "RECREATE");
 }
 
 // create the (cos theta, phi) map of the total efficiency (fully reweighted) for a given pT range
 
 // this macro is based on mapUpsilonEfficiency.C with the difference that only "granular" distributions are made, following the new strategy of correcting the data BEFORE signal extraction from invariant mass fit
 
-void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUpsilonState, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
+void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUpsilonState, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0) {
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -278,51 +239,51 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	// Collins-Soper
 
-	TEfficiency* hNominalEffCS = TEfficiency3D(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", NominalTEfficiency3DName("CS"), lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
+	TEfficiency* hNominalEffCS = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
 
-	TEfficiency* hCS_trk_systUp = TEfficiency3D(Form("hCS_trk_systUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
-	TEfficiency* hCS_trk_systDown = TEfficiency3D(Form("hCS_trk_systDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
-	TEfficiency* hCS_trk_statUp = TEfficiency3D(Form("hCS_trk_statUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
-	TEfficiency* hCS_trk_statDown = TEfficiency3D(Form("hCS_trk_statDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
+	TEfficiency* hCS_trk_systUp = TEfficiency3D(Form("hCS_trk_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_trk_systDown = TEfficiency3D(Form("hCS_trk_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_trk_statUp = TEfficiency3D(Form("hCS_trk_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_trk_statDown = TEfficiency3D(Form("hCS_trk_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
 
-	TEfficiency* hCS_muId_systUp = TEfficiency3D(Form("hCS_muId_systUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
-	TEfficiency* hCS_muId_systDown = TEfficiency3D(Form("hCS_muId_systDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
-	TEfficiency* hCS_muId_statUp = TEfficiency3D(Form("hCS_muId_statUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
-	TEfficiency* hCS_muId_statDown = TEfficiency3D(Form("hCS_muId_statDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
+	TEfficiency* hCS_muId_systUp = TEfficiency3D(Form("hCS_muId_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_muId_systDown = TEfficiency3D(Form("hCS_muId_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_muId_statUp = TEfficiency3D(Form("hCS_muId_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_muId_statDown = TEfficiency3D(Form("hCS_muId_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
 
-	TEfficiency* hCS_trig_systUp = TEfficiency3D(Form("hCS_trig_systUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
-	TEfficiency* hCS_trig_systDown = TEfficiency3D(Form("hCS_trig_systDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
-	TEfficiency* hCS_trig_statUp = TEfficiency3D(Form("hCS_trig_statUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
-	TEfficiency* hCS_trig_statDown = TEfficiency3D(Form("hCS_trig_statDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
+	TEfficiency* hCS_trig_systUp = TEfficiency3D(Form("hCS_trig_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_trig_systDown = TEfficiency3D(Form("hCS_trig_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_trig_statUp = TEfficiency3D(Form("hCS_trig_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_trig_statDown = TEfficiency3D(Form("hCS_trig_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
 
 	// Helicity
-	TEfficiency* hNominalEffHX = TEfficiency3D(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", NominalTEfficiency3DName("HX"), lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
+	TEfficiency* hNominalEffHX = TEfficiency3D(NominalTEfficiency3DName("HX", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
 
-	TEfficiency* hHX_trk_systUp = TEfficiency3D(Form("hHX_trk_systUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
-	TEfficiency* hHX_trk_systDown = TEfficiency3D(Form("hHX_trk_systDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
-	TEfficiency* hHX_trk_statUp = TEfficiency3D(Form("hHX_trk_statUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
-	TEfficiency* hHX_trk_statDown = TEfficiency3D(Form("hHX_trk_statDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
+	TEfficiency* hHX_trk_systUp = TEfficiency3D(Form("hHX_trk_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_trk_systDown = TEfficiency3D(Form("hHX_trk_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_trk_statUp = TEfficiency3D(Form("hHX_trk_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_trk_statDown = TEfficiency3D(Form("hHX_trk_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
 
-	TEfficiency* hHX_muId_systUp = TEfficiency3D(Form("hHX_muId_systUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
-	TEfficiency* hHX_muId_systDown = TEfficiency3D(Form("hHX_muId_systDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
-	TEfficiency* hHX_muId_statUp = TEfficiency3D(Form("hHX_muId_statUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
-	TEfficiency* hHX_muId_statDown = TEfficiency3D(Form("hHX_muId_statDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
+	TEfficiency* hHX_muId_systUp = TEfficiency3D(Form("hHX_muId_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_muId_systDown = TEfficiency3D(Form("hHX_muId_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_muId_statUp = TEfficiency3D(Form("hHX_muId_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_muId_statDown = TEfficiency3D(Form("hHX_muId_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
 
-	TEfficiency* hHX_trig_systUp = TEfficiency3D(Form("hHX_trig_systUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
-	TEfficiency* hHX_trig_systDown = TEfficiency3D(Form("hHX_trig_systDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
-	TEfficiency* hHX_trig_statUp = TEfficiency3D(Form("hHX_trig_statUp_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
-	TEfficiency* hHX_trig_statDown = TEfficiency3D(Form("hHX_trig_statDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
+	TEfficiency* hHX_trig_systUp = TEfficiency3D(Form("hHX_trig_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_trig_systDown = TEfficiency3D(Form("hHX_trig_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_trig_statUp = TEfficiency3D(Form("hHX_trig_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_trig_statDown = TEfficiency3D(Form("hHX_trig_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
 
 	// (cos theta, phi) for the given pt range
-	TEfficiency* hEffCS2D = CosThetaPhiTEfficiency2D(ptMin, ptMax, "CS", iState);
+	TEfficiency* hEffCS2D = CosThetaPhiTEfficiency2D("CS", ptMin, ptMax, iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TEfficiency* hEffHX2D = CosThetaPhiTEfficiency2D(ptMin, ptMax, "HX", iState);
+	TEfficiency* hEffHX2D = CosThetaPhiTEfficiency2D("HX", ptMin, ptMax, iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	// vs cos theta, to investigate
 
-	TEfficiency* hEffCS1D = CosThetaTEfficiency1D(ptMin, ptMax, "CS", iState);
+	TEfficiency* hEffCS1D = CosThetaTEfficiency1D("CS", ptMin, ptMax, iState, false, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TEfficiency* hEffHX1D = CosThetaTEfficiency1D(ptMin, ptMax, "HX", iState);
+	TEfficiency* hEffHX1D = CosThetaTEfficiency1D("HX", ptMin, ptMax, iState, false, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	// we want to estimate the uncertainties from scale factors at the same time
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
@@ -382,13 +343,13 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
 			// if (!MuonSimpleAcc(*genLorentzVector)) continue;
-			if (!MuonWithin2018PbPbAcc(*genLorentzVector)) continue;
+			if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;
 
 			// then negative muon
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
 			// if (!MuonSimpleAcc(*genLorentzVector)) continue;
-			if (!MuonWithin2018PbPbAcc(*genLorentzVector)) continue;
+			if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;
 
 			// go to reco level
 			Int_t iReco = Gen_QQ_whichRec[iGen];
@@ -633,10 +594,10 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	/// display the nominal results
 
 	DrawEfficiencyMap(hEffCS2D, ptMin, ptMax, iState);
-	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, iState, kFALSE, kTRUE);
+	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, iState, false, true, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	DrawEfficiencyMap(hEffHX2D, ptMin, ptMax, iState);
-	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, iState, kFALSE, kTRUE);
+	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, iState, false, true, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	/// compute the systematics in this macro since we have all the ingredients for that
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
@@ -690,8 +651,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	//canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX.png", gUpsilonState), "RECREATE");
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
-	gSystem->mkdir(Form("EfficiencyMaps/%dS", gUpsilonState), kTRUE);
-	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults_2018Acc.root", iState);
+	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
+	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults%s.root", iState, gMuonAccName);
 	TFile outputFile(outputFileName, "UPDATE");
 
 	hNominalEffCS->Write();

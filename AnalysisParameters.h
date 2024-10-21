@@ -194,4 +194,8 @@ const char* RawDatasetName(const char* refFrameName = "CS") {
 	return Form("dataset%s", refFrameName);
 }
 
+const char* PolaWeightName(Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
+	return Form("LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi);
+}
+
 #endif

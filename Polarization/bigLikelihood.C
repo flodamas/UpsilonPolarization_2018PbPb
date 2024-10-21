@@ -48,7 +48,7 @@ void bigLikelihood(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 3
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* filename = "../Files/UpsilonSkimmedDataset.root";
+	const char* filename = Form("../Files/UpsilonSkimmedDataset%s.root", gMuonAccName);
 
 	RooWorkspace wspace = SetUpWorkspace(filename);
 

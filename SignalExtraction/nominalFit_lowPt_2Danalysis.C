@@ -13,7 +13,7 @@
 void nominalFit_lowPt_2Danalysis(Bool_t isCSframe = kTRUE) {
 	// get the skimmed dataset
 
-	const char* filename = "../Files/upsilonSkimmedDataset.root";
+	const char* filename = Form("../Files/UpsilonSkimmedDataset%s.root", gMuonAccName);
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;

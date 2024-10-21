@@ -15,7 +15,7 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 	TCanvas* canvas = new TCanvas(accMap->GetName(), "", 700, 600);
 	accMap->Draw("COLZ");
 
-	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
+	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
 
 	TLatex legend;
 	legend.SetTextAlign(22);
@@ -33,7 +33,7 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 	accMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f_2018Acc.png", iState, accMap->GetName(), lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
+	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accMap->GetName()), "RECREATE");
 }
 
 void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
@@ -48,7 +48,7 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	accHist->SetLineWidth(3);
 	accHist->Draw("PL E0 SAME");
 
-	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
+	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
 
 	TLatex legend;
 	legend.SetTextAlign(22);
@@ -73,7 +73,7 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
 
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f_2018Acc.png", iState, accHist->GetName(), lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
+	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accHist->GetName()), "RECREATE");
 }
 
 const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
@@ -83,7 +83,7 @@ const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
 // (cos theta, phi) acceptance maps based on Y events generated without any decay kinematic cut
 // MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/ (This file was deleted:/)
 
-void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
+void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0) {
 	// // Read GenOnly Nofilter file
 	// const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
@@ -118,26 +118,26 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
 
 	// (cos theta, phi, pT) 3D maps for final acceptance correction, variable size binning for the stats
-	TEfficiency* accMatrixCS = TEfficiency3D(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", NominalTEfficiency3DName("CS"), lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
+	TEfficiency* accMatrixCS = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
 
-	TEfficiency* accMatrixHX = TEfficiency3D(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", NominalTEfficiency3DName("HX"), lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
+	TEfficiency* accMatrixHX = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
 
 	// (cos theta, phi) 2D distribution maps for Lab, CS and HX frames
 
-	TEfficiency* hGranularLab = CosThetaPhiAcceptance2D(ptMin, ptMax, "Lab");
-	TEfficiency* hGranularCS = CosThetaPhiAcceptance2D(ptMin, ptMax, "CS");
-	TEfficiency* hGranularHX = CosThetaPhiAcceptance2D(ptMin, ptMax, "HX");
+	TEfficiency* hGranularLab = CosThetaPhiAcceptance2D("Lab", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	TEfficiency* hGranularCS = CosThetaPhiAcceptance2D("CS", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	TEfficiency* hGranularHX = CosThetaPhiAcceptance2D("HX", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	// actual analysis binning (defined in AnalysisParameters.h)
-	TEfficiency* hAnalysisLab = new TEfficiency(Form("AnalysisLab_pt%dto%d_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi), Acceptance2DAxisTitle("Lab"), NCosThetaBinsLab, CosThetaBinningLab, NPhiBinsLab, PhiBinningLab);
-	TEfficiency* hAnalysisCS = new TEfficiency(Form("AnalysisCS_pt%dto%d_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi), Acceptance2DAxisTitle("CS"), NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
-	TEfficiency* hAnalysisHX = new TEfficiency(Form("AnalysisHX_pt%dto%d_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi), Acceptance2DAxisTitle("HX"), NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
+	TEfficiency* hAnalysisLab = new TEfficiency(Form("Analysis%s", TEfficiencyEndName("Lab", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi)), Acceptance2DAxisTitle("Lab"), NCosThetaBinsLab, CosThetaBinningLab, NPhiBinsLab, PhiBinningLab);
+	TEfficiency* hAnalysisCS = new TEfficiency(Form("Analysis%s", TEfficiencyEndName("CS", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi)), Acceptance2DAxisTitle("CS"), NCosThetaBinsCS, CosThetaBinningCS, NPhiBinsCS, PhiBinningCS);
+	TEfficiency* hAnalysisHX = new TEfficiency(Form("Analysis%s", TEfficiencyEndName("HX", ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi)), Acceptance2DAxisTitle("HX"), NCosThetaBinsHX, CosThetaBinningHX, NPhiBinsHX, PhiBinningHX);
 
 	// vs cos theta, for investigation
 
-	TEfficiency* hAccCS1D = CosThetaTEfficiency1D(ptMin, ptMax, "CS", iState, kTRUE);
+	TEfficiency* hAccCS1D = CosThetaTEfficiency1D("CS", ptMin, ptMax, iState, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TEfficiency* hAccHX1D = CosThetaTEfficiency1D(ptMin, ptMax, "HX", iState, kTRUE);
+	TEfficiency* hAccHX1D = CosThetaTEfficiency1D("HX", ptMin, ptMax, iState, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
@@ -170,8 +170,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
 			// withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV);
-			withinAcceptance = MuonWithin2018PbPbAcc(*gen_mupl_LV) && MuonWithin2018PbPbAcc(*gen_mumi_LV);
-			
+			withinAcceptance = MuonUpsilonTriggerAcc(*gen_mupl_LV) && MuonUpsilonTriggerAcc(*gen_mumi_LV);
+
 			// Reference frame transformations
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
 
@@ -238,7 +238,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 
 	/// save the results in a file for later usage
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults_2018Acc.root", iState);
+	const char* outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, gMuonAccName);
 	TFile outputFile(outputFileName, "UPDATE");
 
 	accMatrixCS->Write();
