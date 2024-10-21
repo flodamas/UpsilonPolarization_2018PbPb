@@ -9,7 +9,7 @@
 
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
-void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCDataset_TriggerAcc.root", bool saveParams = true) {
+void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SSelectedMCWeightedDataset_TriggerAcc.root", bool saveParams = true) {
 	/// open the MC skimmed file
 
 	TFile* file = TFile::Open(filename, "READ");

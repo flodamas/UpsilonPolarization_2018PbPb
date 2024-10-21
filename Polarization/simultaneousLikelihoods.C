@@ -38,7 +38,7 @@ void simultaneousLikelihoods(Int_t ptMin = 0, Int_t ptMax = 30, const char* refF
 	/// 1. create the signal-sWeighted dataset and prepare the NLL for the data
 
 	// set up the data
-	const char* filename = "../Files/UpsilonSkimmedDataset.root";
+	const char* filename = Form("../Files/UpsilonSkimmedDataset%s.root", gMuonAccName);
 
 	RooWorkspace wspace = SetUpWorkspace(filename, refFrameName);
 
