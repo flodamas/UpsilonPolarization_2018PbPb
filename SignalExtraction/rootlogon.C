@@ -8,6 +8,19 @@ void rootlogon() {
 	TStyle* tdrStyle = new TStyle("tdrStyle", "Style for P-TDR");
 
 	gROOT->ProcessLine(".L ../Tools/RooFitPDFs/ErrorFuncTimesExp.cxx");
+	gROOT->ProcessLine(".L ../Tools/RooFitPDFs/CosThetaPolarizationPDF.cxx");
+	gROOT->ProcessLine(".L ../Tools/RooFitPDFs/GeneralPolarizationPDF.cxx");
+
+	// R__ADD_LIBRARY_PATH($ROOTSYS/lib);
+	// R__LOAD_LIBRARY($ROOTSYS/lib/libGpad.so);
+	// R__LOAD_LIBRARY($ROOTSYS/lib/libASImage.so);
+	// R__LOAD_LIBRARY($ROOTSYS/lib/libRooFit.so);
+
+	// R__ADD_LIBRARY_PATH($ROOTSYS/etc/cling);
+	// R__ADD_LIBRARY_PATH($ROOTSYS/etc/cling/plugins/include);
+	
+	// R__ADD_LIBRARY_PATH(/usr/local/opt/llvm/bin);	
+	// R__ADD_LIBRARY(/usr/local/opt/llvm/bin/llvm-symbolizer);
 
 	// For the canvas:
 	tdrStyle->SetCanvasBorderMode(0);

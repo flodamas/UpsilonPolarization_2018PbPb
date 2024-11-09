@@ -9,15 +9,15 @@ using namespace RooFit;
 
 // open the data file, create a workspace, and import the dataset
 RooWorkspace SetUpWorkspace(const char* filename, const char* refFrameName = "") {
-	if (BeVerbose) cout << "\nSetting up the workspace...\n\n";
+	if (BeVerbose) std::cout << "\nSetting up the workspace...\n\n";
 
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
-		cout << "File " << filename << " not found. Check the directory of the file.\n";
+		std::cout << "File " << filename << " not found. Check the directory of the file.\n";
 		return RooWorkspace("emptyWorkspace");
 	}
 
-	if (BeVerbose) cout << "File " << filename << " opened\n";
+	if (BeVerbose) std::cout << "File " << filename << " opened\n";
 
 	const char* datasetName = RawDatasetName(refFrameName);
 	RooDataSet* data = (RooDataSet*)f->Get(datasetName);
@@ -26,7 +26,7 @@ RooWorkspace SetUpWorkspace(const char* filename, const char* refFrameName = "")
 
 	wspace.import(*data);
 
-	if (BeVerbose) cout << datasetName << " imported into " << wspace.GetName() << endl;
+	if (BeVerbose) std::cout << datasetName << " imported into " << wspace.GetName() << std::endl;
 
 	f->Close();
 
@@ -38,7 +38,7 @@ RooDataSet InvMassCosThetaPhiDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_
 	RooDataSet* allDataset = (RooDataSet*)wspace.data(RawDatasetName(refFrameName));
 
 	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		std::cerr << "Null RooDataSet provided to the reducer method!!" << std::endl;
 		return RooDataSet();
 	}
 
@@ -56,7 +56,7 @@ RooDataSet ReducedRecoMCDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptM
 	RooDataSet* allDataset = (RooDataSet*)wspace.data("MCdataset");
 
 	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		std::cerr << "Null RooDataSet provided to the reducer method!!" << std::endl;
 		return RooDataSet();
 	}
 
@@ -72,7 +72,7 @@ RooDataSet ReducedRecoMCDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptM
 // reduce the input dataset (N dimensions) to the apply desired kinematic cuts
 RooDataSet* ReducedDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, Double_t massMin = 8, Double_t massMax = 14, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!\n";
+		std::cerr << "Null RooDataSet provided to the reducer method!!\n";
 		return nullptr;
 	}
 
@@ -118,7 +118,7 @@ RooDataSet* ReducedDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t c
 // reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
 RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
 	if (allDataset == nullptr) {
-		cerr << "Null RooDataSet provided to the reducer method!!" << endl;
+		std::cerr << "Null RooDataSet provided to the reducer method!!" << std::endl;
 		return nullptr;
 	}
 

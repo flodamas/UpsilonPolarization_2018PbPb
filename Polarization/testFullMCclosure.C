@@ -31,7 +31,7 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* filename = Form("../Files/Y%dSSelectedMCWeightedDataset.root", iState);
+	const char* filename = Form("../Files/Y%dSSelectedMCWeightedDataset%s.root", iState, gMuonAccName);
 
 	TFile* f = TFile::Open(filename, "READ");
 	if (!f) {
@@ -115,7 +115,7 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	const char* mapName = CosThetaPhiTEfficiency2DName(ptMin, ptMax, refFrameName);
 
 	// acceptance maps
-	TFile* acceptanceFile = TFile::Open(Form("../MonteCarlo/AcceptanceMaps/%dS/AcceptanceResults.root", iState), "READ");
+	TFile* acceptanceFile = TFile::Open(Form("../MonteCarlo/AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, gMuonAccName), "READ");
 	if (!acceptanceFile) {
 		cout << "Acceptance file not found. Check the directory of the file." << endl;
 		return;
@@ -124,7 +124,7 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(mapName);
 
 	// efficiency maps
-	TFile* efficiencyFile = TFile::Open(Form("../MonteCarlo/EfficiencyMaps/%dS/EfficiencyResults.root", iState), "READ");
+	TFile* efficiencyFile = TFile::Open(Form("../MonteCarlo/EfficiencyMaps/%dS/EfficiencyResults%s.root", iState, gMuonAccName), "READ");
 	if (!efficiencyFile) {
 		cout << "Efficiency file not found. Check the directory of the file." << endl;
 		return;

@@ -11,10 +11,15 @@
 using namespace RooFit;
 
 // for data
+<<<<<<< HEAD
 RooFitResult* RawInvariantMassFit(RooDataSet& data, RooAddPdf model, RooArgSet varsForMinos = RooArgSet()) {
 	if (BeVerbose) std::cout << "\nFitting the raw invariant mass distribution...\n";
+=======
+RooFitResult* RawInvariantMassFit(RooDataSet data, RooAddPdf model, RooArgSet varsForMinos = RooArgSet(), float massMin = MassBinMin, float massMax = MassBinMax) {
+	if (BeVerbose) cout << "\nFitting the raw invariant mass distribution...\n";
+>>>>>>> b3346481d0082db909096b565c02f49b6bee13d9
 
-	auto* fitResult = model.fitTo(data, Save(), Extended(true), PrintLevel(-1), NumCPU(NCPUs), Range(MassBinMin, MassBinMax), Minos(varsForMinos));
+	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), NumCPU(NCPUs), Range("MassFitRange"), Minos(varsForMinos));
 	// only run Minos over the parsed variables
 
 	if (BeVerbose) fitResult->Print("v");
@@ -38,7 +43,7 @@ RooFitResult* WeightedInvariantMassFit(RooDataSet& data, RooAddPdf model, float 
 RooFitResult* MCWeightedInvariantMassFit(RooDataSet& data, RooCrystalBall model, float massMin = MassBinMin, float massMax = MassBinMax) {
 	if (BeVerbose) std::cout << "\nFitting the MC invariant mass distribution with weighted entries...\n\n";
 
-	auto* fitResult = model.fitTo(data, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
+	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 	if (BeVerbose) fitResult->Print("v");
 
@@ -59,7 +64,7 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet& massDataset, Float_t 
 	if (BeVerbose) std::cout << std::endl
 		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << std::endl;
 
-	auto* fitResult = MCWeightedInvariantMassFit(massDataset, signal);
+	auto* fitResult = MCWeightedInvariantMassFit(massDataset, signal, massMin, massMax);
 
 	wspace.import(signal);
 

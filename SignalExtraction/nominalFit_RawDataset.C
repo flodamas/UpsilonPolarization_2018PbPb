@@ -40,7 +40,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* filename = "../Files/UpsilonSkimmedDataset_2018Acc.root";
+	const char* filename = Form("../Files/UpsilonSkimmedDataset%s.root", gMuonAccName);
 
 	const char* refFrameName = isCSframe ? "CS" : "HX";
 
@@ -129,11 +129,10 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
 
 	if (!isBkgExpTimesErr) bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
-	const char* extraString = "_2018Acc";
-	
-	SaveRawDataSignalYields(signalYields, bkgShapeName, fitModelName, extraString);
-	
-	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName, extraString);
+
+	SaveRawDataSignalYields(signalYields, bkgShapeName, fitModelName, gMuonAccName);
+
+	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName, gMuonAccName);
 }
 
 void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 10, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isBkgExpTimesErr = kFALSE, Int_t ChebychevOrder = 2) {

@@ -9,6 +9,8 @@
 #include "RooRealVar.h"
 #include "TMath.h"
 
+using namespace RooFit;
+
 ErrorFuncTimesExp::ErrorFuncTimesExp(const char* name, const char* title,
                                      RooAbsReal& _m, RooAbsReal& _mu,
                                      RooAbsReal& _sigma,

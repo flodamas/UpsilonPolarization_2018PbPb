@@ -228,7 +228,7 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 	return contourCanvas;
 }
 
-TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1) {
+TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1) {
 	TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 680, 600);
 
 	// SetColorPalette(gPreferredColorPaletteName);
@@ -301,7 +301,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 // display the uncertainties signal extraction yield on each bin of 2D yield map
 void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6, Bool_t displayError = kFALSE) {
 	if (!mapCosThetaPhi) {
-		cout << "no 2D map found!!!" << endl;
+		std::cout << "no 2D map found!!!" << std::endl;
 		exit(1);
 	}
 

@@ -64,7 +64,7 @@ const int KlimtGoldPaletteBlue[] = {16, 27, 39, 49, 105};
 
 /// Palettes for multi-dimensional distributions
 
-void SetColorPalette(string styleName = "cividis", bool invert = false, int nContours = 255) {
+void SetColorPalette(std::string styleName = "cividis", bool invert = false, int nContours = 255) {
 	int nColors = 0;
 
 	// palettes defined in ROOT
@@ -127,7 +127,7 @@ void SetColorPalette(string styleName = "cividis", bool invert = false, int nCon
 	}
 
 	else {
-		cout << "Warning: the name provided does not correspond to any of the palette style name defined in ColorSchemes! Will set it to ROOT cividis by default...\n";
+		std::cout << "Warning: the name provided does not correspond to any of the palette style name defined in ColorSchemes! Will set it to ROOT cividis by default...\n";
 		gStyle->SetPalette(kCividis);
 	}
 

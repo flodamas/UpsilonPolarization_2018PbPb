@@ -92,16 +92,19 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
 
+	const char* extraString = "_2018Acc";
+	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
+
 	// get acceptance maps
-	TFile* acceptanceFile = openFile("../MonteCarlo/AcceptanceMaps/1S/AcceptanceResults_2018Acc.root");
-	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
+	TFile* acceptanceFile = openFile(Form("../MonteCarlo/AcceptanceMaps/1S/AcceptanceResults%s.root", extraString));
+	auto* accMap = (TEfficiency*)acceptanceFile->Get(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", nominalMapName, lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
 	// rebin acceptance maps based on costheta, phi, and pT selection
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	// get efficiency maps
-	TFile* efficiencyFile = openFile("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults_2018Acc.root");
-	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
+	TFile* efficiencyFile = openFile(Form("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults%s.root", extraString));
+	auto* effMap = (TEfficiency*)efficiencyFile->Get(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", nominalMapName, lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
 	// rebin efficiency maps based on costheta, phi, and pT selection
 	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
@@ -182,7 +185,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 			// get yields and their uncertainties
 			const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1]);
-			const char* extraString = _2018Acc;
+			const char* extraString = "";
 
 			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][iPhi].c_str()), fitModelName, extraString);	
 			

@@ -347,7 +347,7 @@ void compareMonteCarloPt(Int_t iState = 1) {
 	hPassedRatio->Draw("PZ");
 
 	hPassedRatio->SetMinimum(0.);
-	hPassedRatio->SetMaximum(4.);
+	hPassedRatio->SetMaximum(3.);
 
 	gSystem->mkdir("plots", kTRUE);
 	canvas->SaveAs("plots/MCPtAcceptance.png", "RECREATE");

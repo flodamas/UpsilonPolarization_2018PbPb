@@ -15,7 +15,7 @@
 void skimSelectedMCWeighted(Int_t iState = 1) {
 	const char* inputFileName = Form("OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 
-	const char* outputFileName = Form("Y%dSSelectedMCWeightedDataset.root", iState);
+	const char* outputFileName = Form("Y%dSSelectedMCWeightedDataset%s.root", iState, gMuonAccName);
 
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");

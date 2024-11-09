@@ -27,11 +27,11 @@ RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet dataset) {
 	dataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	auto* fitModel = wspace.pdf("invMassModel");
-	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed));
-	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(gColor1S));
-	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(gColor2S));
-	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(gColor3S));
-	fitModel->plotOn(frame, LineColor(gColorTotalFit));
+	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed), Range("MassFitRange"), NormRange("MassFitRange"));
+	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(gColor1S), Range("MassFitRange"));
+	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(gColor2S), Range("MassFitRange"));
+	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(gColor3S), Range("MassFitRange"));
+	fitModel->plotOn(frame, LineColor(gColorTotalFit), Range("MassFitRange"), NormRange("MassFitRange"));
 
 	frame->GetYaxis()->SetMaxDigits(3);
 	// gStyle->SetExponentOffset(-0.07, 0.005, "Y");
@@ -185,19 +185,19 @@ void enableBinIntegrator(RooAbsReal& func, int numBins) {
 }
 
 void enableBinIntegrator2D(RooAbsReal& func, int numBinsX, int numBinsY) {
-    // Get the current integration configuration
-    RooNumIntConfig customConfig(*func.getIntegratorConfig());
+	// Get the current integration configuration
+	RooNumIntConfig customConfig(*func.getIntegratorConfig());
 
-    // Set the method for 1D and 2D integration
-    customConfig.method2D().setLabel("RooBinIntegrator");
+	// Set the method for 1D and 2D integration
+	customConfig.method2D().setLabel("RooBinIntegrator");
 
-    // Configure the bin settings for 2D integration
-    customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBinsX", numBinsX);
-    customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBinsY", numBinsY);
+	// Configure the bin settings for 2D integration
+	customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBinsX", numBinsX);
+	customConfig.getConfigSection("RooBinIntegrator").setRealValue("numBinsY", numBinsY);
 
-    // Apply the custom configuration to the function
-    func.setIntegratorConfig(customConfig);
-    func.forceNumInt(true);
+	// Apply the custom configuration to the function
+	func.setIntegratorConfig(customConfig);
+	func.forceNumInt(true);
 }
 
 void SaveMCSignalParameters(RooArgSet* params, const char* outputName) {

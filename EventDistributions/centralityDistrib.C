@@ -99,7 +99,7 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 			if (fabs(Reco_QQ_4mom->Eta()) > 2.4) continue;
 
-			if (Reco_QQ_4mom->M() < 9) continue;
+			if (Reco_QQ_4mom->M() < 9 || Reco_QQ_4mom->M() > 10) continue;
 
 			// muon quality criteria
 
@@ -112,11 +112,11 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 
-			if (!MuonSimpleAcc(*Reco_mupl_4mom)) continue;
+			if (!MuonUpsilonTriggerAcc(*Reco_mupl_4mom)) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
-			if (!MuonSimpleAcc(*Reco_mumi_4mom)) continue;
+			if (!MuonUpsilonTriggerAcc(*Reco_mumi_4mom)) continue;
 
 			// if we arrive, it means that the reco'ed dimuon is a good upsilon candidate
 			skipEvent = false;

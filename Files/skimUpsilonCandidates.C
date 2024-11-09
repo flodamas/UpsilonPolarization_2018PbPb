@@ -8,7 +8,7 @@
 
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
 
-void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root", const char* outputFileName = "UpsilonSkimmedDataset_2018Acc.root") {
+void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root") {
 	/// Open OniaTree
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
@@ -60,7 +60,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
 
 	Float_t highPtCut = gPtMax;
-	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, highPtCut, gPtUnit);
+	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, 100, gPtUnit);
 
 	char* refFrameName = (char*)"Lab";
 	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
@@ -117,7 +117,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue; // cut on the dimuon rapidity when reducing the dataset later
 
-			if (Reco_QQ_4mom->Pt() > highPtCut) continue;
+			//if (Reco_QQ_4mom->Pt() > highPtCut) continue;
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
@@ -212,6 +212,8 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 		} // end of reco QQ loop
 	}   // enf of event loop
+
+	const char* outputFileName = Form("UpsilonSkimmedDataset%s.root", gMuonAccName);
 
 	TFile file(outputFileName, "RECREATE");
 

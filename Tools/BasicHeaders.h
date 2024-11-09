@@ -13,6 +13,7 @@
 #include "TClonesArray.h"
 #include "TEfficiency.h"
 #include "TF1.h"
+#include "TF2.h"
 #include "TFile.h"
 #include "TFormula.h"
 #include "TH2.h"
@@ -59,10 +60,16 @@
 #include "RooRealVar.h"
 #include "RooWorkspace.h"
 
+R__ADD_LIBRARY_PATH(/opt/root_install_6.32.06/lib);
+// R__LOAD_LIBRARY(/opt/root_install_6.32.06/lib/libGpad.so);
+// R__LOAD_LIBRARY(/opt/root_install_6.32.06/lib/libASImage.so);
+// R__LOAD_LIBRARY(/opt/root_install_6.32.06/lib/libRooFit.so);
+
+
 TFile* openFile(const char* fileName) {
 	TFile* file = TFile::Open(fileName, "READ");
 	if (!file) {
-		cout << fileName << " not found. Check the directory of the file." << endl;
+		std::cout << fileName << " not found. Check the directory of the file." << std::endl;
 		exit(1);
 	}
 
