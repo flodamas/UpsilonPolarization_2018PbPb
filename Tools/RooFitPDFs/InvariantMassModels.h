@@ -10,7 +10,9 @@ using namespace RooFit;
 
 #include "../Parameters/PhysicsConstants.h"
 
-#include "ErrorFuncTimesExp.h"
+#include "./ErrorFuncTimesExp.h"
+
+#include "../FitShortcuts.h"
 
 /// PDFs for Y signal extraction
 
@@ -20,7 +22,7 @@ using namespace RooFit;
 RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 	RooRealVar mass = *wspace.var("mass");
 
-	Long64_t initYield = nEntries / 10;
+	Long64_t initYield = nEntries / 100;
 
 	// get the tail parameters, assuming that they have been imported to the workspace first!!
 	RooRealVar alphaInf = *wspace.var("alphaInfSymDSCB");
@@ -30,7 +32,7 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
-	RooRealVar sigma_1S("sigma_1S", "", .07, .02, .15);
+	RooRealVar sigma_1S("sigma_1S", "", .04, .02, .15);
 
 	RooCrystalBall signalPDF_1S("signalPDF_1S", "", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
 	RooRealVar yield1S("yield1S", "N 1S", initYield, 0, nEntries);
@@ -99,9 +101,9 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar err_mu("err_mu", " ", 0, 13);
-		RooRealVar err_sigma("err_sigma", " ", 0, 10);
-		RooRealVar exp_lambda("exp_lambda", " ", 0, 20);
+		RooRealVar err_mu("err_mu", " ", 7, 5, 13);
+		RooRealVar err_sigma("err_sigma", " ", 1, 0, 10);
+		RooRealVar exp_lambda("exp_lambda", " ", 1.5, 0, 10);
 
 		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
 
@@ -113,7 +115,7 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 	}
 
 	else {
-		cout << "No matching background model" << endl;
+		std::cout << "No matching background model" << std::endl;
 		return nullptr;
 	}
 }
@@ -123,7 +125,7 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 RooAddPdf MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t nEntries = 1e6) {
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
 
-	if (BeVerbose) cout << "\nBuilding invariant mass fit model with " << signalShapeName << " for the signal and " << bkgShapeName << " for the background\n";
+	if (BeVerbose) std::cout << "\nBuilding invariant mass fit model with " << signalShapeName << " for the signal and " << bkgShapeName << " for the background\n";
 
 	// tail parameters fixed to MC extracted values, and identical for the three resonances
 
@@ -150,7 +152,7 @@ RooAddPdf MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const 
 
 	wspace.import(model, RecycleConflictNodes());
 
-	if (BeVerbose) cout << "\nModel exported to " << wspace.GetName() << endl;
+	if (BeVerbose) std::cout << "\nModel exported to " << wspace.GetName() << std::endl;
 
 	return model;
 }

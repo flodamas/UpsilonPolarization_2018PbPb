@@ -205,7 +205,7 @@ void SaveMCSignalParameters(RooArgSet* params, const char* outputName) {
 
 	params->writeToFile(name);
 
-	if (BeVerbose) cout << "\nSignal shape parameters " << (*params) << " extracted from MC written to " << name << endl;
+	if (BeVerbose) std::cout << "\nSignal shape parameters " << (*params) << " extracted from MC written to " << name << std::endl;
 }
 
 #endif
