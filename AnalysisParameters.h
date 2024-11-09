@@ -179,6 +179,19 @@ const char* PhiRangeText(const char* refFrameName = "CS", int phiMin = -180, int
 	return Form("%d < %s < %d %s", phiMin, PhiVarTitle(refFrameName), phiMax, gPhiUnit);
 }
 
+const char* AbsPhiVarName(const char* refFrameName = "CS") {
+	return Form("absPhi%s", refFrameName);
+}
+const char* AbsPhiVarTitle(const char* refFrameName = "CS") {
+	return Form("|%s_{%s}|", gPhiSymbol, refFrameName);
+}
+const char* AbsPhiAxisTitle(const char* refFrameName) {
+	return Form("%s (%s)", AbsPhiVarTitle(refFrameName), gPhiUnit);
+}
+const char* AbsPhiRangeText(const char* refFrameName = "CS", int phiMin = -180, int phiMax = 180) {
+	return Form("%d < %s < %d %s", phiMin, AbsPhiVarTitle(refFrameName), phiMax, gPhiUnit);
+}
+
 const char* gPhiTildeSymbol = "#tilde{#varphi}";
 
 const char* PhiTildeVarName(const char* refFrameName = "CS") {
