@@ -1,3 +1,6 @@
+#ifndef SPlotHelpers_h
+#define SPlotHelpers_h
+
 #include "../Tools/BasicHeaders.h"
 
 #include "../AnalysisParameters.h"
@@ -22,7 +25,7 @@ RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const
 	// first, check that the dataset is present in the workspace
 
 	if (!wspace.data("reducedDataset")) {
-		cout << "\n[sPlot] ERROR: cannot find the reduced dataset in the workspace! Returning nothing now!!!\n\n";
+		std::cout << "\n[sPlot] ERROR: cannot find the reduced dataset in the workspace! Returning nothing now!!!\n\n";
 		return nullptr;
 	}
 
@@ -93,7 +96,7 @@ RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const
 
 	file.Close();
 
-	if (BeVerbose) cout << "[sPlot] INFO: " << sData->GetName() << " imported into " << wspace.GetName() << " and saved in " << sWeightedDatasetsFileName << endl;
+	if (BeVerbose) std::cout << "[sPlot] INFO: " << sData->GetName() << " imported into " << wspace.GetName() << " and saved in " << sWeightedDatasetsFileName << std::endl;
 
 	return sData;
 }
@@ -107,7 +110,7 @@ RooDataSet* SWeightedDataset(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, con
 
 	// recreate it upon request
 	if (update) {
-		if (BeVerbose) cout << "\n[sWeights] updating " << datasetName << " as requested\n";
+		if (BeVerbose) std::cout << "\n[sWeights] updating " << datasetName << " as requested\n";
 
 		sData = CreateSWeights(wspace, ptMin, ptMax, signalShapeName, bkgShapeName);
 		return sData;
@@ -115,7 +118,7 @@ RooDataSet* SWeightedDataset(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, con
 
 	// check if the sWeighted dataset has been already been imported to the workspace
 	else if (wspace.data(datasetName)) {
-		if (BeVerbose) cout << "\n[sWeights] found " << datasetName << " in workspace\n";
+		if (BeVerbose) std::cout << "\n[sWeights] found " << datasetName << " in workspace\n";
 
 		sData = (RooDataSet*)wspace.data(datasetName);
 	}
@@ -125,7 +128,7 @@ RooDataSet* SWeightedDataset(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, con
 		TFile* file = TFile::Open(sWeightedDatasetsFileName, "READ");
 
 		if (file->Get(datasetName)) {
-			if (BeVerbose) cout << "\n[sWeights] found " << datasetName << " in " << sWeightedDatasetsFileName << endl;
+			if (BeVerbose) std::cout << "\n[sWeights] found " << datasetName << " in " << sWeightedDatasetsFileName << std::endl;
 
 			sData = (RooDataSet*)file->Get(datasetName);
 			wspace.import(*sData);
@@ -133,7 +136,7 @@ RooDataSet* SWeightedDataset(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, con
 		}
 
 		else {
-			if (BeVerbose) cout << "\n[sWeights] could not find " << datasetName << ", will create it now\n";
+			if (BeVerbose) std::cout << "\n[sWeights] could not find " << datasetName << ", will create it now\n";
 
 			sData = CreateSWeights(wspace, ptMin, ptMax, signalShapeName, bkgShapeName);
 		}
@@ -142,7 +145,7 @@ RooDataSet* SWeightedDataset(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, con
 
 	// otherwise, (re)create the sWeights assuming that the original dataset is in the workspace!
 	else {
-		if (BeVerbose) cout << "\n[sWeights] could not find " << datasetName << ", will create it now\n";
+		if (BeVerbose) std::cout << "\n[sWeights] could not find " << datasetName << ", will create it now\n";
 
 		sData = CreateSWeights(wspace, ptMin, ptMax, signalShapeName, bkgShapeName);
 	}
@@ -171,3 +174,5 @@ RooConstVar GetSPlotScaleFactor(RooDataSet* sData, Int_t iState = gUpsilonState)
 
 	return RooConstVar("sPlotScaleFactor", "sPlot scale factor", scaleFactor);
 }
+
+#endif

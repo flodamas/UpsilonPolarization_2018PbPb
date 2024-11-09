@@ -2,6 +2,8 @@
 #ifndef ERRORFUNCTIMESEXP
 #define ERRORFUNCTIMESEXP
 
+using namespace RooFit;
+
 #include "RooAbsPdf.h"
 #include "RooRealProxy.h"
 #include "RooCategoryProxy.h"

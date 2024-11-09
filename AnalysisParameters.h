@@ -12,6 +12,8 @@ bool BeVerbose = true;
 
 const char* gCMSLumiText = "PbPb 1.61 nb^{-1} (5.02 TeV)";
 
+const char* gMuonAccName = "_TriggerAcc";
+
 // CANNOT BE CHANGED!
 const int gUpsilonHLTBit = 14;
 const int gL2FilterBit = 19;
@@ -27,15 +29,15 @@ const int gUpsilonState = 1;
 const int gCentralityBinMin = 0;
 const int gCentralityBinMax = 90;
 
-const float gRapidityMin = 0.0;
+const float gRapidityMin = 0.;
 const float gRapidityMax = 2.4;
 
 // pT binning for the final results!
 const int NPtBins = 7;
 const double gPtBinning[NPtBins + 1] = {0, 2, 4, 6, 8, 12, 16, 30};
 
-const int NPtFineBins = 10;
-const double gPtFineBinning[NPtFineBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 30}; // can afford to split bins into two for the MC pt spectrum reweighting
+const int NPtFineBins = 11;
+const double gPtFineBinning[NPtFineBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 20, 30}; // can afford to split bins into two for the MC pt spectrum reweighting
 
 // fine binning for (cos theta, phi) correction maps, same binning regardless of the reference frame
 const int NCosThetaFineBins = 20;
@@ -76,7 +78,7 @@ const double PhiBinningHX[NPhiBinsHX + 1] = {-180, -120, -60, 0, 60, 120, 180};
 */
 
 const int gPtMin = 0;
-const int gPtMax = 30;
+const int gPtMax = 50;
 
 // 16 < pt < 30 GeV, Lab
 const int NCosThetaBinsLab = 10;
@@ -137,14 +139,14 @@ const char* gPtVarName = "#it{p}_{T}";
 const char* gPtUnit = "GeV/#it{c}";
 const char* gPtAxisTitle = Form("%s (%s)", gPtVarName, gPtUnit);
 
-const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
+const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > thresholds"; // "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
 
 const char* gDimuonPtVarTitle = "#it{p}_{T}^{ #mu#mu}";
 const char* DimuonPtRangeText(int ptMin, int ptMax) {
 	return Form("%d < %s < %d %s", ptMin, gDimuonPtVarTitle, ptMax, gPtUnit);
 }
 
-const char* gDimuonRapidityVarTitle = "|#it{y}^{ #mu#mu}|";
+const char* gDimuonRapidityVarTitle = "|#it{y}^{#mu#mu}|";
 const char* DimuonRapidityRangeText(float rapidityMin, float rapidityMax) {
 	return Form("%1.1f < %s < %1.1f", rapidityMin, gDimuonRapidityVarTitle, rapidityMax);
 }
@@ -203,6 +205,10 @@ const char* PhiTildeVarTitle(const char* refFrameName = "CS") {
 
 const char* RawDatasetName(const char* refFrameName = "CS") {
 	return Form("dataset%s", refFrameName);
+}
+
+const char* PolaWeightName(Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
+	return Form("LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi);
 }
 
 #endif

@@ -1,4 +1,4 @@
-alphaInf =  1.5971 +/- 0.053446 L(0.1 - 10) 
-orderInf =  2.2666 +/- 0.23645 L(0.1 - 10) 
-alphaSup =  1.6741 +/- 0.074368 L(0.1 - 10) 
-orderSup =  14.579 +/- 6.0370 L(0.1 - 40) 
+alphaInfSymDSCB =  1.4904 +/- 0.021011 L(0.1 - 10) 
+orderInfSymDSCB =  2.7571 +/- 0.071004 L(0.1 - 10) 
+alphaSupSymDSCB =  1.7365 +/- 0.053488 L(0.1 - 10) 
+orderSupSymDSCB =  9.0182 +/- 1.4988 L(0.1 - 40) 

@@ -69,7 +69,7 @@ TVector3 MuPlusVector_CollinsSoper(const TLorentzVector QQLV_Lab, const TLorentz
 	else if (Angle_B1ZHX < Angle_B2ZHX)
 		delta = Angle_B1ZHX + Angle_B1miB2 / 2.;
 	else
-		cout << "beam1PvecBoosted.Pz() = 0?" << endl;
+		std::cout << "beam1PvecBoosted.Pz() = 0?" << std::endl;
 
 	// ******** Rotate the coordinates along the y-axis by the angle between z_HX and z_CS ******** //
 	TVector3 MuPlusVec_CS(MuPlusVector_Helicity(QQLV_Lab, MuPlusLV_Lab));
