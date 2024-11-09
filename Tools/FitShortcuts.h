@@ -11,13 +11,8 @@
 using namespace RooFit;
 
 // for data
-<<<<<<< HEAD
 RooFitResult* RawInvariantMassFit(RooDataSet& data, RooAddPdf model, RooArgSet varsForMinos = RooArgSet()) {
 	if (BeVerbose) std::cout << "\nFitting the raw invariant mass distribution...\n";
-=======
-RooFitResult* RawInvariantMassFit(RooDataSet data, RooAddPdf model, RooArgSet varsForMinos = RooArgSet(), float massMin = MassBinMin, float massMax = MassBinMax) {
-	if (BeVerbose) cout << "\nFitting the raw invariant mass distribution...\n";
->>>>>>> b3346481d0082db909096b565c02f49b6bee13d9
 
 	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), NumCPU(NCPUs), Range("MassFitRange"), Minos(varsForMinos));
 	// only run Minos over the parsed variables

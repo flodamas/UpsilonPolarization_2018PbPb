@@ -101,15 +101,9 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-<<<<<<< HEAD
 		RooRealVar err_mu("err_mu", " ", 7, 5, 13);
 		RooRealVar err_sigma("err_sigma", " ", 1, 0, 10);
 		RooRealVar exp_lambda("exp_lambda", " ", 1.5, 0, 10);
-=======
-		RooRealVar err_mu("err_mu", " ", 0, 13);
-		RooRealVar err_sigma("err_sigma", " ", 1, 0, 10);
-		RooRealVar exp_lambda("exp_lambda", " ", 10, 0, 500);
->>>>>>> b3346481d0082db909096b565c02f49b6bee13d9
 
 		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
 
