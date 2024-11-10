@@ -35,6 +35,19 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 	return text;
 }
 
+TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+	TPaveText* text = new TPaveText(0.2, 0.9, 0.45, 0.7, "NDCNB");
+	text->SetFillColor(4000);
+	text->SetBorderSize(0);
+	// text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
+	text->AddText(isCSframe ? "Collins-Soper frame" : "Helicity frame");
+	text->AddText(CosThetaRangeText(isCSframe ? "CS" : "HX", cosThetaMin, cosThetaMax));
+	text->AddText(AbsPhiRangeText(isCSframe ? "CS" : "HX", phiMin, phiMax));
+
+	text->SetAllWith("", "align", 12);
+	return text;
+}
+
 TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S /*, RooRealVar nBkg*/) {
 	// TPaveText* text = new TPaveText(0.6, 0.85, 0.95, 0.5, "NDCNB");
 	TPaveText* text = new TPaveText(0.57, 0.35, 0.95, 0.08, "NDCNB");
