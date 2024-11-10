@@ -92,19 +92,18 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
 
-	const char* extraString = "_2018Acc";
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
 
 	// get acceptance maps
-	TFile* acceptanceFile = openFile(Form("../MonteCarlo/AcceptanceMaps/1S/AcceptanceResults%s.root", extraString));
-	auto* accMap = (TEfficiency*)acceptanceFile->Get(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", nominalMapName, lambdaTheta, lambdaPhi, lambdaThetaPhi));
-
+	TFile* acceptanceFile = openFile(Form("../MonteCarlo/AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName));
+	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
+	
 	// rebin acceptance maps based on costheta, phi, and pT selection
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	// get efficiency maps
-	TFile* efficiencyFile = openFile(Form("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults%s.root", extraString));
-	auto* effMap = (TEfficiency*)efficiencyFile->Get(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", nominalMapName, lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	TFile* efficiencyFile = openFile(Form("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults%s.root", gMuonAccName));
+	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	// rebin efficiency maps based on costheta, phi, and pT selection
 	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
@@ -185,9 +184,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 			// get yields and their uncertainties
 			const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1]);
-			const char* extraString = "";
 
-			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][iPhi].c_str()), fitModelName, extraString);	
+			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][iPhi].c_str()), fitModelName, Form("%s%s", gMuonAccName, "_absphi"));	
 			
 			double yield1SVal = (yield1S->getVal());
 
@@ -462,37 +460,37 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	/// save canvas
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	weightCanvas->SaveAs(Form("EfficiencyMaps/%dS/WeightsMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	weightCanvas->SaveAs(Form("EfficiencyMaps/%dS/WeightsMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 
 	gSystem->mkdir("YieldMap/2D", kTRUE);
-	yieldCanvas->SaveAs(Form("YieldMap/2D/YieldMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	yieldCanvas->SaveAs(Form("YieldMap/2D/YieldMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 
 	gSystem->mkdir("YieldMap/2D", kTRUE);
-	correctedMapCanvas->SaveAs(Form("YieldMap/2D/CorrectedMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	correctedMapCanvas->SaveAs(Form("YieldMap/2D/CorrectedMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 
 	gSystem->mkdir("UncertaintyPlots/2D", kTRUE);
-	statHighAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
-	statLowAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
-	statHighEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
-	statLowEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
-	systEffCanvas->SaveAs(Form("UncertaintyPlots/2D/sysEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
-	yieldUncCanvas->SaveAs(Form("UncertaintyPlots/2D/yieldUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
-	totalUncCanvas->SaveAs(Form("UncertaintyPlots/2D/totalUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	statHighAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	statLowAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	statHighEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	statLowEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	systEffCanvas->SaveAs(Form("UncertaintyPlots/2D/sysEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	yieldUncCanvas->SaveAs(Form("UncertaintyPlots/2D/yieldUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	totalUncCanvas->SaveAs(Form("UncertaintyPlots/2D/totalUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 
 	// save the histograms to the root files to see them with the root viewer
-	TFile* EfficiencyOutFile = new TFile(Form("EfficiencyMaps/%dS/efficiencyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.root", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	TFile* EfficiencyOutFile = new TFile(Form("EfficiencyMaps/%dS/efficiencyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 	accMapCosThetaPhi->Write();
 	effMapCosThetaPhi->Write();
 	systEffCosThetaPhi->Write();
 	weightMap->Write();
 	EfficiencyOutFile->Close();
 
-	TFile* ResultOutFile = new TFile(Form("YieldMap/2D/resultsHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	TFile* ResultOutFile = new TFile(Form("YieldMap/2D/resultsHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 	yieldMap->Write();
 	standardCorrectedMap->Write();
 	ResultOutFile->Close();
 
-	TFile* uncOutFile = new TFile(Form("UncertaintyPlots/2D/uncertaintyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f_2018Acc.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	TFile* uncOutFile = new TFile(Form("UncertaintyPlots/2D/uncertaintyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 	statLowAccCosThetaPhi->Write();
 	statLowEffCosThetaPhi->Write();
 	statHighAccCosThetaPhi->Write();

@@ -120,7 +120,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	// (cos theta, phi, pT) 3D maps for final acceptance correction, variable size binning for the stats
 	TEfficiency* accMatrixCS = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
 
-	TEfficiency* accMatrixHX = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
+	TEfficiency* accMatrixHX = TEfficiency3D(NominalTEfficiency3DName("HX", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
 
 	// (cos theta, phi) 2D distribution maps for Lab, CS and HX frames
 
