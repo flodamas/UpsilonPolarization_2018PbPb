@@ -54,8 +54,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	std::string bkgShapeName[nCosThetaBinsMax][nPhiBinsMax];
 
-	// // fill the background shape array with ChebychevOrder2
-	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
+	// fill the background shape array with ChebychevOrder2
+	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
 
 	// // exceptions
 	// // bkgShapeName[1][1] = "ChebychevOrder1";
@@ -68,6 +68,11 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// // bkgShapeName[3][0] = "ChebychevOrder1";
 	// // bkgShapeName[3][5] = "ChebychevOrder1";
 
+	// // HX, 2 < pT < 6 GeV/c, |phi|
+	// bkgShapeName[4][0] = "ExpTimesErr";
+	// bkgShapeName[4][1] = "ExpTimesErr";
+	// bkgShapeName[4][2] = "ExpTimesErr";
+
 	// // HX, 12 < pT < 20
 	// bkgShapeName[1][1] = "ChebychevOrder1";
 	// bkgShapeName[2][2] = "ChebychevOrder1";
@@ -79,11 +84,28 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// bkgShapeName[4][0] = "ChebychevOrder1";
 	// bkgShapeName[4][1] = "ChebychevOrder0";
 
-	// fill the background shape array with ExpTimesErr
-	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
+	// // fill the background shape array with ExpTimesErr
+	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
 
-	// // exceptions
-	// bkgShapeName[3][0] = "ChebychevOrder1";
+	// exceptions
+
+	// // HX, 2 < pT < 6 GeV/c (-180 to 180)
+	// bkgShapeName[0][2] = "ChebychevOrder1";
+	// bkgShapeName[0][3] = "ChebychevOrder1";
+
+	// bkgShapeName[3][2] = "ChebychevOrder2";
+	// bkgShapeName[3][3] = "ChebychevOrder2";
+
+	// bkgShapeName[3][0] = "ChebychevOrder2";
+	// bkgShapeName[3][5] = "ChebychevOrder2";
+
+	// // HX, 2 < pT < 6 GeV/c (abs(phi))
+	// bkgShapeName[0][0] = "ChebychevOrder1";
+
+	// bkgShapeName[3][0] = "ChebychevOrder2";
+
+	// bkgShapeName[4][2] = "ChebychevOrder1";
+
 
 	/// "Standard" procedure: extract the yields per bin
 	TH2D* yieldMap = new TH2D("yieldMap", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
@@ -183,23 +205,28 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			totalUncLow = totalRelUncLow * efficiency * acceptance;
 
 			// get yields and their uncertainties
-			const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1]);
+			// const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1]);
 
-			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][iPhi].c_str()), fitModelName, Form("%s%s", gMuonAccName, "_absphi"));	
+			// RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][iPhi].c_str()), fitModelName, Form("%s%s", gMuonAccName, "_absphi"));	
 			
-			double yield1SVal = (yield1S->getVal());
+			// double yield1SVal = (yield1S->getVal());
 
-			double yield1SUnc = (yield1S->getError());		
+			// double yield1SUnc = (yield1S->getError());		
 			
-			// Int_t absiPhi = yieldMap->GetYaxis()->FindBin(fabs(binCenterPhi)) - 1;
+			Int_t absiPhi = yieldMap->GetYaxis()->FindBin(fabs(binCenterPhi)) - 1;
+			cout << "absiPhi: " << absiPhi << endl;
 
-			// const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[absiPhi], (Int_t)phiBinEdges[absiPhi + 1]);
+			const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[absiPhi], (Int_t)phiBinEdges[absiPhi + 1]);
 
-			// RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][absiPhi].c_str()), fitModelName);
+			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][absiPhi].c_str()), fitModelName, Form("%s%s", gMuonAccName, "_absphi"));
 
 			// double yield1SVal = (yield1S->getVal())/2.;
 
 			// double yield1SUnc = (yield1S->getError())/2.;
+			double yield1SVal = (yield1S->getVal());
+
+			double yield1SUnc = (yield1S->getError());
+
 
 			// set the bin contents reflecting weights
 			// only raw yield itself before correction
