@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../Tools/Parameters/PhaseSpace.h"
+
 #include "../Tools/Parameters/CentralityValues.h"
 #include "../Tools/Parameters/EfficiencyWeights.h"
 #include "../Tools/Parameters/MuonScaleFactors.h"
@@ -345,7 +347,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			double dimuWeightDownError_squared = pow(dimuWeight_trk_statDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_muId_statDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_trig_statDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_trk_systDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_muId_systDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_trig_systDown - dimuWeight_nominal, 2.0);
 
 			errorWeightDown = weight * sqrt(dimuWeightDownError_squared);
-			cout << "errorWeightDown: " << errorWeightDown << endl;
+			// cout << "errorWeightDown: " << errorWeightDown << endl;
 
 			//cout << "Weight from muon scale factors = " << dimuWeight_nominal << " - " << sqrt(dimuWeightDownError_squared) << " (" << 100. * sqrt(dimuWeightDownError_squared) / dimuWeight_nominal << "% relative)" << endl;
 
@@ -353,7 +355,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 			errorWeightUp = weight * sqrt(dimuWeightUpError_squared);
 
-			cout << "errorWeightUp: " << errorWeightUp << endl;
+			// cout << "errorWeightUp: " << errorWeightUp << endl;
 			// fill the dataset
 
 			recoCat.setLabel((allGood) ? "selected" : "rejected");
@@ -441,7 +443,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 // check the dataset distributions
 
 void draw2DHist(const char* refFrameName = "CS", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
-	const char* FileName = Form("Y1SReconstructedMCWeightedDataset%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", gMuonAccName lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	const char* FileName = Form("Y1SReconstructedMCWeightedDataset%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* file = openFile(FileName);
 

@@ -13,6 +13,7 @@ bool BeVerbose = true;
 const char* gCMSLumiText = "PbPb 1.61 nb^{-1} (5.02 TeV)";
 
 const char* gMuonAccName = "_TriggerAcc";
+// const char* gMuonAccName = "_2018Acc";
 
 // CANNOT BE CHANGED!
 const int gUpsilonHLTBit = 14;
