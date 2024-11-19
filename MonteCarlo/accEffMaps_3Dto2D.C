@@ -45,11 +45,13 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
 
 	// get acceptance maps
-	const char* extraString = "_2018Acc";
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
 
-	TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", extraString));
-	auto* accMap = (TEfficiency*)acceptanceFile->Get(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", nominalMapName, lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName));
+	cout << Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName) << endl;
+	
+	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
+	cout << nominalMapName << endl;
 
 	if (!accMap) {
     	std::cerr << "Error: accMap is null." << std::endl;
@@ -60,8 +62,14 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	// get efficiency maps
-	TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", extraString));
-	auto* effMap = (TEfficiency*)efficiencyFile->Get(Form("%s_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", nominalMapName, lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", gMuonAccName));
+	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
+	cout << nominalMapName << endl;
+
+	if (!effMap) {
+    	std::cerr << "Error: effMap is null." << std::endl;
+    	return;
+	}
 
 	// rebin efficiency maps based on costheta, phi, and pT selection
 	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
@@ -84,17 +92,17 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	// draw acc and eff histograms to check if the rebinning works well
  	// (last three variables: isAcc, displayValues, extraString)
-	DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kFALSE, extraString);
+	DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kFALSE, gMuonAccName);
 
-	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kFALSE, extraString);
+	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kFALSE, gMuonAccName);
 }
 
 void accEffMaps_3Dto2D_scan(const char* refFrameName = "CS") {
 
-	const int NptBins = 8;
-	int ptBinEdges[NptBins] = {0, 2, 4, 6, 8, 12, 16, 30};
+	const int NptBins = 4;
+	int ptBinEdges[NptBins + 1] = {0, 2, 6, 12, 20};
 
-	for (int ipt = 0; ipt < NptBins - 1; ipt++) {
+	for (int ipt = 0; ipt < NptBins; ipt++) {
 
 		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 20, -1, 1, 24, -200, 280, 1);
 
