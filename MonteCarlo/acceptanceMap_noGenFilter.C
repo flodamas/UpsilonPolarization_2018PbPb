@@ -176,18 +176,18 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
 
 			cosThetaCS = muPlus_CS.CosTheta();
-			phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
+			phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
 
-			weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
+			weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * fabs(muPlus_CS.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(fabs(muPlus_CS.Phi()));
 
 			accMatrixCS->FillWeighted(withinAcceptance, weightCS, cosThetaCS, phiCS, gen_QQ_LV->Pt());
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 
 			cosThetaHX = muPlus_HX.CosTheta();
-			phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
+			phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
 
-			weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+			weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
 
 			accMatrixHX->FillWeighted(withinAcceptance, weightHX, cosThetaHX, phiHX, gen_QQ_LV->Pt());
 
