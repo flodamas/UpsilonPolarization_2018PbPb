@@ -112,7 +112,7 @@ void testFullMCclosure(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	// 3. the acceptance x efficiency PDF
 
-	const char* mapName = CosThetaPhiTEfficiency2DName(ptMin, ptMax, refFrameName);
+	const char* mapName = CosThetaPhiTEfficiency2DName(refFrameName, ptMin, ptMax);
 
 	// acceptance maps
 	TFile* acceptanceFile = TFile::Open(Form("../MonteCarlo/AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, gMuonAccName), "READ");
