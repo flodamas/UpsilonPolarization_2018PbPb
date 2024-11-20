@@ -10,9 +10,9 @@
 
 // see tutorial https://root.cern/doc/master/rf706__histpdf_8C.html
 
-//RooHistPdf* prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Float_t phiMin = -180, Float_t phiMax = 180, Int_t iState = gUpsilonState) { //possible refFrame names: CS or HX
+RooHistPdf* prodAccEffPDF(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Float_t phiMin = -180, Float_t phiMax = 180, Int_t iState = gUpsilonState) { //possible refFrame names: CS or HX
 
-RooHistPdf* prodAccEffPDF(RooRealVar cosTheta, RooRealVar phi, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t iState = gUpsilonState) { //possible refFrame names: CS or HX
+	//RooHistPdf* prodAccEffPDF(RooRealVar cosTheta, RooRealVar phi, Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Int_t iState = gUpsilonState) { //possible refFrame names: CS or HX
 
 	writeExtraText = true;
 	extraText = "       Internal";
@@ -23,11 +23,11 @@ RooHistPdf* prodAccEffPDF(RooRealVar cosTheta, RooRealVar phi, Int_t ptMin = 0, 
 
 	Int_t nCosThetaBins = 20;
 
-	//	RooRealVar cosTheta(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), cosThetaMin, cosThetaMax);
+	RooRealVar cosTheta(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), cosThetaMin, cosThetaMax);
 
 	Int_t nPhiBins = 18;
 
-	//	RooRealVar phi(PhiVarName(refFrameName), PhiVarTitle(refFrameName), phiMin, phiMax, gPhiUnit);
+	RooRealVar phi(PhiVarName(refFrameName), PhiVarTitle(refFrameName), phiMin, phiMax, gPhiUnit);
 
 	/// 1. retrieve the 2D maps
 	const char* mapName = CosThetaPhiTEfficiency2DName(refFrameName, ptMin, ptMax);
@@ -90,7 +90,7 @@ RooHistPdf* prodAccEffPDF(RooRealVar cosTheta, RooRealVar phi, Int_t ptMin = 0, 
 	CMS_lumi(canvas, Form("Unpolarized #varUpsilon(%dS) MC", iState));
 
 	gSystem->mkdir(Form("../MonteCarlo/EfficiencyMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("../MonteCarlo/EfficiencyMaps/%dS/AccEff_CosThetaPhi%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	canvas->SaveAs(Form("../MonteCarlo/EfficiencyMaps/%dS/AccEff_CosThetaPhi%s%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gMuonAccName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	// draw the sampling of the PDF in 3D
 	TCanvas* canvas2 = new TCanvas("canvas2", "canvas", 700, 600);
@@ -112,7 +112,7 @@ RooHistPdf* prodAccEffPDF(RooRealVar cosTheta, RooRealVar phi, Int_t ptMin = 0, 
 	legend.DrawLatexNDC(.48, .8, Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
 	legend.DrawLatexNDC(.48, .72, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
-	canvas2->SaveAs(Form("../MonteCarlo/EfficiencyMaps/%dS/AccEffPDF_CosThetaPhi%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
+	canvas2->SaveAs(Form("../MonteCarlo/EfficiencyMaps/%dS/AccEffPDF_CosThetaPhi%s%s_cent%dto%d_pt%dto%dGeV.png", iState, refFrameName, gMuonAccName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax), "RECREATE");
 
 	acceptanceFile->Close();
 	efficiencyFile->Close();
