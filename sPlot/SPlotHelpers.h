@@ -12,7 +12,7 @@ using namespace RooStats;
 
 /// sPlot class documentation https://root.cern/doc/master/classRooStats_1_1SPlot.html
 
-const char* sWeightedDatasetsFileName = "../sPlot/Datasets/sWeightedDatasets.root";
+const char* sWeightedDatasetsFileName = Form("../sPlot/Datasets/sWeightedDatasets%s.root", gMuonAccName);
 
 const char* sWeightedDatasetName(const char* fitName) {
 	return Form("sWeightedDataset_%s", fitName);

@@ -28,7 +28,7 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* filename = "../Files/UpsilonSkimmedDataset.root";
+	const char* filename = Form("../Files/UpsilonSkimmedDataset%s.root", gMuonAccName);
 
 	RooWorkspace wspace = SetUpWorkspace(filename);
 
@@ -82,10 +82,10 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 
 	// 3. the acceptance x efficiency PDF
 
-	const char* mapName = CosThetaPhiTEfficiency2DName(ptMin, ptMax, refFrameName);
+	const char* mapName = CosThetaPhiTEfficiency2DName(refFrameName, ptMin, ptMax);
 
 	// acceptance maps
-	TFile* acceptanceFile = TFile::Open(Form("../MonteCarlo/AcceptanceMaps/%dS/AcceptanceResults.root", iState), "READ");
+	TFile* acceptanceFile = TFile::Open(Form("../MonteCarlo/AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, gMuonAccName), "READ");
 	if (!acceptanceFile) {
 		cout << "Acceptance file not found. Check the directory of the file." << endl;
 		return;
@@ -94,7 +94,7 @@ void detailed(bool updatesWeights = false, Int_t ptMin = 0, Int_t ptMax = 30, co
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(mapName);
 
 	// efficiency maps
-	TFile* efficiencyFile = TFile::Open(Form("../MonteCarlo/EfficiencyMaps/%dS/EfficiencyResults.root", iState), "READ");
+	TFile* efficiencyFile = TFile::Open(Form("../MonteCarlo/EfficiencyMaps/%dS/EfficiencyResults%s.root", iState, gMuonAccName), "READ");
 	if (!efficiencyFile) {
 		cout << "Efficiency file not found. Check the directory of the file." << endl;
 		return;
