@@ -38,7 +38,7 @@ RooFitResult* WeightedInvariantMassFit(RooDataSet& data, RooAddPdf model, float 
 RooFitResult* MCWeightedInvariantMassFit(RooDataSet& data, RooCrystalBall model, float massMin = MassBinMin, float massMax = MassBinMax) {
 	if (BeVerbose) std::cout << "\nFitting the MC invariant mass distribution with weighted entries...\n\n";
 
-	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
+	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError), Extended(true));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 	if (BeVerbose) fitResult->Print("v");
 
