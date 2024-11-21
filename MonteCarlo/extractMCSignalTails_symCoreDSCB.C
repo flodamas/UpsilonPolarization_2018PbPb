@@ -9,9 +9,8 @@
 
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
-void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", bool saveParams = true,
-	Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Float_t phiMin = -180, Float_t phiMax = 180
-) {
+void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", Bool_t isCSframe = kFALSE,
+                                      Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Float_t phiMin = -180, Float_t phiMax = 180, bool saveParams = true) {
 	/// open the MC skimmed file
 
 	TFile* file = TFile::Open(filename, "READ");
@@ -19,7 +18,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
 	}
 
-	cout << "File " << filename << " opened" << endl;
+	cout << "File " << filename << " opened\n";
 
 	writeExtraText = true; // if extra text
 	extraText = "      Simulation Internal";
@@ -28,7 +27,6 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 	// we only extract the tail parameters for a specific pt bin, they do not vary significantly with cos theta or phi within this pt bin
 	// Bool_t isCSframe = kTRUE;
-	Bool_t isCSframe = kFALSE;
 	// Float_t cosThetaMin = -1, cosThetaMax = 1;
 	// Float_t phiMin = -180, phiMax = 180;
 
@@ -45,12 +43,12 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	RooWorkspace wspace("workspace");
 	wspace.import(*allDataset);
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	RooRealVar* massVar = wspace.var("mass");
+	RooRealVar massVar = *wspace.var("mass");
 
 	// fit
-	auto* fitResult = SymDSCBfit(wspace, *massDataset, massMin, massMax);
+	auto* fitResult = SymDSCBfit(wspace, massDataset, massMin, massMax);
 
 	RooRealVar mean = *wspace.var(Form("mean%s", signalShapeName));
 	RooRealVar sigma = *wspace.var(Form("sigma%s", signalShapeName));
@@ -67,10 +65,10 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	pad1->Draw();
 	pad1->cd();
 
-	RooPlot* frame = massVar->frame(Title(" "), Range(massMin, massMax));
+	RooPlot* frame = massVar.frame(Title(" "), Range(massMin, massMax));
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 	// frame->SetYTitle(Form("Candidates / (%d MeV)", (int)1000 * (binMax - binMin) / nBins));
-	massDataset->plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
+	massDataset.plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
 
 	wspace.pdf(signalShapeName)->plotOn(frame, LineColor(kBlue));
 
@@ -92,7 +90,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 	// const char* outputName = GetSignalFitName(signalShapeName, ptMin, ptMax);
 	const char* outputName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
-	cout << outputName << endl;
+	//cout << outputName << endl;
 	gSystem->mkdir("SignalShapeFits", kTRUE);
 	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
 
@@ -114,11 +112,11 @@ void scanExtractMCSignalTails_symCoreDSCB() {
 	Int_t NumPtEle = sizeof(PtEdges) / sizeof(Int_t);
 	Int_t NumCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
 	Int_t NumPhiEle = sizeof(phiEdges) / sizeof(Float_t);
-	
-	for(Int_t ptIdx = 0; ptIdx < NumPtEle - 1; ptIdx++) {
+
+	for (Int_t ptIdx = 0; ptIdx < NumPtEle - 1; ptIdx++) {
 		for (Int_t cosThetaIdx = 0; cosThetaIdx < NumCosThetaEle - 1; cosThetaIdx++) {
 			for (Int_t phiIdx = 0; phiIdx < NumPhiEle - 1; phiIdx++) {
-				extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, PtEdges[ptIdx], PtEdges[ptIdx + 1], "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", kTRUE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1]);
+				extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, PtEdges[ptIdx], PtEdges[ptIdx + 1], "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", kTRUE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1], true);
 			}
 		}
 	}
