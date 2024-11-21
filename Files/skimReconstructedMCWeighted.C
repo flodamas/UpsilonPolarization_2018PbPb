@@ -10,8 +10,6 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-// skim and keep all MC events, but add a category "selected" to know if a given event passes the selection criteria or no
-
 // the reconstructed dimuons are fully weighted, including potential reweighting for polarization
 
 void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
@@ -129,12 +127,8 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 	lambdaThetaPhiVar.setVal(lambdaThetaPhi);
 	lambdaThetaPhiVar.setConstant(kTRUE);
 
-	RooCategory recoCat("recoCategory", "is the dimuon selected?"); // for efficiency PDF
-	recoCat.defineType("selected", 1);
-	recoCat.defineType("rejected", 0);
-
-	RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(recoCat, centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
-	RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(recoCat, centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
+	RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
+	RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
@@ -169,64 +163,35 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 		if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality > 90% in 2018 data
 
-		// firesTrigger = ((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)));
-
 		if (!((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
 
 		nColl = FindNcoll(Centrality);
 
-		// loop over all gen upsilons
-		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
-			genLorentzVector = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
+		// loop over reconstructed dimuon candidates
+		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
+			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
 
-			// fiducial region
+			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
 
-			if (fabs(genLorentzVector->Rapidity()) < gRapidityMin || fabs(genLorentzVector->Rapidity()) > gRapidityMax) continue;
+			if (Reco_QQ_sign[iQQ] != 0) continue; // only opposite-sign muon pairs
 
-			// single-muon acceptance
+			if (Reco_QQ_VtxProb[iQQ] < 0.01) continue; // good common vertex proba
 
-			// positive muon first
-			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iQQ);
 
-			if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;
+			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
-			// then negative muon
-			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
-
-			if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;
-
-			// go to reco level
-			Int_t iReco = Gen_QQ_whichRec[iGen];
-
-			if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
-
-			isRecoMatched = iReco > -1;
-
-			if (!isRecoMatched) continue;
-
-			/// all the reconstructed upsilons must pass the conditions below!
-
-			// dimuonMatching = (Reco_QQ_trig[iReco] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1));
-
-			if (!((Reco_QQ_trig[iReco] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
-
-			// goodVertexProba = Reco_QQ_VtxProb[iReco] > 0.01;
-			if (Reco_QQ_VtxProb[iReco] < 0.01) continue;
-			
-			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iReco);
+			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue;
 
 			/// single-muon selection criteria
-			int iMuPlus = Reco_QQ_mupl_idx[iReco];
-			int iMuMinus = Reco_QQ_mumi_idx[iReco];
+			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
+			int iMuMinus = Reco_QQ_mumi_idx[iQQ];
 
-			// global AND tracker muons
-			// trackerAndGlobalMuons = (Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8) && (Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8);
 			// global AND tracker muons
 			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
 			if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
 
 			// passing hybrid-soft Id
-			// hybridSoftMuons = (Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.) && (Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.);
 			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
 			if (!((Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.))) continue;
 
@@ -268,7 +233,6 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			// passing hybrid-soft Id
 			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
 			if (!((Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.))) continue;
-
 
 			/// muon scale factors
 
@@ -377,8 +341,6 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			// cout << "errorWeightUp: " << errorWeightUp << endl;
 			// fill the dataset
 
-			recoCat.setLabel((allGood) ? "selected" : "rejected");
-
 			centVar = Centrality;
 
 			polarWeightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
@@ -444,7 +406,6 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			// datasetHX.add(RooArgSet(recoCat, centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightHX, errorWeightDown, errorWeightUp);
 			datasetCS.add(RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);
 			datasetHX.add(RooArgSet(centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightHX, errorWeightDown, errorWeightUp);
-
 		}
 	}
 

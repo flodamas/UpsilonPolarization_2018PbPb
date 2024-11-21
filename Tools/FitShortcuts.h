@@ -11,8 +11,8 @@
 using namespace RooFit;
 
 // for data
-RooFitResult* RawInvariantMassFit(RooDataSet& data, RooAddPdf model, RooArgSet varsForMinos = RooArgSet()) {
-	if (BeVerbose) std::cout << "\nFitting the raw invariant mass distribution...\n";
+RooFitResult* RawInvariantMassFit(RooDataSet data, RooAddPdf model, RooArgSet varsForMinos = RooArgSet(), float massMin = MassBinMin, float massMax = MassBinMax) {
+	if (BeVerbose) cout << "\nFitting the raw invariant mass distribution...\n";
 
 	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), NumCPU(NCPUs), Range("MassFitRange"), Minos(varsForMinos));
 	// only run Minos over the parsed variables
@@ -22,8 +22,8 @@ RooFitResult* RawInvariantMassFit(RooDataSet& data, RooAddPdf model, RooArgSet v
 	return fitResult;
 }
 
-RooFitResult* WeightedInvariantMassFit(RooDataSet& data, RooAddPdf model, float massMin = MassBinMin, float massMax = MassBinMax) {
-	if (BeVerbose) std::cout << "\nFitting the invariant mass distribution with weighted entries...\n\n";
+RooFitResult* WeightedInvariantMassFit(RooDataSet data, RooAddPdf model, float massMin = MassBinMin, float massMax = MassBinMax) {
+	if (BeVerbose) cout << "\nFitting the invariant mass distribution with weighted entries...\n\n";
 
 	bool doWeightedError = true;
 
@@ -35,8 +35,8 @@ RooFitResult* WeightedInvariantMassFit(RooDataSet& data, RooAddPdf model, float 
 }
 
 // for MC
-RooFitResult* MCWeightedInvariantMassFit(RooDataSet& data, RooCrystalBall model, float massMin = MassBinMin, float massMax = MassBinMax) {
-	if (BeVerbose) std::cout << "\nFitting the MC invariant mass distribution with weighted entries...\n\n";
+RooFitResult* MCWeightedInvariantMassFit(RooDataSet data, RooCrystalBall model, float massMin = MassBinMin, float massMax = MassBinMax) {
+	if (BeVerbose) cout << "\nFitting the MC invariant mass distribution with weighted entries...\n\n";
 
 	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
@@ -45,7 +45,7 @@ RooFitResult* MCWeightedInvariantMassFit(RooDataSet& data, RooCrystalBall model,
 	return fitResult;
 }
 
-RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet& massDataset, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet massDataset, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
 	// fit
 	RooRealVar mean("meanSymDSCB", "", PDGmass_1S, 9., 10.);
 	RooRealVar sigma("sigmaSymDSCB", "", 0.08, .05, .15);
@@ -56,8 +56,8 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet& massDataset, Float_t 
 
 	RooCrystalBall signal("SymDSCB", "SymDSCB", *wspace.var("mass"), mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 
-	if (BeVerbose) std::cout << std::endl
-		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions..." << std::endl;
+	if (BeVerbose) cout << endl
+		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions...\n";
 
 	auto* fitResult = MCWeightedInvariantMassFit(massDataset, signal, massMin, massMax);
 
@@ -78,8 +78,8 @@ RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet*
 
 	RooCrystalBall signal("AsymDSCB", "AsymDSCB", *massVar, mean, sigmaInf, sigmaSup, alphaInf, orderInf, alphaSup, orderSup);
 
-	if (BeVerbose) std::cout << std::endl
-		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of an asymmetric Gaussian core and asymmetric tail distributions..." << std::endl;
+	if (BeVerbose) cout << endl
+		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of an asymmetric Gaussian core and asymmetric tail distributions..." << endl;
 
 	bool doWeightedError = true;
 
@@ -113,8 +113,8 @@ RooFitResult* SymDSCBGaussfit(RooRealVar* massVar, RooWorkspace* wspace, RooData
 
 	RooAddPdf signal("DSCBGauss", "sum of DSCB and CB PDF", RooArgList(DSCB, gauss), RooArgList(normFraction), kTRUE);
 
-	if (BeVerbose) std::cout << std::endl
-		                  << "Fitting the MC signal shape (weighted entries!!) with the sum of a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions, and a Gaussian PDF..." << std::endl;
+	if (BeVerbose) cout << endl
+		                  << "Fitting the MC signal shape (weighted entries!!) with the sum of a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions, and a Gaussian PDF..." << endl;
 
 	bool doWeightedError = true;
 
@@ -152,8 +152,8 @@ RooFitResult* Hypatiafit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* 
 
 	RooHypatia2 signal("Hypatia", "Hypatia", *massVar, lambda, zeta, beta, sigma, mean, alphaInf, orderInf, alphaSup, orderSup);
 
-	if (BeVerbose) std::cout << std::endl
-		                  << "Fitting the MC signal shape (weighted entries!!) with a Hypatia PDF" << std::endl;
+	if (BeVerbose) cout << endl
+		                  << "Fitting the MC signal shape (weighted entries!!) with a Hypatia PDF" << endl;
 
 	bool doWeightedError = true;
 
@@ -180,7 +180,7 @@ const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin
 	return Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", signalFitName, cosThetaMin, cosThetaMax, phiMin, phiMax, refFrameName);
 }
 
-const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Int_t nCosThetaBins = 10, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
+const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
 	const char** signalFitNames = new const char*[nCosThetaBins];
 
 	// just need to append the specific (cos theta, phi) bin name
@@ -191,7 +191,7 @@ const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptM
 	return signalFitNames;
 }
 
-const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, const std::vector<Double_t>& phiBinEdges = {}) {
+const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {}) {
 	const char** signalFitNames = new const char*[nPhiBins];
 
 	// just need to append the specific (cos theta, phi) bin name
@@ -207,40 +207,51 @@ const char* GetMCFileName(const char* signalShapeName = "SymDSCB", Int_t ptMin =
 	return Form("../MonteCarlo/SignalParameters/%s.txt", GetSignalFitName(signalShapeName, ptMin, ptMax));
 }
 
-void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
+void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t fixSigmatoMC = false) {
+	// Define the parameter variables
+	RooRealVar sigma(Form("sigma%s", signalShapeName), "", 1);
 	RooRealVar alphaInf(Form("alphaInf%s", signalShapeName), "", 1);
 	RooRealVar orderInf(Form("orderInf%s", signalShapeName), "", 1);
 	RooRealVar alphaSup(Form("alphaSup%s", signalShapeName), "", 1);
 	RooRealVar orderSup(Form("orderSup%s", signalShapeName), "", 1);
 
-	RooArgSet tailParams(alphaInf, orderInf, alphaSup, orderSup);
+	RooArgSet tailParams(sigma, alphaInf, orderInf, alphaSup, orderSup);
 
 	// if the .txt file for this specific fit model exists, just read the tail parameters from it
 
-	const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax);
+	const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax); // GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	if (fopen(mcFileName, "r")) {
-		if (BeVerbose) std::cout << std::endl
-			                  << "Found " << mcFileName << " file, will read the signal tail parameters from it" << std::endl;
+		if (BeVerbose) cout << "\nFound " << mcFileName << " file, will read the signal parameters from it\n";
 		tailParams.readFromFile(mcFileName);
 	} else {
-		std::cout << std::endl
-		     << mcFileName << " file does not seem to exist, you need to extract the signal tail paramaters from MC fit first!" << std::endl;
+		cout << endl
+		     << mcFileName << " file does not seem to exist, you need to extract the signal paramaters from MC fit first!" << endl;
 		exit(1);
 	}
 
 	// fix the tail parameters
+	if (fixSigmatoMC) sigma.setConstant();
 	alphaInf.setConstant();
 	orderInf.setConstant();
 	alphaSup.setConstant();
 	orderSup.setConstant();
 
 	if (BeVerbose) {
-		std::cout << std::endl
-		     << "Tail parameters fixed to the following MC signal values:" << std::endl;
+		cout << "\nSignal parameters fixed to the following MC values:" << endl;
 		tailParams.Print("v");
 	}
 	wspace.import(tailParams);
+
+	// build the Gaussian constraints on tail parameters to propagate the uncertainties on these parameters
+	RooGaussian alphaInfConstraint("alphaInfConstraint", "alphaInfConstraint", alphaInf, alphaInf.getVal(), alphaInf.getError());
+	RooGaussian orderInfConstraint("orderInfConstraint", "orderInfConstraint", orderInf, orderInf.getVal(), orderInf.getError());
+	RooGaussian alphaSupConstraint("alphaSupConstraint", "alphaSupConstraint", alphaSup, alphaSup.getVal(), alphaSup.getError());
+	RooGaussian orderSupConstraint("orderSupConstraint", "orderSupConstraint", orderSup, orderSup.getVal(), orderSup.getError());
+
+	RooArgSet paramConstraints(alphaInfConstraint, orderInfConstraint, alphaSupConstraint, orderSupConstraint);
+
+	wspace.import(paramConstraints);
 }
 
 RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
@@ -251,12 +262,12 @@ RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, 
 	const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax);
 
 	if (fopen(mcFileName, "r")) {
-		if (BeVerbose) std::cout <<std::endl
-			                  << "Found " << mcFileName << " file, will read the signal tail parameters from it" << std::endl;
+		if (BeVerbose) cout << endl
+			                  << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
 		tailParams.readFromFile(mcFileName);
 	} else {
-		std::cout << std::endl
-		     << mcFileName << " file does not seem to exist, you need to extract the signal tail paramaters from MC fit first!" << std::endl;
+		cout << endl
+		     << mcFileName << " file does not seem to exist, you need to extract the signal tail paramaters from MC fit first!" << endl;
 		exit(1);
 	}
 
@@ -267,8 +278,8 @@ RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, 
 	orderSup->setConstant();
 
 	if (BeVerbose) {
-		std::cout << std::endl
-		     << "Tail parameters fixed to the following MC signal values:" << std::endl;
+		cout << endl
+		     << "Tail parameters fixed to the following MC signal values:" << endl;
 		tailParams.Print("v");
 	}
 	return tailParams;
@@ -289,12 +300,12 @@ RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooReal
 	const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax);
 
 	if (fopen(mcFileName, "r")) {
-		if (BeVerbose) std::cout << std::endl
-			                  << "Found " << mcFileName << " file, will read the signal tail parameters from it" << std::endl;
+		if (BeVerbose) cout << endl
+			                  << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
 		Params.readFromFile(mcFileName);
 	} else {
-		std::cout << std::endl
-		     << mcFileName << " file does not seem to exist, you need to extract the signal tail parameters from MC fit first!" << std::endl;
+		cout << endl
+		     << mcFileName << " file does not seem to exist, you need to extract the signal tail parameters from MC fit first!" << endl;
 	}
 	// fix the parameters
 	sigma->setConstant();
@@ -307,8 +318,8 @@ RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooReal
 	// ratio_sigma -> setConstant();
 
 	if (BeVerbose) {
-		std::cout << std::endl
-		     << "Parameters fixed to the following MC signal values:" << std::endl;
+		cout << endl
+		     << "Parameters fixed to the following MC signal values:" << endl;
 		Params.Print("v");
 	}
 	return Params;
@@ -355,7 +366,7 @@ void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName
 
 	auto list = parameters->contentsString();
 
-	std::cout << "\n[Polarization] fit results for parameters (" << list << ") saved in " << fileName << std::endl;
+	cout << "\n[Polarization] fit results for parameters (" << list << ") saved in " << fileName << endl;
 }
 
 RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName, const char* extraString = "") {
@@ -364,19 +375,19 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	char yieldsFileName[512];
 	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/SignalYields/%s_%s%s.txt", bkgShapeName, fitModelName, extraString);
 
-	std::cout << yieldsFileName << std::endl;
+	cout << yieldsFileName << endl;
 	if (fopen(yieldsFileName, "r")) {
-		std::cout << std::endl
-		     << "Found" << yieldsFileName << " file, will read signal yields from it" << std::endl;
+		cout << endl
+		     << "Found" << yieldsFileName << " file, will read signal yields from it" << endl;
 		signalYields.readFromFile(yieldsFileName);
 	} else {
-		std::cout << std::endl
-		     << yieldsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << std::endl;
+		cout << endl
+		     << yieldsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << endl;
 		exit(1);
 	}
 
-	std::cout << std::endl
-	     << "Signal yields values:" << std::endl;
+	cout << endl
+	     << "Signal yields values:" << endl;
 	signalYields.Print("v");
 
 	return signalYields;
@@ -388,19 +399,19 @@ RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooReal
 	char paramsFileName[512];
 	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s%s.txt", methodName, modelName, extraString);
 
-	std::cout << paramsFileName << std::endl;
+	cout << paramsFileName << endl;
 	if (fopen(paramsFileName, "r")) {
-		std::cout << std::endl
-		     << "Found" << paramsFileName << " file, will read polarization parameters from it" << std::endl;
+		cout << endl
+		     << "Found" << paramsFileName << " file, will read polarization parameters from it" << endl;
 		polarParams.readFromFile(paramsFileName);
 	} else {
-		std::cout << std::endl
-		     << paramsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << std::endl;
+		cout << endl
+		     << paramsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << endl;
 		exit(1);
 	}
 
-	std::cout << std::endl
-	     << "Polarization parameter values:" << std::endl;
+	cout << endl
+	     << "Polarization parameter values:" << endl;
 	polarParams.Print("v");
 
 	return polarParams;
@@ -426,13 +437,13 @@ void calculateChi2(TH1D* standardCorrectedHist, TF1* PolarFunc, Int_t nCosThetaB
 
 		chiSqr += TMath::Power(res, 2);
 
-		// std::cout << "x: " << x << std::endl;
-		// std::cout << "res: " << res << std::endl;
+		// cout << "x: " << x << endl;
+		// cout << "res: " << res << endl;
 	}
 
-	std::cout << "chi2: " << chiSqr << std::endl;
-	std::cout << "nDOF: " << (nCosThetaBins - PolarFunc->GetNpar()) << std::endl;
-	std::cout << "reduced chi2: " << chiSqr / (nCosThetaBins - PolarFunc->GetNpar()) << std::endl;
+	cout << "chi2: " << chiSqr << endl;
+	cout << "nDOF: " << (nCosThetaBins - PolarFunc->GetNpar()) << endl;
+	cout << "reduced chi2: " << chiSqr / (nCosThetaBins - PolarFunc->GetNpar()) << endl;
 }
 
 #endif
