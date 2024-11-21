@@ -35,7 +35,7 @@ const float gRapidityMax = 2.4;
 
 // pT binning for the final results!
 const int NPtBins = 7;
-const double gPtBinning[NPtBins + 1] = {0, 2, 4, 6, 8, 12, 16, 30};
+const double gPtBinning[NPtBins + 1] = {0, 2, 6, 12, 20};
 
 const int NPtFineBins = 11;
 const double gPtFineBinning[NPtFineBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 20, 30}; // can afford to split bins into two for the MC pt spectrum reweighting
