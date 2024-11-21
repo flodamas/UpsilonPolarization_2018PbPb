@@ -36,7 +36,7 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 }
 
 TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB");
+	TPaveText* text = new TPaveText(0.14, 0.65, 0.50, 0.90, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	// text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
