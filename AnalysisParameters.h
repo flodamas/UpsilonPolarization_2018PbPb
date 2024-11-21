@@ -34,7 +34,7 @@ const float gRapidityMin = 0.;
 const float gRapidityMax = 2.4;
 
 // pT binning for the final results!
-const int NPtBins = 7;
+const int NPtBins = 4;
 const double gPtBinning[NPtBins + 1] = {0, 2, 6, 12, 20};
 
 const int NPtFineBins = 11;

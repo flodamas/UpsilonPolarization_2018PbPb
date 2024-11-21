@@ -134,14 +134,14 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 
 // build the main PDF based on all PDFs above
 
-RooAddPdf MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t nEntries = 1e6) {
+RooAddPdf MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, const char* fitModelName, Long64_t nEntries = 1e6) {
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
 
 	if (BeVerbose) std::cout << "\nBuilding invariant mass fit model with " << signalShapeName << " for the signal and " << bkgShapeName << " for the background\n";
 
 	// tail parameters fixed to MC extracted values, and identical for the three resonances
 
-	ImportAndFixMCSignalParameters(wspace, signalShapeName, ptMin, ptMax);
+	ImportAndFixMCSignalParameters(wspace, signalShapeName, fitModelName);
 
 	auto signalModel = NominalSignalModel(wspace, nEntries);
 
