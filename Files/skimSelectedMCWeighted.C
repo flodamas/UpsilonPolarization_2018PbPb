@@ -47,17 +47,22 @@ void skimSelectedMCWeighted(Int_t iState = 1) {
 	ULong64_t Reco_mu_trig[1000];
 
 	OniaTree->SetBranchAddress("Gen_weight", &Gen_weight);
-	OniaTree->SetBranchAddress("zVtx", &zVtx);
-	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
-	OniaTree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
-	OniaTree->SetBranchAddress("Reco_QQ_4mom", &CloneArr_QQ);
-	OniaTree->SetBranchAddress("Reco_mu_4mom", &CloneArr_mu);
+	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
+
+	OniaTree->SetBranchAddress("zVtx", &zVtx);
+
+	OniaTree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
+
 	OniaTree->SetBranchAddress("Reco_QQ_size", &Reco_QQ_size);
-	OniaTree->SetBranchAddress("Reco_QQ_sign", &Reco_QQ_sign);
+	OniaTree->SetBranchAddress("Reco_QQ_4mom", &CloneArr_QQ);
+	OniaTree->SetBranchAddress("Reco_QQ_whichGen", Reco_QQ_whichGen);
+
+	OniaTree->SetBranchAddress("Reco_mu_4mom", &CloneArr_mu);
 	OniaTree->SetBranchAddress("Reco_QQ_mupl_idx", Reco_QQ_mupl_idx);
 	OniaTree->SetBranchAddress("Reco_QQ_mumi_idx", Reco_QQ_mumi_idx);
-	OniaTree->SetBranchAddress("Reco_QQ_whichGen", Reco_QQ_whichGen);
+
+	OniaTree->SetBranchAddress("Reco_QQ_sign", &Reco_QQ_sign);
 
 	OniaTree->SetBranchAddress("Reco_mu_trig", Reco_mu_trig);
 	OniaTree->SetBranchAddress("Reco_mu_SelectionType", Reco_mu_SelectionType);
