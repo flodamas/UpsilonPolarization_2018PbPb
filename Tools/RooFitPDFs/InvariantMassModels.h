@@ -25,6 +25,10 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 	Long64_t initYield = nEntries / 100;
 
 	// get the tail parameters, assuming that they have been imported to the workspace first!!
+	RooRealVar sigma = *wspace.var("sigmaSymDSCB");
+	sigma.Print();
+	Double_t sigmaSeed = sigma.getVal();
+
 	RooRealVar alphaInf = *wspace.var("alphaInfSymDSCB");
 	RooRealVar orderInf = *wspace.var("orderInfSymDSCB");
 	RooRealVar alphaSup = *wspace.var("alphaSupSymDSCB");
@@ -32,7 +36,7 @@ RooAddPdf NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
-	RooRealVar sigma_1S("sigma_1S", "", .04, .02, .15);
+	RooRealVar sigma_1S("sigma_1S", "", sigmaSeed, .02, .15);
 
 	RooCrystalBall signalPDF_1S("signalPDF_1S", "", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
 	RooRealVar yield1S("yield1S", "N 1S", initYield, 0, nEntries);
@@ -101,9 +105,9 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar err_mu("err_mu", " ", 7, 5, 13);
-		RooRealVar err_sigma("err_sigma", " ", 1, 0, 10);
-		RooRealVar exp_lambda("exp_lambda", " ", 1.5, 0, 10);
+		RooRealVar err_mu("err_mu", " ", 7.16, 4, 13);
+		RooRealVar err_sigma("err_sigma", " ", 0.82, 0, 10);
+		RooRealVar exp_lambda("exp_lambda", " ", 4.6, 0, 10);
 
 		ErrorFuncTimesExp bkgPDF("bkgPDF", " ", invMass, err_mu, err_sigma, exp_lambda);
 
@@ -134,14 +138,14 @@ RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64
 
 // build the main PDF based on all PDFs above
 
-RooAddPdf MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t nEntries = 1e6) {
+RooAddPdf MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, Int_t ptMin = 0, Int_t ptMax = 30, Long64_t nEntries = 1e6, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, const char* refFrameName = "CS") {
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
 
 	if (BeVerbose) std::cout << "\nBuilding invariant mass fit model with " << signalShapeName << " for the signal and " << bkgShapeName << " for the background\n";
 
 	// tail parameters fixed to MC extracted values, and identical for the three resonances
 
-	ImportAndFixMCSignalParameters(wspace, signalShapeName, ptMin, ptMax);
+	ImportAndFixMCSignalParameters(wspace, signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	auto signalModel = NominalSignalModel(wspace, nEntries);
 

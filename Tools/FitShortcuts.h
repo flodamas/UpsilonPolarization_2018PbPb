@@ -219,7 +219,9 @@ void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShap
 
 	// if the .txt file for this specific fit model exists, just read the tail parameters from it
 
-	const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax); // GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	// const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax); // GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	const char* mcFileName = Form("../MonteCarlo/SignalParameters/%s.txt", GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	cout << mcFileName << endl;
 
 	if (fopen(mcFileName, "r")) {
 		if (BeVerbose) cout << "\nFound " << mcFileName << " file, will read the signal parameters from it\n";

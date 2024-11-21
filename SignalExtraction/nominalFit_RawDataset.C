@@ -74,7 +74,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	else
 		bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
 
-	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
+	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries, cosThetaMin, cosThetaMax, phiMin, phiMax, refFrameName);
 
 	RooDataSet reducedDataset = InvMassDataset(wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName, phiMin, phiMax);
 
