@@ -69,57 +69,11 @@ RooDataSet ReducedRecoMCDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptM
 	return reducedDataset;
 }
 
-// reduce the input dataset (N dimensions) to the apply desired kinematic cuts
-RooDataSet* ReducedDataset(RooDataSet* allDataset, RooWorkspace* wspace, Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, Double_t massMin = 8, Double_t massMax = 14, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	if (allDataset == nullptr) {
-		std::cerr << "Null RooDataSet provided to the reducer method!!\n";
-		return nullptr;
-	}
-
-	// not cutting in CS and HF variables at the same time!!! Either you're analyzing CS or HX frame, but not both at once
-
-	Float_t minCosThetaCS, maxCosThetaCS;
-	Int_t minPhiCS, maxPhiCS;
-	Float_t minCosThetaHX, maxCosThetaHX;
-	Int_t minPhiHX, maxPhiHX;
-
-	if (isCSframe) {
-		minCosThetaCS = cosThetaMin;
-		maxCosThetaCS = cosThetaMax;
-		minPhiCS = phiMin;
-		maxPhiCS = phiMax;
-
-		minCosThetaHX = -1;
-		maxCosThetaHX = 1;
-		minPhiHX = -180;
-		maxPhiHX = 180;
-	} else {
-		minCosThetaCS = -1;
-		maxCosThetaCS = 1;
-		minPhiCS = -180;
-		maxPhiCS = 180;
-
-		minCosThetaHX = cosThetaMin;
-		maxCosThetaHX = cosThetaMax;
-		minPhiHX = phiMin;
-		maxPhiHX = phiMax;
-	}
-
-	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (mass > %f && mass < %f) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %d && phiCS < %d)&& (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %d && phiHX < %d)", 2 * centMin, 2 * centMax, massMin, massMax, ptMin, ptMax, minCosThetaCS, maxCosThetaCS, minPhiCS, maxPhiCS, minCosThetaHX, maxCosThetaHX, minPhiHX, maxPhiHX);
-	RooDataSet* reducedDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace->var("centrality")), *(wspace->var("mass")), *(wspace->var("rapidity")), *(wspace->var("pt")), *(wspace->var("cosThetaLab")), *(wspace->var("phiLab")), *(wspace->var("etaLabMupl")), *(wspace->var("etaLabMumi")), *(wspace->var("cosThetaCS")), *(wspace->var("phiCS")), *(wspace->var("cosThetaHX")), *(wspace->var("phiHX"))), kinematicCut);
-
-	reducedDataset->SetName("reducedDataset");
-
-	wspace->import(*reducedDataset);
-
-	return reducedDataset;
-}
-
 // reduce the input dataset (N dimensions) to the mass dimension only dataset and apply desired kinematic cuts
-RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
+RooDataSet ReducedMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, double cosThetaMin = -1, double cosThetaMax = 1, double phiMin = -180, double phiMax = 180) {
 	if (allDataset == nullptr) {
 		std::cerr << "Null RooDataSet provided to the reducer method!!" << std::endl;
-		return nullptr;
+		return RooDataSet();
 	}
 
 	// not cutting in CS and HF variables at the same time!!! Either you're analyzing CS or HX frame, but not both at once
@@ -153,10 +107,10 @@ RooDataSet* ReducedMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int
 
 	const char* kinematicCut = Form("(centrality >= %d && centrality < %d) && (rapidity > %f && rapidity < %f) && (pt > %d && pt < %d) && (cosThetaCS > %f && cosThetaCS < %f) && (phiCS > %f && phiCS < %f)&& (cosThetaHX > %f && cosThetaHX < %f) && (phiHX > %f && phiHX < %f)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, minCosThetaCS, maxCosThetaCS, minPhiCS, maxPhiCS, minCosThetaHX, maxCosThetaHX, minPhiHX, maxPhiHX);
 
-	RooDataSet* massDataset = (RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
-	massDataset->SetName(kinematicCut); // just to make it unique
+	RooDataSet massDataset = *(RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
+	massDataset.SetName(kinematicCut); // just to make it unique
 
-	wspace.import(*massDataset);
+	wspace.import(massDataset);
 
 	return massDataset;
 }
