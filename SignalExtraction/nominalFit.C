@@ -9,7 +9,7 @@
 #include "../Tools/RooFitPDFs/ErrorFuncTimesExp.h"
 #include "../Tools/Style/FitDistributions.h"
 
-void nominalFit(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* bkgShapeName = "ExpTimesErr", Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+void nominalFit(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* bkgShapeName = "ExpTimesErr", Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* refFrameName = "HX", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -35,17 +35,21 @@ void nominalFit(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* bkgShapeName 
 
 	const char* signalShapeName = "SymDSCB";
 
-	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
+	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
+	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries);
 
 	auto* fitResult = RawInvariantMassFit(data, invMassModel, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")), massMin, massMax);
 
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
 
-	const char* fitModelName = GetSignalFitName(signalShapeName, ptMin, ptMax);
+	//const char* fitModelName = GetSignalFitName(signalShapeName, ptMin, ptMax);
 
 	RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
 
-	SaveRawDataSignalYields(signalYields, bkgShapeName, fitModelName, gMuonAccName);
+	const char* totalFitModelName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	SaveRawDataCanvas(massCanvas, bkgShapeName, fitModelName, gMuonAccName);
+	SaveRawSignalYields(signalYields, totalFitModelName);
+
+	SaveRawDataFitCanvas(massCanvas, totalFitModelName);
 }
