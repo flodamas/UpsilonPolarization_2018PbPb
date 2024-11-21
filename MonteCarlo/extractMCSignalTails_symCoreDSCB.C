@@ -9,8 +9,8 @@
 
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
-void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", bool saveParams = true,
-	Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Float_t phiMin = -180, Float_t phiMax = 180
+void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", bool saveParams = kTRUE,
+	Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Float_t phiMin = -180, Float_t phiMax = 180
 ) {
 	/// open the MC skimmed file
 
@@ -27,8 +27,8 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	const char* signalShapeName = "SymDSCB";
 
 	// we only extract the tail parameters for a specific pt bin, they do not vary significantly with cos theta or phi within this pt bin
-	// Bool_t isCSframe = kTRUE;
-	Bool_t isCSframe = kFALSE;
+
+	// Bool_t isCSframe = kFALSE;
 	// Float_t cosThetaMin = -1, cosThetaMax = 1;
 	// Float_t phiMin = -180, phiMax = 180;
 
@@ -106,8 +106,8 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	// file->Close();
 }
 
-void scanExtractMCSignalTails_symCoreDSCB() {
-	Int_t PtEdges[4] = {2, 6, 12, 20};
+void scanExtractMCSignalTails_symCoreDSCB(Bool_t isCSframe = kTRUE) {
+	Int_t PtEdges[5] = {0, 2, 6, 12, 20};
 	Float_t cosThetaEdges[6] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
 	Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
 
@@ -115,10 +115,10 @@ void scanExtractMCSignalTails_symCoreDSCB() {
 	Int_t NumCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
 	Int_t NumPhiEle = sizeof(phiEdges) / sizeof(Float_t);
 	
-	for(Int_t ptIdx = 0; ptIdx < NumPtEle - 1; ptIdx++) {
+	for(Int_t ptIdx = 0; ptIdx < 1; ptIdx++) {
 		for (Int_t cosThetaIdx = 0; cosThetaIdx < NumCosThetaEle - 1; cosThetaIdx++) {
 			for (Int_t phiIdx = 0; phiIdx < NumPhiEle - 1; phiIdx++) {
-				extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, PtEdges[ptIdx], PtEdges[ptIdx + 1], "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", kTRUE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1]);
+				extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, PtEdges[ptIdx], PtEdges[ptIdx + 1], "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", kTRUE, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1]);
 			}
 		}
 	}
