@@ -9,7 +9,9 @@
 
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
-void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", bool saveParams = true) {
+void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", bool saveParams = true,
+	Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Float_t phiMin = -180, Float_t phiMax = 180
+) {
 	/// open the MC skimmed file
 
 	TFile* file = TFile::Open(filename, "READ");
@@ -27,8 +29,8 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	// we only extract the tail parameters for a specific pt bin, they do not vary significantly with cos theta or phi within this pt bin
 	// Bool_t isCSframe = kTRUE;
 	Bool_t isCSframe = kFALSE;
-	Float_t cosThetaMin = -1, cosThetaMax = 1;
-	Float_t phiMin = -180, phiMax = 180;
+	// Float_t cosThetaMin = -1, cosThetaMax = 1;
+	// Float_t phiMin = -180, phiMax = 180;
 
 	Float_t massMin = 8.5, massMax = 10.5;
 	Int_t nBins = 80;
@@ -88,16 +90,17 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	pad1->Draw();
 	pad2->Draw();
 
-	const char* outputName = GetSignalFitName(signalShapeName, ptMin, ptMax);
-
+	// const char* outputName = GetSignalFitName(signalShapeName, ptMin, ptMax);
+	const char* outputName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	cout << outputName << endl;
 	gSystem->mkdir("SignalShapeFits", kTRUE);
 	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
 
 	if (saveParams) {
 		// save signal shape parameters in a txt file to be read for data fit
-		RooArgSet* tailParams = new RooArgSet(alphaInf, orderInf, alphaSup, orderSup);
+		RooArgSet* Params = new RooArgSet(sigma, alphaInf, orderInf, alphaSup, orderSup);
 
-		SaveMCSignalParameters(tailParams, outputName); // so that we don't have to refit later
+		SaveMCSignalParameters(Params, outputName); // so that we don't have to refit later
 	}
 
 	// file->Close();
@@ -105,8 +108,18 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 void scanExtractMCSignalTails_symCoreDSCB() {
 	Int_t PtEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
+	Float_t cosThetaEdges[6] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
+	Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+
 	Int_t NumPtEle = sizeof(PtEdges) / sizeof(Int_t);
-	for (Int_t idx = 0; idx < NumPtEle - 1; idx++) {
-		extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, PtEdges[idx], PtEdges[idx + 1]);
+	Int_t NumCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
+	Int_t NumPhiEle = sizeof(phiEdges) / sizeof(Float_t);
+	
+	for(Int_t ptIdx = 0; ptIdx < NumPtEle - 1; ptIdx++) {
+		for (Int_t cosThetaIdx = 0; cosThetaIdx < NumCosThetaEle - 1; cosThetaIdx++) {
+			for (Int_t phiIdx = 0; phiIdx < NumPhiEle - 1; phiIdx++) {
+				extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, PtEdges[ptIdx], PtEdges[ptIdx + 1], "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", kTRUE, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1]);
+			}
+		}
 	}
 }
