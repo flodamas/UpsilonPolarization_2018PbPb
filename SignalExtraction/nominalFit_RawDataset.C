@@ -47,6 +47,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	RooWorkspace wspace = SetUpWorkspace(filename, "");
 
 	RooRealVar invMass = *wspace.var("mass");
+	invMass.setRange("MassFitRange", massMin, massMax);
 
 	RooRealVar cosTheta = *wspace.var(Form("cosTheta%s", refFrameName));
 
@@ -79,7 +80,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	invMassModel.setNormRange("MassFitRange");
 
-	auto* fitResult = invMassModel.fitTo(reducedDataset, Save(), Extended(kTRUE) /*, PrintLevel(-1)*/, NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
+	auto* fitResult = invMassModel.fitTo(reducedDataset, Save(), Extended(kTRUE) /*, PrintLevel(-1)*/, NumCPU(NCPUs), Range("MassFitRange"), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
 
 	fitResult->Print("v");
 
@@ -93,7 +94,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	pad1->cd();
 
 	// RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
-	RooPlot* frame = invMass.frame(Title(" "), Range(MassBinMin, MassBinMax));
+	RooPlot* frame = invMass.frame(Title(" "), Range("MassFitRange"));
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 	reducedDataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
@@ -149,7 +150,7 @@ void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
 	for (Int_t cosThetaIdx = 0; cosThetaIdx < nCosThetaBins; cosThetaIdx++) {
 		for (Int_t idx = 0; idx < nPhiBins; idx++) {
-			nominalFit_RawDataset(ptMin, ptMax, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, MassBinMin, MassBinMax, isBkgExpTimesErr, ChebychevOrder);
+			nominalFit_RawDataset(ptMin, ptMax, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, MassBinMin, 13, isBkgExpTimesErr, ChebychevOrder);
 		}
 	}
 }
