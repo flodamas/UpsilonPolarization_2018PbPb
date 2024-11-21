@@ -75,7 +75,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	wspace.pdf(signalShapeName)->plotOn(frame, LineColor(kBlue));
 
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
-	//frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 	frame->addObject(SymCoreDoubleCBParamsText(mean, sigma, alphaInf, orderInf, alphaSup, orderSup));
 	frame->Draw();
 
@@ -107,7 +107,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 }
 
 void scanExtractMCSignalTails_symCoreDSCB() {
-	Int_t PtEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
+	Int_t PtEdges[4] = {2, 6, 12, 20};
 	Float_t cosThetaEdges[6] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
 	Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
 
