@@ -23,7 +23,7 @@ TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax
 }
 
 TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	TPaveText* text = new TPaveText(0.2, 0.9, 0.45, 0.7, "NDCNB");
+	TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	// text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
@@ -31,7 +31,7 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 	text->AddText(CosThetaRangeText(isCSframe ? "CS" : "HX", cosThetaMin, cosThetaMax));
 	text->AddText(PhiRangeText(isCSframe ? "CS" : "HX", phiMin, phiMax));
 
-	text->SetAllWith("", "align", 12);
+	text->SetAllWith("", "align", 32);
 	return text;
 }
 
