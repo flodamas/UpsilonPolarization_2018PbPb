@@ -56,8 +56,7 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet massDataset, Float_t m
 
 	RooCrystalBall signal("SymDSCB", "SymDSCB", *wspace.var("mass"), mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 
-	if (BeVerbose) cout << endl
-		                  << "Fitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions...\n";
+	if (BeVerbose) cout << "\nFitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions...\n";
 
 	auto* fitResult = MCWeightedInvariantMassFit(massDataset, signal, massMin, massMax);
 
@@ -180,6 +179,14 @@ const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin
 	return Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", signalFitName, cosThetaMin, cosThetaMax, phiMin, phiMax, refFrameName);
 }
 
+const char* GetTotalFitModelName(const char* bkgShapeName = "ExpTimesErr", const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
+	// total fit name = bkg + signal names (in this order)
+
+	return Form("%s_%s", bkgShapeName, fitModelName);
+}
+
 const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Int_t nCosThetaBins = 10, const vector<Double_t>& cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
 	const char** signalFitNames = new const char*[nCosThetaBins];
 
@@ -203,11 +210,13 @@ const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptM
 }
 
 // small dummy function to avoid repetiting the same piece of code everywhere...
-const char* GetMCFileName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
-	return Form("../MonteCarlo/SignalParameters/%s.txt", GetSignalFitName(signalShapeName, ptMin, ptMax));
+const char* GetMCFileName(const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12") {
+	return Form("../MonteCarlo/SignalParameters/%s.txt", fitModelName);
 }
 
-void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t fixSigmatoMC = false) {
+//void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t fixSigmatoMC = false) {
+
+void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12", bool fixSigmaToMC = false) {
 	// Define the parameter variables
 	RooRealVar sigma(Form("sigma%s", signalShapeName), "", 1);
 	RooRealVar alphaInf(Form("alphaInf%s", signalShapeName), "", 1);
@@ -219,9 +228,9 @@ void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShap
 
 	// if the .txt file for this specific fit model exists, just read the tail parameters from it
 
-	// const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax); // GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
-	const char* mcFileName = Form("../MonteCarlo/SignalParameters/%s.txt", GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax));
-	cout << mcFileName << endl;
+	//const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax); // GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
+	const char* mcFileName = GetMCFileName(fitModelName);
 
 	if (fopen(mcFileName, "r")) {
 		if (BeVerbose) cout << "\nFound " << mcFileName << " file, will read the signal parameters from it\n";
@@ -233,7 +242,7 @@ void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShap
 	}
 
 	// fix the tail parameters
-	if (fixSigmatoMC) sigma.setConstant();
+	if (fixSigmaToMC) sigma.setConstant();
 	alphaInf.setConstant();
 	orderInf.setConstant();
 	alphaSup.setConstant();
@@ -255,7 +264,7 @@ void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShap
 
 	wspace.import(paramConstraints);
 }
-
+/*
 RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
 	RooArgSet tailParams(*alphaInf, *orderInf, *alphaSup, *orderSup);
 
@@ -326,7 +335,7 @@ RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooReal
 	}
 	return Params;
 }
-
+*/
 Double_t ComputeSignalSignificance(RooWorkspace& wspace, Int_t iState = 1) {
 	RooRealVar mass = *wspace.var("mass");
 
@@ -355,9 +364,9 @@ void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const c
 	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/%s_%s%s.txt", bkgShapeName, fitModelName, extraString));
 }
 
-void SaveRawDataSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const char* fitModelName, const char* extraString = "") {
-	gSystem->mkdir("../SignalExtraction/SignalYields/", kTRUE);
-	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/RawData_%s_%s%s.txt", bkgShapeName, fitModelName, extraString));
+void SaveRawSignalYields(RooArgSet* signalYields, const char* fitModelName, const char* extraString = gMuonAccName) {
+	gSystem->mkdir("../SignalExtraction/RawYields/", kTRUE);
+	signalYields->writeToFile(Form("../SignalExtraction/RawYields/%s%s.txt", fitModelName, extraString));
 }
 
 void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName, const char* modelName, const char* extraString = "") {
@@ -419,14 +428,14 @@ RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooReal
 	return polarParams;
 }
 
-void SaveCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName) {
-	gSystem->mkdir("InvMassFits", kTRUE);
-	canvasName->SaveAs(Form("InvMassFits/CorrectedData_%s_%s.png", bkgShapeName, fitModelName), "RECREATE");
+void SaveCanvas(TCanvas* canvasName, const char* fitModelName) {
+	gSystem->mkdir("InvMassFits/CorrectedData/", kTRUE);
+	canvasName->SaveAs(Form("InvMassFits/CorrectedData/%s.png", fitModelName), "RECREATE");
 }
 
-void SaveRawDataCanvas(TCanvas* canvasName, const char* bkgShapeName, const char* fitModelName, const char* extraString = "") {
-	gSystem->mkdir("InvMassFits", kTRUE);
-	canvasName->SaveAs(Form("InvMassFits/RawData_%s_%s%s.png", bkgShapeName, fitModelName, extraString), "RECREATE");
+void SaveRawDataFitCanvas(TCanvas* canvasName, const char* totalFitModelName, const char* extraString = gMuonAccName) {
+	gSystem->mkdir("InvMassFits/RawData/", kTRUE);
+	canvasName->SaveAs(Form("InvMassFits/RawData/%s%s.png", totalFitModelName, extraString), "RECREATE");
 }
 
 void calculateChi2(TH1D* standardCorrectedHist, TF1* PolarFunc, Int_t nCosThetaBins = 10) {
