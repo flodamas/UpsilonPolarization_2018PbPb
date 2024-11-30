@@ -11,10 +11,19 @@
 using namespace RooFit;
 
 // for data
-RooFitResult* RawInvariantMassFit(RooDataSet data, RooAddPdf model, RooArgSet varsForMinos = RooArgSet(), float massMin = MassBinMin, float massMax = MassBinMax) {
+RooFitResult* RawInvariantMassFit(RooWorkspace& wspace, RooDataSet data, RooArgSet varsForMinos = RooArgSet(), float massMin = MassBinMin, float massMax = MassBinMax) {
+	auto model = wspace.pdf("invMassModel");
+
+	if (model == nullptr) {
+		std::cerr << "\n[FitShortcuts] the workspace does not contain the proper invariant mass model for fitting!\n";
+		return nullptr;
+	}
+
 	if (BeVerbose) cout << "\nFitting the raw invariant mass distribution...\n";
 
-	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), NumCPU(NCPUs), Range("MassFitRange"), Minos(varsForMinos));
+	//model.Print("v");
+
+	auto* fitResult = model->fitTo(data, Save(), PrintLevel(-1), NumCPU(NCPUs), Range("MassFitRange"), Minos(varsForMinos), Extended(true));
 	// only run Minos over the parsed variables
 
 	if (BeVerbose) fitResult->Print("v");
@@ -48,7 +57,7 @@ RooFitResult* MCWeightedInvariantMassFit(RooDataSet data, RooCrystalBall model, 
 RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet massDataset, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
 	// fit
 	RooRealVar mean("meanSymDSCB", "", PDGmass_1S, 9., 10.);
-	RooRealVar sigma("sigmaSymDSCB", "", 0.08, .05, .15);
+	RooRealVar sigma("sigmaSymDSCB", "", 0.08, .03, .15);
 	RooRealVar alphaInf("alphaInfSymDSCB", "", 1.5, 0.1, 10);
 	RooRealVar orderInf("orderInfSymDSCB", "", 1.5, 0.1, 10);
 	RooRealVar alphaSup("alphaSupSymDSCB", "", 1.5, 0.1, 10);
@@ -171,7 +180,7 @@ const char* GetSignalFitName(const char* signalShapeName = "SymDSCB", Int_t ptMi
 	return Form("%s_cent%dto%d_absy%dp%dto%dp%d_pt%dto%d", signalShapeName, gCentralityBinMin, gCentralityBinMax, (Int_t)gRapidityMin, (Int_t)(10 * (gRapidityMin - (Int_t)gRapidityMin)), (Int_t)gRapidityMax, (Int_t)(10 * (gRapidityMax - (Int_t)gRapidityMax)), ptMin, ptMax);
 }
 
-const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "HX", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	const char* signalFitName = GetSignalFitName(signalShapeName, ptMin, ptMax);
 
 	// just need to append the specific (cos theta, phi) bin name
@@ -179,7 +188,7 @@ const char* GetFitModelName(const char* signalShapeName = "SymDSCB", Int_t ptMin
 	return Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", signalFitName, cosThetaMin, cosThetaMax, phiMin, phiMax, refFrameName);
 }
 
-const char* GetTotalFitModelName(const char* bkgShapeName = "ExpTimesErr", const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+const char* GetTotalFitModelName(const char* bkgShapeName = "ExpTimesErr", const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "HX", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	// total fit name = bkg + signal names (in this order)
@@ -214,27 +223,25 @@ const char* GetMCFileName(const char* fitModelName = "SymDSCB_cent0to90_absy0p0t
 	return Form("../MonteCarlo/SignalParameters/%s.txt", fitModelName);
 }
 
-//void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t fixSigmatoMC = false) {
+// Define and read the signal parameters from MC extracted values, define Gaussian constraints on the parameters that are set to constants
 
-void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12", bool fixSigmaToMC = false) {
-	// Define the parameter variables
-	RooRealVar sigma(Form("sigma%s", signalShapeName), "", 1);
-	RooRealVar alphaInf(Form("alphaInf%s", signalShapeName), "", 1);
-	RooRealVar orderInf(Form("orderInf%s", signalShapeName), "", 1);
-	RooRealVar alphaSup(Form("alphaSup%s", signalShapeName), "", 1);
-	RooRealVar orderSup(Form("orderSup%s", signalShapeName), "", 1);
+RooArgList* ListOfSignalContraints(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12", bool fixSigmaToMC = false) {
+	// Declare the parameter variables
+	RooRealVar* sigma = new RooRealVar(Form("sigma%s", signalShapeName), "", 1);
+	RooRealVar* alphaInf = new RooRealVar(Form("alphaInf%s", signalShapeName), "", 1);
+	RooRealVar* orderInf = new RooRealVar(Form("orderInf%s", signalShapeName), "", 1);
+	RooRealVar* alphaSup = new RooRealVar(Form("alphaSup%s", signalShapeName), "", 1);
+	RooRealVar* orderSup = new RooRealVar(Form("orderSup%s", signalShapeName), "", 1);
 
-	RooArgSet tailParams(sigma, alphaInf, orderInf, alphaSup, orderSup);
+	RooArgSet parametersList(*sigma, *alphaInf, *orderInf, *alphaSup, *orderSup);
 
 	// if the .txt file for this specific fit model exists, just read the tail parameters from it
-
-	//const char* mcFileName = GetMCFileName(signalShapeName, ptMin, ptMax); // GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	const char* mcFileName = GetMCFileName(fitModelName);
 
 	if (fopen(mcFileName, "r")) {
 		if (BeVerbose) cout << "\nFound " << mcFileName << " file, will read the signal parameters from it\n";
-		tailParams.readFromFile(mcFileName);
+		parametersList.readFromFile(mcFileName);
 	} else {
 		cout << endl
 		     << mcFileName << " file does not seem to exist, you need to extract the signal paramaters from MC fit first!" << endl;
@@ -242,31 +249,48 @@ void ImportAndFixMCSignalParameters(RooWorkspace& wspace, const char* signalShap
 	}
 
 	// fix the tail parameters
-	if (fixSigmaToMC) sigma.setConstant();
-	alphaInf.setConstant();
-	orderInf.setConstant();
-	alphaSup.setConstant();
-	orderSup.setConstant();
+	if (fixSigmaToMC) sigma->setConstant();
+	alphaInf->setConstant();
+	orderInf->setConstant();
+	alphaSup->setConstant();
+	orderSup->setConstant();
 
 	if (BeVerbose) {
-		cout << "\nSignal parameters fixed to the following MC values:" << endl;
-		tailParams.Print("v");
+		cout << "\nSignal parameters fixed to the following MC values:\n";
+		parametersList.Print("v");
 	}
-	wspace.import(tailParams);
+	wspace.import(parametersList);
 
-	// build the Gaussian constraints on tail parameters to propagate the uncertainties on these parameters
-	RooGaussian alphaInfConstraint("alphaInfConstraint", "alphaInfConstraint", alphaInf, alphaInf.getVal(), alphaInf.getError());
-	RooGaussian orderInfConstraint("orderInfConstraint", "orderInfConstraint", orderInf, orderInf.getVal(), orderInf.getError());
-	RooGaussian alphaSupConstraint("alphaSupConstraint", "alphaSupConstraint", alphaSup, alphaSup.getVal(), alphaSup.getError());
-	RooGaussian orderSupConstraint("orderSupConstraint", "orderSupConstraint", orderSup, orderSup.getVal(), orderSup.getError());
+	// build the Gaussian constraints on  parameters to propagate the corresponding uncertainties
+	RooGaussian* alphaInfConstraint = new RooGaussian("alphaInfConstraint", "Gaussian constraint on alphaInf", *alphaInf, alphaInf->getVal(), alphaInf->getError());
+	RooGaussian* orderInfConstraint = new RooGaussian("orderInfConstraint", "Gaussian constraint on orderInf", *orderInf, orderInf->getVal(), orderInf->getError());
+	RooGaussian* alphaSupConstraint = new RooGaussian("alphaSupConstraint", "Gaussian constraint on alphaSup", *alphaSup, alphaSup->getVal(), alphaSup->getError());
+	RooGaussian* orderSupConstraint = new RooGaussian("orderSupConstraint", "Gaussian constraint on orderSup", *orderSup, orderSup->getVal(), orderSup->getError());
 
-	RooArgSet paramConstraints(alphaInfConstraint, orderInfConstraint, alphaSupConstraint, orderSupConstraint);
+	RooArgList* constraintsList = new RooArgList();
+	if (fixSigmaToMC) {
+		RooGaussian* sigmaConstraint = new RooGaussian("sigmaConstraint", "sigmaConstraint", *sigma, sigma->getVal(), sigma->getError());
+		constraintsList->add(*sigmaConstraint);
+	}
+	constraintsList->add(*alphaInfConstraint);
+	constraintsList->add(*orderInfConstraint);
+	constraintsList->add(*alphaSupConstraint);
+	constraintsList->add(*orderSupConstraint);
 
-	wspace.import(paramConstraints);
+	wspace.import(*constraintsList, RecycleConflictNodes());
+
+	cout << "\nList of Gaussian constraints:\n";
+
+	constraintsList->Print("v");
+
+	//wspace.Print("v");
+
+	return constraintsList;
 }
+
 /*
 RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
-	RooArgSet tailParams(*alphaInf, *orderInf, *alphaSup, *orderSup);
+	RooArgSet parametersList(*alphaInf, *orderInf, *alphaSup, *orderSup);
 
 	// if the .txt file for this specific fit model exists, just read the tail parameters from it
 
@@ -275,7 +299,7 @@ RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, 
 	if (fopen(mcFileName, "r")) {
 		if (BeVerbose) cout << endl
 			                  << "Found " << mcFileName << " file, will read the signal tail parameters from it" << endl;
-		tailParams.readFromFile(mcFileName);
+		parametersList.readFromFile(mcFileName);
 	} else {
 		cout << endl
 		     << mcFileName << " file does not seem to exist, you need to extract the signal tail paramaters from MC fit first!" << endl;
@@ -291,9 +315,9 @@ RooArgSet GetMCSignalTailParameters(RooRealVar* alphaInf, RooRealVar* orderInf, 
 	if (BeVerbose) {
 		cout << endl
 		     << "Tail parameters fixed to the following MC signal values:" << endl;
-		tailParams.Print("v");
+		parametersList.Print("v");
 	}
-	return tailParams;
+	return parametersList;
 }
 
 RooArgSet GetMCSignalParameters(RooRealVar* sigma, RooRealVar* alphaInf, RooRealVar* orderInf, RooRealVar* alphaSup, RooRealVar* orderSup, RooRealVar* sigma_gauss, RooRealVar* normFraction, const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {

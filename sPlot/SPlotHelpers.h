@@ -17,8 +17,8 @@ using namespace RooStats;
 
 const char* sWeightedDatasetsFileName = Form("../sPlot/Datasets/sWeightedDatasets%s.root", gMuonAccName);
 
-const char* sWeightedDatasetName(const char* fitName) {
-	return Form("sWeightedDataset_%s", fitName);
+const char* sWeightedDatasetName(const char* fitModelName) {
+	return Form("sWeightedDataset_%s", fitModelName);
 }
 
 RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr") {
@@ -29,24 +29,26 @@ RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const
 		return nullptr;
 	}
 
+	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax);
+
 	auto data = *(RooDataSet*)wspace.data("reducedDataset");
 	Long64_t nEntries = data.sumEntries();
 
 	// then, check if the invariant mass model is present in the workspace. If not, build it!
 
-	RooAddPdf invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, ptMin, ptMax, nEntries);
+	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries);
 
 	// need a "standard fit" first
 
-	auto* fitResult = RawInvariantMassFit(data, invMassModel, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")));
+	auto* fitResult = RawInvariantMassFit(wspace, data, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")));
 
 	// draw and save the invariant mass distribution, to check the fit
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
 
-	const char* fitName = Form("%s_%s_cent%dto%d_pt%dto%dGeV", signalShapeName, bkgShapeName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
+	const char* totalFitModelName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax);
 
 	gSystem->mkdir("../sPlot/InvMassFits", kTRUE);
-	massCanvas->SaveAs(Form("../sPlot/InvMassFits/%s.png", fitName), "RECREATE");
+	massCanvas->SaveAs(Form("../sPlot/InvMassFits/%s.png", totalFitModelName), "RECREATE");
 
 	delete massCanvas;
 
@@ -64,10 +66,10 @@ RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const
 	RooRealVar yield3S = *wspace.var("yield3S");
 	RooRealVar yieldBkg = *wspace.var("yieldBkg");
 
-	RooStats::SPlot mySPlot{"mySPlot", "", data, &invMassModel, RooArgList(yield1S, yield2S, yield3S, yieldBkg), RooArgSet(), true, false, "", Range(MassBinMin, MassBinMax), NumCPU(NCPUs)};
+	RooStats::SPlot mySPlot{"mySPlot", "", data, wspace.pdf("invMassModel"), RooArgList(yield1S, yield2S, yield3S, yieldBkg), RooArgSet(), true, false, "", Range(MassBinMin, MassBinMax), NumCPU(NCPUs)};
 
 	// copy the newly created dataset
-	auto* sData = new RooDataSet(data, sWeightedDatasetName(fitName));
+	auto* sData = new RooDataSet(data, sWeightedDatasetName(fitModelName));
 
 	if (BeVerbose) {
 		std::cout << "\nAfter creating sWeights:\n";

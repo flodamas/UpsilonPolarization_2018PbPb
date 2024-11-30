@@ -30,7 +30,7 @@ void drawAndSaveDistribution(TH2* histo, const char* name, Int_t ptMin, Int_t pt
 	delete canvas;
 }
 
-void rawCosThetaPhi(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Float_t phiMin = -180, Float_t phiMax = 180, const char* filename = "../Files/UpsilonSkimmedDataset.root") {
+void rawCosThetaPhi(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1., Float_t phiMin = -180, Float_t phiMax = 180, const char* filename = "../Files/UpsilonSkimmedDataset_TriggerAcc.root") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
