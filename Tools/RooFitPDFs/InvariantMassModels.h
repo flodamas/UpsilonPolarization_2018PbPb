@@ -148,7 +148,7 @@ void ApplyInternalConstraintsToSignal(RooWorkspace& wspace, std::vector<std::str
 /// Background shape modeling
 
 RooArgList* ChebychevCoefList(int order = 1) {
-	RooArgList* coefList = new RooArgList;
+	RooArgList* coefList = new RooArgList();
 
 	for (int i = 0; i <= order; i++) {
 		RooRealVar* coef = new RooRealVar(Form("ChebychevCoef_%d", i), " ", 0.1, -3, 3);
@@ -180,9 +180,9 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.16, 4, 13);
-		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.82, 0, 10);
-		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 4.6, 0, 10);
+		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.16, 2, 15);
+		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1, 0.0001, 10);
+		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 4.6, 0, 100);
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 
@@ -199,63 +199,6 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 		wspace.import(*bkgPDF, RecycleConflictNodes());
 
 		return bkgPDF;
-	}
-
-	else {
-		std::cout << "No matching background model name!" << std::endl;
-		return nullptr;
-	}
-}
-
-RooAddPdf BackgroundModel(RooWorkspace& wspace, const char* bkgShapeName, Long64_t nEntries = 1e6) {
-	RooRealVar invMass = *wspace.var("mass");
-
-	RooRealVar yieldBkg("yieldBkg", "N background events", 0, nEntries);
-
-	// Chebychev Nth order polynomial
-	if (strncmp(bkgShapeName, "ChebychevOrder", 14) == 0) {
-		int charSize = strlen(bkgShapeName);
-		const char* lastDigit = bkgShapeName + charSize - 1;
-		std::stringstream converter(lastDigit);
-
-		int order = 0;
-		converter >> order;
-
-		RooArgList* coefList = ChebychevCoefList(order);
-		RooChebychev bkgPDF("bkgPDF", Form("Chebychev polynomial of order %d", order), invMass, *coefList);
-
-		RooAddPdf bkgModel("bkgModel", "PDF of the background", {bkgPDF}, {yieldBkg});
-
-		wspace.import(bkgModel, RecycleConflictNodes());
-
-		return bkgModel;
-	}
-
-	// exponential x err function
-	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar err_mu("err_mu", " ", 7.16, 4, 13);
-		RooRealVar err_sigma("err_sigma", " ", 0.82, 0, 10);
-		RooRealVar exp_lambda("exp_lambda", " ", 4.6, 0, 10);
-
-		ErrorFuncTimesExp bkgPDF("bkgPDF", "Product of an error function with an exponential", invMass, err_mu, err_sigma, exp_lambda);
-
-		RooAddPdf bkgModel("bkgModel", "Background pdf", {bkgPDF}, {yieldBkg});
-
-		wspace.import(bkgModel, RecycleConflictNodes());
-
-		return bkgModel;
-	}
-
-	else if (strcmp(bkgShapeName, "Exponential") == 0) {
-		RooRealVar exp_lambda("exp_lambda", " ", -10, 10);
-
-		RooExponential bkgPDF("bkgPDF", " ", invMass, exp_lambda);
-
-		RooAddPdf bkgModel("bkgModel", "PDF of the background", {bkgPDF}, {yieldBkg});
-
-		wspace.import(bkgModel, RecycleConflictNodes());
-
-		return bkgModel;
 	}
 
 	else {
@@ -346,13 +289,10 @@ RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const
 	constrainedSignalModel.pdfList().Print("v");
 
 	// background
-	auto bkgModel = BackgroundModel(wspace, bkgShapeName, nEntries);
 
-	//auto bkgModel = wspace.pdf("bkgModel");
+	auto bkgPDF = BackgroundPDF(wspace, bkgShapeName);
 
-	RooAbsPdf* bkgPDF = wspace.pdf("bkgPDF");
-
-	RooRealVar* yieldBkg = wspace.var("yieldBkg");
+	RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "Background yield", 0, nEntries);
 
 	// complete invariant mass model
 
