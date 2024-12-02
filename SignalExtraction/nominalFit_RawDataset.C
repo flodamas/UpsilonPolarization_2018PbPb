@@ -12,7 +12,7 @@
 #include "../MonteCarlo/AccEffHelpers.h"
 #include "../Polarization/PolarFitHelpers.h"
 
-using namespace std; 
+using namespace std;
 
 RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180) {
 	RooDataSet* allDataset = (RooDataSet*)wspace.data(RawDatasetName(""));
@@ -76,7 +76,11 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries);
+	//auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries);
+
+	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries);
+
+	RooAddPdf invMassModel = *((RooAddPdf*)wspace.pdf("invMassModel"));
 
 	RooDataSet reducedDataset = InvMassDataset(wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName, phiMin, phiMax);
 
@@ -110,8 +114,10 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
-	if (!isPhiFolded) frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
-	else frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	if (!isPhiFolded)
+		frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	else
+		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 
 	frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
 
@@ -134,7 +140,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
 
-	if (!isBkgExpTimesErr) bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
+	//	if (!isBkgExpTimesErr) bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
 
 	const char* totalFitModelName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 

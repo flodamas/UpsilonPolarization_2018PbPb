@@ -92,11 +92,11 @@ void skimDimuonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbProm
 
 		if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality >= 90% in 2018 data
 
-		//if (!((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
+		if (!((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
 
 		// loop over reconstructed dimuon candidates
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
-			//if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
+			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
 
 			if (Reco_QQ_VtxProb[iQQ] < 0.01) continue; // good common vertex proba
 
