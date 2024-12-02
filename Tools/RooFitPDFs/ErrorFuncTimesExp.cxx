@@ -1,15 +1,4 @@
-#include "RooFit.h"
-
-#include "Riostream.h"
-#include <math.h>
-
 #include "ErrorFuncTimesExp.h"
-#include "RooAbsPdf.h"
-#include "RooAbsReal.h"
-#include "RooRealVar.h"
-#include "TMath.h"
-
-using namespace RooFit;
 
 ErrorFuncTimesExp::ErrorFuncTimesExp(const char* name, const char* title,
                                      RooAbsReal& _m, RooAbsReal& _mu,
@@ -29,5 +18,5 @@ ErrorFuncTimesExp::ErrorFuncTimesExp(const ErrorFuncTimesExp& other, const char*
   lambda("lambda", this, other.lambda) {}
 
 Double_t ErrorFuncTimesExp::evaluate() const {
-	return TMath::Exp(-m / lambda) * (TMath::Erf((m - mu) / (TMath::Sqrt(2) * sigma)) + 1) * 0.5;
+	return (RooMath::erf((m - mu) * sigma) + 1) * exp(-m / lambda);
 }
