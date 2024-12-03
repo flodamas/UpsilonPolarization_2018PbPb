@@ -269,7 +269,7 @@ RooArgList* ListOfSignalContraints(RooWorkspace& wspace, const char* signalShape
 
 	RooArgList* constraintsList = new RooArgList();
 	if (fixSigmaToMC) {
-		RooGaussian* sigmaConstraint = new RooGaussian("sigmaConstraint", "sigmaConstraint", *sigma, sigma->getVal(), sigma->getError());
+		RooGaussian* sigmaConstraint = new RooGaussian("sigmaConstraint", "Gaussian constraint on width parameter", *sigma, sigma->getVal(), sigma->getError());
 		constraintsList->add(*sigmaConstraint);
 	}
 	constraintsList->add(*alphaInfConstraint);
@@ -369,7 +369,7 @@ Double_t ComputeSignalSignificance(RooWorkspace& wspace, Int_t iState = 1) {
 	RooFormulaVar mean2S = *(RooFormulaVar*)(wspace.function("mean_2S"));
 	double mean = (iState == 1) ? mean1S.getVal() : mean2S.getVal();
 
-	RooRealVar sigma1S = *(wspace.var("sigma_1S"));
+	RooRealVar sigma1S = *(wspace.var("sigmaSymDSCB"));
 	RooFormulaVar sigma2S = *(RooFormulaVar*)(wspace.function("sigma_2S"));
 	double width = (iState == 1) ? sigma1S.getVal() : sigma2S.getVal();
 
