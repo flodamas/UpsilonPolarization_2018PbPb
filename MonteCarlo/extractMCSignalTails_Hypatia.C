@@ -1,22 +1,20 @@
-#include "../Tools/Style/tdrStyle.C"
-#include "../Tools/Style/CMS_lumi.C"
+#include "../Tools/BasicHeaders.h"
+
+#include "../Tools/Datasets/RooDataSetHelpers.h"
+
+#include "../Tools/FitShortcuts.h"
 
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
-#include "../Tools/FitShortcuts.h"
-
 // #include "../Tools/Parameters/PhysicsConstants.h"
 
-// crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
-
-RooArgSet* extractMCSignalTails_Hypatia(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30) {
+void extractMCSignalTails_Hypatia(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Float_t phiMin = -180, Float_t phiMax = 180, bool saveParams = true) {
 	/// Start measuring time
 	clock_t start, end, cpu_time;
 	start = clock();
 
 	/// open the MC skimmed file
-	const char* filename = "../Files/MCUpsilonSkimmedWeightedDataset.root";
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -28,11 +26,7 @@ RooArgSet* extractMCSignalTails_Hypatia(Int_t centMin = 0, Int_t centMax = 90, I
 	writeExtraText = true; // if extra text
 	extraText = "      Simulation Internal";
 
-	// we only extract the tail parameters for a specific pt bin, they do not vary significantly with cos theta or phi within this pt bin
-	// Bool_t isCSframe = kTRUE;
-	Bool_t isCSframe = kFALSE;
-	Float_t cosThetaMin = -1, cosThetaMax = 1;
-	Float_t phiMin = -180, phiMax = 180;
+	const char* signalShapeName = "Hypatia";
 
 	Float_t massMin = 8.5, massMax = 10.5;
 	Int_t nBins = 80;
@@ -40,58 +34,31 @@ RooArgSet* extractMCSignalTails_Hypatia(Int_t centMin = 0, Int_t centMax = 90, I
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	RooDataSet* allDataset = (RooDataSet*)file->Get("MCdataset");
+	const char* refFrameName = (isCSframe) ? "CS" : "HX";
 
-	RooWorkspace* wspace = new RooWorkspace("workspace");
-	wspace->import(*allDataset);
+	RooDataSet* allDataset = (RooDataSet*)file->Get(Form("MCdataset%s", refFrameName));
 
-	RooDataSet* massDataset = ReducedMassDataset(allDataset, wspace, centMin, centMax, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooWorkspace wspace("workspace");
+	wspace.import(*allDataset);
 
-	RooRealVar* massVar = wspace->var("mass");
+	RooDataSet massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	/// fit
-	/// Hypatia variables
-	RooRealVar mean("meanHypatia", "", 9.47, 9.2, 9.8);
-	RooRealVar lambda("lambdaHypatia", "lambda of hypatia PDF", -1.0, -20.0, -0.1);
-	RooRealVar zeta("zetaHypatia", "zeta of hypatia PDF", 0.01, 0.0, 1.0);
-	RooRealVar beta("betaHypatia", "beta of hypatia PDF", -1.0, -10.0, 0.0);
-	RooRealVar sigma("sigmaHypatia", "sigma of hypatia PDF", 0.1, 0.05, 0.25);
-	RooRealVar alphaInf("alphaInfHypatia", "al1s of hypatia PDF", 3.0, 0.1, 5.0);
-	RooRealVar alphaSup("alphaSupHypatia", "ar1s of hypatia PDF", 3.0, 0.1, 10.0);
-	RooRealVar orderInf("orderInfHypatia", "nl1s of hypatia PDF", 1.0, 0.2, 15);
-	RooRealVar orderSup("orderSupHypatia", "nr1s of hypatia PDF", 1.0, 0.0, 15);
-	/*
-	lambda.setVal(-1.754);
-	zeta.setVal(0);
-	beta.setVal(-1.545);
-	sigma.setVal(0.160);
-	alphaInf.setVal(1.66);
-	alphaSup.setVal(5.360);
-	orderInf.setVal(1.611);
-	orderSup.setVal(0.003);
-*/
-	zeta.setVal(0);
-	zeta.setConstant(1);
-
-	RooHypatia2 signal("Hypatia", "Hypatia", *massVar, lambda, zeta, beta, sigma, mean, alphaInf, orderInf, alphaSup, orderSup);
-
-	cout << endl
-	     << "Fitting the MC signal shape (weighted entries!!) with a Hypatia PDF" << endl;
-
-	bool doWeightedError = true;
+	RooRealVar massVar = *wspace.var("mass");
 
 	/// fit
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError));
-	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
+	auto* fitResult = HypatiaFit(wspace, massDataset, massMin, massMax);
 
-	fitResult->Print("v");
+	RooRealVar mean = *wspace.var(Form("mean%s", signalShapeName));
+	RooRealVar sigma = *wspace.var(Form("sigma%s", signalShapeName));
+	RooRealVar alphaInf = *wspace.var(Form("alphaInf%s", signalShapeName));
+	RooRealVar orderInf = *wspace.var(Form("orderInf%s", signalShapeName));
+	RooRealVar alphaSup = *wspace.var(Form("alphaSup%s", signalShapeName));
+	RooRealVar orderSup = *wspace.var(Form("orderSup%s", signalShapeName));
+	RooRealVar lambda = *wspace.var(Form("lambda%s", signalShapeName));
+	RooRealVar zeta = *wspace.var(Form("zeta%s", signalShapeName));
+	RooRealVar beta = *wspace.var(Form("beta%s", signalShapeName));
 
-	TString outputName = Form("Hypatia_cent%dto%d_pt%dto%d", centMin, centMax, ptMin, ptMax);
-
-	// save signal shape parameters in a txt file to be read for data fit
-	RooArgSet* Params = new RooArgSet(mean, lambda, zeta, beta, sigma, alphaInf, orderInf, alphaSup, orderSup);
-
-	SaveMCSignalParameters(Params, outputName.Data()); // so that we don't have to refit later
+	const char* outputName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	/// draw the fit to see if the fit is reasonable (we can comment it (lines 79-105) out if drawing is not necessary)
 	auto* canvas = new TCanvas("canvas", "", 600, 600);
@@ -100,16 +67,18 @@ RooArgSet* extractMCSignalTails_Hypatia(Int_t centMin = 0, Int_t centMax = 90, I
 	pad1->Draw();
 	pad1->cd();
 
-	RooPlot* frame = massVar->frame(Title(" "), Range(massMin, massMax));
+	RooPlot* frame = massVar.frame(Title(" "), Range(massMin, massMax));
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 	// frame->SetYTitle(Form("Candidates / (%d MeV)", (int)1000 * (binMax - binMin) / nBins));
-	massDataset->plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
+	massDataset.plotOn(frame, Name("data"), Binning(nBins), DrawOption("P0Z"));
 
-	signal.plotOn(frame, LineColor(kBlue));
+	wspace.pdf(signalShapeName)->plotOn(frame, LineColor(kBlue));
 
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
 	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 	frame->addObject(HypatiaParamsText(mean, lambda, zeta, beta, sigma, alphaInf, orderInf, alphaSup, orderSup));
+	frame->GetYaxis()->SetMaxDigits(3);
+
 	frame->Draw();
 
 	canvas->cd();
@@ -119,22 +88,36 @@ RooArgSet* extractMCSignalTails_Hypatia(Int_t centMin = 0, Int_t centMax = 90, I
 	canvas->cd();
 	pad1->Draw();
 	pad2->Draw();
-	canvas->SaveAs(Form("SignalShapeFits/MCfit_Hypatia_%dto%d.png", ptMin, ptMax), "RECREATE");
 
-	// file->Close();
+	//cout << outputName << endl;
+	gSystem->mkdir("SignalShapeFits", kTRUE);
+	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
+
+	if (saveParams) {
+		// save signal shape parameters in a txt file to be read for data fit
+		RooArgSet* Params = new RooArgSet(lambda, zeta, beta, sigma, alphaInf, orderInf, alphaSup, orderSup);
+
+		SaveMCSignalParameters(Params, outputName); // so that we don't have to refit later
+	}
 
 	/// End measuring time
 	end = clock();
 	cpu_time = (double)(end - start) / CLOCKS_PER_SEC;
 	cout << "Time elapsed: " << cpu_time / 60. << "minutes" << endl;
-
-	return Params;
 }
 
-void extractMCSignalPara_symCoreDSCB_Gauss_scan() {
-	Int_t ptCuts[9] = {0, 2, 4, 6, 8, 12, 16, 20, 30};
-	Int_t NumPtArr = sizeof(ptCuts) / sizeof(Int_t);
-	for (int idx = 0; idx < NumPtArr - 1; idx++) {
-		extractMCSignalTails_Hypatia(0, 90, ptCuts[idx], ptCuts[idx + 1]);
+void extractMCSignalPara_Hypatia_scan(Bool_t isCSframe = kFALSE) {
+	Float_t cosThetaEdges[6] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
+	Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+
+	Int_t NumCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
+	Int_t NumPhiEle = sizeof(phiEdges) / sizeof(Float_t);
+
+	for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
+		for (Int_t cosThetaIdx = 0; cosThetaIdx < NumCosThetaEle - 1; cosThetaIdx++) {
+			for (Int_t phiIdx = 0; phiIdx < NumPhiEle - 1; phiIdx++) {
+				extractMCSignalTails_Hypatia(gCentralityBinMin, gCentralityBinMax, gPtBinning[ptIdx], gPtBinning[ptIdx + 1], "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1], true);
+			}
+		}
 	}
 }

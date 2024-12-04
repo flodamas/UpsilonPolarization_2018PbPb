@@ -1,0 +1,8 @@
+lambdaHypatia = -1.70893 +/- 0.027271 L(-20 - 10) 
+zetaHypatia =  0.0000 C L(0 - 1) 
+betaHypatia =  0.0000 C L(-20 - 0) 
+sigmaHypatia =  0.15000 C L(0.03 - 0.3) 
+alphaInfHypatia =  0.65123 +/- 0.035038 L(0.1 - 10) 
+orderInfHypatia =  3.1234 +/- 0.19274 L(0.2 - 10) 
+alphaSupHypatia =  1.1155 +/- 0.051986 L(0.1 - 10) 
+orderSupHypatia =  22.503 +/- 8.4203 L(0.1 - 100) 
