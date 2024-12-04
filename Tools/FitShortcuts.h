@@ -100,7 +100,7 @@ RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet*
 	return fitResult;
 }
 
-RooFitResult* SymDSCBGaussfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
+RooFitResult* SymDSCBGaussfit(RooWorkspace& wspace, RooDataSet massDataset, Float_t massMin, Float_t massMax) {
 	/// fit
 	/// (DSCB variables)
 	RooRealVar mean("meanDSCBGauss", "", PDGmass_1S, 9., 10.);
@@ -116,8 +116,8 @@ RooFitResult* SymDSCBGaussfit(RooRealVar* massVar, RooWorkspace* wspace, RooData
 	/// (fraction between two PDFs)
 	RooRealVar normFraction("normFraction", "", 0.6, 0.01, 1);
 
-	RooCrystalBall DSCB("DSCB", "DSCB", *massVar, mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
-	RooGaussian gauss("gauss", "gaussian", *massVar, mean, sigma_gauss);
+	RooCrystalBall DSCB("DSCB", "DSCB", *wspace.var("mass"), mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
+	RooGaussian gauss("gauss", "gaussian", *wspace.var("mass"), mean, sigma_gauss);
 
 	RooAddPdf signal("DSCBGauss", "sum of DSCB and CB PDF", RooArgList(DSCB, gauss), RooArgList(normFraction), kTRUE);
 
@@ -126,9 +126,9 @@ RooFitResult* SymDSCBGaussfit(RooRealVar* massVar, RooWorkspace* wspace, RooData
 
 	bool doWeightedError = true;
 
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError));
+	auto* fitResult = signal.fitTo(massDataset, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
-	wspace->import(signal);
+	wspace.import(signal);
 
 	if (BeVerbose) fitResult->Print("v");
 
