@@ -1,0 +1,5 @@
+sigmaDSCBGauss =  0.050000 +/- 0.00000090672 L(0.05 - 0.15) 
+alphaInfDSCBGauss =  0.80290 +/- 0.30703 L(0.1 - 10) 
+orderInfDSCBGauss =  1.8493 +/- 0.93518 L(0.1 - 10) 
+alphaSupDSCBGauss =  0.66285 +/- 0.091411 L(0.1 - 10) 
+orderSupDSCBGauss =  40.000 +/- 0.014553 L(0.1 - 40) 
