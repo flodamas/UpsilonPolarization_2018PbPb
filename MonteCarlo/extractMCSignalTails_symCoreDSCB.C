@@ -24,12 +24,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 	const char* signalShapeName = "SymDSCB";
 
-	// we only extract the tail parameters for a specific pt bin, they do not vary significantly with cos theta or phi within this pt bin
-	// Bool_t isCSframe = kTRUE;
-	// Float_t cosThetaMin = -1, cosThetaMax = 1;
-	// Float_t phiMin = -180, phiMax = 180;
-
-	Float_t massMin = 8.5, massMax = 10.5;
+	Float_t massMin = 8.8, massMax = 10.2;
 	Int_t nBins = 80;
 
 	using namespace RooFit;
@@ -74,6 +69,8 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
 	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 	frame->addObject(SymCoreDoubleCBParamsText(mean, sigma, alphaInf, orderInf, alphaSup, orderSup));
+	frame->GetYaxis()->SetMaxDigits(3);
+
 	frame->Draw();
 
 	canvas->cd();

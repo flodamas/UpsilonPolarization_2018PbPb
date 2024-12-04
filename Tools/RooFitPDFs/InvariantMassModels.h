@@ -26,7 +26,7 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
 	RooRealVar mass = *wspace.var("mass");
 
 	// get the tail parameters, assuming that they have been imported to the workspace first!!
-	RooRealVar sigma = *wspace.var("sigmaSymDSCB");
+	RooRealVar sigma_1S = *wspace.var("sigmaSymDSCB");
 	//	sigma.Print();
 	//	Double_t sigmaSeed = sigma.getVal();
 
@@ -38,7 +38,7 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
 
 	// Y(1S) signal shape
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
-	RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .03, .15);
+	//RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .03, .15);
 
 	sigma_1S.setConstant();
 

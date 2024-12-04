@@ -91,7 +91,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 	RooRealVar eventWeightCSVar("eventWeightCS", "event-by-event weight (Ncoll x MC gen weight x reco pT reweighting x muon scale factors x polarization in CS)", 0, 100000);
 	RooRealVar eventWeightHXVar("eventWeightHX", "event-by-event weight (Ncoll x MC gen weight x reco pT reweighting x muon scale factors x polarization in HX)", 0, 100000);
 
-	Float_t lowMassCut = 8, highMassCut = 11;
+	Float_t lowMassCut = 8.5, highMassCut = 10.5;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
 
