@@ -40,6 +40,8 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
 	RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .03, .15);
 
+	sigma_1S.setConstant();
+
 	RooCrystalBall signalPDF_1S("signalPDF_1S", "Symmetric DSCB pdf for Y(1S) mass peak", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
 	list.push_back(signalPDF_1S.GetName());
 
@@ -180,9 +182,9 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.16, 2, 15);
-		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1, 0.0001, 10);
-		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 4.6, 0, 100);
+		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 8.9, 2, 13);
+		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1.0, 0.0001, 10);
+		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 3.5, 0, 10);
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 
