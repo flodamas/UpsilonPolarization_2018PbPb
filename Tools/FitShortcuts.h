@@ -44,7 +44,7 @@ RooFitResult* WeightedInvariantMassFit(RooDataSet data, RooAddPdf model, float m
 }
 
 // for MC
-RooFitResult* MCWeightedInvariantMassFit(RooDataSet data, RooCrystalBall model, float massMin = MassBinMin, float massMax = MassBinMax) {
+RooFitResult* MCWeightedInvariantMassFit(RooDataSet data, RooAbsPdf& model, float massMin = MassBinMin, float massMax = MassBinMax) {
 	if (BeVerbose) cout << "\nFitting the MC invariant mass distribution with weighted entries...\n\n";
 
 	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
@@ -54,7 +54,7 @@ RooFitResult* MCWeightedInvariantMassFit(RooDataSet data, RooCrystalBall model, 
 	return fitResult;
 }
 
-RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet massDataset, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet data, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
 	// fit
 	RooRealVar mean("meanSymDSCB", "", PDGmass_1S, 9., 10.);
 	RooRealVar sigma("sigmaSymDSCB", "", 0.08, .03, .15);
@@ -67,14 +67,14 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet massDataset, Float_t m
 
 	if (BeVerbose) cout << "\nFitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions...\n";
 
-	auto* fitResult = MCWeightedInvariantMassFit(massDataset, signal, massMin, massMax);
+	auto* fitResult = MCWeightedInvariantMassFit(data, signal, massMin, massMax);
 
 	wspace.import(signal);
 
 	return fitResult;
 }
 
-RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
+RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* data, Float_t massMin, Float_t massMax) {
 	// fit
 	RooRealVar mean("meanAsymDSCB", "", PDGmass_1S, 9., 10.);
 	RooRealVar sigmaInf("sigmaInfAsymDSCB", "", 0.08, .05, .15);
@@ -91,7 +91,7 @@ RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet*
 
 	bool doWeightedError = true;
 
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError));
+	auto* fitResult = signal.fitTo(*data, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 	wspace->import(signal);
 
@@ -100,7 +100,7 @@ RooFitResult* AsymDSCBfit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet*
 	return fitResult;
 }
 
-RooFitResult* SymDSCBGaussfit(RooWorkspace& wspace, RooDataSet massDataset, Float_t massMin, Float_t massMax) {
+RooFitResult* SymDSCBGaussfit(RooWorkspace& wspace, RooDataSet data, Float_t massMin, Float_t massMax) {
 	/// fit
 	/// (DSCB variables)
 	RooRealVar mean("meanDSCBGauss", "", PDGmass_1S, 9., 10.);
@@ -121,32 +121,34 @@ RooFitResult* SymDSCBGaussfit(RooWorkspace& wspace, RooDataSet massDataset, Floa
 
 	RooAddPdf signal("DSCBGauss", "sum of DSCB and CB PDF", RooArgList(DSCB, gauss), RooArgList(normFraction), kTRUE);
 
-	if (BeVerbose) cout << endl
-		                  << "Fitting the MC signal shape (weighted entries!!) with the sum of a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions, and a Gaussian PDF..." << endl;
+	if (BeVerbose) cout << "\nFitting the MC signal shape (weighted entries!!) with the sum of a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions, and a Gaussian PDF..." << endl;
 
-	bool doWeightedError = true;
+	auto* fitResult = MCWeightedInvariantMassFit(data, signal, massMin, massMax);
 
-	auto* fitResult = signal.fitTo(massDataset, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(3), Range(massMin, massMax), AsymptoticError(doWeightedError));
-	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
 	wspace.import(signal);
-
-	if (BeVerbose) fitResult->Print("v");
 
 	return fitResult;
 }
 
-RooFitResult* Hypatiafit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* massDataset, Float_t massMin, Float_t massMax) {
+RooFitResult* HypatiaFit(RooWorkspace& wspace, RooDataSet data, Float_t massMin, Float_t massMax) {
 	// fit
 	RooRealVar mean("meanHypatia", "", PDGmass_1S, 9., 10.);
-	RooRealVar lambda("lambdaHypatia", "lambda of hypatia PDF", -1.0, -20.0, -0.1);
+	RooRealVar lambda("lambdaHypatia", "lambda of hypatia PDF", -1.0, -10.0, 10);
 	RooRealVar zeta("zetaHypatia", "zeta of hypatia PDF", 0.01, 0.0, 1.0);
 	RooRealVar beta("betaHypatia", "beta of hypatia PDF", -0.01, -20.0, 0.0);
-	RooRealVar sigma("sigmaHypatia", "sigma of hypatia PDF", 0.15, 0.1, 0.3);
-	RooRealVar alphaInf("alphaInfHypatia", "al1s of hypatia PDF", 3.0, 0.1, 5.0);
-	RooRealVar alphaSup("alphaSupHypatia", "ar1s of hypatia PDF", 3.0, 0.1, 7.0);
-	RooRealVar orderInf("orderInfHypatia", "nl1s of hypatia PDF", 1.0, 0.2, 14.718);
-	RooRealVar orderSup("orderSupHypatia", "nr1s of hypatia PDF", 1.0, 0.0, 14.718);
+	RooRealVar sigma("sigmaHypatia", "sigma of hypatia PDF", 0.15, 0.03, 0.3);
+	RooRealVar alphaInf("alphaInfHypatia", "al1s of hypatia PDF", 1.5, 0.1, 10.0);
+	RooRealVar alphaSup("alphaSupHypatia", "ar1s of hypatia PDF", 1.5, 0.1, 10.0);
+	RooRealVar orderInf("orderInfHypatia", "nl1s of hypatia PDF", 1.0, 0.2, 10.0);
+	RooRealVar orderSup("orderSupHypatia", "nr1s of hypatia PDF", 5., 0.1, 100);
 
+	//mean.setConstant();
+	sigma.setConstant();
+	zeta.setVal(0);
+	zeta.setConstant();
+	beta.setVal(0);
+	beta.setConstant();
+	/*
 	lambda.setVal(-1.729);
 	zeta.setVal(0);
 	beta.setVal(-1.59);
@@ -155,21 +157,16 @@ RooFitResult* Hypatiafit(RooRealVar* massVar, RooWorkspace* wspace, RooDataSet* 
 	alphaSup.setVal(5.398);
 	orderInf.setVal(1.422);
 	orderSup.setVal(0.012);
+*/
+	//zeta.setConstant(1);
 
-	zeta.setConstant(1);
+	RooHypatia2 signal("Hypatia", "Hypatia", *wspace.var("mass"), lambda, zeta, beta, sigma, mean, alphaInf, orderInf, alphaSup, orderSup);
 
-	RooHypatia2 signal("Hypatia", "Hypatia", *massVar, lambda, zeta, beta, sigma, mean, alphaInf, orderInf, alphaSup, orderSup);
+	if (BeVerbose) cout << "\nFitting the MC signal shape (weighted entries!!) with a Hypatia PDF" << endl;
 
-	if (BeVerbose) cout << endl
-		                  << "Fitting the MC signal shape (weighted entries!!) with a Hypatia PDF" << endl;
+	auto* fitResult = MCWeightedInvariantMassFit(data, signal, massMin, massMax);
 
-	bool doWeightedError = true;
-
-	auto* fitResult = signal.fitTo(*massDataset, Save(), Extended(true) /*, PrintLevel(-1)*/, Minos(!doWeightedError), NumCPU(8), Range(massMin, massMax), AsymptoticError(doWeightedError));
-	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
-	wspace->import(signal);
-
-	if (BeVerbose) fitResult->Print("v");
+	wspace.import(signal);
 
 	return fitResult;
 }
@@ -369,7 +366,7 @@ Double_t ComputeSignalSignificance(RooWorkspace& wspace, Int_t iState = 1) {
 	RooFormulaVar mean2S = *(RooFormulaVar*)(wspace.function("mean_2S"));
 	double mean = (iState == 1) ? mean1S.getVal() : mean2S.getVal();
 
-	RooRealVar sigma1S = *(wspace.var("sigmaSymDSCB"));
+	RooRealVar sigma1S = *(wspace.var("sigmaSymDSCB")); // to be fixed
 	RooFormulaVar sigma2S = *(RooFormulaVar*)(wspace.function("sigma_2S"));
 	double width = (iState == 1) ? sigma1S.getVal() : sigma2S.getVal();
 
