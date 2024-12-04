@@ -123,7 +123,7 @@ TPaveText* SymCoreDoubleCBDataParamsText(RooRealVar mean, RooRealVar sigma, RooR
 }
 
 TPaveText* SymCoreDoubleCBGaussParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR, RooRealVar sigmaG, RooRealVar fraction /*, RooRealVar ratio_sigma*/) {
-	auto* text = new TPaveText(0.6, 0.85, 0.93, 0.25, "NDCNB");
+	auto* text = new TPaveText(0.16, 0.8, 0.52, 0.4, "NDCNB");
 	text->SetBorderSize(0);
 
 	text->AddText("Symmetric DSCB + Gaussian");
@@ -137,7 +137,7 @@ TPaveText* SymCoreDoubleCBGaussParamsText(RooRealVar mean, RooRealVar sigma, Roo
 	text->AddText(Form("Norm frac = %.2f #pm %.2f", fraction.getVal(), fraction.getError()));
 	// text->AddText(Form("#frac{#sigma_{DSCB}}{#sigma_{g}} = %.2f ", ratio_sigma.getVal()));
 
-	text->SetAllWith(" ", "align", 32);
+	text->SetAllWith(" ", "align", 12);
 	return text;
 }
 
