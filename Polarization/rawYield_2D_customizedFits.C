@@ -78,11 +78,12 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// bkgShapeName[2][2] = "ChebychevOrder1";
 	// bkgShapeName[3][2] = "ChebychevOrder1";
 
+	// CS, 6 < pT < 12 GeV/c, |phi|
+	bkgShapeName[4][0] = "ChebychevOrder1";
+
 	// // CS, 12 < pT < 20
-	// bkgShapeName[1][4] = "ChebychevOrder1";
-	// bkgShapeName[3][4] = "ChebychevOrder0";
-	// bkgShapeName[4][0] = "ChebychevOrder1";
-	// bkgShapeName[4][1] = "ChebychevOrder0";
+	// bkgShapeName[1][2] = "ChebychevOrder1";
+	// bkgShapeName[3][2] = "ChebychevOrder1";
 
 	// // fill the background shape array with ExpTimesErr
 	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
@@ -218,7 +219,9 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 			const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[absiPhi], (Int_t)phiBinEdges[absiPhi + 1]);
 
-			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][absiPhi].c_str()), fitModelName, Form("%s%s", gMuonAccName, "_absphi"));
+			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("%s", bkgShapeName[iCosTheta][absiPhi].c_str()), fitModelName, Form("%s", gMuonAccName));
+
+			cout << "signalYields: " << signalYields << endl;
 
 			// double yield1SVal = (yield1S->getVal())/2.;
 

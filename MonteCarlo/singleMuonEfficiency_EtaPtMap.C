@@ -70,6 +70,17 @@ TLine* drawTrigger2018acc(float etaMin = 1., float ptMax = 3., Color_t lineColor
 	return lineVert;
 }
 
+TLine* drawL3pTThreshold(float etaMin = 1.571, float ptMax = 2.5, Color_t lineColor = kCyan+3, int lineStyle = 1, int lineWidth = 3) {
+	float eta1 = 2.4;
+
+	float pt1 = 2.5;
+
+	auto* line1 = MyLine(etaMin, pt1, eta1, pt1, lineColor, lineStyle, lineWidth);
+	line1->Draw("l");
+
+	return line1;
+}
+
 void singleMuonEfficiency_EtaPtMap() {
 	const char* filename = "../Files/OniaTree_Y1S_pThat2_HydjetDrumMB_miniAOD.root";
 	TFile* file = TFile::Open(filename, "READ");
@@ -205,9 +216,11 @@ void singleMuonEfficiency_EtaPtMap() {
 	hEffMap->Draw("COLZ");
 
 	auto* triggerAcc = drawTrigger2018acc(0, 6);
+	auto* triggerL3pT = drawL3pTThreshold(1.571, 2.5);
 
-	auto* legend = new TLegend(.14, .25, .38, .2);
+	auto* legend = new TLegend(.15, .3, .38, .17);
 	legend->AddEntry(triggerAcc, "acceptance for 2018 PbPb data", "l");
+	legend->AddEntry(triggerL3pT, "p_{T} threshold for L3 muons", "l");
 	legend->Draw();
 
 	CMS_lumi(canvas, "#varUpsilon(1S) Hydjet-embedded MC");

@@ -167,14 +167,14 @@ TPaveText* SymCoreDoubleCBGaussDataParamsText(RooRealVar mean, RooRealVar sigma,
 }
 
 TPaveText* HypatiaParamsText(RooRealVar mean, RooRealVar lambda, RooRealVar zeta, RooRealVar beta, RooRealVar sigma, RooRealVar alphaL, RooRealVar orderL, RooRealVar alphaR, RooRealVar orderR) {
-	auto* text = new TPaveText(0.15, 0.58, 0.45, 0.07, "NDCNB");
+	auto* text = new TPaveText(0.16, 0.8, 0.5, 0.2, "NDCNB");
 	text->SetBorderSize(0);
 
 	text->AddText("Hypatia");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
-	text->AddText(Form("#lambda = %.3f #pm %.3f GeV", lambda.getVal(), lambda.getError()));
+	text->AddText(Form("#lambda = %.3f #pm %.3f", lambda.getVal(), lambda.getError()));
 	text->AddText(Form("#zeta = (%.2f #pm %.2f) x10^{-3}", 1000 * zeta.getVal(), 1000 * zeta.getError()));
-	text->AddText(Form("#beta = %.3f #pm %.3f GeV", beta.getVal(), beta.getError()));
+	text->AddText(Form("#beta = %.3f #pm %.3f", beta.getVal(), beta.getError()));
 	text->AddText(Form("#sigma = %.2f #pm %.2f MeV", 1000 * sigma.getVal(), 1000 * sigma.getError()));
 	text->AddText(Form("#alpha_{L} = %.3f #pm %.3f", alphaL.getVal(), alphaL.getError()));
 	text->AddText(Form("n_{L}= %.3f #pm %.3f", orderL.getVal(), orderL.getError()));
