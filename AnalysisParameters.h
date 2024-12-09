@@ -14,6 +14,7 @@ const char* gCMSLumiText = "PbPb 1.61 nb^{-1} (5.02 TeV)";
 
 const char* gMuonAccName = "_TriggerAcc";
 // const char* gMuonAccName = "_2018Acc";
+// const char* gMuonAccName = "";
 
 // CANNOT BE CHANGED!
 const int gUpsilonHLTBit = 14;
@@ -141,6 +142,7 @@ const char* gPtUnit = "GeV/#it{c}";
 const char* gPtAxisTitle = Form("%s (%s)", gPtVarName, gPtUnit);
 
 const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > thresholds"; // "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
+// const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
 
 const char* gDimuonPtVarTitle = "#it{p}_{T}^{ #mu#mu}";
 const char* DimuonPtRangeText(int ptMin, int ptMax) {
