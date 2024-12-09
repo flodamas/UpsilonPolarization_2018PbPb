@@ -24,6 +24,7 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
 	std::vector<std::string> list;
 
 	RooRealVar mass = *wspace.var("mass");
+	mass.setRange("fitRange", 7, 13);
 
 	// get the tail parameters, assuming that they have been imported to the workspace first!!
 	RooRealVar sigma_1S = *wspace.var("sigmaSymDSCB");
@@ -40,7 +41,7 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
 	//RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .03, .15);
 
-	sigma_1S.setConstant();
+	// sigma_1S.setConstant();
 
 	RooCrystalBall signalPDF_1S("signalPDF_1S", "Symmetric DSCB pdf for Y(1S) mass peak", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
 	list.push_back(signalPDF_1S.GetName());
@@ -70,6 +71,7 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
 
 RooAddPdf* NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 	RooRealVar mass = *wspace.var("mass");
+	mass.setRange("fitRange", 7, 13);
 
 	Long64_t initYield = nEntries / 100;
 
@@ -110,6 +112,7 @@ RooAddPdf* NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
 	RooRealVar* yield3S = new RooRealVar("yield3S", "N 3S", initYield / 12, 0, nEntries);
 
 	RooAddPdf* SymDSCBModel = new RooAddPdf("signalPDF", "PDF of the sum of the three Y signal PDFs", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S}, {*yield1S, *yield2S, *yield3S});
+	SymDSCBModel->setNormRange("fitRange");
 
 	wspace.import(*SymDSCBModel, RecycleConflictNodes());
 
@@ -162,6 +165,7 @@ RooArgList* ChebychevCoefList(int order = 1) {
 
 RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 	RooRealVar* invMass = wspace.var("mass");
+	invMass->setRange("fitRange", 7, 13);
 
 	// Chebychev Nth order polynomial
 	if (strncmp(bkgShapeName, "ChebychevOrder", 14) == 0) {
@@ -174,6 +178,7 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 
 		RooArgList* coefList = ChebychevCoefList(order);
 		RooChebychev* bkgPDF = new RooChebychev("bkgPDF", Form("Chebychev polynomial of order %d", order), *invMass, *coefList);
+		bkgPDF->setNormRange("fitRange");
 
 		wspace.import(*bkgPDF, RecycleConflictNodes());
 
@@ -182,11 +187,13 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 8.9, 2, 13);
-		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1.0, 0.0001, 10);
-		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 3.5, 0, 10);
+		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7, 2, 13);
+		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.2);
+		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.69, 0.0001, 10);
+		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1.7, 0, 15);
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
+		bkgPDF->setNormRange("fitRange");
 
 		wspace.import(*bkgPDF, RecycleConflictNodes());
 
@@ -197,6 +204,7 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", -10, 10);
 
 		RooExponential* bkgPDF = new RooExponential("bkgPDF", " ", *invMass, *exp_lambda);
+		bkgPDF->setNormRange("fitRange");
 
 		wspace.import(*bkgPDF, RecycleConflictNodes());
 
@@ -231,8 +239,11 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 	auto signalPDF_3S = wspace.pdf(signalPdfNameList.at(2));
 
 	// 3. background
+	RooRealVar* invMass = wspace.var("mass");
+	invMass->setRange("fitRange", 7, 13);
 
 	auto bkgPDF = BackgroundPDF(wspace, bkgShapeName);
+	bkgPDF->setNormRange("fitRange");
 
 	// complete invariant mass model
 
@@ -261,7 +272,7 @@ RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const
 
 	//ImportAndFixMCSignalParameters(wspace, signalShapeName, fitModelName);
 
-	RooArgList* constraintsList = ListOfSignalContraints(wspace, signalShapeName, fitModelName, false);
+	RooArgList* constraintsList = ListOfSignalContraints(wspace, signalShapeName, fitModelName, true);
 
 	auto signalModel = NominalSignalModel(wspace, nEntries);
 
@@ -291,8 +302,11 @@ RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const
 	constrainedSignalModel.pdfList().Print("v");
 
 	// background
+	RooRealVar* invMass = wspace.var("mass");
+	invMass->setRange("fitRange", 7, 13);
 
 	auto bkgPDF = BackgroundPDF(wspace, bkgShapeName);
+	bkgPDF->setNormRange("fitRange");
 
 	RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "Background yield", 0, nEntries);
 
@@ -307,7 +321,7 @@ RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const
 	//model->Print("v");
 
 	RooAddPdf* model = new RooAddPdf("invMassModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF}, {*yield1S, *yield2S, *yield3S, *yieldBkg});
-
+	
 	wspace.import(*model, RecycleConflictNodes());
 
 	if (BeVerbose) std::cout << "\nModel exported to " << wspace.GetName() << std::endl;
