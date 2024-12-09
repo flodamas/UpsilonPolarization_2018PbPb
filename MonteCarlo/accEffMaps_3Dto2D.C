@@ -5,7 +5,7 @@
 #include "AccEffHelpers.h"
 
 #include "../Tools/Datasets/RooDataSetHelpers.h"
-#include "../sPlot/SPlotHelpers.h"
+// #include "../sPlot/SPlotHelpers.h"
 
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
@@ -48,9 +48,11 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
 
 	TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName));
+	// TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", "_2018Acc"));
 	cout << Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName) << endl;
 	
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
+	// auto* accMap = (TEfficiency*)acceptanceFile->Get(Form("Nominal3D%s_%s_LambdaTheta0.00Phi0.00ThetaPhi0.00", refFrameName, gMuonAccName));
 	cout << nominalMapName << endl;
 
 	if (!accMap) {
@@ -64,6 +66,7 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	// get efficiency maps
 	TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", gMuonAccName));
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
+	// auto* effMap = (TEfficiency*)efficiencyFile->Get(Form("Nominal3D%s_%s_LambdaTheta0.00Phi0.00ThetaPhi0.00", refFrameName, gMuonAccName));
 	cout << nominalMapName << endl;
 
 	if (!effMap) {
@@ -93,8 +96,10 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	// draw acc and eff histograms to check if the rebinning works well
  	// (last three variables: isAcc, displayValues, extraString)
 	DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kFALSE, gMuonAccName);
+	// DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kFALSE, "");
 
 	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kFALSE, gMuonAccName);
+	// DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kFALSE, "_2018Acc");
 }
 
 void accEffMaps_3Dto2D_scan(const char* refFrameName = "CS") {
