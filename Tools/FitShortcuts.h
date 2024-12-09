@@ -49,6 +49,7 @@ RooFitResult* MCWeightedInvariantMassFit(RooDataSet data, RooCrystalBall model, 
 
 	auto* fitResult = model.fitTo(data, Save(), PrintLevel(-1), Minos(!DoMCWeightedError), NumCPU(NCPUs), Range(massMin, massMax), AsymptoticError(DoMCWeightedError));
 	// quoting RooFit: "sum-of-weights and asymptotic error correction do not work with MINOS errors", so let's turn off Minos, no need to estimate asymmetric errors with MC fit
+	// stratiges
 	if (BeVerbose) fitResult->Print("v");
 
 	return fitResult;
@@ -408,7 +409,7 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
 	char yieldsFileName[512];
-	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/SignalYields/%s_%s%s.txt", bkgShapeName, fitModelName, extraString);
+	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/RawYields/%s_%s%s.txt", bkgShapeName, fitModelName, extraString);
 
 	cout << yieldsFileName << endl;
 	if (fopen(yieldsFileName, "r")) {
