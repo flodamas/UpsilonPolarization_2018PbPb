@@ -54,8 +54,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	std::string bkgShapeName[nCosThetaBinsMax][nPhiBinsMax];
 
-	// fill the background shape array with ChebychevOrder2
-	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
+	// // fill the background shape array with ChebychevOrder2
+	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
 
 	// // exceptions
 	// // bkgShapeName[1][1] = "ChebychevOrder1";
@@ -78,15 +78,15 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// bkgShapeName[2][2] = "ChebychevOrder1";
 	// bkgShapeName[3][2] = "ChebychevOrder1";
 
-	// CS, 6 < pT < 12 GeV/c, |phi|
-	bkgShapeName[4][0] = "ChebychevOrder1";
+	// // CS, 6 < pT < 12 GeV/c, |phi|
+	// bkgShapeName[4][0] = "ChebychevOrder1";
 
 	// // CS, 12 < pT < 20
 	// bkgShapeName[1][2] = "ChebychevOrder1";
 	// bkgShapeName[3][2] = "ChebychevOrder1";
 
-	// // fill the background shape array with ExpTimesErr
-	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
+	// fill the background shape array with ExpTimesErr
+	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
 
 	// exceptions
 

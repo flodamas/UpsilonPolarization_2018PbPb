@@ -23,7 +23,7 @@ using namespace RooFit;
 
 // make and draw the invariant mass distribution with fit results
 RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet dataset) {
-	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
+	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range("MassFitRange"));
 	dataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	auto* fitModel = wspace.pdf("invMassModel");
