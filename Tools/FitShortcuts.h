@@ -172,6 +172,23 @@ RooFitResult* HypatiaFit(RooWorkspace& wspace, RooDataSet data, Float_t massMin,
 	return fitResult;
 }
 
+RooFitResult* VoigtianFit(RooWorkspace& wspace, RooDataSet data, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+	// fit
+	RooRealVar mean("meanVoigtian", "", PDGmass_1S, 9., 10.);
+	RooRealVar sigma("sigmaVoigtian", "", 0.08, .03, .15);
+	RooRealVar width("widthVoigtian", "", 0.08, .03, .15);
+
+	RooVoigtian signal("Voigtian", "Voigtian", *wspace.var("mass"), mean, sigma, width);
+
+	if (BeVerbose) cout << "\nFitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions...\n";
+
+	auto* fitResult = MCWeightedInvariantMassFit(data, signal, massMin, massMax);
+
+	wspace.import(signal);
+
+	return fitResult;
+}
+
 /// Helpers to get the relevant signal shape parameters and to define an unique fit name
 
 const char* GetSignalFitName(const char* signalShapeName = "SymDSCB", Int_t ptMin = 0, Int_t ptMax = 30) {
