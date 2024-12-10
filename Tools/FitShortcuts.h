@@ -62,7 +62,7 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet data, Float_t massMin 
 	RooRealVar alphaInf("alphaInfSymDSCB", "", 1.5, 0.1, 10);
 	RooRealVar orderInf("orderInfSymDSCB", "", 1.5, 0.1, 10);
 	RooRealVar alphaSup("alphaSupSymDSCB", "", 1.5, 0.1, 10);
-	RooRealVar orderSup("orderSupSymDSCB", "", 5, 0.1, 1000);
+	RooRealVar orderSup("orderSupSymDSCB", "", 5, 0.1, 100);
 
 	RooCrystalBall signal("SymDSCB", "SymDSCB", *wspace.var("mass"), mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 
