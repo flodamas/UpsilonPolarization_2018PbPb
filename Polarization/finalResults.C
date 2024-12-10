@@ -5,32 +5,27 @@
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
-void finalResults(Bool_t isCSframe = true , const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180){
-
+void finalResults(Bool_t isCSframe = true, const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
-
-	const Int_t nPtBin = 4;
-	Double_t ptBinEdges[nPtBin + 1] = {0, 2, 6, 12, 20};
 
 	RooRealVar* lambdaTheta = new RooRealVar("lambdaTheta", "lambdaTheta", 0);
 	RooRealVar* lambdaPhi = new RooRealVar("lambdaPhi", "lambdaPhi", 0);
 	RooRealVar* lambdaThetaPhi = new RooRealVar("lambdaThetaPhi", "lambdaThetaPhi", 0);
 	RooRealVar* lambdaTilde = new RooRealVar("lambdaTilde", "lambdaTilde", 0);
 
-	TH1D* lambdaThetaHist = new TH1D("lambdaThetaHist", "; p_{T} (GeV/c); #lambda_{#theta}", nPtBin, ptBinEdges);	
-	TH1D* lambdaPhiHist = new TH1D("lambdaPhiHist", "; p_{T} (GeV/c); #lambda_{#varphi}", nPtBin, ptBinEdges);	
-	TH1D* lambdaThetaPhiHist = new TH1D("lambdaThetaPhiHist", "; p_{T} (GeV/c); #lambda_{#theta#varphi}", nPtBin, ptBinEdges);	
-	TH1D* lambdaTildeHist = new TH1D("lambdaTildeHist", "; p_{T} (GeV/c); #tilde{#lambda}", nPtBin, ptBinEdges);	
+	TH1D* lambdaThetaHist = new TH1D("lambdaThetaHist", "; p_{T} (GeV/c); #lambda_{#theta}", NPtBins, gPtBinning);
+	TH1D* lambdaPhiHist = new TH1D("lambdaPhiHist", "; p_{T} (GeV/c); #lambda_{#varphi}", NPtBins, gPtBinning);
+	TH1D* lambdaThetaPhiHist = new TH1D("lambdaThetaPhiHist", "; p_{T} (GeV/c); #lambda_{#theta#varphi}", NPtBins, gPtBinning);
+	TH1D* lambdaTildeHist = new TH1D("lambdaTildeHist", "; p_{T} (GeV/c); #tilde{#lambda}", NPtBins, gPtBinning);
 
 	const char* refFrameName = (isCSframe ? "CS" : "HX");
 	const char* signalShapeName = "SymDSCB";
- 	const char* methodName = "rootFit";
+	const char* methodName = "rootFit";
 
-	for (Int_t ibin = 1; ibin <= nPtBin; ibin++){
-
+	for (Int_t ibin = 1; ibin <= NPtBins; ibin++) {
 		// get polarization parameters
-		const char* fitModelName = GetFitModelName(signalShapeName, ptBinEdges[ibin -1], ptBinEdges[ibin], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+		const char* fitModelName = GetFitModelName(signalShapeName, gPtBinning[ibin - 1], gPtBinning[ibin], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 		RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName);
 
@@ -50,23 +45,23 @@ void finalResults(Bool_t isCSframe = true , const Int_t nCosThetaBins = 5, Doubl
 
 		lambdaThetaHist->SetBinContent(ibin, lambdaThetaVal);
 		lambdaThetaHist->SetBinError(ibin, lambdaThetaUnc);
-		
+
 		lambdaPhiHist->SetBinContent(ibin, lambdaPhiVal);
 		lambdaPhiHist->SetBinError(ibin, lambdaPhiUnc);
-		
+
 		lambdaThetaPhiHist->SetBinContent(ibin, lambdaThetaPhiVal);
 		lambdaThetaPhiHist->SetBinError(ibin, lambdaThetaPhiUnc);
-		
+
 		lambdaTildeHist->SetBinContent(ibin, lambdaTildeVal);
-		lambdaTildeHist->SetBinError(ibin, lambdaTildeUnc);				
+		lambdaTildeHist->SetBinError(ibin, lambdaTildeUnc);
 	}
 
 	TCanvas* polarParamsCanvas = new TCanvas("polarParamsCanvas", "polarParamsCanvas", 500, 900);
 
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.66, 1, 1.0);
 
-	pad1->SetTopMargin(0.1);
-	pad1->SetBottomMargin(0.03);
+	pad1->SetTopMargin(0.12);
+	pad1->SetBottomMargin(0.0);
 	pad1->SetLeftMargin(0.17);
 	pad1->Draw();
 	pad1->cd();
@@ -80,34 +75,36 @@ void finalResults(Bool_t isCSframe = true , const Int_t nCosThetaBins = 5, Doubl
 
 	lambdaThetaHist->GetYaxis()->SetRangeUser(-1.2, 1.2);
 	lambdaThetaHist->GetYaxis()->CenterTitle();
-	lambdaThetaHist->GetYaxis()->SetTitleSize(0.09);
+	lambdaThetaHist->GetYaxis()->SetTitleSize(0.1);
 	lambdaThetaHist->GetYaxis()->SetTitleOffset(0.8);
-	
+
 	lambdaThetaHist->GetYaxis()->SetLabelSize(0.075);
 
 	TLatex text;
 	text.SetTextAlign(22);
 	text.SetTextSize(0.08);
-	text.DrawLatexNDC(.31, .83, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
+	text.DrawLatexNDC(.31, .8, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
 
 	TLatex refFrameText;
 	refFrameText.SetTextAlign(22);
 	refFrameText.SetTextSize(0.08);
-	if (isCSframe) refFrameText.DrawLatexNDC(0.82, 0.82, "Collins-Soper");
-	else refFrameText.DrawLatexNDC(0.86, 0.82, "Helicity");
+	if (isCSframe)
+		refFrameText.DrawLatexNDC(0.82, 0.8, "Collins-Soper");
+	else
+		refFrameText.DrawLatexNDC(0.86, 0.8, "Helicity");
 
-	TLine* zeroLine = new TLine(ptBinEdges[0], 0, ptBinEdges[nPtBin], 0);
+	TLine* zeroLine = new TLine(gPtBinning[0], 0, gPtBinning[NPtBins], 0);
 	zeroLine->Draw("SAME");
 	zeroLine->SetLineStyle(kDashed);
 
-	CMS_lumi(pad1, "2018 PbPb miniAOD, DoubleMuon PD");
+	CMS_lumi(pad1, gCMSLumiText);
 
 	polarParamsCanvas->cd();
 
-	TPad* pad2 = new TPad("pad2", "pad2", 0, 0.35, 1, 0.67);
-	
+	TPad* pad2 = new TPad("pad2", "pad2", 0, 0.35, 1, 0.66);
+
 	pad2->SetTopMargin(0.0);
-	pad2->SetBottomMargin(0.03);
+	pad2->SetBottomMargin(0.0);
 	pad2->SetLeftMargin(0.17);
 	pad2->Draw();
 	pad2->cd();
@@ -119,19 +116,24 @@ void finalResults(Bool_t isCSframe = true , const Int_t nCosThetaBins = 5, Doubl
 
 	lambdaPhiHist->GetYaxis()->SetRangeUser(-1.2, 1.2);
 	lambdaPhiHist->GetYaxis()->CenterTitle();
-	lambdaPhiHist->GetYaxis()->SetTitleSize(0.098);
-	lambdaPhiHist->GetYaxis()->SetTitleOffset(0.75);
-	
-	lambdaPhiHist->GetYaxis()->SetLabelSize(0.081);
+	lambdaPhiHist->GetYaxis()->SetTitleSize(0.11);
+	lambdaPhiHist->GetYaxis()->SetTitleOffset(0.7);
+
+	lambdaPhiHist->GetYaxis()->SetLabelSize(0.08);
+
+	TLatex kinematicText;
+	kinematicText.SetTextAlign(13);
+	kinematicText.SetTextSize(0.085);
+	kinematicText.DrawLatexNDC(.25, .85, Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(0, 2.4)));
 
 	zeroLine->Draw("SAME");
 
 	polarParamsCanvas->cd();
-	
-	TPad* pad3 = new TPad("pad3", "pad3", 0, 0.00, 1, 0.360);
+
+	TPad* pad3 = new TPad("pad3", "pad3", 0, 0.00, 1, 0.35);
 
 	pad3->SetTopMargin(0.0);
-	pad3->SetBottomMargin(0.20);
+	pad3->SetBottomMargin(0.25);
 	pad3->SetLeftMargin(0.17);
 	pad3->Draw();
 	pad3->cd();
@@ -140,44 +142,46 @@ void finalResults(Bool_t isCSframe = true , const Int_t nCosThetaBins = 5, Doubl
 
 	// cosmetics
 	lambdaThetaPhiHist->GetXaxis()->CenterTitle();
-	lambdaThetaPhiHist->GetXaxis()->SetTitleSize(0.089);
+	lambdaThetaPhiHist->GetXaxis()->SetTitleSize(0.1);
 
-	lambdaThetaPhiHist->GetXaxis()->SetLabelSize(0.072);
+	lambdaThetaPhiHist->GetXaxis()->SetLabelSize(0.075);
 
 	lambdaThetaPhiHist->GetYaxis()->SetRangeUser(-1.2, 1.2);
 	lambdaThetaPhiHist->GetYaxis()->CenterTitle();
-	lambdaThetaPhiHist->GetYaxis()->SetTitleSize(0.09);
+	lambdaThetaPhiHist->GetYaxis()->SetTitleSize(0.1);
 	lambdaThetaPhiHist->GetYaxis()->SetTitleOffset(0.75);
-	
-	lambdaThetaPhiHist->GetYaxis()->SetLabelSize(0.072);
+
+	lambdaThetaPhiHist->GetYaxis()->SetLabelSize(0.075);
 
 	zeroLine->Draw("SAME");
 
-	const char* fitModelName2 = GetFitModelName(signalShapeName, ptBinEdges[0], ptBinEdges[nPtBin], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
-		
+	const char* fitModelName2 = GetFitModelName(signalShapeName, gPtBinning[0], gPtBinning[NPtBins], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+
 	gSystem->mkdir("ParametersResults", kTRUE);
-	polarParamsCanvas->SaveAs(Form("./ParametersResults/polarParams_%s_%s.png", methodName, fitModelName2), "RECREATE");
+	polarParamsCanvas->SaveAs(Form("/ParametersResults/polarParams_%s_%s.png", methodName, fitModelName2), "RECREATE");
 
 	TCanvas* invPolarParamsCanvas = new TCanvas("invPolarParamsCanvas", "invPolarParamsCanvas", 500, 500);
 
-	lambdaTildeHist->Draw();	
+	lambdaTildeHist->Draw();
 
 	// cosmetics
 	lambdaTildeHist->GetXaxis()->CenterTitle();
 
-	lambdaTildeHist->GetYaxis()->SetRangeUser(-1.2, 1.2);
+	lambdaTildeHist->GetYaxis()->SetRangeUser(-1.4, 1.4);
 	lambdaTildeHist->GetYaxis()->CenterTitle();
 
 	zeroLine->Draw("SAME");
 
-	CMS_lumi(invPolarParamsCanvas, "2018 PbPb miniAOD, DoubleMuon PD");
+	CMS_lumi(invPolarParamsCanvas, gCMSLumiText);
 
 	text.SetTextSize(0.058);
-	text.DrawLatexNDC(.32, .88, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
+	text.DrawLatexNDC(.32, .85, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
 
 	refFrameText.SetTextSize(0.058);
-	if (isCSframe) refFrameText.DrawLatexNDC(0.78, 0.88, "Collins-Soper");
-	else refFrameText.DrawLatexNDC(0.85, 0.88, "Helicity");
+	if (isCSframe)
+		refFrameText.DrawLatexNDC(0.78, 0.85, "Collins-Soper");
+	else
+		refFrameText.DrawLatexNDC(0.85, 0.85, "Helicity");
 
-	invPolarParamsCanvas->SaveAs(Form("./ParametersResults/invariantParameter_%s_%s.png", methodName, fitModelName2), "RECREATE");
+	invPolarParamsCanvas->SaveAs(Form("/ParametersResults/invariantParameter_%s_%s.png", methodName, fitModelName2), "RECREATE");
 }
