@@ -38,11 +38,6 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
 	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
 	//RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .03, .15);
 
-<<<<<<< HEAD
-	// sigma_1S.setConstant();
-
-=======
->>>>>>> 72ba954fdedbb93052259b4a0dfe7b32be899e65
 	RooCrystalBall signalPDF_1S("signalPDF_1S", "Symmetric DSCB pdf for Y(1S) mass peak", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
 	list.push_back(signalPDF_1S.GetName());
 
