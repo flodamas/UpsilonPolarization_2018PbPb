@@ -133,7 +133,7 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
 		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7, 2, 15);
 		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.2);
-		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.69, 0.0001, 10);
+		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.8, 0.0001, 10);
 		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1.7, 0, 50);
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
