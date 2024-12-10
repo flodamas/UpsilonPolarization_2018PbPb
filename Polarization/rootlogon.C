@@ -87,7 +87,7 @@ void rootlogon() {
 	// tdrStyle->SetStatY(Float_t y = 0);
 
 	// Margins:
-	tdrStyle->SetPadTopMargin(0.06);
+	tdrStyle->SetPadTopMargin(0.07);
 	tdrStyle->SetPadBottomMargin(0.13);
 	tdrStyle->SetPadLeftMargin(0.14);
 	tdrStyle->SetPadRightMargin(0.03);
