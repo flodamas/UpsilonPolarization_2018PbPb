@@ -24,7 +24,6 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
 	std::vector<std::string> list;
 
 	RooRealVar mass = *wspace.var("mass");
-	mass.setRange("fitRange", 7, 13);
 
 	// get the tail parameters, assuming that they have been imported to the workspace first!!
 	RooRealVar sigma_1S = *wspace.var("sigmaSymDSCB");
@@ -64,56 +63,6 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
 	return list;
 }
 
-RooAddPdf* NominalSignalModel(RooWorkspace& wspace, Long64_t nEntries = 1e6) {
-	RooRealVar mass = *wspace.var("mass");
-	mass.setRange("fitRange", 7, 13);
-
-	Long64_t initYield = nEntries / 100;
-
-	// get the tail parameters, assuming that they have been imported to the workspace first!!
-	RooRealVar sigma = *wspace.var("sigmaSymDSCB");
-	//	sigma.Print();
-	//	Double_t sigmaSeed = sigma.getVal();
-
-	//RooRealVar sigma_1S = *wspace.var("sigma_1S");
-	RooRealVar alphaInf = *wspace.var("alphaInfSymDSCB");
-	RooRealVar orderInf = *wspace.var("orderInfSymDSCB");
-	RooRealVar alphaSup = *wspace.var("alphaSupSymDSCB");
-	RooRealVar orderSup = *wspace.var("orderSupSymDSCB");
-
-	// Y(1S) signal shape
-	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
-	RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .02, .15);
-
-	RooCrystalBall* signalPDF_1S = new RooCrystalBall("signalPDF_1S", "", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
-	RooRealVar* yield1S = new RooRealVar("yield1S", "N 1S", initYield, 0, nEntries);
-
-	// Y(2S) signal shape, mass scaling for mean and widths
-	RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
-
-	RooFormulaVar mean_2S("mean_2S", "@0*@1", RooArgSet(massScaling_2S, mean_1S));
-	RooFormulaVar sigma_2S("sigma_2S", "@0*@1", RooArgSet(massScaling_2S, sigma_1S));
-
-	RooCrystalBall* signalPDF_2S = new RooCrystalBall("signalPDF_2S", "", mass, mean_2S, sigma_2S, alphaInf, orderInf, alphaSup, orderSup);
-	RooRealVar* yield2S = new RooRealVar("yield2S", "N 2S", initYield / 4, 0, nEntries);
-
-	// Y(3S) signal shape, mass scaling for mean and widths
-	RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
-
-	RooFormulaVar mean_3S("mean_3S", "@0*@1", RooArgSet(massScaling_3S, mean_1S));
-	RooFormulaVar sigma_3S("sigma_3S", "@0*@1", RooArgSet(massScaling_3S, sigma_1S));
-
-	RooCrystalBall* signalPDF_3S = new RooCrystalBall("signalPDF_3S", "", mass, mean_3S, sigma_3S, alphaInf, orderInf, alphaSup, orderSup);
-	RooRealVar* yield3S = new RooRealVar("yield3S", "N 3S", initYield / 12, 0, nEntries);
-
-	RooAddPdf* SymDSCBModel = new RooAddPdf("signalPDF", "PDF of the sum of the three Y signal PDFs", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S}, {*yield1S, *yield2S, *yield3S});
-	SymDSCBModel->setNormRange("fitRange");
-
-	wspace.import(*SymDSCBModel, RecycleConflictNodes());
-
-	return SymDSCBModel;
-}
-
 // Multiply the signal PDFs by constraints terms (if any)
 
 void ApplyInternalConstraintsToSignal(RooWorkspace& wspace, std::vector<std::string>& signalPdfNameList, RooArgList* listOfConstraints) {
@@ -137,6 +86,7 @@ void ApplyInternalConstraintsToSignal(RooWorkspace& wspace, std::vector<std::str
 		// cannot overwrite the signal pdf so use another name
 
 		RooProdPdf* newPdf = new RooProdPdf(Form("constrained_%s", pdfName.c_str()), Form("(constrained) %s", originalPdf->GetTitle()), pdfList);
+		newPdf->setNormRange("MassFitRange");
 
 		wspace.import(*newPdf, RecycleConflictNodes());
 
@@ -160,7 +110,6 @@ RooArgList* ChebychevCoefList(int order = 1) {
 
 RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 	RooRealVar* invMass = wspace.var("mass");
-	invMass->setRange("fitRange", 7, 13);
 
 	// Chebychev Nth order polynomial
 	if (strncmp(bkgShapeName, "ChebychevOrder", 14) == 0) {
@@ -234,11 +183,9 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 	auto signalPDF_3S = wspace.pdf(signalPdfNameList.at(2));
 
 	// 3. background
-	RooRealVar* invMass = wspace.var("mass");
-	invMass->setRange("fitRange", 7, 13);
 
 	auto bkgPDF = BackgroundPDF(wspace, bkgShapeName);
-	bkgPDF->setNormRange("fitRange");
+	bkgPDF->setNormRange("MassFitRange");
 
 	// complete invariant mass model
 
@@ -251,78 +198,12 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 	RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "Background yield", 0, nEntries);
 
 	RooAddPdf model("invMassModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF}, {*yield1S, *yield2S, *yield3S, *yieldBkg});
+	model.setNormRange("MassFitRange");
 
 	wspace.import(model, RecycleConflictNodes());
 
 	if (BeVerbose) std::cout << "\nInvariant mass model exported to " << wspace.GetName() << std::endl;
 	//wspace.Print("v");
-}
-
-RooAddPdf* MassFitModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, const char* fitModelName, Long64_t nEntries = 1e6) {
-	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
-
-	if (BeVerbose) std::cout << "\nBuilding invariant mass fit model with " << signalShapeName << " for the signal and " << bkgShapeName << " for the background\n";
-
-	// tail parameters fixed to MC extracted values, and identical for the three resonances
-
-	//ImportAndFixMCSignalParameters(wspace, signalShapeName, fitModelName);
-
-	RooArgList* constraintsList = ListOfSignalContraints(wspace, signalShapeName, fitModelName, true);
-
-	auto signalModel = NominalSignalModel(wspace, nEntries);
-
-	// apply Gaussian penalty to  internal constraint terms
-	constraintsList->add(*wspace.pdf("SymDSCBModel"));
-
-	cout << "\nContent of constraints list:\n";
-
-	constraintsList->Print("v");
-
-	RooProdPdf constrainedSignalModel("constrainedSignalModel", " ", *constraintsList);
-
-	wspace.import(constrainedSignalModel, RecycleConflictNodes()); // including all signal yield variables!!
-
-	cout << "\nConstraints applied to the signal model\n";
-
-	RooAbsPdf* signalPDF_1S = wspace.pdf("signalPDF_1S");
-	RooAbsPdf* signalPDF_2S = wspace.pdf("signalPDF_2S");
-	RooAbsPdf* signalPDF_3S = wspace.pdf("signalPDF_3S");
-
-	RooRealVar* yield1S = wspace.var("yield1S");
-	RooRealVar* yield2S = wspace.var("yield2S");
-	RooRealVar* yield3S = wspace.var("yield3S");
-
-	cout << "\nList of PDFs in constrainedSignalModel:\n";
-
-	constrainedSignalModel.pdfList().Print("v");
-
-	// background
-	RooRealVar* invMass = wspace.var("mass");
-	invMass->setRange("fitRange", 7, 13);
-
-	auto bkgPDF = BackgroundPDF(wspace, bkgShapeName);
-	bkgPDF->setNormRange("fitRange");
-
-	RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "Background yield", 0, nEntries);
-
-	// complete invariant mass model
-
-	cout << "\n[InvariantMassModels] Adding signal and background PDFs... ";
-
-	//RooAddPdf* model = new RooAddPdf("invMassModel", "(constrained) signal + background PDF", RooArgList(constrainedSignalModel, bkgModel));
-
-	cout << "Done!!\n";
-
-	//model->Print("v");
-
-	RooAddPdf* model = new RooAddPdf("invMassModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF}, {*yield1S, *yield2S, *yield3S, *yieldBkg});
-	
-	wspace.import(*model, RecycleConflictNodes());
-
-	if (BeVerbose) std::cout << "\nModel exported to " << wspace.GetName() << std::endl;
-	//wspace.Print("v");
-
-	return model;
 }
 
 #endif
