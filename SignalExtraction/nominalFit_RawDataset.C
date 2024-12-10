@@ -27,12 +27,12 @@ RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 3
 
 	RooDataSet reducedDataset = *(RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
 
-	wspace.import(reducedDataset, Rename(Form("dataset_cosTheta_%.1fto%.1f_phi_%dto%d", cosThetaMin, cosThetaMax, phiMin, phiMax)));
+	wspace.import(reducedDataset, Rename(Form("dataset_cosTheta_%.2fto%.2f_absphi_%dto%d", cosThetaMin, cosThetaMax, phiMin, phiMax)));
 
 	return reducedDataset;
 }
 
-void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, Bool_t isBkgExpTimesErr = kFALSE, Int_t ChebychevOrder = 2) {
+void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* bkgShapeName = "ChebychevOrder2") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -65,15 +65,6 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	const char* signalShapeName = "SymDSCB";
 
-	// background
-
-	const char* bkgShapeName = nullptr;
-
-	if (isBkgExpTimesErr)
-		bkgShapeName = "ExpTimesErr";
-	else
-		bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
-
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	//auto invMassModel = MassFitModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries);
@@ -84,14 +75,18 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	RooDataSet reducedDataset = InvMassDataset(wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName, phiMin, phiMax);
 
+	auto* fitResult = RawInvariantMassFit(wspace, reducedDataset);
+
+	/*
 	auto bkgPDF = BackgroundPDF(wspace, bkgShapeName);
 	bkgPDF->setNormRange("MassFitRange");
 	invMassModel.setNormRange("MassFitRange");
 
-	auto* fitResult = invMassModel.fitTo(reducedDataset, Save(), Extended(kTRUE) /*, PrintLevel(-1)*/, NumCPU(NCPUs), Range("MassFitRange"), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
+
+	auto* fitResult = invMassModel.fitTo(reducedDataset, Save(), Extended(kTRUE) , PrintLevel(-1), NumCPU(NCPUs), Range("MassFitRange"), AsymptoticError(DoAsymptoticError), SumW2Error(!DoAsymptoticError));
 
 	fitResult->Print("v");
-
+*/
 	// save the invariant mass distribution fit for further checks
 	// one pad for the invariant mass data distribution with fit components, one for the pull distribution
 	auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
@@ -101,18 +96,8 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	pad1->Draw();
 	pad1->cd();
 
-	// RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
-	RooPlot* frame = invMass.frame(Title(" "), Range("MassFitRange"));
+	RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
-	reducedDataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
-
-	invMassModel.plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(kGray + 2), LineStyle(kDashed));
-	invMassModel.plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(kRed));
-	invMassModel.plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(kRed));
-	invMassModel.plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(kRed));
-	invMassModel.plotOn(frame, LineColor(kBlue));
-
-	frame->GetYaxis()->SetMaxDigits(3);
 
 	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
@@ -142,8 +127,6 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
 
-	if (!isBkgExpTimesErr) bkgShapeName = Form("ChebychevOrder%d", ChebychevOrder);
-
 	const char* totalFitModelName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	SaveRawSignalYields(signalYields, totalFitModelName);
@@ -151,7 +134,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	SaveRawDataFitCanvas(massCanvas, totalFitModelName);
 }
 
-void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 10, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isBkgExpTimesErr = kFALSE, Int_t ChebychevOrder = 2) {
+void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 10, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, const char* bkgShapeName = "ChebychevOrder2") {
 	// Int_t ptEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
 
 	std::vector<Double_t> cosThetaEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
@@ -160,11 +143,11 @@ void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
 	// Int_t numPtEle = sizeof(ptEdges) / sizeof(Int_t);
 	// for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
-		for (Int_t cosThetaIdx = 0; cosThetaIdx < nCosThetaBins; cosThetaIdx++) {
-			for (Int_t idx = 0; idx < nPhiBins; idx++) {
-				nominalFit_RawDataset(ptMin, ptMax, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, 7.5, 13, isBkgExpTimesErr, ChebychevOrder);
-				// nominalFit_RawDataset(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, MassBinMin, 13, isBkgExpTimesErr, ChebychevOrder);
-			}
+	for (Int_t cosThetaIdx = 0; cosThetaIdx < nCosThetaBins; cosThetaIdx++) {
+		for (Int_t idx = 0; idx < nPhiBins; idx++) {
+			nominalFit_RawDataset(ptMin, ptMax, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, 7.5, 13, bkgShapeName);
+			// nominalFit_RawDataset(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, MassBinMin, 13, isBkgExpTimesErr, ChebychevOrder);
 		}
+	}
 	// }
-}		
+}
