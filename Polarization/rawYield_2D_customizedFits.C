@@ -20,7 +20,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE) {
+void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE, const char* defaultBkgShapeName = "Chebychev") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -55,57 +55,61 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	std::string bkgShapeName[nCosThetaBinsMax][nPhiBinsMax];
 
 	// // fill the background shape array with ChebychevOrder2
-	// std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
+	if (strcmp(defaultBkgShapeName, "Chebychev") == 0){
+		std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
 
-	// // exceptions
-	// // bkgShapeName[1][1] = "ChebychevOrder1";
-	// // bkgShapeName[1][3] = "ChebychevOrder1";
-	// // bkgShapeName[1][4] = "ChebychevOrder1";
-	// // bkgShapeName[1][5] = "ChebychevOrder1";
+		// // exceptions
+		// // bkgShapeName[1][1] = "ChebychevOrder1";
+		// // bkgShapeName[1][3] = "ChebychevOrder1";
+		// // bkgShapeName[1][4] = "ChebychevOrder1";
+		// // bkgShapeName[1][5] = "ChebychevOrder1";
 
-	// // bkgShapeName[2][2] = "ChebychevOrder1";
+		// // bkgShapeName[2][2] = "ChebychevOrder1";
 
-	// // bkgShapeName[3][0] = "ChebychevOrder1";
-	// // bkgShapeName[3][5] = "ChebychevOrder1";
+		// // bkgShapeName[3][0] = "ChebychevOrder1";
+		// // bkgShapeName[3][5] = "ChebychevOrder1";
 
-	// // HX, 2 < pT < 6 GeV/c, |phi|
-	// bkgShapeName[4][0] = "ExpTimesErr";
-	// bkgShapeName[4][1] = "ExpTimesErr";
-	// bkgShapeName[4][2] = "ExpTimesErr";
+		// // HX, 2 < pT < 6 GeV/c, |phi|
+		// bkgShapeName[4][0] = "ExpTimesErr";
+		// bkgShapeName[4][1] = "ExpTimesErr";
+		// bkgShapeName[4][2] = "ExpTimesErr";
 
-	// // HX, 12 < pT < 20
-	// bkgShapeName[1][1] = "ChebychevOrder1";
-	// bkgShapeName[2][2] = "ChebychevOrder1";
-	// bkgShapeName[3][2] = "ChebychevOrder1";
+		// // HX, 12 < pT < 20
+		// bkgShapeName[1][1] = "ChebychevOrder1";
+		// bkgShapeName[2][2] = "ChebychevOrder1";
+		// bkgShapeName[3][2] = "ChebychevOrder1";
 
-	// // CS, 6 < pT < 12 GeV/c, |phi|
-	// bkgShapeName[4][0] = "ChebychevOrder1";
+		// // CS, 6 < pT < 12 GeV/c, |phi|
+		// bkgShapeName[4][0] = "ChebychevOrder1";
 
-	// // CS, 12 < pT < 20
-	// bkgShapeName[1][2] = "ChebychevOrder1";
-	// bkgShapeName[3][2] = "ChebychevOrder1";
+		// // CS, 12 < pT < 20
+		// bkgShapeName[1][2] = "ChebychevOrder1";
+		// bkgShapeName[3][2] = "ChebychevOrder1";
+	}
 
-	// fill the background shape array with ExpTimesErr
-	std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
+	if (strcmp(defaultBkgShapeName, "ExpTimesErr") == 0){
+		// fill the background shape array with ExpTimesErr
+		std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
 
-	// exceptions
+		// exceptions
 
-	// // HX, 2 < pT < 6 GeV/c (-180 to 180)
-	// bkgShapeName[0][2] = "ChebychevOrder1";
-	// bkgShapeName[0][3] = "ChebychevOrder1";
+		// // HX, 2 < pT < 6 GeV/c (-180 to 180)
+		// bkgShapeName[0][2] = "ChebychevOrder1";
+		// bkgShapeName[0][3] = "ChebychevOrder1";
 
-	// bkgShapeName[3][2] = "ChebychevOrder2";
-	// bkgShapeName[3][3] = "ChebychevOrder2";
+		// bkgShapeName[3][2] = "ChebychevOrder2";
+		// bkgShapeName[3][3] = "ChebychevOrder2";
 
-	// bkgShapeName[3][0] = "ChebychevOrder2";
-	// bkgShapeName[3][5] = "ChebychevOrder2";
+		// bkgShapeName[3][0] = "ChebychevOrder2";
+		// bkgShapeName[3][5] = "ChebychevOrder2";
 
-	// // HX, 2 < pT < 6 GeV/c (abs(phi))
-	// bkgShapeName[0][0] = "ChebychevOrder1";
+		// // HX, 2 < pT < 6 GeV/c (abs(phi))
+		// bkgShapeName[0][0] = "ChebychevOrder1";
 
-	// bkgShapeName[3][0] = "ChebychevOrder2";
+		// bkgShapeName[3][0] = "ChebychevOrder2";
 
-	// bkgShapeName[4][2] = "ChebychevOrder1";
+		// bkgShapeName[4][2] = "ChebychevOrder1";
+	}
 
 
 	/// "Standard" procedure: extract the yields per bin
@@ -373,7 +377,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-		SavePolarizationFitParameters(savedParams, "rootFit", fitModelName);
+		SavePolarizationFitParameters(savedParams, "rootFit", fitModelName, defaultBkgShapeName);
 
 		TLegend legend2(.17, .55, .28, .84);
 		legend2.SetTextSize(.05);
