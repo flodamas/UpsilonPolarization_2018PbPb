@@ -5,7 +5,7 @@
 #include "../MonteCarlo/AccEffHelpers.h"
 
 #include "../Tools/Datasets/RooDataSetHelpers.h"
-#include "../sPlot/SPlotHelpers.h"
+//#include "../sPlot/SPlotHelpers.h"
 
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
@@ -20,12 +20,16 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
+<<<<<<< HEAD
 void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE, const char* defaultBkgShapeName = "Chebychev") {
+=======
+void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE) {
+>>>>>>> 26ecd761d6cdd92f7354701b638eccb587c3b5aa
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
 	using namespace RooFit;
-	using namespace RooStats;
+	//using namespace RooStats;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
 	/// Bin edges and width
@@ -111,7 +115,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		// bkgShapeName[4][2] = "ChebychevOrder1";
 	}
 
-
 	/// "Standard" procedure: extract the yields per bin
 	TH2D* yieldMap = new TH2D("yieldMap", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
 
@@ -122,14 +125,14 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
 
 	// get acceptance maps
-	TFile* acceptanceFile = openFile(Form("../MonteCarlo/AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName));
+	TFile* acceptanceFile = openFile(Form("../MonteCarlo/AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, gMuonAccName));
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
-	
+
 	// rebin acceptance maps based on costheta, phi, and pT selection
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	// get efficiency maps
-	TFile* efficiencyFile = openFile(Form("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults%s.root", gMuonAccName));
+	TFile* efficiencyFile = openFile(Form("../MonteCarlo/EfficiencyMaps/%dS/EfficiencyResults%s.root", iState, gMuonAccName));
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	// rebin efficiency maps based on costheta, phi, and pT selection
@@ -141,7 +144,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	// rebin uncertainty map based on costheta, phi, and pT selection
 	TH2D* systEffCosThetaPhi = rebinRel3DUncMap(effMap, systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
-	Bool_t isCSframe = (strcmp(refFrameName, "CS") == 0) ? kTRUE : kFALSE;
+	//	Bool_t isCSframe = (strcmp(refFrameName, "CS") == 0) ? kTRUE : kFALSE;
 
 	// initialize variables used in the loop below
 	Double_t totalRelUncHigh = 0, totalRelUncLow = 0;
@@ -186,8 +189,10 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			double efficiency = effMapCosThetaPhi->GetEfficiency(iGlobalBin);
 
 			// calculate weight
-			if (acceptance == 0 || efficiency == 0) weight = 0.;
-			else weight = 1. / (acceptance * efficiency);
+			if (acceptance == 0 || efficiency == 0)
+				weight = 0.;
+			else
+				weight = 1. / (acceptance * efficiency);
 
 			weightMap->SetBinContent(iCosTheta + 1, iPhi + 1, weight);
 
@@ -212,12 +217,12 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			// get yields and their uncertainties
 			// const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[iPhi], (Int_t)phiBinEdges[iPhi + 1]);
 
-			// RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][iPhi].c_str()), fitModelName, Form("%s%s", gMuonAccName, "_absphi"));	
-			
+			// RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeName[iCosTheta][iPhi].c_str()), fitModelName, Form("%s%s", gMuonAccName, "_absphi"));
+
 			// double yield1SVal = (yield1S->getVal());
 
-			// double yield1SUnc = (yield1S->getError());		
-			
+			// double yield1SUnc = (yield1S->getError());
+
 			Int_t absiPhi = yieldMap->GetYaxis()->FindBin(fabs(binCenterPhi)) - 1;
 			cout << "absiPhi: " << absiPhi << endl;
 
@@ -234,18 +239,17 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 			double yield1SUnc = (yield1S->getError());
 
-
 			// set the bin contents reflecting weights
 			// only raw yield itself before correction
 			yieldMap->SetBinContent(iCosTheta + 1, iPhi + 1, yield1SVal);
 
 			// yield with acceptance x efficiency correction
 			standardCorrectedMap->SetBinContent(iCosTheta + 1, iPhi + 1, yield1SVal * weight);
-					
+
 			// yieldMap->SetBinError(iCosTheta + 1, yield1SErr * weight);
 			// yieldMap->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relAccUncHigh));
 			// yieldMap->SetBinError(iCosTheta + 1, yield1SVal * weight * TMath::Hypot(yield1SErr / yield1SVal, relEffUncHigh));
-			
+
 			yieldMap->SetBinError(iCosTheta + 1, iPhi + 1, yield1SUnc);
 
 			// yieldMap->SetBinError(iCosTheta + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh));
@@ -253,7 +257,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 			// yieldMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 
 			// standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
-		
+
 			standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 
 			// fill uncertainty histograms
@@ -292,13 +296,13 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	kinematicsText->Draw("SAME");
 
 	weightCanvas->Modified();
-    weightCanvas->Update();
+	weightCanvas->Update();
 
-    // draw yield map before applying corrections
+	// draw yield map before applying corrections
 
 	TCanvas* yieldCanvas = draw2DMap(yieldMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, LEGOplot);
 
-	yieldMap->GetZaxis()->SetTitle("#varUpsilon(1S) Yields");
+	yieldMap->GetZaxis()->SetTitle(Form("#varUpsilon(%dS) yields", iState));
 	yieldMap->GetZaxis()->SetTitleOffset(1.);
 
 	yieldMap->GetZaxis()->SetRangeUser(0, maxYield * 2);
@@ -313,7 +317,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	yieldCanvas->Modified();
 	yieldCanvas->Update();
 
-	// draw yield map corrected by acceptance and efficiency  
+	// draw yield map corrected by acceptance and efficiency
 
 	TCanvas* correctedMapCanvas = draw2DMap(standardCorrectedMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, LEGOplot);
 
@@ -333,7 +337,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	TF2* polarFunc2D = getGeneralPolarFunc(maxYield);
 
 	if (LEGOplot) {
-
 		TFitResultPtr fitResults = standardCorrectedMap->Fit("generalPolarFunc", "ESVIMR");
 
 		// Fit results
@@ -353,7 +356,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		double lambdaThetaPhiVal = fitResults->Parameter(3);
 		double lambdaThetaPhiErr = fitResults->ParError(3);
 
-		double lambdaTildeVal = (lambdaThetaVal + 3. * lambdaPhiVal) / (1. - lambdaPhiVal); 
+		double lambdaTildeVal = (lambdaThetaVal + 3. * lambdaPhiVal) / (1. - lambdaPhiVal);
 		double lambdaTildeErr = TMath::Hypot(1. / (1. - lambdaPhiVal) * lambdaPhiErr, (3. - lambdaThetaVal - 6. * lambdaPhiVal) / TMath::Power((1. - lambdaPhiVal), 2) * lambdaPhiErr);
 
 		RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.2, 1.2);
@@ -411,10 +414,10 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	display2DMapContents(statHighAccCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
 	statHighAccCanvas->Modified();
-    statHighAccCanvas->Update();
+	statHighAccCanvas->Update();
 
-    // statistical uncertainty of acceptance down
-    TCanvas* statLowAccCanvas = draw2DMap(statLowAccCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	// statistical uncertainty of acceptance down
+	TCanvas* statLowAccCanvas = draw2DMap(statLowAccCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
 	statLowAccCosThetaPhi->GetZaxis()->SetTitle("stat uncer low of acceptance");
 	statLowAccCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
@@ -424,7 +427,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	display2DMapContents(statLowAccCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
 	statLowAccCanvas->Modified();
-    statLowAccCanvas->Update();
+	statLowAccCanvas->Update();
 
 	// statistical uncertainty of efficiency up
 	TCanvas* statHighEffCanvas = draw2DMap(statHighEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
@@ -437,10 +440,10 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	display2DMapContents(statHighEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
 	statHighEffCanvas->Modified();
-    statHighEffCanvas->Update();
+	statHighEffCanvas->Update();
 
-    // statistical uncertainty of efficiency down
-    TCanvas* statLowEffCanvas = draw2DMap(statLowEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	// statistical uncertainty of efficiency down
+	TCanvas* statLowEffCanvas = draw2DMap(statLowEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
 	statLowEffCosThetaPhi->GetZaxis()->SetTitle("stat uncer low of efficiency");
 	statLowEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
@@ -450,47 +453,47 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	display2DMapContents(statLowEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
 	statLowEffCanvas->Modified();
-    statLowEffCanvas->Update();
+	statLowEffCanvas->Update();
 
-    // systematic uncertainty of efficiency (muon scale factor)
-    TCanvas* systEffCanvas = draw2DMap(relSystEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	// systematic uncertainty of efficiency (muon scale factor)
+	TCanvas* systEffCanvas = draw2DMap(relSystEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
-    relSystEffCosThetaPhi->GetZaxis()->SetTitle("syst uncer of efficiency (muon SF)");
-    relSystEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+	relSystEffCosThetaPhi->GetZaxis()->SetTitle("syst uncer of efficiency (muon SF)");
+	relSystEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
 	kinematicsText->Draw("SAME");
 
 	display2DMapContents(relSystEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
 	systEffCanvas->Modified();
-    systEffCanvas->Update();
+	systEffCanvas->Update();
 
 	// yield extraction uncertainty
-    TCanvas* yieldUncCanvas = draw2DMap(yield1SUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	TCanvas* yieldUncCanvas = draw2DMap(yield1SUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
-    yield1SUncCosThetaPhi->GetZaxis()->SetTitle("raw yield extraction uncertatinty");
-	yield1SUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+	yield1SUncCosThetaPhi->GetZaxis()->SetTitle("raw yield statistical uncertainty");
+	//yield1SUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
 	kinematicsText->Draw("SAME");
 
 	display2DMapContents(yield1SUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
 	yieldUncCanvas->Modified();
-    yieldUncCanvas->Update();
+	yieldUncCanvas->Update();
 
-    // total uncertatinty
+	// total uncertatinty
 
-    TCanvas* totalUncCanvas = draw2DMap(totalRelUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	TCanvas* totalUncCanvas = draw2DMap(totalRelUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
-    totalRelUncCosThetaPhi->GetZaxis()->SetTitle("total uncertainty");
-    totalRelUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+	totalRelUncCosThetaPhi->GetZaxis()->SetTitle("total uncertainty");
+	totalRelUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
 	kinematicsText->Draw("SAME");
 
 	display2DMapContents(totalRelUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
 	totalUncCanvas->Modified();
-    totalUncCanvas->Update();
+	totalUncCanvas->Update();
 
 	/// save canvas
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
@@ -533,5 +536,4 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	yield1SUncCosThetaPhi->Write();
 	totalRelUncCosThetaPhi->Write();
 	uncOutFile->Close();
-
 }
