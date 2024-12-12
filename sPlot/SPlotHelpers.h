@@ -15,10 +15,12 @@ using namespace RooStats;
 
 /// sPlot class documentation https://root.cern/doc/master/classRooStats_1_1SPlot.html
 
-const char* sWeightedDatasetsFileName = Form("../sPlot/Datasets/sWeightedDatasets%s.root", gMuonAccName);
+const char* sWeightedDatasetsFileName = "../sPlot/Datasets/sWeightedDatasets.root";
 
 const char* sWeightedDatasetName(const char* fitModelName) {
-	return Form("sWeightedDataset_%s", fitModelName);
+	const char* name = Form("sWeightedDataset_%s", fitModelName);
+
+	return name;
 }
 
 RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr") {
@@ -66,10 +68,13 @@ RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const
 	RooRealVar yield3S = *wspace.var("yield3S");
 	RooRealVar yieldBkg = *wspace.var("yieldBkg");
 
-	RooStats::SPlot mySPlot{"mySPlot", "", data, wspace.pdf("invMassModel"), RooArgList(yield1S, yield2S, yield3S, yieldBkg), RooArgSet(), true, false, "", Range(MassBinMin, MassBinMax), NumCPU(NCPUs)};
+	RooStats::SPlot mySPlot{"mySPlot", "", data, wspace.pdf("invMassModel"), RooArgList(yield1S, yield2S, yield3S, yieldBkg), RooArgSet(), true, false, "", Range("MassFitRange"), NumCPU(NCPUs)};
 
 	// copy the newly created dataset
-	auto* sData = new RooDataSet(data, sWeightedDatasetName(fitModelName));
+
+	const char* fitName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax);
+
+	auto* sData = new RooDataSet(data, sWeightedDatasetName(fitName));
 
 	if (BeVerbose) {
 		std::cout << "\nAfter creating sWeights:\n";
@@ -106,7 +111,7 @@ RooDataSet* CreateSWeights(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const
 RooDataSet* SWeightedDataset(RooWorkspace& wspace, Int_t ptMin, Int_t ptMax, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr", bool update = false) {
 	RooDataSet* sData = new RooDataSet();
 
-	const char* fitName = Form("%s_%s_cent%dto%d_pt%dto%dGeV", signalShapeName, bkgShapeName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
+	const char* fitName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax);
 
 	const char* datasetName = sWeightedDatasetName(fitName);
 
