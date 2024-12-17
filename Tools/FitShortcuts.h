@@ -411,7 +411,7 @@ void SaveRawSignalYields(RooArgSet* signalYields, const char* fitModelName, cons
 void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName, const char* modelName, const char* extraString = "") {
 	gSystem->mkdir("../Polarization/ParametersResults/", kTRUE);
 
-	const char* fileName = Form("../Polarization/ParametersResults/%s_%s%s.txt", methodName, modelName, extraString);
+	const char* fileName = Form("../Polarization/ParametersResults/%s_%s_%s.txt", methodName, modelName, extraString);
 	parameters->writeToFile(fileName);
 
 	auto list = parameters->contentsString();
