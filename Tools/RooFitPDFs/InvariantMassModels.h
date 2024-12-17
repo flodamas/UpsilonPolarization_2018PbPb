@@ -122,7 +122,8 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 
 		RooArgList* coefList = ChebychevCoefList(order);
 		RooChebychev* bkgPDF = new RooChebychev("bkgPDF", Form("Chebychev polynomial of order %d", order), *invMass, *coefList);
-		bkgPDF->setNormRange("fitRange");
+
+		bkgPDF->setNormRange("MassFitRange");
 
 		wspace.import(*bkgPDF, RecycleConflictNodes());
 
@@ -137,7 +138,22 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1.7, 0, 50);
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
-		bkgPDF->setNormRange("fitRange");
+
+		bkgPDF->setNormRange("MassFitRange");
+
+		wspace.import(*bkgPDF, RecycleConflictNodes());
+
+		return bkgPDF;
+	}
+
+	else if (strcmp(bkgShapeName, "Argus") == 0) {
+		RooRealVar* m0 = new RooRealVar("m0_Argus", " ", 100, 0, 1000);
+		RooRealVar* c = new RooRealVar("c_Argus", " ", 10, 0, 100);
+		RooRealVar* p = new RooRealVar("p_Argus", " ", 1, 0, 20);
+
+		RooArgusBG* bkgPDF = new RooArgusBG("bkgPDF", "ARGUS background shape", *invMass, *m0, *c);
+
+		bkgPDF->setNormRange("MassFitRange");
 
 		wspace.import(*bkgPDF, RecycleConflictNodes());
 
@@ -148,7 +164,8 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", -10, 10);
 
 		RooExponential* bkgPDF = new RooExponential("bkgPDF", " ", *invMass, *exp_lambda);
-		bkgPDF->setNormRange("fitRange");
+
+		bkgPDF->setNormRange("MassFitRange");
 
 		wspace.import(*bkgPDF, RecycleConflictNodes());
 
