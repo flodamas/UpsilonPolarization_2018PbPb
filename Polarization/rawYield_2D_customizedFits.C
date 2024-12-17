@@ -20,11 +20,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-<<<<<<< HEAD
 void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE, const char* defaultBkgShapeName = "Chebychev") {
-=======
-void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE) {
->>>>>>> 26ecd761d6cdd92f7354701b638eccb587c3b5aa
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -59,7 +55,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	std::string bkgShapeName[nCosThetaBinsMax][nPhiBinsMax];
 
 	// // fill the background shape array with ChebychevOrder2
-	if (strcmp(defaultBkgShapeName, "Chebychev") == 0){
+	if (strcmp(defaultBkgShapeName, "Chebychev") == 0) {
 		std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ChebychevOrder2");
 
 		// // exceptions
@@ -91,7 +87,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 		// bkgShapeName[3][2] = "ChebychevOrder1";
 	}
 
-	if (strcmp(defaultBkgShapeName, "ExpTimesErr") == 0){
+	if (strcmp(defaultBkgShapeName, "ExpTimesErr") == 0) {
 		// fill the background shape array with ExpTimesErr
 		std::fill(&bkgShapeName[0][0], &bkgShapeName[0][0] + nCosThetaBinsMax * nPhiBinsMax, "ExpTimesErr");
 
