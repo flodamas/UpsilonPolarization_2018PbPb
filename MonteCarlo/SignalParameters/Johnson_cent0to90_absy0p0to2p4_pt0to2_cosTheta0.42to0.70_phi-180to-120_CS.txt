@@ -1,0 +1,3 @@
+lambdaJohnson =  0.11904 +/- 0.029742 L(0.001 - 2) 
+gammaJohnson =  0.20157 +/- 0.12943 L(0 - 2) 
+deltaJohnson =  1.3418 +/- 0.27215 L(0.01 - 10) 

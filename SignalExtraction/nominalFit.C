@@ -37,7 +37,7 @@ void nominalFit(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* bkgShapeName 
 
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries);
+	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true);
 
 	auto* fitResult = RawInvariantMassFit(wspace, data, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")), massMin, massMax);
 
