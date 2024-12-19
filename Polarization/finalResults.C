@@ -5,7 +5,7 @@
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
-void finalResults(Bool_t isCSframe = true, const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180) {
+void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
@@ -22,12 +22,14 @@ void finalResults(Bool_t isCSframe = true, const Int_t nCosThetaBins = 5, Double
 	const char* refFrameName = (isCSframe ? "CS" : "HX");
 	const char* signalShapeName = "SymDSCB";
 	const char* methodName = "rootFit";
+	// const char* bkgShapeName = "ExpTimesErr";
+	// const char* bkgShapeName = "Chebychev";
 
 	for (Int_t ibin = 1; ibin <= NPtBins; ibin++) {
 		// get polarization parameters
 		const char* fitModelName = GetFitModelName(signalShapeName, gPtBinning[ibin - 1], gPtBinning[ibin], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-		RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName);
+		RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName);
 
 		double lambdaThetaVal = lambdaTheta->getVal();
 		double lambdaThetaUnc = lambdaTheta->getError();
@@ -158,7 +160,7 @@ void finalResults(Bool_t isCSframe = true, const Int_t nCosThetaBins = 5, Double
 	const char* fitModelName2 = GetFitModelName(signalShapeName, gPtBinning[0], gPtBinning[NPtBins], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	gSystem->mkdir("ParametersResults", kTRUE);
-	polarParamsCanvas->SaveAs(Form("/ParametersResults/polarParams_%s_%s.png", methodName, fitModelName2), "RECREATE");
+	polarParamsCanvas->SaveAs(Form("ParametersResults/polarParams_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
 
 	TCanvas* invPolarParamsCanvas = new TCanvas("invPolarParamsCanvas", "invPolarParamsCanvas", 500, 500);
 
@@ -183,5 +185,5 @@ void finalResults(Bool_t isCSframe = true, const Int_t nCosThetaBins = 5, Double
 	else
 		refFrameText.DrawLatexNDC(0.85, 0.85, "Helicity");
 
-	invPolarParamsCanvas->SaveAs(Form("/ParametersResults/invariantParameter_%s_%s.png", methodName, fitModelName2), "RECREATE");
+	invPolarParamsCanvas->SaveAs(Form("ParametersResults/invariantParameter_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
 }
