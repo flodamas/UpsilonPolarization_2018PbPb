@@ -181,7 +181,25 @@ RooFitResult* VoigtianFit(RooWorkspace& wspace, RooDataSet data, Float_t massMin
 
 	RooVoigtian signal("Voigtian", "Voigtian", *wspace.var("mass"), mean, sigma, width);
 
-	if (BeVerbose) cout << "\nFitting the MC signal shape (weighted entries!!) with a double-sided Crystal Ball PDF made of a symmetric Gaussian core and asymmetric tail distributions...\n";
+	if (BeVerbose) cout << "\nFitting the MC signal shape (weighted entries!!) with a Voigtian PDF...\n";
+
+	auto* fitResult = MCWeightedInvariantMassFit(data, signal, massMin, massMax);
+
+	wspace.import(signal);
+
+	return fitResult;
+}
+
+RooFitResult* JohnsonFit(RooWorkspace& wspace, RooDataSet data, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+	// fit
+	RooRealVar mean("meanJohnson", "", PDGmass_1S, 9.3, 9.6);
+	RooRealVar lambda("lambdaJohnson", "", 0.1, 0.001, 5);
+	RooRealVar gamma("gammaJohnson", "", 0.4, -5, 5);
+	RooRealVar delta("deltaJohnson", "", 1, 0.01, 10);
+
+	RooJohnson signal("Johnson", "Johnson", *wspace.var("mass"), mean, lambda, gamma, delta);
+
+	if (BeVerbose) cout << "\nFitting the MC signal shape (weighted entries!!) with a Johnson PDF...\n";
 
 	auto* fitResult = MCWeightedInvariantMassFit(data, signal, massMin, massMax);
 
