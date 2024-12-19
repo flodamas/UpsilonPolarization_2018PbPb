@@ -22,6 +22,7 @@ RooFitResult* RawInvariantMassFit(RooWorkspace& wspace, RooDataSet data, RooArgS
 	if (BeVerbose) cout << "\nFitting the raw invariant mass distribution...\n";
 
 	//model.Print("v");
+	cout << "varsForMinos: " << varsForMinos.getSize() << endl;
 
 	auto* fitResult = model->fitTo(data, Save(), PrintLevel(-1), NumCPU(NCPUs), Range("MassFitRange"), Minos(varsForMinos), Extended(true));
 	// only run Minos over the parsed variables
@@ -447,7 +448,7 @@ RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooReal
 	RooArgSet polarParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
 
 	char paramsFileName[512];
-	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s%s.txt", methodName, modelName, extraString);
+	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s_%s.txt", methodName, modelName, extraString);
 
 	cout << paramsFileName << endl;
 	if (fopen(paramsFileName, "r")) {
