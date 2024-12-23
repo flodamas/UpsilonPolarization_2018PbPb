@@ -58,13 +58,8 @@
 #include "RooPlot.h"
 #include "RooRealProxy.h"
 #include "RooRealVar.h"
+#include "RooRandom.h"
 #include "RooWorkspace.h"
-
-R__ADD_LIBRARY_PATH(/opt/root_install_6.32.06/lib);
-// R__LOAD_LIBRARY(/opt/root_install_6.32.06/lib/libGpad.so);
-// R__LOAD_LIBRARY(/opt/root_install_6.32.06/lib/libASImage.so);
-// R__LOAD_LIBRARY(/opt/root_install_6.32.06/lib/libRooFit.so);
-
 
 TFile* openFile(const char* fileName) {
 	TFile* file = TFile::Open(fileName, "READ");
