@@ -19,7 +19,7 @@
 
 using namespace std;
 
-RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Double_t* yield1SInput = nullptr){
+RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Double_t* yield1SInput = nullptr){
 
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
@@ -39,7 +39,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
     RooWorkspace wspace(Form("workspace%s", refFrameName));
 
-	Float_t lowMassCut = 7, highMassCut = 13;
+    Float_t lowMassCut = 7, highMassCut = 13;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 
     wspace.import(massVar);
@@ -68,15 +68,27 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
     /// set the parameter values using the fit results (now the example is from HX, pT 0 to 2, cosTheta -0.42 to -0.14, phi 60 to 120)
     /********************* enter the values using the already obtained fit results *******************************/
 
-    mean_1S->setVal(9.4572);
-    yield1S->setVal(5.0721e2);
-    yield2S->setVal(2.1923e1);
-    yield3S->setVal(3.9287e1);
+    /// HX frame, pT 0 to 2, cosTheta -0.42 to -0.14, phi 60 to 120
+    // mean_1S->setVal(9.4572);
+    // yield1S->setVal(5.0721e2);
+    // yield2S->setVal(2.1923e1);
+    // yield3S->setVal(3.9287e1);
 
-    err_mu->setVal(7.2495e0);
-    err_sigma->setVal(9.1318e-1);
-    exp_lambda->setVal(1.5132e0);
-    yieldBkg->setVal(1.1140e4);
+    // err_mu->setVal(7.2495e0);
+    // err_sigma->setVal(9.1318e-1);
+    // exp_lambda->setVal(1.5132e0);
+    // yieldBkg->setVal(1.1140e4);
+
+    /// HX frame, pT 2 to 6, cosTheta -0.42 to -0.14, phi 60 to 120
+    mean_1S->setVal(9.4422);
+    yield1S->setVal(1.8837e3);
+    yield2S->setVal(2.1522e2);
+    yield3S->setVal(7.0108e1);
+
+    err_mu->setVal(7.1678e0);
+    err_sigma->setVal(8.9041e-1);
+    exp_lambda->setVal(1.5231e0);
+    yieldBkg->setVal(3.8490e4);
 
     /************************************************************************************************************/
 
@@ -124,7 +136,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
     return pseudoData;
 }
 
-void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Bool_t isPhiFolded = kTRUE){
+void pseudoExperiment(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Bool_t isPhiFolded = kTRUE, Float_t massMin = 7, Float_t massMax = MassBinMax){
 
     /// Start measuring time
 	clock_t start, end, cpu_time;
@@ -143,7 +155,7 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
     const char* altSignalShapeName = "SymDSCB";
 
     const char* altBkgShapeName = "ExpTimesErr";
-    // const char* altBkgShapeName = "ChebychevOrder2";
+    // const char* altBkgShapeName = "ChebychevOrder3";
 
     /*******************************************************************************************************/
 
@@ -153,8 +165,10 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 
     RooWorkspace wspace(Form("workspace%s", refFrameName));
 
-	Float_t lowMassCut = 7, highMassCut = 13;
+	Float_t lowMassCut = 6.5, highMassCut = 14.5;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
+
+    massVar.setRange("MassFitRange", massMin, massMax); // in this way, the bin width is fixed to 0.08 GeV/c2
 
     wspace.import(massVar);
 
@@ -170,9 +184,15 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 
     Double_t yield1SInput = 0.;
 
-    Long64_t nPseudoExperiments = 1e4;
+    Long64_t nPseudoExperiments = 1e0;
 
-    TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 30, -150, 150);
+    TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 60, -300, 300);
+
+    RooDataSet* pseudoDataset = nullptr;
+
+    RooFitResult* fitResult = nullptr;
+
+    RooPlot* frame = nullptr;
 
     for (Long64_t iEvent = 0; iEvent < nPseudoExperiments; iEvent++){
 
@@ -181,14 +201,24 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 		}
 
         /// generate the pseudo-data
-        RooDataSet* pseudoDataset = generatePseudoData(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, &yield1SInput);
+        pseudoDataset = generatePseudoData(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, &yield1SInput);
         wspace.import(*pseudoDataset);
 
         /// fit the pseudo-data with the alternative signal and background shapes
-        auto* fitResult = RawInvariantMassFit(wspace, *pseudoDataset);
+        fitResult = RawInvariantMassFit(wspace, *pseudoDataset);
 
         /// get the fitted yield1S
         RooRealVar* yield1Svar = dynamic_cast<RooRealVar*>(fitResult->floatParsFinal().find("yield1S"));
+
+        frame = InvariantMassRooPlot(wspace, *pseudoDataset);
+
+        double chi2 = frame->chiSquare(fitResult->floatParsFinal().getSize());
+        // cout << "chi2/Ndf: " << chi2 << endl;
+
+        if (chi2 > 5) {
+            cout << "chi2/Ndf > 5, skipping this pseudo-experiment" << endl;
+            continue;
+        }
 
         /// fill the histogram with the difference between the input and fitted yield1S
         yield1Sdiff->Fill(yield1SInput - yield1Svar->getVal());
@@ -223,45 +253,40 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
     yield1SdiffCanvas->SaveAs(Form("YieldDifferencePlots/yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld.png", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
 
     /// draw fitted invariant mass distribution
-    // auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
-	// TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
-	// pad1->SetBottomMargin(0.03);
+    auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
+	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
+	pad1->SetBottomMargin(0.03);
 
-	// pad1->Draw();
-	// pad1->cd();
+	pad1->Draw();
+	pad1->cd();
 
-	// RooPlot* frame = InvariantMassRooPlot(wspace, *pseudoDataset);
-	// frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
+    /// draw the generated pseudo-data
 
-	// frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 
-	// if (!isPhiFolded)
-	// 	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
-	// else
-	// 	frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
 
-	// frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
+	if (!isPhiFolded)
+		frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	else
+		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 
-	// frame->Draw();
+	frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
 
-	// gPad->RedrawAxis();
+	frame->Draw();
 
-	// // pull distribution
-	// massCanvas->cd();
+	gPad->RedrawAxis();
 
-	// TPad* pad2 = GetPadPullDistribution(frame, fitResult->floatParsFinal().getSize());
+	// pull distribution
+	massCanvas->cd();
 
-	// //canvas->Modified();
-	// //canvas->Update();
-	// massCanvas->cd();
-	// pad1->Draw();
-	// pad2->Draw();
+	TPad* pad2 = GetPadPullDistribution(frame, fitResult->floatParsFinal().getSize());
 
-	// // const char* fitModelName = GetFitModelName(altSignalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
-
-	// RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
-
-	// const char* totalFitModelName = GetTotalFitModelName(altBkgShapeName, altSignalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	//canvas->Modified();
+	//canvas->Update();
+	massCanvas->cd();
+	pad1->Draw();
+	pad2->Draw();
 
     /// End measuring time
 	end = clock();
