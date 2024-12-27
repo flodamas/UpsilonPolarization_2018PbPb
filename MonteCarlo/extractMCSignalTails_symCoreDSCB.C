@@ -25,6 +25,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	const char* signalShapeName = "SymDSCB";
 
 	Float_t massMin = 8.8, massMax = 10.2;
+	// Float_t massMin = 8.65, massMax = 10.5;
 	Int_t nBins = 80;
 
 	using namespace RooFit;
@@ -37,9 +38,10 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	RooWorkspace wspace("workspace");
 	wspace.import(*allDataset);
 
-	RooDataSet massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, massMin, massMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar massVar = *wspace.var("mass");
+	massVar.setRange("MassFitRange", massMin, massMax);
 
 	// fit
 	auto* fitResult = SymDSCBfit(wspace, massDataset, massMin, massMax);
