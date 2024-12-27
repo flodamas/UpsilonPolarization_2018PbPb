@@ -54,7 +54,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
     RooWorkspace wspace(Form("workspace%s", refFrameName));
 
-	Float_t lowMassCut = 7, highMassCut = 13;
+    Float_t lowMassCut = 7, highMassCut = 13;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 
     wspace.import(massVar);
@@ -89,6 +89,12 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
     // yield2S->setVal(2.1923e1);
     // yield3S->setVal(3.9287e1);
 
+    /// HX frame, pT 0 to 2, cosTheta -0.42 to -0.14, phi 60 to 120
+    // mean_1S->setVal(9.4572);
+    // yield1S->setVal(5.0721e2);
+    // yield2S->setVal(2.1923e1);
+    // yield3S->setVal(3.9287e1);
+
     // err_mu->setVal(7.2495e0);
     // err_sigma->setVal(9.1318e-1);
     // exp_lambda->setVal(1.5132e0);
@@ -103,7 +109,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
     err_mu->setVal(7.1678e0);
     err_sigma->setVal(8.9041e-1);
     exp_lambda->setVal(1.5231e0);
-    yieldBkg->setVal(3.8490e4);    
+    yieldBkg->setVal(3.8490e4);
 
     /************************************************************************************************************/
 
@@ -228,6 +234,7 @@ void pseudoExperimen_condor(const char* outputfileName = "yield1Sdiff.root", Int
         frame = InvariantMassRooPlot(wspace, *pseudoDataset);
 
         double chi2 = frame->chiSquare(fitResult->floatParsFinal().getSize());
+        // cout << "chi2/Ndf: " << chi2 << endl;
 
         if (chi2 > 5) {
             cout << "chi2/Ndf > 5, skipping this pseudo-experiment" << endl;
