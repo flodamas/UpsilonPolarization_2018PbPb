@@ -132,10 +132,11 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 6.8, 2, 15);
-		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 9.0);
-		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1.2, 0.1, 5);
-		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 2.0, 0, 5000);
+		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7., 2, 15);
+		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.2);
+		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.89, 0.1, 5);
+		// RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9);
+		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1.5, 0, 10);
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 

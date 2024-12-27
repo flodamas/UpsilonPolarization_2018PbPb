@@ -42,6 +42,8 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     Float_t lowMassCut = 7, highMassCut = 13;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 
+    massVar.setRange("MassFitRange", MassBinMin, MassBinMax);
+
     wspace.import(massVar);
 
     /// set the tentative limit of the yields variables for the nominal fit model
@@ -116,22 +118,24 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"), yieldTot);
 
     /// draw the generated pseudo-data
-    // auto* pseudoDataCanvas = new TCanvas("pseudoDataCanvas", "", 600, 600);
+    auto* pseudoDataCanvas = new TCanvas("pseudoDataCanvas", "", 600, 600);
 
-	// RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range("MassFitRange"));
+    // RooPlot* frame = InvariantMassRooPlot(wspace, *pseudoData);
+	
+    RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range("MassFitRange"));
 
-    // pseudoData->plotOn(frame, Name("data"), Binning(75), DrawOption("P0Z"));
+    pseudoData->plotOn(frame, Name("data"), Binning(75), DrawOption("P0Z"), Range("MassFitRange"));
 
-	// nominalFitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed), Range("MassFitRange"), NormRange("MassFitRange"));
-	// nominalFitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(gColor1S), Range("MassFitRange"));
-	// nominalFitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(gColor2S), Range("MassFitRange"));
-	// nominalFitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(gColor3S), Range("MassFitRange"));
-	// nominalFitModel->plotOn(frame, LineColor(gColorTotalFit), Range("MassFitRange"), NormRange("MassFitRange"));
+	nominalFitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed), Range("MassFitRange"), NormRange("MassFitRange"));
+	nominalFitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(gColor1S), Range("MassFitRange"));
+	nominalFitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(gColor2S), Range("MassFitRange"));
+	nominalFitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(gColor3S), Range("MassFitRange"));
+	nominalFitModel->plotOn(frame, LineColor(gColorTotalFit), Range("MassFitRange"), NormRange("MassFitRange"));
 
-	// frame->GetYaxis()->SetMaxDigits(3);
-	// gStyle->SetExponentOffset(-0.07, 0.005, "Y");
+	frame->GetYaxis()->SetMaxDigits(3);
+	gStyle->SetExponentOffset(-0.07, 0.005, "Y");
     
-    // frame->Draw();
+    frame->Draw();
 
     return pseudoData;
 }
