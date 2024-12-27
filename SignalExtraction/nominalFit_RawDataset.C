@@ -115,9 +115,13 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	RooArgSet* signalYields = new RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S"), *wspace.var("yield3S"));
 
+	RooArgSet* fitParams = new RooArgSet(fitResult->floatParsFinal());
+
 	const char* totalFitModelName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	SaveRawSignalYields(signalYields, totalFitModelName);
+
+	SaveRawFitResults(fitParams, totalFitModelName);
 
 	SaveRawDataFitCanvas(massCanvas, totalFitModelName);
 }
