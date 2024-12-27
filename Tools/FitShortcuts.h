@@ -63,7 +63,7 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet data, Float_t massMin 
 	RooRealVar alphaInf("alphaInfSymDSCB", "", 1.5, 0.1, 10);
 	RooRealVar orderInf("orderInfSymDSCB", "", 1.5, 0.1, 10);
 	RooRealVar alphaSup("alphaSupSymDSCB", "", 1.5, 0.1, 10);
-	RooRealVar orderSup("orderSupSymDSCB", "", 5, 0.1, 100);
+	RooRealVar orderSup("orderSupSymDSCB", "", 5, 0.1, 200);
 
 	RooCrystalBall signal("SymDSCB", "SymDSCB", *wspace.var("mass"), mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 
@@ -425,6 +425,11 @@ void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const c
 void SaveRawSignalYields(RooArgSet* signalYields, const char* fitModelName, const char* extraString = gMuonAccName) {
 	gSystem->mkdir("../SignalExtraction/RawYields/", kTRUE);
 	signalYields->writeToFile(Form("../SignalExtraction/RawYields/%s%s.txt", fitModelName, extraString));
+}
+
+void SaveRawFitResults(RooArgSet* fitParams, const char* fitModelName, const char* extraString = gMuonAccName) {
+	gSystem->mkdir("../SignalExtraction/RawFitResults/", kTRUE);
+	fitParams->writeToFile(Form("../SignalExtraction/RawFitResults/%s%s.txt", fitModelName, extraString));
 }
 
 void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName, const char* modelName, const char* extraString = "") {
