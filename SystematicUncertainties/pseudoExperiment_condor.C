@@ -4,19 +4,33 @@
 // 3. Repeat the above steps for a large number of pseudo-samples and check how much it is biased.
 
 // #include "../Tools/BasicHeaders.h"
-#include "BasicHeaders.h"
+// #include "BasicHeaders.h"
 
-#include "AnalysisParameters.h"
+// #include "AnalysisParameters.h"
 
-#include "FitShortcuts.h"
-#include "Legends.h"
-#include "FitDistributions.h"
+// #include "FitShortcuts.h"
+// #include "Legends.h"
+// #include "FitDistributions.h"
 
-#include "RooDataSetHelpers.h"
-#include "InvariantMassModels.h"
+// #include "RooDataSetHelpers.h"
+// #include "InvariantMassModels.h"
 
-#include "AccEffHelpers.h"
-#include "PolarFitHelpers.h"
+// #include "AccEffHelpers.h"
+// #include "PolarFitHelpers.h"
+
+#include "../Tools/BasicHeaders.h"
+
+#include "../AnalysisParameters.h"
+
+#include "../Tools/FitShortcuts.h"
+#include "../Tools/Style/Legends.h"
+#include "../Tools/Style/FitDistributions.h"
+
+#include "../Tools/Datasets/RooDataSetHelpers.h"
+#include "../Tools/RooFitPDFs/InvariantMassModels.h"
+
+#include "../MonteCarlo/AccEffHelpers.h"
+#include "../Polarization/PolarFitHelpers.h"
 
 using namespace std;
 
@@ -68,16 +82,28 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
     /// set the parameter values using the fit results (now the example is from HX, pT 0 to 2, cosTheta -0.42 to -0.14, phi 60 to 120)
     /********************* enter the values using the already obtained fit results *******************************/
+ 
+    /// HX frame, pT 0 to 2, cosTheta -0.42 to -0.14, phi 60 to 120
+    // mean_1S->setVal(9.4572);
+    // yield1S->setVal(5.0721e2);
+    // yield2S->setVal(2.1923e1);
+    // yield3S->setVal(3.9287e1);
 
-    mean_1S->setVal(9.4572);
-    yield1S->setVal(5.0721e2);
-    yield2S->setVal(2.1923e1);
-    yield3S->setVal(3.9287e1);
+    // err_mu->setVal(7.2495e0);
+    // err_sigma->setVal(9.1318e-1);
+    // exp_lambda->setVal(1.5132e0);
+    // yieldBkg->setVal(1.1140e4);
 
-    err_mu->setVal(7.2495e0);
-    err_sigma->setVal(9.1318e-1);
-    exp_lambda->setVal(1.5132e0);
-    yieldBkg->setVal(1.1140e4);
+    /// HX frame, pT 2 to 6, cosTheta -0.42 to -0.14, phi 60 to 120
+    mean_1S->setVal(9.4422);
+    yield1S->setVal(1.8837e3);
+    yield2S->setVal(2.1522e2);
+    yield3S->setVal(7.0108e1);
+
+    err_mu->setVal(7.1678e0);
+    err_sigma->setVal(8.9041e-1);
+    exp_lambda->setVal(1.5231e0);
+    yieldBkg->setVal(3.8490e4);    
 
     /************************************************************************************************************/
 
@@ -125,7 +151,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
     return pseudoData;
 }
 
-void pseudoExperimen_condor(const char* outputfileName = "yield1Sdiff.root", Int_t jobIndex = 1, Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
+void pseudoExperimen_condor(const char* outputfileName = "yield1Sdiff.root", Int_t jobIndex = 1, Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
 
     /// Start measuring time
 	clock_t start, end, cpu_time;
