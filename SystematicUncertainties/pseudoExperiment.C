@@ -19,7 +19,7 @@
 
 using namespace std;
 
-RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Double_t* yield1SInput = nullptr){
+RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Double_t* yield1SInput = nullptr, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
 
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
@@ -42,7 +42,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     Float_t lowMassCut = 6.5, highMassCut = 14.5;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 
-    massVar.setRange("MassFitRange", MassBinMin, MassBinMax);
+    massVar.setRange("MassFitRange", massMin, massMax);
 
     wspace.import(massVar);
 
@@ -184,7 +184,7 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 		}
 
         /// generate the pseudo-data
-        pseudoDataset = generatePseudoData(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, &yield1SInput);
+        pseudoDataset = generatePseudoData(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, &yield1SInput, massMin, massMax);
         wspace.import(*pseudoDataset);
 
         /// fit the pseudo-data with the alternative signal and background shapes
