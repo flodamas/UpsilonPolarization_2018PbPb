@@ -7,6 +7,6 @@ output                = /afs/cern.ch/user/s/sayoo/private/Polarization/UpsilonPo
 error                 = /afs/cern.ch/user/s/sayoo/private/Polarization/UpsilonPolarization_2018PbPb/SystematicUncertainties/logs/job_$(Cluster)_$(ProcID).err
 log                   = /afs/cern.ch/user/s/sayoo/private/Polarization/UpsilonPolarization_2018PbPb/SystematicUncertainties/logs/job_$(Cluster)_$(ProcID).log
 #+MaxWallTimeMins      = 10
-+MaxRuntime           = 600
++MaxRuntime           = 2000
 
 queue 1000
