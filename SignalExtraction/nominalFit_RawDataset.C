@@ -121,7 +121,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	SaveRawSignalYields(signalYields, totalFitModelName);
 
-	SaveRawFitResults(fitParams, totalFitModelName);
+	SaveRawFitResults(fitResult, totalFitModelName);
 
 	SaveRawDataFitCanvas(massCanvas, totalFitModelName);
 }

@@ -427,9 +427,12 @@ void SaveRawSignalYields(RooArgSet* signalYields, const char* fitModelName, cons
 	signalYields->writeToFile(Form("../SignalExtraction/RawYields/%s%s.txt", fitModelName, extraString));
 }
 
-void SaveRawFitResults(RooArgSet* fitParams, const char* fitModelName, const char* extraString = gMuonAccName) {
-	gSystem->mkdir("../SignalExtraction/RawFitResults/", kTRUE);
-	fitParams->writeToFile(Form("../SignalExtraction/RawFitResults/%s%s.txt", fitModelName, extraString));
+void SaveRawFitResults(RooFitResult* fitResult, const char* fitModelName, const char* extraString = gMuonAccName) {
+	gSystem->mkdir("../SignalExtraction/RawFitResults", kTRUE);
+	TFile fitResultsFile(Form("RawFitResults/%s%s.root", fitModelName, gMuonAccName), "RECREATE");
+	
+	fitResult->Write();
+	fitResultsFile.Close();
 }
 
 void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName, const char* modelName, const char* extraString = "") {
@@ -465,6 +468,33 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	signalYields.Print("v");
 
 	return signalYields;
+}
+
+RooFitResult* GetFitResults(const char* totalFitModelName, const char* extraString = "") {
+    TFile *fitResultsFile = TFile::Open(Form("../SignalExtraction/RawFitResults/%s%s.root", totalFitModelName, extraString), "READ");  
+
+	char fitResultsFileName[512];
+	snprintf(fitResultsFileName, sizeof(fitResultsFileName), "../SignalExtraction/RawFitResults/%s%s.root", totalFitModelName, extraString);
+
+	cout << fitResultsFileName << endl;
+    if (!fitResultsFile) {
+		cout << endl
+       		 << fitResultsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << endl;
+		exit(1);
+	}
+
+    else {
+		cout << endl
+		     << "Found" << fitResultsFileName << " file, will read fit results from it" << endl;	
+	}
+
+    RooFitResult* fitResults = (RooFitResult*)fitResultsFile->Get("fitresult_invMassModel_dataset");
+
+	cout << endl
+         << "Fit result values:" << endl;
+	fitResults->Print("v");
+
+	return fitResults;
 }
 
 RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooRealVar* lambdaThetaPhi, RooRealVar* lambdaTilde, const char* methodName, const char* modelName, const char* extraString = "") {
