@@ -34,7 +34,7 @@
 
 using namespace std;
 
-RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Double_t* yield1SInput = nullptr, Int_t jobIndex = 1){
+RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Double_t* yield1SInput = nullptr, Int_t jobIndex = 1, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
 
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
@@ -54,8 +54,10 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
     RooWorkspace wspace(Form("workspace%s", refFrameName));
 
-    Float_t lowMassCut = 7, highMassCut = 13;
+    Float_t lowMassCut = 6.5, highMassCut = 14.5;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
+
+    massVar.setRange("MassFitRange", massMin, massMax);
 
     wspace.import(massVar);
 
@@ -80,38 +82,22 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
     RooRealVar* yieldBkg = (RooRealVar*)wspace.var("yieldBkg");
 
-    /// set the parameter values using the fit results (now the example is from HX, pT 0 to 2, cosTheta -0.42 to -0.14, phi 60 to 120)
-    /********************* enter the values using the already obtained fit results *******************************/
- 
-    /// HX frame, pT 0 to 2, cosTheta -0.42 to -0.14, phi 60 to 120
-    // mean_1S->setVal(9.4572);
-    // yield1S->setVal(5.0721e2);
-    // yield2S->setVal(2.1923e1);
-    // yield3S->setVal(3.9287e1);
+    /// get the fit results from the nominal fit model
+    const char* totalFitModelName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-    /// HX frame, pT 0 to 2, cosTheta -0.42 to -0.14, phi 60 to 120
-    // mean_1S->setVal(9.4572);
-    // yield1S->setVal(5.0721e2);
-    // yield2S->setVal(2.1923e1);
-    // yield3S->setVal(3.9287e1);
+    RooFitResult* fitResults = GetFitResults(totalFitModelName, gMuonAccName);
 
-    // err_mu->setVal(7.2495e0);
-    // err_sigma->setVal(9.1318e-1);
-    // exp_lambda->setVal(1.5132e0);
-    // yieldBkg->setVal(1.1140e4);
+    RooArgSet* fitParams = new RooArgSet(fitResults->floatParsFinal());
 
-    /// HX frame, pT 2 to 6, cosTheta -0.42 to -0.14, phi 60 to 120
-    mean_1S->setVal(9.4422);
-    yield1S->setVal(1.8837e3);
-    yield2S->setVal(2.1522e2);
-    yield3S->setVal(7.0108e1);
+    mean_1S->setVal(((RooRealVar*)fitParams->find("mean_1S"))->getVal());
+    yield1S->setVal(((RooRealVar*)fitParams->find("yield1S"))->getVal());
+    yield2S->setVal(((RooRealVar*)fitParams->find("yield2S"))->getVal());
+    yield3S->setVal(((RooRealVar*)fitParams->find("yield3S"))->getVal());
 
-    err_mu->setVal(7.1678e0);
-    err_sigma->setVal(8.9041e-1);
-    exp_lambda->setVal(1.5231e0);
-    yieldBkg->setVal(3.8490e4);
-
-    /************************************************************************************************************/
+    err_mu->setVal(((RooRealVar*)fitParams->find("err_mu"))->getVal());
+    err_sigma->setVal(((RooRealVar*)fitParams->find("err_sigma"))->getVal());
+    exp_lambda->setVal(((RooRealVar*)fitParams->find("exp_lambda"))->getVal());
+    yieldBkg->setVal(((RooRealVar*)fitParams->find("yieldBkg"))->getVal());
 
     /// record the input yield1S and pass it to the main function
     *yield1SInput = (Double_t)(yield1S->getVal());
@@ -136,21 +122,10 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
     /// generate the pseudo-data
     RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"), yieldTot);
 
-    /// draw the generated pseudo-data
+    // /// draw the generated pseudo-data
     // auto* pseudoDataCanvas = new TCanvas("pseudoDataCanvas", "", 600, 600);
 
-	// RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range("MassFitRange"));
-
-    // pseudoData->plotOn(frame, Name("data"), Binning(75), DrawOption("P0Z"));
-
-	// nominalFitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed), Range("MassFitRange"), NormRange("MassFitRange"));
-	// nominalFitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(gColor1S), Range("MassFitRange"));
-	// nominalFitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(gColor2S), Range("MassFitRange"));
-	// nominalFitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(gColor3S), Range("MassFitRange"));
-	// nominalFitModel->plotOn(frame, LineColor(gColorTotalFit), Range("MassFitRange"), NormRange("MassFitRange"));
-
-	// frame->GetYaxis()->SetMaxDigits(3);
-	// gStyle->SetExponentOffset(-0.07, 0.005, "Y");
+    // RooPlot* frame = InvariantMassRooPlot(wspace, *pseudoData);
     
     // frame->Draw();
 
@@ -222,7 +197,7 @@ void pseudoExperiment_condor(const char* outputfileName = "yield1Sdiff.root", In
 		}
 
         /// generate the pseudo-data
-        pseudoDataset = generatePseudoData(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, &yield1SInput, jobIndex);
+        pseudoDataset = generatePseudoData(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, &yield1SInput, jobIndex, massMin, massMax);
         wspace.import(*pseudoDataset);
 
         /// fit the pseudo-data with the alternative signal and background shapes
