@@ -140,7 +140,8 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
     /// define alternative signal and background shape names
     /********************* enter the alternavtive signal or background shape *******************************/
 
-    const char* altSignalShapeName = "SymDSCB";
+    // const char* altSignalShapeName = "SymDSCB";
+    const char* altSignalShapeName = "Johnson";
 
     const char* altBkgShapeName = "ExpTimesErr";
     // const char* altBkgShapeName = "ChebychevOrder3";
@@ -260,7 +261,10 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 	else
 		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 
-	frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
+	if (strcmp(altSignalShapeName, "SymDSCB") == 0)
+        frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
+    else
+        frame->addObject(FitResultText(*wspace.var("yield1S"), 0, *wspace.var("yield2S"), 0));
 
 	frame->Draw();
 
