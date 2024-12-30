@@ -120,7 +120,8 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
     RooRandom::randomGenerator()->SetSeed(time(0) + jobIndex * 1000);
 
     /// generate the pseudo-data
-    RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"), yieldTot);
+    // RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"), yieldTot);
+    RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"));
 
     // /// draw the generated pseudo-data
     // auto* pseudoDataCanvas = new TCanvas("pseudoDataCanvas", "", 600, 600);
