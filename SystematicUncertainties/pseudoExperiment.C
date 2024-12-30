@@ -107,7 +107,12 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     RooRandom::randomGenerator()->SetSeed(time(0));
 
     /// generate the pseudo-data
-    RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"), yieldTot);
+    // RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"), NumEvents(yieldTot));
+    // RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"), yieldTot);
+    RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"));
+
+    double generatedYield = pseudoData->sumEntries();
+    std::cout << "Input Yield: " << yieldTot << ", Generated Yield: " << generatedYield << std::endl;
 
     /// draw the generated pseudo-data
     auto* pseudoDataCanvas = new TCanvas("pseudoDataCanvas", "", 600, 600);
@@ -170,6 +175,7 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
     Long64_t nPseudoExperiments = 1e0;
 
     TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 60, -300, 300);
+    // TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 400, -2000, 2000);
 
     RooDataSet* pseudoDataset = nullptr;
 
