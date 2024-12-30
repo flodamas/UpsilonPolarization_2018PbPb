@@ -20,45 +20,96 @@ using namespace RooFit;
 // tail parameters identical for the three resonances
 
 // return the list of pdf names for internal usage
-std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace) {
+std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB") {
 	std::vector<std::string> list;
 
 	RooRealVar mass = *wspace.var("mass");
 
-	// get the tail parameters, assuming that they have been imported to the workspace first!!
-	RooRealVar sigma_1S = *wspace.var("sigmaSymDSCB");
+	if (strcmp(signalShapeName, "SymDSCB") == 0) {
+		// get the tail parameters, assuming that they have been imported to the workspace first!!
+		RooRealVar sigma_1S = *wspace.var("sigmaSymDSCB");
 
-	RooRealVar alphaInf = *wspace.var("alphaInfSymDSCB");
-	RooRealVar orderInf = *wspace.var("orderInfSymDSCB");
-	RooRealVar alphaSup = *wspace.var("alphaSupSymDSCB");
-	RooRealVar orderSup = *wspace.var("orderSupSymDSCB");
+		RooRealVar alphaInf = *wspace.var("alphaInfSymDSCB");
+		RooRealVar orderInf = *wspace.var("orderInfSymDSCB");
+		RooRealVar alphaSup = *wspace.var("alphaSupSymDSCB");
+		RooRealVar orderSup = *wspace.var("orderSupSymDSCB");
 
-	// Y(1S) signal shape
-	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.4, 9.5);
-	//RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .03, .15);
+		// Y(1S) signal shape
+		RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.4, 9.5);
+		//RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .03, .15);
 
-	RooCrystalBall signalPDF_1S("signalPDF_1S", "Symmetric DSCB pdf for Y(1S) mass peak", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
-	list.push_back(signalPDF_1S.GetName());
+		RooCrystalBall signalPDF_1S("signalPDF_1S", "Symmetric DSCB pdf for Y(1S) mass peak", mass, mean_1S, sigma_1S, alphaInf, orderInf, alphaSup, orderSup);
+		list.push_back(signalPDF_1S.GetName());
 
-	// Y(2S) signal shape, mass scaling for mean and widths
-	RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
+		// Y(2S) signal shape, mass scaling for mean and widths
+		RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
 
-	RooFormulaVar mean_2S("mean_2S", "@0*@1", RooArgSet(massScaling_2S, mean_1S));
-	RooFormulaVar sigma_2S("sigma_2S", "@0*@1", RooArgSet(massScaling_2S, sigma_1S));
+		RooFormulaVar mean_2S("mean_2S", "@0*@1", RooArgSet(massScaling_2S, mean_1S));
+		RooFormulaVar sigma_2S("sigma_2S", "@0*@1", RooArgSet(massScaling_2S, sigma_1S));
 
-	RooCrystalBall signalPDF_2S("signalPDF_2S", "Symmetric DSCB pdf for Y(2S) mass peak", mass, mean_2S, sigma_2S, alphaInf, orderInf, alphaSup, orderSup);
-	list.push_back(signalPDF_2S.GetName());
+		RooCrystalBall signalPDF_2S("signalPDF_2S", "Symmetric DSCB pdf for Y(2S) mass peak", mass, mean_2S, sigma_2S, alphaInf, orderInf, alphaSup, orderSup);
+		list.push_back(signalPDF_2S.GetName());
 
-	// Y(3S) signal shape, mass scaling for mean and widths
-	RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
+		// Y(3S) signal shape, mass scaling for mean and widths
+		RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
 
-	RooFormulaVar mean_3S("mean_3S", "@0*@1", RooArgSet(massScaling_3S, mean_1S));
-	RooFormulaVar sigma_3S("sigma_3S", "@0*@1", RooArgSet(massScaling_3S, sigma_1S));
+		RooFormulaVar mean_3S("mean_3S", "@0*@1", RooArgSet(massScaling_3S, mean_1S));
+		RooFormulaVar sigma_3S("sigma_3S", "@0*@1", RooArgSet(massScaling_3S, sigma_1S));
 
-	RooCrystalBall signalPDF_3S("signalPDF_3S", "Symmetric DSCB pdf for Y(3S) mass peak", mass, mean_3S, sigma_3S, alphaInf, orderInf, alphaSup, orderSup);
-	list.push_back(signalPDF_3S.GetName());
+		RooCrystalBall signalPDF_3S("signalPDF_3S", "Symmetric DSCB pdf for Y(3S) mass peak", mass, mean_3S, sigma_3S, alphaInf, orderInf, alphaSup, orderSup);
+		list.push_back(signalPDF_3S.GetName());
 
-	wspace.import({signalPDF_1S, signalPDF_2S, signalPDF_3S}, RecycleConflictNodes());
+		wspace.import({signalPDF_1S, signalPDF_2S, signalPDF_3S}, RecycleConflictNodes());
+	}
+
+	else if (strcmp(signalShapeName, "Johnson") == 0) {
+		// get the parameters, assuming that they have been imported to the workspace first!!
+		RooRealVar lambda = *wspace.var("lambdaJohnson");
+		RooRealVar gamma = *wspace.var("gammaJohnson");
+		RooRealVar delta = *wspace.var("deltaJohnson");
+
+		// Y(1S) signal shape
+		RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.4, 9.5);
+
+		RooJohnson signalPDF_1S("signalPDF_1S", "Johnson pdf for Y(1S) mass peak", mass, mean_1S, lambda, gamma, delta);
+		list.push_back(signalPDF_1S.GetName());
+
+		// Y(2S) signal shape, mass scaling for mean and widths
+		RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
+
+		RooFormulaVar mean_2S("mean_2S", "@0*@1", RooArgSet(massScaling_2S, mean_1S));
+
+		RooJohnson signalPDF_2S("signalPDF_2S", "Johnson pdf for Y(2S) mass peak", mass, mean_2S, lambda, gamma, delta);
+		list.push_back(signalPDF_2S.GetName());
+
+		// Y(3S) signal shape, mass scaling for mean and widths
+		RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
+
+		RooFormulaVar mean_3S("mean_3S", "@0*@1", RooArgSet(massScaling_3S, mean_1S));
+
+		RooJohnson signalPDF_3S("signalPDF_3S", "Johnson pdf for Y(3S) mass peak", mass, mean_3S, lambda, gamma, delta);
+		list.push_back(signalPDF_3S.GetName());	
+
+		wspace.import({signalPDF_1S, signalPDF_2S, signalPDF_3S}, RecycleConflictNodes());
+	}
+
+	else if (strcmp(signalShapeName, "Voigtian") == 0) {
+		// this function is not complete yet, need to add the mass scaling for the excited states
+		// Voigtian distribution
+		RooRealVar mean("meanVoigtian", "", PDGmass_1S, 9., 10.);
+		RooRealVar sigma("sigmaVoigtian", "", 0.08, .03, .15);
+		RooRealVar width("widthVoigtian", "", 0.08, .03, .15);
+
+		RooVoigtian signalPDF("signalPDF", "Voigtian distribution", mass, mean, sigma, width);
+		list.push_back(signalPDF.GetName());
+
+		wspace.import(signalPDF, RecycleConflictNodes());
+	}
+
+	else {
+		std::cerr << "No matching Signal shape name!" << std::endl;
+		exit(1);
+	}
 
 	return list;
 }
@@ -132,9 +183,9 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7., 2, 15);
+		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.1, 2, 15);
 		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.2);
-		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.89, 0.1, 5);
+		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9, 0.1, 5);
 		// RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9);
 		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1.5, 0, 10);
 
@@ -190,7 +241,7 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 
 	// 2. signal model: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
 
-	auto signalPdfNameList = BuildSignalPdfs(wspace);
+	auto signalPdfNameList = BuildSignalPdfs(wspace, signalShapeName);
 
 	// 2.1 apply Gaussian penalty to internal constraint terms
 

@@ -260,56 +260,102 @@ const char* GetMCFileName(const char* fitModelName = "SymDSCB_cent0to90_absy0p0t
 // Define and read the signal parameters from MC extracted values, define Gaussian constraints on the parameters that are set to constants
 
 RooArgList* ListOfSignalContraints(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12", bool fixSigmaToMC = false) {
-	// Declare the parameter variables
-	RooRealVar* sigma = new RooRealVar(Form("sigma%s", signalShapeName), "", 1);
-	RooRealVar* alphaInf = new RooRealVar(Form("alphaInf%s", signalShapeName), "", 1);
-	RooRealVar* orderInf = new RooRealVar(Form("orderInf%s", signalShapeName), "", 1);
-	RooRealVar* alphaSup = new RooRealVar(Form("alphaSup%s", signalShapeName), "", 1);
-	RooRealVar* orderSup = new RooRealVar(Form("orderSup%s", signalShapeName), "", 1);
-
-	RooArgSet parametersList(*sigma, *alphaInf, *orderInf, *alphaSup, *orderSup);
-
-	// if the .txt file for this specific fit model exists, just read the tail parameters from it
-
-	const char* mcFileName = GetMCFileName(fitModelName);
-
-	if (fopen(mcFileName, "r")) {
-		if (BeVerbose) cout << "\nFound " << mcFileName << " file, will read the signal parameters from it\n";
-		parametersList.readFromFile(mcFileName);
-	} else {
-		cout << endl
-		     << mcFileName << " file does not seem to exist, you need to extract the signal paramaters from MC fit first!" << endl;
-		exit(1);
-	}
-
-	// fix the tail parameters
-	if (fixSigmaToMC) sigma->setConstant();
-	alphaInf->setConstant();
-	orderInf->setConstant();
-	alphaSup->setConstant();
-	orderSup->setConstant();
-
-	if (BeVerbose) {
-		cout << "\nSignal parameters fixed to the following MC values:\n";
-		parametersList.Print("v");
-	}
-	wspace.import(parametersList);
-
-	// build the Gaussian constraints on  parameters to propagate the corresponding uncertainties
-	RooGaussian* alphaInfConstraint = new RooGaussian("alphaInfConstraint", "Gaussian constraint on alphaInf", *alphaInf, alphaInf->getVal(), alphaInf->getError());
-	RooGaussian* orderInfConstraint = new RooGaussian("orderInfConstraint", "Gaussian constraint on orderInf", *orderInf, orderInf->getVal(), orderInf->getError());
-	RooGaussian* alphaSupConstraint = new RooGaussian("alphaSupConstraint", "Gaussian constraint on alphaSup", *alphaSup, alphaSup->getVal(), alphaSup->getError());
-	RooGaussian* orderSupConstraint = new RooGaussian("orderSupConstraint", "Gaussian constraint on orderSup", *orderSup, orderSup->getVal(), orderSup->getError());
-
+	
 	RooArgList* constraintsList = new RooArgList();
-	if (fixSigmaToMC) {
-		RooGaussian* sigmaConstraint = new RooGaussian("sigmaConstraint", "Gaussian constraint on width parameter", *sigma, sigma->getVal(), sigma->getError());
-		constraintsList->add(*sigmaConstraint);
+
+	if (strcmp(signalShapeName, "SymDSCB") == 0) {
+		// Declare the parameter variables
+		RooRealVar* sigma = new RooRealVar(Form("sigma%s", signalShapeName), "", 1);
+		RooRealVar* alphaInf = new RooRealVar(Form("alphaInf%s", signalShapeName), "", 1);
+		RooRealVar* orderInf = new RooRealVar(Form("orderInf%s", signalShapeName), "", 1);
+		RooRealVar* alphaSup = new RooRealVar(Form("alphaSup%s", signalShapeName), "", 1);
+		RooRealVar* orderSup = new RooRealVar(Form("orderSup%s", signalShapeName), "", 1);
+
+		RooArgSet parametersList(*sigma, *alphaInf, *orderInf, *alphaSup, *orderSup);
+
+		// if the .txt file for this specific fit model exists, just read the tail parameters from it
+
+		const char* mcFileName = GetMCFileName(fitModelName);
+
+		if (fopen(mcFileName, "r")) {
+			if (BeVerbose) cout << "\nFound " << mcFileName << " file, will read the signal parameters from it\n";
+			parametersList.readFromFile(mcFileName);
+		} else {
+			cout << endl
+				<< mcFileName << " file does not seem to exist, you need to extract the signal paramaters from MC fit first!" << endl;
+			exit(1);
+		}
+
+		// fix the tail parameters
+		if (fixSigmaToMC) sigma->setConstant();
+		alphaInf->setConstant();
+		orderInf->setConstant();
+		alphaSup->setConstant();
+		orderSup->setConstant();
+
+		if (BeVerbose) {
+			cout << "\nSignal parameters fixed to the following MC values:\n";
+			parametersList.Print("v");
+		}
+		wspace.import(parametersList);
+
+		// build the Gaussian constraints on parameters to propagate the corresponding uncertainties
+		RooGaussian* alphaInfConstraint = new RooGaussian("alphaInfConstraint", "Gaussian constraint on alphaInf", *alphaInf, alphaInf->getVal(), alphaInf->getError());
+		RooGaussian* orderInfConstraint = new RooGaussian("orderInfConstraint", "Gaussian constraint on orderInf", *orderInf, orderInf->getVal(), orderInf->getError());
+		RooGaussian* alphaSupConstraint = new RooGaussian("alphaSupConstraint", "Gaussian constraint on alphaSup", *alphaSup, alphaSup->getVal(), alphaSup->getError());
+		RooGaussian* orderSupConstraint = new RooGaussian("orderSupConstraint", "Gaussian constraint on orderSup", *orderSup, orderSup->getVal(), orderSup->getError());
+
+		if (fixSigmaToMC) {
+			RooGaussian* sigmaConstraint = new RooGaussian("sigmaConstraint", "Gaussian constraint on width parameter", *sigma, sigma->getVal(), sigma->getError());
+			constraintsList->add(*sigmaConstraint);
+		}
+		constraintsList->add(*alphaInfConstraint);
+		constraintsList->add(*orderInfConstraint);
+		constraintsList->add(*alphaSupConstraint);
+		constraintsList->add(*orderSupConstraint);
 	}
-	constraintsList->add(*alphaInfConstraint);
-	constraintsList->add(*orderInfConstraint);
-	constraintsList->add(*alphaSupConstraint);
-	constraintsList->add(*orderSupConstraint);
+
+	else if (strcmp(signalShapeName, "Johnson") == 0) {
+		// Declare the parameter variables
+		RooRealVar* lambda = new RooRealVar(Form("lambda%s", signalShapeName), "", 1);
+		RooRealVar* gamma = new RooRealVar(Form("gamma%s", signalShapeName), "", 1);
+		RooRealVar* delta = new RooRealVar(Form("delta%s", signalShapeName), "", 1);
+
+		RooArgSet parametersList(*lambda, *gamma, *delta);
+
+		// if the .txt file for this specific fit model exists, just read the tail parameters from it
+
+		const char* mcFileName = GetMCFileName(fitModelName);
+
+		if (fopen(mcFileName, "r")) {
+			if (BeVerbose) cout << "\nFound " << mcFileName << " file, will read the signal parameters from it\n";
+			parametersList.readFromFile(mcFileName);
+		} else {
+			cout << endl
+			     << mcFileName << " file does not seem to exist, you need to extract the signal paramaters from MC fit first!" << endl;
+			exit(1);
+		}
+
+		// fix the tail parameters
+		lambda->setConstant();
+		gamma->setConstant();
+		delta->setConstant();
+
+		if (BeVerbose) {
+			cout << "\nSignal parameters fixed to the following MC values:\n";
+			parametersList.Print("v");
+		}
+		wspace.import(parametersList);
+
+		// build the Gaussian constraints on parameters to propagate the corresponding uncertainties
+		RooGaussian* lambdaConstraint = new RooGaussian("lambdaConstraint", "Gaussian constraint on lambda parameter", *lambda, lambda->getVal(), lambda->getError());
+		RooGaussian* gammaConstraint = new RooGaussian("gammaConstraint", "Gaussian constraint on gamma parameter", *gamma, gamma->getVal(), gamma->getError());
+		RooGaussian* deltaConstraint = new RooGaussian("deltaConstraint", "Gaussian constraint on delta parameter", *delta, delta->getVal(), delta->getError());
+
+		constraintsList->add(*lambdaConstraint);
+		constraintsList->add(*gammaConstraint);
+		constraintsList->add(*deltaConstraint);
+	}
 
 	wspace.import(*constraintsList, RecycleConflictNodes());
 
