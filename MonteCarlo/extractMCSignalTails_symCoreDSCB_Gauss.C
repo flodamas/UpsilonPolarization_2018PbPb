@@ -95,8 +95,8 @@ void extractMCSignalTails_symCoreDSCB_Gauss(Int_t centMin = 0, Int_t centMax = 9
 	// const char* outputName = GetSignalFitName(signalShapeName, ptMin, ptMax);
 	const char* outputName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 	//cout << outputName << endl;
-	gSystem->mkdir("SignalShapeFits", kTRUE);
-	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
+	gSystem->mkdir("SignalShapeFits/absPhi", kTRUE);
+	canvas->SaveAs(Form("SignalShapeFits/absPhi/%s.png", outputName), "RECREATE");
 
 	if (saveParams) {
 		// save signal shape parameters in a txt file to be read for data fit
