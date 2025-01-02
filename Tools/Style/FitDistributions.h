@@ -201,7 +201,8 @@ void enableBinIntegrator2D(RooAbsReal& func, int numBinsX, int numBinsY) {
 }
 
 void SaveMCSignalParameters(RooArgSet* params, const char* outputName) {
-	const char* name = Form("SignalParameters/%s.txt", outputName);
+	gSystem->mkdir("SignalParameters/absPhi", kTRUE);
+	const char* name = Form("SignalParameters/absPhi/%s.txt", outputName);
 
 	params->writeToFile(name);
 
