@@ -104,7 +104,8 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 void scanExtractMCSignalTails_symCoreDSCB(Bool_t isCSframe = kFALSE) {
 	Float_t cosThetaEdges[6] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
-	Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+	// Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+	Float_t phiEdges[4] = {0, 60, 120, 180};
 
 	Int_t NumCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
 	Int_t NumPhiEle = sizeof(phiEdges) / sizeof(Float_t);
