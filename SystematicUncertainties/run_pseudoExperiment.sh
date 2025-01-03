@@ -32,11 +32,12 @@ for i in $(seq 0 $((cosThetaBins - 1))); do
         # Format cosTheta and phi values to two decimal places
         cosThetaLowFormatted=$(printf "%.2f" $cosThetaLow)
         cosThetaHighFormatted=$(printf "%.2f" $cosThetaHigh)
-        phiLowFormatted=$(printf "%.2f" $phiLow)
-        phiHighFormatted=$(printf "%.2f" $phiHigh)
+        phiLowFormatted=$(printf "%d" $phiLow)
+        phiHighFormatted=$(printf "%d" $phiHigh)
 
         # Define the output file with formatted values
-        OUTPUT_FILE="output_${JOB_INDEX}_cosTheta_${cosThetaLowFormatted}_${cosThetaHighFormatted}_phi_${phiLowFormatted}_${phiHighFormatted}.root"
+        # OUTPUT_FILE="output_${JOB_INDEX}_cosTheta_${cosThetaLowFormatted}_${cosThetaHighFormatted}_phi_${phiLowFormatted}_${phiHighFormatted}.root"
+        OUTPUT_FILE="output_${JOB_INDEX}.root"
 
         # Run ROOT script with output
         root -b -q "pseudoExperiment_condor.C(\"$OUTPUT_FILE\", ${JOB_INDEX}, 0, 2, kFALSE, $cosThetaLow, $cosThetaHigh, $phiLow, $phiHigh)"
