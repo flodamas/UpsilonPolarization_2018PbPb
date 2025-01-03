@@ -60,10 +60,10 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet data, Float_t massMin 
 	// fit
 	RooRealVar mean("meanSymDSCB", "", PDGmass_1S, 9., 10.);
 	RooRealVar sigma("sigmaSymDSCB", "", 0.08, .03, .15);
-	RooRealVar alphaInf("alphaInfSymDSCB", "", 1.5, 0.1, 10);
-	RooRealVar orderInf("orderInfSymDSCB", "", 1.5, 0.1, 10);
-	RooRealVar alphaSup("alphaSupSymDSCB", "", 1.5, 0.1, 10);
-	RooRealVar orderSup("orderSupSymDSCB", "", 5, 0.1, 200);
+	RooRealVar alphaInf("alphaInfSymDSCB", "", 1.14, 0.1, 10);
+	RooRealVar orderInf("orderInfSymDSCB", "", 5.0, 0.1, 20);
+	RooRealVar alphaSup("alphaSupSymDSCB", "", 1.3, 0.1, 10);
+	RooRealVar orderSup("orderSupSymDSCB", "", 147, 0.1, 200);
 
 	RooCrystalBall signal("SymDSCB", "SymDSCB", *wspace.var("mass"), mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 
@@ -254,7 +254,7 @@ const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptM
 
 // small dummy function to avoid repetiting the same piece of code everywhere...
 const char* GetMCFileName(const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12") {
-	return Form("../MonteCarlo/SignalParameters/%s.txt", fitModelName);
+	return Form("../MonteCarlo/SignalParameters/absPhi/%s.txt", fitModelName);
 }
 
 // Define and read the signal parameters from MC extracted values, define Gaussian constraints on the parameters that are set to constants
