@@ -126,8 +126,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	SaveRawDataFitCanvas(massCanvas, totalFitModelName);
 }
 
-void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 10, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, const char* bkgShapeName = "ChebychevOrder2") {
-	// Int_t ptEdges[8] = {0, 2, 4, 6, 8, 12, 16, 30};
+void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, const char* bkgShapeName = "ChebychevOrder2") { // possible bkgShapeName: ExpTimesErr, ChebychevOrderN, Argus, Exponential
 
 	std::vector<Double_t> cosThetaEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
@@ -138,7 +137,7 @@ void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
 	for (Int_t cosThetaIdx = 0; cosThetaIdx < nCosThetaBins; cosThetaIdx++) {
 		for (Int_t idx = 0; idx < nPhiBins; idx++) {
-			nominalFit_RawDataset(ptMin, ptMax, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, 7.5, 13, bkgShapeName);
+			nominalFit_RawDataset(ptMin, ptMax, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, 7, 13, bkgShapeName);
 			// nominalFit_RawDataset(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, MassBinMin, 13, isBkgExpTimesErr, ChebychevOrder);
 		}
 	// }
