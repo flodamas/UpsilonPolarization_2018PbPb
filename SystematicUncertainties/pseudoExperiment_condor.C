@@ -133,7 +133,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
     return pseudoData;
 }
 
-void pseudoExperiment_condor(const char* outputfileName = "yield1Sdiff.root", Int_t jobIndex = 1, Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
+void pseudoExperiment_condor(const char* outputfileName = "yield1Sdiff.root", Int_t jobIndex = 1, Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.70, Float_t cosThetaMax = -0.42, Int_t phiMin = 0, Int_t phiMax = 60, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
 
     /// Start measuring time
 	clock_t start, end, cpu_time;
