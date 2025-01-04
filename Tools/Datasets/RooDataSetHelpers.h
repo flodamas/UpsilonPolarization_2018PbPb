@@ -113,6 +113,7 @@ RooDataSet ReducedMassDataset(RooDataSet* allDataset, RooWorkspace& wspace, Int_
 
 	RooDataSet massDataset = *(RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
 	massDataset.SetName(kinematicCut); // just to make it unique
+	// massDataset.Print();
 
 	wspace.import(massDataset);
 

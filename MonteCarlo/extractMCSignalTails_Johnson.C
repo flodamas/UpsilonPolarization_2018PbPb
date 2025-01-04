@@ -37,9 +37,10 @@ void extractMCSignalTails_Johnson(Int_t centMin = 0, Int_t centMax = 90, Int_t p
 	RooWorkspace wspace("workspace");
 	wspace.import(*allDataset);
 
-	RooDataSet massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, massMin, massMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar massVar = *wspace.var("mass");
+	massVar.setRange("MassFitRange", massMin, massMax);
 
 	// fit
 	auto* fitResult = JohnsonFit(wspace, massDataset, massMin, massMax);
@@ -54,6 +55,7 @@ void extractMCSignalTails_Johnson(Int_t centMin = 0, Int_t centMax = 90, Int_t p
 
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 	pad1->SetBottomMargin(0.03);
+	pad1->SetRightMargin(0.035);
 	pad1->Draw();
 	pad1->cd();
 
@@ -65,8 +67,8 @@ void extractMCSignalTails_Johnson(Int_t centMin = 0, Int_t centMax = 90, Int_t p
 	wspace.pdf(signalShapeName)->plotOn(frame, LineColor(kBlue));
 
 	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
-	frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
-	//frame->addObject(SymCoreDoubleCBParamsText(mean, sigma, alphaInf, orderInf, alphaSup, orderSup));
+	frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	frame->addObject(JohnsonParamsText(mean, lambda, gamma, delta));
 	frame->GetYaxis()->SetMaxDigits(3);
 
 	frame->Draw();
@@ -85,8 +87,8 @@ void extractMCSignalTails_Johnson(Int_t centMin = 0, Int_t centMax = 90, Int_t p
 	// const char* outputName = GetSignalFitName(signalShapeName, ptMin, ptMax);
 	const char* outputName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 	//cout << outputName << endl;
-	gSystem->mkdir("SignalShapeFits", kTRUE);
-	canvas->SaveAs(Form("SignalShapeFits/%s.png", outputName), "RECREATE");
+	gSystem->mkdir("SignalShapeFits/absPhi", kTRUE);
+	canvas->SaveAs(Form("SignalShapeFits/absPhi/%s.png", outputName), "RECREATE");
 
 	if (saveParams) {
 		// save signal shape parameters in a txt file to be read for data fit
@@ -100,7 +102,8 @@ void extractMCSignalTails_Johnson(Int_t centMin = 0, Int_t centMax = 90, Int_t p
 
 void scanExtractMCSignalTails_Johnson(Bool_t isCSframe = kFALSE) {
 	Float_t cosThetaEdges[6] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
-	Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+	// Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+	Float_t phiEdges[4] = {0, 60, 120, 180};
 
 	Int_t NumCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
 	Int_t NumPhiEle = sizeof(phiEdges) / sizeof(Float_t);

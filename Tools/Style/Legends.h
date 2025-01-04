@@ -36,7 +36,8 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 }
 
 TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	TPaveText* text = new TPaveText(0.14, 0.65, 0.50, 0.90, "NDCNB");
+	// TPaveText* text = new TPaveText(0.14, 0.65, 0.50, 0.90, "NDCNB");
+	TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	// text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
@@ -44,7 +45,8 @@ TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = 
 	text->AddText(CosThetaRangeText(isCSframe ? "CS" : "HX", cosThetaMin, cosThetaMax));
 	text->AddText(AbsPhiRangeText(isCSframe ? "CS" : "HX", phiMin, phiMax));
 
-	text->SetAllWith("", "align", 12);
+	// text->SetAllWith("", "align", 12);
+	text->SetAllWith("", "align", 32);
 	return text;
 }
 
@@ -180,6 +182,21 @@ TPaveText* HypatiaParamsText(RooRealVar mean, RooRealVar lambda, RooRealVar zeta
 	text->AddText(Form("n_{L}= %.3f #pm %.3f", orderL.getVal(), orderL.getError()));
 	text->AddText(Form("#alpha_{H} = %.3f #pm %.3f", alphaR.getVal(), alphaR.getError()));
 	text->AddText(Form("n_{H} = %.3f #pm %.3f", orderR.getVal(), orderR.getError()));
+
+	text->SetAllWith(" ", "align", 12);
+
+	return text;
+}
+
+TPaveText* JohnsonParamsText(RooRealVar mean, RooRealVar lambda, RooRealVar gamma, RooRealVar delta) {
+	auto* text = new TPaveText(0.16, 0.8, 0.48, 0.48, "NDCNB");
+	text->SetBorderSize(0);
+
+	text->AddText("Johnson      ");
+	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
+	text->AddText(Form("#lambda = %.3f #pm %.3f", lambda.getVal(), lambda.getError()));
+	text->AddText(Form("#gamma = %.3f #pm %.3f", gamma.getVal(), gamma.getError()));
+	text->AddText(Form("#delta = %.3f #pm %.3f", delta.getVal(), delta.getError()));
 
 	text->SetAllWith(" ", "align", 12);
 

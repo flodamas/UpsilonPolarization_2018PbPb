@@ -44,6 +44,7 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	TPad* bottomPad = new TPad("bottomPad", "bottomPad", 0, 0.0, 1, .25);
 	bottomPad->SetTopMargin(0.015);
 	bottomPad->SetBottomMargin(0.4);
+	bottomPad->SetRightMargin(0.035);
 	bottomPad->SetTicks(1, 1);
 	bottomPad->Draw();
 	bottomPad->cd();
