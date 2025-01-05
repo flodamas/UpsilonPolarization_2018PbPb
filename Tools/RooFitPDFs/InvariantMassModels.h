@@ -24,6 +24,7 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace, const char* signa
 	std::vector<std::string> list;
 
 	RooRealVar mass = *wspace.var("mass");
+	mass.setRange("MassFitRange", MassBinMin, MassBinMax);
 
 	if (strcmp(signalShapeName, "SymDSCB") == 0) {
 		// get the tail parameters, assuming that they have been imported to the workspace first!!
@@ -161,6 +162,7 @@ RooArgList* ChebychevCoefList(int order = 1) {
 
 RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 	RooRealVar* invMass = wspace.var("mass");
+	invMass->setRange("MassFitRange", MassBinMin, MassBinMax);
 
 	// Chebychev Nth order polynomial
 	if (strncmp(bkgShapeName, "ChebychevOrder", 14) == 0) {
@@ -183,11 +185,11 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.1, 2, 15);
+		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 6.7, 2, 15);
 		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7.2);
-		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9, 0.1, 5);
+		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1.3, 0.1, 5);
 		// RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9);
-		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1.5, 0, 10);
+		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 30, 0, 2000);
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 
@@ -233,6 +235,9 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 // build the main PDF based on all PDFs above
 
 void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, const char* fitModelName, Long64_t nEntries = 1e6, bool fixSigmaToMC = false) {
+	RooRealVar* invMass = wspace.var("mass");
+	invMass->setRange("MassFitRange", MassBinMin, MassBinMax);
+	
 	if (BeVerbose) std::cout << "\nBuilding invariant mass fit model with " << signalShapeName << " for the Y signal shapes and " << bkgShapeName << " for the background modeling\n";
 
 	// 1. tail parameters fixed to MC extracted values, and identical for the three resonances
@@ -250,6 +255,9 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 	auto signalPDF_1S = wspace.pdf(signalPdfNameList.at(0));
 	auto signalPDF_2S = wspace.pdf(signalPdfNameList.at(1));
 	auto signalPDF_3S = wspace.pdf(signalPdfNameList.at(2));
+	signalPDF_1S->setNormRange("MassFitRange");
+	signalPDF_2S->setNormRange("MassFitRange");
+	signalPDF_3S->setNormRange("MassFitRange");
 
 	// 3. background
 
@@ -268,6 +276,9 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 
 	RooAddPdf model("invMassModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF}, {*yield1S, *yield2S, *yield3S, *yieldBkg});
 	model.setNormRange("MassFitRange");
+
+	RooArgSet normSet(*invMass);  // Define normalization set for the mass variable
+	model.fixCoefNormalization(normSet);
 
 	wspace.import(model, RecycleConflictNodes());
 

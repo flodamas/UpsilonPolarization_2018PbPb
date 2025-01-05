@@ -19,6 +19,24 @@
 
 using namespace std;
 
+RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 30, Float_t cosThetaMin = -0.1, Float_t cosThetaMax = 0.1, const char* refFrameName = "CS", Int_t phiMin = -180, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+	RooDataSet* allDataset = (RooDataSet*)wspace.data(RawDatasetName(""));
+
+	if (allDataset == nullptr) {
+		std::cerr << "Null RooDataSet provided to the reducer method!!" << std::endl;
+		return RooDataSet();
+	}
+
+	// const char* kinematicCut = Form("centrality >= %d && centrality < %d && rapidity > %f && rapidity < %f && pt > %d && pt < %d && cosTheta%s > %f && cosTheta%s < %f && %s > %d && %s < %d", 2 * gCentralityBinMin, 2 * gCentralityBinMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, cosThetaMin, refFrameName, cosThetaMax, PhiVarName(refFrameName), phiMin, PhiVarName(refFrameName), phiMax);
+	const char* kinematicCut = Form("centrality >= %d && centrality < %d && mass >= %f && mass < %f && rapidity > %f && rapidity < %f && pt > %d && pt < %d && cosTheta%s > %f && cosTheta%s < %f && fabs(%s) > %d && fabs(%s) < %d", 2 * gCentralityBinMin, 2 * gCentralityBinMax, massMin, massMax, gRapidityMin, gRapidityMax, ptMin, ptMax, refFrameName, cosThetaMin, refFrameName, cosThetaMax, PhiVarName(refFrameName), phiMin, PhiVarName(refFrameName), phiMax);
+
+	RooDataSet reducedDataset = *(RooDataSet*)allDataset->reduce(RooArgSet(*(wspace.var("mass"))), kinematicCut);
+
+	wspace.import(reducedDataset, Rename(Form("dataset_cosTheta_%.2fto%.2f_absphi_%dto%d", cosThetaMin, cosThetaMax, phiMin, phiMax)));
+
+	return reducedDataset;
+}
+
 RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Double_t* yield1SInput = nullptr, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
 
 	writeExtraText = true; // if extra text
@@ -39,7 +57,9 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
 
     RooWorkspace wspace(Form("workspace%s", refFrameName));
 
-    Float_t lowMassCut = 6.5, highMassCut = 14.5;
+    // Float_t lowMassCut = 6.5, highMassCut = 14.5;
+    // Float_t lowMassCut = 7, highMassCut = 14;
+    Float_t lowMassCut = massMin, highMassCut = massMax;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 
     massVar.setRange("MassFitRange", massMin, massMax);
@@ -99,7 +119,8 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
 
     /// get the nominal fit model from the workspace
 	auto* nominalFitModel = wspace.pdf("invMassModel");
-
+    nominalFitModel->setNormRange("MassFitRange");
+ 
     /// calculate the total yield
     double yieldTot = yield1S->getVal() + yield2S->getVal() + yield3S->getVal() + yieldBkg->getVal();
 
@@ -118,13 +139,36 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     auto* pseudoDataCanvas = new TCanvas("pseudoDataCanvas", "", 600, 600);
 
     RooPlot* frame = InvariantMassRooPlot(wspace, *pseudoData);
-    
+
+    std::cout << "NominalFitModel Total Yield: " 
+              << nominalFitModel->expectedEvents(*wspace.var("mass")) << std::endl;
+
+    // Check ranges
+    std::cout << "NominalFitModel Total Yield: " 
+              << nominalFitModel->expectedEvents(*wspace.var("mass")) << std::endl;
+
+    std::cout << "Generated Events: " << pseudoData->numEntries() << std::endl;
+
+    // Integrals over default range and fit range
+    double integralDefault = nominalFitModel->createIntegral(RooArgSet(*wspace.var("mass")))->getVal();
+    double integralFitRange = nominalFitModel->createIntegral(RooArgSet(*wspace.var("mass")), RooFit::Range("MassFitRange"))->getVal();
+
+    std::cout << "Integral over default range: " << integralDefault << std::endl;
+    std::cout << "Integral over fit range: " << integralFitRange << std::endl;
+
+    // Generated events in range
+    std::cout << "Generated Events in Range: " 
+              << pseudoData->sumEntries("mass > 6.5 && mass < 14.5") << std::endl;
+
+
+    // Draw the frame
     frame->Draw();
+    // nominalFitModel->Print("t");
 
     return pseudoData;
 }
 
-void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
+void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = 11.5){
 
     /// Start measuring time
 	clock_t start, end, cpu_time;
@@ -140,8 +184,8 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
     /// define alternative signal and background shape names
     /********************* enter the alternavtive signal or background shape *******************************/
 
-    // const char* altSignalShapeName = "SymDSCB";
-    const char* altSignalShapeName = "Johnson";
+    const char* altSignalShapeName = "SymDSCB";
+    // const char* altSignalShapeName = "Johnson";
 
     const char* altBkgShapeName = "ExpTimesErr";
     // const char* altBkgShapeName = "ChebychevOrder3";
@@ -154,7 +198,8 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 
     RooWorkspace wspace(Form("workspace%s", refFrameName));
 
-	Float_t lowMassCut = 6.5, highMassCut = 14.5;
+	// Float_t lowMassCut = 6.5, highMassCut = 14.5;
+    Float_t lowMassCut = MassBinMin, highMassCut = MassBinMax;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 
     massVar.setRange("MassFitRange", massMin, massMax); // in this way, the bin width is fixed to 0.08 GeV/c2
@@ -164,12 +209,29 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
     // cout << "wspace print " << endl;
     // wspace.Print(); 
 
+    /// test with the real dataset********************************************************
+ 	// const char* filename = Form("../Files/UpsilonSkimmedDataset%s.root", gMuonAccName);
+    
+    // RooWorkspace wspace = SetUpWorkspace(filename, "");
+
+    // RooRealVar massVar = *wspace.var("mass");
+    // // wspace.Print("t");
+	// massVar.setRange("MassFitRange", massMin, massMax);
+    
+    // auto allDataset = InvMassCosThetaPhiDataset(wspace, ptMin, ptMax, "");
+  	
+    // RooDataSet reducedDataset = InvMassDataset(wspace, ptMin, ptMax, cosThetaMin, cosThetaMax, refFrameName, phiMin, phiMax);
+	
+    // Long64_t nEntries = reducedDataset.sumEntries();
+    /// **********************************************************************************
+
     Double_t nEntries = 1e5;
     
     /// Build the invariant mass model with the alternative signal and background shapes
 	BuildInvariantMassModel(wspace, altSignalShapeName, altBkgShapeName, altFitModelName, nEntries, true);
 
     RooAddPdf invMassModel = *((RooAddPdf*)wspace.pdf("invMassModel"));
+    invMassModel.setNormRange("MassFitRange");
 
     Double_t yield1SInput = 0.;
 
@@ -197,10 +259,14 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
         /// fit the pseudo-data with the alternative signal and background shapes
         fitResult = RawInvariantMassFit(wspace, *pseudoDataset);
 
+        /// test with the real dataset
+        // fitResult = RawInvariantMassFit(wspace, reducedDataset);
+
         /// get the fitted yield1S
         RooRealVar* yield1Svar = dynamic_cast<RooRealVar*>(fitResult->floatParsFinal().find("yield1S"));
 
         frame = InvariantMassRooPlot(wspace, *pseudoDataset);
+        // frame = InvariantMassRooPlot(wspace, reducedDataset);
 
         double chi2 = frame->chiSquare(fitResult->floatParsFinal().getSize());
         // cout << "chi2/Ndf: " << chi2 << endl;
@@ -244,8 +310,10 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 
     /// draw fitted invariant mass distribution
     auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
-	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
+	
+    TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 	pad1->SetBottomMargin(0.03);
+    pad1->SetRightMargin(0.035);
 
 	pad1->Draw();
 	pad1->cd();
