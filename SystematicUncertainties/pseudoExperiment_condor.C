@@ -3,21 +3,6 @@
 // 2. Fit the pseudo-sample with the nominal signal PDF and an alternative background PDF (Chebyshev orJohnson's distribution) to obtain the signal yield.
 // 3. Repeat the above steps for a large number of pseudo-samples and check how much it is biased.
 
-// #include "../Tools/BasicHeaders.h"
-// #include "BasicHeaders.h"
-
-// #include "AnalysisParameters.h"
-
-// #include "FitShortcuts.h"
-// #include "Legends.h"
-// #include "FitDistributions.h"
-
-// #include "RooDataSetHelpers.h"
-// #include "InvariantMassModels.h"
-
-// #include "AccEffHelpers.h"
-// #include "PolarFitHelpers.h"
-
 #include "../Tools/BasicHeaders.h"
 
 #include "../AnalysisParameters.h"
@@ -54,7 +39,8 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
     RooWorkspace wspace(Form("workspace%s", refFrameName));
 
-    Float_t lowMassCut = 6.5, highMassCut = 14.5;
+    // Float_t lowMassCut = 6.5, highMassCut = 14.5;
+    Float_t lowMassCut = massMin, highMassCut = massMax;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 
     massVar.setRange("MassFitRange", massMin, massMax);
@@ -112,6 +98,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
     /// get the nominal fit model from the workspace
 	auto* nominalFitModel = wspace.pdf("invMassModel");
+    nominalFitModel->setNormRange("MassFitRange");
 
     /// calculate the total yield
     double yieldTot = yield1S->getVal() + yield2S->getVal() + yield3S->getVal() + yieldBkg->getVal();
@@ -150,6 +137,7 @@ void pseudoExperiment_condor(const char* outputfileName = "yield1Sdiff.root", In
     /********************* enter the alternavtive signal or background shape *******************************/
 
     const char* altSignalShapeName = "SymDSCB";
+    // const char* altSignalShapeName = "Johnson";
 
     const char* altBkgShapeName = "ExpTimesErr";
     // const char* altBkgShapeName = "ChebychevOrder3";
@@ -162,7 +150,8 @@ void pseudoExperiment_condor(const char* outputfileName = "yield1Sdiff.root", In
 
     RooWorkspace wspace(Form("workspace%s", refFrameName));
 
-	Float_t lowMassCut = 6.5, highMassCut = 14.5;
+	// Float_t lowMassCut = 6.5, highMassCut = 14.5;
+    Float_t lowMassCut = MassBinMin, highMassCut = MassBinMax;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 
     massVar.setRange("MassFitRange", massMin, massMax); // in this way, the bin width is fixed to 0.08 GeV/c2
@@ -181,7 +170,7 @@ void pseudoExperiment_condor(const char* outputfileName = "yield1Sdiff.root", In
 
     Double_t yield1SInput = 0.;
 
-    Long64_t nPseudoExperiments = 1e2;
+    Long64_t nPseudoExperiments = 1e1;
 
     TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 60, -300, 300);
 
@@ -240,20 +229,21 @@ void pseudoExperiment_condor(const char* outputfileName = "yield1Sdiff.root", In
 
     yield1SdiffCanvas->Update();  
 
-    gSystem->mkdir(Form("YieldDifferencePlots/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), kTRUE);
-    TFile* yield1SdiffFile = new TFile(Form("YieldDifferencePlots/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/%s", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments, outputfileName), "RECREATE");
+    gSystem->mkdir(Form("YieldDifferencePlots_mass7to11p5/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), kTRUE);
+    TFile* yield1SdiffFile = new TFile(Form("YieldDifferencePlots_mass7to11p5/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/%s", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments, outputfileName), "RECREATE");
     // TFile* yield1SdiffFile = new TFile(Form("%s", outputfileName), "RECREATE");
    
     yield1Sdiff->Write();
 
     yield1SdiffFile->Close();
 
-    yield1SdiffCanvas->SaveAs(Form("YieldDifferencePlots/yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld.png", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
+    yield1SdiffCanvas->SaveAs(Form("YieldDifferencePlots_mass7to11p5/yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld.png", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
 
     /// draw fitted invariant mass distribution
     auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
 	pad1->SetBottomMargin(0.03);
+    pad1->SetRightMargin(0.035);
 
 	pad1->Draw();
 	pad1->cd();

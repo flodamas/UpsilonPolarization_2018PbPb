@@ -29,11 +29,11 @@ for i in $(seq 0 $((cosThetaBins - 1))); do
         phiLow=$(echo "$phiMin + $j * $phiStep" | bc -l)
         phiHigh=$(echo "$phiLow + $phiStep" | bc -l)
 
-        # Format cosTheta and phi values to two decimal places
-        cosThetaLowFormatted=$(printf "%.2f" $cosThetaLow)
-        cosThetaHighFormatted=$(printf "%.2f" $cosThetaHigh)
-        phiLowFormatted=$(printf "%d" $phiLow)
-        phiHighFormatted=$(printf "%d" $phiHigh)
+        # # Format cosTheta and phi values to two decimal places
+        # cosThetaLowFormatted=$(printf "%.2f" $cosThetaLow)
+        # cosThetaHighFormatted=$(printf "%.2f" $cosThetaHigh)
+        # phiLowFormatted=$(printf "%d" $phiLow)
+        # phiHighFormatted=$(printf "%d" $phiHigh)
 
         # Define the output file with formatted values
         # OUTPUT_FILE="output_${JOB_INDEX}_cosTheta_${cosThetaLowFormatted}_${cosThetaHighFormatted}_phi_${phiLowFormatted}_${phiHighFormatted}.root"
