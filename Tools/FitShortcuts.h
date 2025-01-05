@@ -14,6 +14,9 @@ using namespace RooFit;
 RooFitResult* RawInvariantMassFit(RooWorkspace& wspace, RooDataSet data, RooArgSet varsForMinos = RooArgSet(), float massMin = MassBinMin, float massMax = MassBinMax) {
 	auto model = wspace.pdf("invMassModel");
 
+	RooRealVar* invMass = wspace.var("mass");
+	invMass->setRange("MassFitRange", MassBinMin, MassBinMax);
+
 	if (model == nullptr) {
 		std::cerr << "\n[FitShortcuts] the workspace does not contain the proper invariant mass model for fitting!\n";
 		return nullptr;
