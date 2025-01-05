@@ -110,7 +110,8 @@ const double PhiBinningHX[NPhiBinsHX + 1] = {-180, 180};
 const int NCPUs = 3;
 
 const float MassBinMin = 7;
-const float MassBinMax = 13;
+// const float MassBinMax = 13;
+const float MassBinMax = 11.5;
 const int NMassBins = 100;
 
 // error estimate
