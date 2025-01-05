@@ -8,7 +8,7 @@
 
 #include "../MonteCarlo/AccEffHelpers.h"
 
-void mergeResults(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.70, Float_t cosThetaMax = -0.42, Int_t phiMin = 0, Int_t phiMax = 60, Long64_t nPseudoExperiments = 100, const char* altSignalShapeName = "SymDSCB", const char* altBkgShapeName = "ChebychevOrder3") {
+void mergeResults(const char* altSignalShapeName = "SymDSCB", const char* altBkgShapeName = "ChebychevOrder3", Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.70, Float_t cosThetaMax = -0.42, Int_t phiMin = 0, Int_t phiMax = 60, Long64_t nPseudoExperiments = 100) {
     
     int nFiles = 1000;
 
@@ -28,7 +28,8 @@ void mergeResults(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, F
         fileLocation = Form("YieldDifferencePlots/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments);
         // cout << fileLocation << endl;
 
-        TString filename = Form("%soutput_%d_cosTheta_%.2f_%.2f_phi_%.2f_%.2f.root", fileLocation, i, cosThetaMin, cosThetaMax, (double)phiMin, (double)phiMax);
+        TString filename = Form("%soutput_%d.root", fileLocation, i);
+        // TString filename = Form("%soutput_%d_cosTheta_%.2f_%.2f_phi_%.2f_%.2f.root", fileLocation, i, cosThetaMin, cosThetaMax, (double)phiMin, (double)phiMax);
         TFile *file = TFile::Open(filename, "READ");
 
         cout << filename << endl;
@@ -81,7 +82,7 @@ void multipleMergeResults(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
 
     for (Int_t i = 0; i < nCosThetaBins; ++i) {
         for (Int_t j = 0; j < nPhiBins; ++j) {
-            mergeResults(ptMin, ptMax, isCSframe, cosThetaEdges[i], cosThetaEdges[i+1], phiEdges[j], phiEdges[j+1], 100, signalShapeName, bkgShapeName);
+            mergeResults(signalShapeName, bkgShapeName, ptMin, ptMax, isCSframe, cosThetaEdges[i], cosThetaEdges[i+1], phiEdges[j], phiEdges[j+1], 100);
         }
     }
 }
