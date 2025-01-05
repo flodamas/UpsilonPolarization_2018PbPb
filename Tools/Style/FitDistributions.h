@@ -23,8 +23,28 @@ using namespace RooFit;
 
 // make and draw the invariant mass distribution with fit results
 RooPlot* InvariantMassRooPlot(RooWorkspace& wspace, RooDataSet dataset) {
-	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range("MassFitRange"));
-	dataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
+	// Define the range and desired bin width
+    double plotMassMin = 6.5;
+    double plotMassMax = 14.5;
+    double binWidth = 0.08;
+
+    // Calculate the number of bins
+    int nBins = static_cast<int>((plotMassMax - plotMassMin) / binWidth);
+
+    // Create the bin edges
+    std::vector<double> binEdges;
+    for (double edge = plotMassMin; edge <= plotMassMax; edge += binWidth) {
+        binEdges.push_back(edge);
+    }
+	
+	// Create a RooBinning object with the bin edges
+    RooBinning customBinning(binEdges.size() - 1, &binEdges[0]);
+
+	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
+	dataset.plotOn(frame, Name("data"), Binning(customBinning), DrawOption("P0Z"));
+
+	// RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range("MassFitRange"));
+	// dataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
 
 	auto* fitModel = wspace.pdf("invMassModel");
 	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed), Range("MassFitRange"), NormRange("MassFitRange"));
