@@ -37,6 +37,53 @@ RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 3
 	return reducedDataset;
 }
 
+TPaveText* KinematicsText_YieldDiff(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax) {
+	TPaveText* text = new TPaveText(0.14, 0.9, 0.49, 0.65, "NDCNB");
+	// TPaveText* text = new TPaveText(0.65, 0.90, 0.95, 0.60, "NDCNB");
+
+	text->SetFillColor(4000);
+	text->SetBorderSize(0);
+	text->AddText(CentralityRangeText(centMin, centMax));
+	text->AddText(gMuonPtCutText);
+	text->AddText(DimuonRapidityRangeText(gRapidityMin, gRapidityMax));
+	text->AddText(DimuonPtRangeText(ptMin, ptMax));
+
+	text->SetAllWith("", "align", 12);
+	return text;
+}
+
+TPaveText* RefFrameTextPhiFolded_YieldDiff(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+	TPaveText* text = new TPaveText(0.14, 0.55, 0.45, 0.35, "NDCNB"); // on the left side
+	// TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB"); // on the right side
+	text->SetFillColor(4000);
+	text->SetBorderSize(0);
+	// text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
+	text->AddText(isCSframe ? "Collins-Soper frame" : "Helicity frame");
+	text->AddText(CosThetaRangeText(isCSframe ? "CS" : "HX", cosThetaMin, cosThetaMax));
+	text->AddText(AbsPhiRangeText(isCSframe ? "CS" : "HX", phiMin, phiMax));
+
+	text->SetAllWith("", "align", 12); // on the left side
+	// text->SetAllWith("", "align", 32); // on the right side
+	return text;
+}
+
+void CustomizeStatBox(TH1D *hist, double x1 = 0.7, double x2 = 0.9, double y1 = 0.7, double y2 = 0.9) {
+    if (!hist) return; // Ensure the histogram exists
+
+    gPad->Update(); // Make sure the stat box is drawn
+    TPaveStats *stats = (TPaveStats*)hist->FindObject("stats");
+    if (stats) {
+        stats->SetName("");        // Remove the title
+        stats->SetX1NDC(x1);       // Left x
+        stats->SetX2NDC(x2);       // Right x
+        stats->SetY1NDC(y1);       // Bottom y
+        stats->SetY2NDC(y2);       // Top y
+        gPad->Modified();          // Mark the pad as modified
+        gPad->Update();            // Update the pad
+    }
+}
+
+
 RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Double_t* yield1SInput = nullptr, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
 
 	writeExtraText = true; // if extra text
@@ -160,7 +207,6 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     std::cout << "Generated Events in Range: " 
               << pseudoData->sumEntries("mass > 6.5 && mass < 14.5") << std::endl;
 
-
     // Draw the frame
     frame->Draw();
     // nominalFitModel->Print("t");
@@ -237,7 +283,8 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 
     Long64_t nPseudoExperiments = 1e0;
 
-    TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 60, -300, 300);
+    // TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 60, -300, 300);
+    TH1D* yield1Sdiff = new TH1D(Form("%s+%s", altSignalShapeName, altBkgShapeName), "", 60, -300, 300);
     // TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 400, -2000, 2000);
 
     RooDataSet* pseudoDataset = nullptr;
@@ -281,8 +328,8 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
     }
 
     /// draw the yield difference histogram
-    auto* yield1SdiffCanvas = new TCanvas("yield1SdiffCanvas", "", 600, 600);
-    yield1SdiffCanvas->SetRightMargin(0.08);
+    auto* yield1SdiffCanvas = new TCanvas("yield1SdiffCanvas", "", 600, 400);
+    yield1SdiffCanvas->SetRightMargin(0.035);
 
     gStyle->SetOptStat(1111);
 
@@ -296,6 +343,14 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
     yield1Sdiff->SetYTitle("Entries / 10");
 
     yield1Sdiff->Draw();
+
+    TPaveText *KinematicsLegend = KinematicsText_YieldDiff(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax);
+    KinematicsLegend->Draw();
+
+    TPaveText *RefFrameLegendPhiFolded = RefFrameTextPhiFolded_YieldDiff(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+    RefFrameLegendPhiFolded->Draw();
+
+    CustomizeStatBox(yield1Sdiff, 0.7, 0.93, 0.73, 0.90);
 
     yield1SdiffCanvas->Update();  
 
