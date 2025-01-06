@@ -32,7 +32,7 @@ RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 3
 	return reducedDataset;
 }
 
-void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* bkgShapeName = "ChebychevOrder2") {
+void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* signalShapeName = "ExpTimesErr",  const char* bkgShapeName = "ChebychevOrder2") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -65,7 +65,8 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	// signal: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
 
-	const char* signalShapeName = "SymDSCB";
+	// const char* signalShapeName = "SymDSCB";
+	// // const char* signalShapeName = "Johnson";
 
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
@@ -95,8 +96,11 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 		frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 	else
 		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
-
-	frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
+	
+	if (strcmp(signalShapeName, "SymDSCB") == 0)
+		frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
+    else
+        frame->addObject(FitResultText(*wspace.var("yield1S"), 0, *wspace.var("yield2S"), 0));
 
 	frame->Draw();
 
@@ -128,7 +132,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	SaveRawDataFitCanvas(massCanvas, totalFitModelName);
 }
 
-void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, const char* bkgShapeName = "ChebychevOrder2") { // possible bkgShapeName: ExpTimesErr, ChebychevOrderN, Argus, Exponential
+void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ChebychevOrder2") { // possible bkgShapeName: ExpTimesErr, ChebychevOrderN, Argus, Exponential
 
 	std::vector<Double_t> cosThetaEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
@@ -139,7 +143,7 @@ void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSfram
 
 	for (Int_t cosThetaIdx = 0; cosThetaIdx < nCosThetaBins; cosThetaIdx++) {
 		for (Int_t idx = 0; idx < nPhiBins; idx++) {
-			nominalFit_RawDataset(ptMin, ptMax, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, 7, 11.5, bkgShapeName);
+			nominalFit_RawDataset(ptMin, ptMax, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, 7, 11.5, signalShapeName, bkgShapeName);
 			// nominalFit_RawDataset(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[idx], phiEdges[idx + 1], kTRUE, MassBinMin, 13, isBkgExpTimesErr, ChebychevOrder);
 		}
 	// }
