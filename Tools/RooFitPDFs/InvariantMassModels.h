@@ -160,7 +160,7 @@ RooArgList* ChebychevCoefList(int order = 1) {
 	return coefList;
 }
 
-RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
+RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName, const char* fitModelName) {
 	RooRealVar* invMass = wspace.var("mass");
 	invMass->setRange("MassFitRange", MassBinMin, MassBinMax);
 
@@ -190,6 +190,20 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName) {
 		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1.3, 0.1, 5);
 		// RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9);
 		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 30, 0, 2000);
+
+		/// if the fit was already performed, get the seeds of the parameters from the fit results
+		const char* totalFitModelName = Form("%s_%s", bkgShapeName, fitModelName);
+		const char* savedFitResultFileName = Form("%s%s.root", totalFitModelName, gMuonAccName);
+		
+		if (savedFitResultFileName) {
+			RooFitResult* fitResults = GetFitResults(totalFitModelName, gMuonAccName);
+
+			RooArgSet* fitParams = new RooArgSet(fitResults->floatParsFinal());
+
+			err_mu->setVal(((RooRealVar*)fitParams->find("err_mu"))->getVal());
+    		err_sigma->setVal(((RooRealVar*)fitParams->find("err_sigma"))->getVal());
+    		exp_lambda->setVal(((RooRealVar*)fitParams->find("exp_lambda"))->getVal());
+		}
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 
@@ -261,7 +275,7 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 
 	// 3. background
 
-	auto bkgPDF = BackgroundPDF(wspace, bkgShapeName);
+	auto bkgPDF = BackgroundPDF(wspace, bkgShapeName, fitModelName);
 	bkgPDF->setNormRange("MassFitRange");
 
 	// complete invariant mass model
