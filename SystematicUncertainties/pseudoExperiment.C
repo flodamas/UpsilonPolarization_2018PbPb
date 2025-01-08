@@ -83,7 +83,6 @@ void CustomizeStatBox(TH1D *hist, double x1 = 0.7, double x2 = 0.9, double y1 = 
     }
 }
 
-
 RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Double_t* yield1SInput = nullptr, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax){
 
 	writeExtraText = true; // if extra text
