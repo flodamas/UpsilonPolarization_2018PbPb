@@ -205,6 +205,10 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName, const c
     		exp_lambda->setVal(((RooRealVar*)fitParams->find("exp_lambda"))->getVal());
 		}
 
+		else {
+			std::cerr << savedFitResultFileName << "does not exist!!!" << std::endl;
+		}
+
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 
 		bkgPDF->setNormRange("MassFitRange");
