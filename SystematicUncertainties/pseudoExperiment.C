@@ -213,7 +213,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     return pseudoData;
 }
 
-void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.42, Float_t cosThetaMax = -0.14, Int_t phiMin = 60, Int_t phiMax = 120, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = 11.5){
+void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -0.7, Float_t cosThetaMax = -0.42, Int_t phiMin = 0, Int_t phiMax = 60, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = 11.5){
 
     /// Start measuring time
 	clock_t start, end, cpu_time;
@@ -280,7 +280,7 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 
     Double_t yield1SInput = 0.;
 
-    Long64_t nPseudoExperiments = 1e0;
+    Long64_t nPseudoExperiments = 1e2;
 
     // TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 60, -300, 300);
     TH1D* yield1Sdiff = new TH1D(Form("%s+%s", altSignalShapeName, altBkgShapeName), "", 60, -300, 300);
