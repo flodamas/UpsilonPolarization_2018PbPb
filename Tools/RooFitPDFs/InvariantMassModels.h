@@ -191,24 +191,6 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName, const c
 		// RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9);
 		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 30, 0, 2000);
 
-		/// if the fit was already performed, get the seeds of the parameters from the fit results
-		const char* totalFitModelName = Form("%s_%s", bkgShapeName, fitModelName);
-		const char* savedFitResultFileName = Form("%s%s.root", totalFitModelName, gMuonAccName);
-		
-		if (savedFitResultFileName) {
-			RooFitResult* fitResults = GetFitResults(totalFitModelName, gMuonAccName);
-
-			RooArgSet* fitParams = new RooArgSet(fitResults->floatParsFinal());
-
-			err_mu->setVal(((RooRealVar*)fitParams->find("err_mu"))->getVal());
-    		err_sigma->setVal(((RooRealVar*)fitParams->find("err_sigma"))->getVal());
-    		exp_lambda->setVal(((RooRealVar*)fitParams->find("exp_lambda"))->getVal());
-		}
-
-		else {
-			std::cerr << savedFitResultFileName << "does not exist!!!" << std::endl;
-		}
-
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 
 		bkgPDF->setNormRange("MassFitRange");
@@ -297,8 +279,35 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 
 	RooArgSet normSet(*invMass);  // Define normalization set for the mass variable
 	model.fixCoefNormalization(normSet);
-
+	
+	// wspace.import(model);
 	wspace.import(model, RecycleConflictNodes());
+
+	/// if the fit was already performed, get the seeds of the parameters from the fit results
+	RooRealVar* err_mu = (RooRealVar*)wspace.var("err_mu");
+    RooRealVar* err_sigma = (RooRealVar*)wspace.var("err_sigma");
+    RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
+	
+	const char* totalFitModelName = Form("%s_%s", bkgShapeName, fitModelName);
+	const char* savedFitResultFileName = Form("%s%s.root", totalFitModelName, gMuonAccName);
+	
+	if (savedFitResultFileName) {
+		RooFitResult* fitResults = GetFitResults(totalFitModelName, gMuonAccName);
+
+		RooArgSet* fitParams = new RooArgSet(fitResults->floatParsFinal());
+
+		err_mu->setVal(((RooRealVar*)fitParams->find("err_mu"))->getVal());
+		err_sigma->setVal(((RooRealVar*)fitParams->find("err_sigma"))->getVal());
+		exp_lambda->setVal(((RooRealVar*)fitParams->find("exp_lambda"))->getVal());
+
+		cout << "err_mu: " << err_mu->getVal() << endl;
+		cout << "err_sigma: " << err_sigma->getVal() << endl;
+		cout << "exp_lambda: " << exp_lambda->getVal() << endl;
+	}
+
+	else {
+		std::cerr << savedFitResultFileName << "does not exist!!!" << std::endl;
+	}
 
 	if (BeVerbose) std::cout << "\nInvariant mass model exported to " << wspace.GetName() << std::endl;
 	//wspace.Print("v");
