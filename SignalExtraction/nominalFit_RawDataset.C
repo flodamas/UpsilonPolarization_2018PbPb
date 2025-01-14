@@ -32,7 +32,7 @@ RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 3
 	return reducedDataset;
 }
 
-void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* signalShapeName = "ExpTimesErr",  const char* bkgShapeName = "ChebychevOrder2") {
+void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* signalShapeName = "SymDSCB",  const char* bkgShapeName = "ChebychevOrder2") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
