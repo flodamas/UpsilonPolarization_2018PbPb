@@ -66,7 +66,8 @@ RooFitResult* SymDSCBfit(RooWorkspace& wspace, RooDataSet data, Float_t massMin 
 	RooRealVar alphaInf("alphaInfSymDSCB", "", 1.14, 0.1, 10);
 	RooRealVar orderInf("orderInfSymDSCB", "", 5.0, 0.1, 20);
 	RooRealVar alphaSup("alphaSupSymDSCB", "", 1.3, 0.1, 10);
-	RooRealVar orderSup("orderSupSymDSCB", "", 147, 0.1, 200);
+	RooRealVar orderSup("orderSupSymDSCB", "", 33, 0.1, 200);
+	// RooRealVar orderSup("orderSupSymDSCB", "", 33.284);
 
 	RooCrystalBall signal("SymDSCB", "SymDSCB", *wspace.var("mass"), mean, sigma, alphaInf, orderInf, alphaSup, orderSup);
 
@@ -302,20 +303,20 @@ RooArgList* ListOfSignalContraints(RooWorkspace& wspace, const char* signalShape
 		}
 		wspace.import(parametersList);
 
-		// // build the Gaussian constraints on parameters to propagate the corresponding uncertainties
-		// RooGaussian* alphaInfConstraint = new RooGaussian("alphaInfConstraint", "Gaussian constraint on alphaInf", *alphaInf, alphaInf->getVal(), alphaInf->getError());
-		// RooGaussian* orderInfConstraint = new RooGaussian("orderInfConstraint", "Gaussian constraint on orderInf", *orderInf, orderInf->getVal(), orderInf->getError());
-		// RooGaussian* alphaSupConstraint = new RooGaussian("alphaSupConstraint", "Gaussian constraint on alphaSup", *alphaSup, alphaSup->getVal(), alphaSup->getError());
-		// RooGaussian* orderSupConstraint = new RooGaussian("orderSupConstraint", "Gaussian constraint on orderSup", *orderSup, orderSup->getVal(), orderSup->getError());
+		// build the Gaussian constraints on parameters to propagate the corresponding uncertainties
+		RooGaussian* alphaInfConstraint = new RooGaussian("alphaInfConstraint", "Gaussian constraint on alphaInf", *alphaInf, alphaInf->getVal(), alphaInf->getError());
+		RooGaussian* orderInfConstraint = new RooGaussian("orderInfConstraint", "Gaussian constraint on orderInf", *orderInf, orderInf->getVal(), orderInf->getError());
+		RooGaussian* alphaSupConstraint = new RooGaussian("alphaSupConstraint", "Gaussian constraint on alphaSup", *alphaSup, alphaSup->getVal(), alphaSup->getError());
+		RooGaussian* orderSupConstraint = new RooGaussian("orderSupConstraint", "Gaussian constraint on orderSup", *orderSup, orderSup->getVal(), orderSup->getError());
 
-		// if (fixSigmaToMC) {
-		// 	RooGaussian* sigmaConstraint = new RooGaussian("sigmaConstraint", "Gaussian constraint on width parameter", *sigma, sigma->getVal(), sigma->getError());
-		// 	constraintsList->add(*sigmaConstraint);
-		// }
-		// constraintsList->add(*alphaInfConstraint);
-		// constraintsList->add(*orderInfConstraint);
-		// constraintsList->add(*alphaSupConstraint);
-		// constraintsList->add(*orderSupConstraint);
+		if (fixSigmaToMC) {
+			RooGaussian* sigmaConstraint = new RooGaussian("sigmaConstraint", "Gaussian constraint on width parameter", *sigma, sigma->getVal(), sigma->getError());
+			constraintsList->add(*sigmaConstraint);
+		}
+		constraintsList->add(*alphaInfConstraint);
+		constraintsList->add(*orderInfConstraint);
+		constraintsList->add(*alphaSupConstraint);
+		constraintsList->add(*orderSupConstraint);
 	}
 
 	else if (strcmp(signalShapeName, "Johnson") == 0) {
