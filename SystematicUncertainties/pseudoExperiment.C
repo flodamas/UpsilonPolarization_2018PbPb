@@ -274,7 +274,7 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 
     Double_t yield1SInput = 0.;
 
-    Long64_t nPseudoExperiments = 1e2;
+    Long64_t nPseudoExperiments = 1e0;
 
     // TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 60, -300, 300);
     TH1D* yield1Sdiff = new TH1D(Form("%s+%s", altSignalShapeName, altBkgShapeName), "", 60, -300, 300);
@@ -317,11 +317,22 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
         frame = InvariantMassRooPlot(wspace, *pseudoDataset);
         // frame = InvariantMassRooPlot(wspace, reducedDataset);
 
+        int status = fitResult->status();
+        // cout << "fit result status: " << status << endl;
+
+        int covQual = fitResult->covQual();
+        // cout << "covQual: " << covQual << endl;
+
         double chi2 = frame->chiSquare(fitResult->floatParsFinal().getSize());
         // cout << "chi2/Ndf: " << chi2 << endl;
 
-        if (chi2 > 5) {
-            cout << "chi2/Ndf > 5, skipping this pseudo-experiment" << endl;
+        cout << "correlation matrix: " << endl;
+        fitResult->correlationMatrix().Print("v");
+
+        if (chi2 > 5 || status != 0 || covQual < 2) {
+            if (chi2 > 5) cout << "chi2/Ndf > 5, skipping this pseudo-experiment" << endl;
+            if (status != 0) cout << "status != 0, skipping this pseudo-experiment" << endl;
+            if (covQual < 2) cout << "covQual < 2, skipping this pseudo-experiment" << endl;
             continue;
         }
 
