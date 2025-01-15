@@ -59,7 +59,7 @@ void TestBuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeNa
 
 	RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "Background yield", 0, nEntries);
 
-	RooAddPdf model("invMassModel", "", {*signalPDF_1S}, {*yield1S});
+	RooAddPdf model("invMassModel", "", {*signalPDF_1S, *bkgPDF}, {*yield1S, *yieldBkg});
 	model.setNormRange("MassFitRange");
 
 	RooArgSet normSet(*invMass);  // Define normalization set for the mass variable
@@ -139,7 +139,7 @@ RooPlot* TestInvariantMassRooPlot(RooWorkspace& wspace, RooDataSet dataset) {
     RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
 
 	auto* fitModel = wspace.pdf("invMassModel");
-	// fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed), Range("MassFitRange"), NormRange("MassFitRange"));
+	fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed), Range("MassFitRange"), NormRange("MassFitRange"));
 	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(gColor1S),Range("MassFitRange"), NormRange("MassFitRange"), Normalization(1.0, RooAbsReal::Relative));
 	// fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_2S")), LineColor(gColor2S), Range("MassFitRange"));
 	// fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_3S")), LineColor(gColor3S), Range("MassFitRange"));
@@ -192,19 +192,19 @@ TPaveText* RefFrameTextPhiFolded_YieldDiff(Bool_t isCSframe = true, Float_t cosT
 	return text;
 }
 
-TPaveText* FitResultText_YieldDiff(RooRealVar n1S, Float_t signif1S/*, RooRealVar n2S, Float_t signif2S, RooRealVar nBkg*/) {
+TPaveText* FitResultText_YieldDiff(RooRealVar n1S, Float_t signif1S/*, RooRealVar n2S, Float_t signif2S*/, RooRealVar nBkg) {
 	// TPaveText* text = new TPaveText(0.6, 0.85, 0.95, 0.5, "NDCNB");
 	TPaveText* text = new TPaveText(0.57, 0.35, 0.95, 0.08, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	if (DoAsymptoticError) {
 		text->AddText(Form("N(#varUpsilon(1S)) = %.0f #pm %.0f", n1S.getVal(), n1S.getError()));
-		// text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif1S));
+		text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif1S));
 		// text->AddText(Form("N(#varUpsilon(2S)) = %.0f #pm %.0f", n2S.getVal(), n2S.getError()));
 		// text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif2S));
 	} else { // assuming Minos is ON, print asymmetric errors
 		text->AddText(Form("N(#varUpsilon(1S)) = %.0f^{ #plus%.0f}_{ %.0f}", n1S.getVal(), n1S.getErrorHi(), n1S.getErrorLo()));
-		// text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif1S));
+		text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif1S));
 		// text->AddText(Form("N(#varUpsilon(2S)) = %.0f^{ #plus%.0f}_{ %.0f}", n2S.getVal(), n2S.getErrorHi(), n2S.getErrorLo()));
 		// text->AddText(Form("S / #sqrt{S+B} (3#sigma) = %.1f", signif2S));
 	}
@@ -272,12 +272,12 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     // RooRealVar* yield2S = (RooRealVar*)wspace.var("yield2S");
     // RooRealVar* yield3S = (RooRealVar*)wspace.var("yield3S");
 
-    // /// background model parameters
-    // RooRealVar* err_mu = (RooRealVar*)wspace.var("err_mu");
-    // RooRealVar* err_sigma = (RooRealVar*)wspace.var("err_sigma");
-    // RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
+    /// background model parameters
+    RooRealVar* err_mu = (RooRealVar*)wspace.var("err_mu");
+    RooRealVar* err_sigma = (RooRealVar*)wspace.var("err_sigma");
+    RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
 
-    // RooRealVar* yieldBkg = (RooRealVar*)wspace.var("yieldBkg");
+    RooRealVar* yieldBkg = (RooRealVar*)wspace.var("yieldBkg");
 	
     /// get the fit results from the nominal fit model
     const char* totalFitModelName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
@@ -291,10 +291,10 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     // yield2S->setVal(((RooRealVar*)fitParams->find("yield2S"))->getVal());
     // yield3S->setVal(((RooRealVar*)fitParams->find("yield3S"))->getVal());
 
-    // err_mu->setVal(((RooRealVar*)fitParams->find("err_mu"))->getVal());
-    // err_sigma->setVal(((RooRealVar*)fitParams->find("err_sigma"))->getVal());
-    // exp_lambda->setVal(((RooRealVar*)fitParams->find("exp_lambda"))->getVal());
-    // yieldBkg->setVal(((RooRealVar*)fitParams->find("yieldBkg"))->getVal());
+    err_mu->setVal(((RooRealVar*)fitParams->find("err_mu"))->getVal());
+    err_sigma->setVal(((RooRealVar*)fitParams->find("err_sigma"))->getVal());
+    exp_lambda->setVal(((RooRealVar*)fitParams->find("exp_lambda"))->getVal());
+    yieldBkg->setVal(((RooRealVar*)fitParams->find("yieldBkg"))->getVal());
 
     *yield1SInput = (Double_t)(yield1S->getVal());
 
@@ -305,8 +305,8 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     /// calculate the total yield
     double yieldTot = yield1S->getVal();
 	
-    // /// radoimize the seed
-    // RooRandom::randomGenerator()->SetSeed(time(0));
+    /// radoimize the seed
+    RooRandom::randomGenerator()->SetSeed(time(0));
 
     RooDataSet* pseudoData = invMassModel.generate(*wspace.var("mass"));
 
@@ -419,13 +419,13 @@ void testPseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
         RooAddPdf invMassModel = *((RooAddPdf*)wspace.pdf("invMassModel"));
         invMassModel.setNormRange("MassFitRange");
 
-        // RooRealVar* err_mu = (RooRealVar*)wspace.var("err_mu");
-        // RooRealVar* err_sigma = (RooRealVar*)wspace.var("err_sigma");
-        // RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
+        RooRealVar* err_mu = (RooRealVar*)wspace.var("err_mu");
+        RooRealVar* err_sigma = (RooRealVar*)wspace.var("err_sigma");
+        RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
 
-    	// cout << "err_mu: " << err_mu->getVal() << endl;
-	    // cout << "err_sigma: " << err_sigma->getVal() << endl;
-	    // cout << "exp_lambda: " << exp_lambda->getVal() << endl;
+    	cout << "err_mu: " << err_mu->getVal() << endl;
+	    cout << "err_sigma: " << err_sigma->getVal() << endl;
+	    cout << "exp_lambda: " << exp_lambda->getVal() << endl;
 
         /// fit the pseudo-data with the alternative signal and background shapes
         fitResult = RawInvariantMassFit(wspace, *pseudoDataset);
@@ -496,7 +496,7 @@ void testPseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
 
     yield1SdiffFile->Close();
 
-    yield1SdiffCanvas->SaveAs(Form("YieldDifferencePlots/yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld.png", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
+    yield1SdiffCanvas->SaveAs(Form("YieldDifferencePlots_test/yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld.png", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
 
     /// draw fitted invariant mass distribution
     auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
@@ -544,8 +544,6 @@ void testPseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
 	end = clock();
 	cpu_time = (double)(end - start) / CLOCKS_PER_SEC;
 	cout << "Time elapsed: " << cpu_time / 60. << "minutes" << endl;
-
-
 
     // Double_t yield1SInput = 0.;
 
