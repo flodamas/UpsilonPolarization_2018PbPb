@@ -388,7 +388,7 @@ void testPseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
 
     Double_t yield1SInput = 0.;
 
-    Long64_t nPseudoExperiments = 1e0;
+    Long64_t nPseudoExperiments = 1e2;
 
     // TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 60, -300, 300);
     TH1D* yield1Sdiff = new TH1D(Form("%s+%s", altSignalShapeName, altBkgShapeName), "", 60, -300, 300);
