@@ -192,7 +192,7 @@ TPaveText* RefFrameTextPhiFolded_YieldDiff(Bool_t isCSframe = true, Float_t cosT
 	return text;
 }
 
-TPaveText* FitResultText_YieldDiff(RooRealVar n1S, Float_t signif1S/*, RooRealVar n2S, Float_t signif2S*/, RooRealVar nBkg) {
+TPaveText* FitResultText_YieldDiff(RooRealVar n1S, Float_t signif1S/*, RooRealVar n2S, Float_t signif2S, RooRealVar nBkg*/) {
 	// TPaveText* text = new TPaveText(0.6, 0.85, 0.95, 0.5, "NDCNB");
 	TPaveText* text = new TPaveText(0.57, 0.35, 0.95, 0.08, "NDCNB");
 	text->SetFillColor(4000);
@@ -303,7 +303,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     // nominalFitModel->setNormRange("MassFitRange");
 
     /// calculate the total yield
-    double yieldTot = yield1S->getVal();
+    double yieldTot = yield1S->getVal() + yieldBkg->getVal();
 	
     /// radoimize the seed
     RooRandom::randomGenerator()->SetSeed(time(0));
@@ -521,7 +521,7 @@ void testPseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
 
 	if (strcmp(altSignalShapeName, "SymDSCB") == 0)
         // frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
-        frame->addObject(FitResultText_YieldDiff(*wspace.var("yield1S"), 0));
+        frame->addObject(FitResultText_YieldDiff(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1)));
     else
         frame->addObject(FitResultText_YieldDiff(*wspace.var("yield1S"), 0));
 
