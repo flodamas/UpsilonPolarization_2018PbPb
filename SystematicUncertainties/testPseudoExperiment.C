@@ -1,4 +1,5 @@
-// This code performs pseudo-experiments to calculate the systematic uncertainties from the choice of the background model.
+// This code tests pseudo-experiments code with only selected PDFs e.g. Y(1S) signal + nominal background or Y(1S) signal + Y(2S) signal + Y(3S) signal to identify the source of the bias on the pseudo-experiment.
+
 // 1. Generate a pseudo-sample using the nominal signal and background PDFs (DSCB and exp*erf) with the already obtained parameter values. 
 // 2. Fit the pseudo-sample with the nominal signal PDF and an alternative background PDF (Chebyshev orJohnson's distribution) to obtain the signal yield.
 // 3. Repeat the above steps for a large number of pseudo-samples and check how much it is biased.
@@ -19,6 +20,7 @@
 
 using namespace std;
 
+/// build the invariant mass model with the selected PDFs
 void TestBuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, const char* fitModelName, Long64_t nEntries = 1e6, bool fixSigmaToMC = false) {
 	RooRealVar* invMass = wspace.var("mass");
 	invMass->setRange("MassFitRange", MassBinMin, MassBinMax);
@@ -59,6 +61,7 @@ void TestBuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeNa
 
 	RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "Background yield", 0, nEntries);
 
+    /// this line will determine the final model!!!
 	RooAddPdf model("invMassModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, /*, *bkgPDF*/}, {*yield1S, *yield2S, *yield3S/*, *yieldBkg*/});
 	model.setNormRange("MassFitRange");
 
@@ -104,7 +107,6 @@ void TestBuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeNa
 	// cout << "err_sigma: " << err_sigma->getVal() << endl;
 	// cout << "exp_lambda: " << exp_lambda->getVal() << endl;
 
-
 	// if (BeVerbose) std::cout << "\nInvariant mass model exported to " << wspace.GetName() << std::endl;
 	// //wspace.Print("v");
 }
@@ -131,13 +133,11 @@ RooPlot* TestInvariantMassRooPlot(RooWorkspace& wspace, RooDataSet dataset) {
 	RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range(MassBinMin, MassBinMax));
 	dataset.plotOn(frame, Name("data"), Binning(customBinning), DrawOption("P0Z"));
 
-	// RooPlot* frame = (*wspace.var("mass")).frame(Title(" "), Range("MassFitRange"));
-	// dataset.plotOn(frame, Name("data"), Binning(NMassBins), DrawOption("P0Z"));
-
 	RooRealVar* err_mu = (RooRealVar*)wspace.var("err_mu");
     RooRealVar* err_sigma = (RooRealVar*)wspace.var("err_sigma");
     RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
 
+    /// switch on and off the signal and background components on the plot
 	auto* fitModel = wspace.pdf("invMassModel");
 	// fitModel->plotOn(frame, Components(*wspace.pdf("bkgPDF")), LineColor(gColorBkg), LineStyle(kDashed), Range("MassFitRange"), NormRange("MassFitRange"));
 	fitModel->plotOn(frame, Components(*wspace.pdf("signalPDF_1S")), LineColor(gColor1S),Range("MassFitRange"), NormRange("MassFitRange"), Normalization(1.0, RooAbsReal::Relative));
@@ -298,10 +298,6 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
 
     *yield1SInput = (Double_t)(yield1S->getVal());
 
-    // /// get the nominal fit model from the workspace
-	// auto* nominalFitModel = wspace.pdf("invMassModel");
-    // nominalFitModel->setNormRange("MassFitRange");
-
     /// calculate the total yield
     double yieldTot = yield1S->getVal() + yield2S->getVal() + yield3S->getVal()/*+ yieldBkg->getVal()*/;
 	
@@ -340,7 +336,6 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
 
     // Draw the frame
     frame->Draw();
-    // nominalFitModel->Print("t");
 
     return pseudoData;
 }
@@ -390,9 +385,7 @@ void testPseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
 
     Long64_t nPseudoExperiments = 1e2;
 
-    // TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 60, -300, 300);
     TH1D* yield1Sdiff = new TH1D(Form("%s+%s", altSignalShapeName, altBkgShapeName), "", 60, -300, 300);
-    // TH1D* yield1Sdiff = new TH1D(Form("yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld", altSignalShapeName, altBkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments), "", 400, -2000, 2000);
 
     RooDataSet* pseudoDataset = nullptr;
 
@@ -414,8 +407,7 @@ void testPseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
 
         /// Build the invariant mass model with the alternative signal and background shapes
         TestBuildInvariantMassModel(wspace, altSignalShapeName, altBkgShapeName, altFitModelName, nEntries, true);
-        // BuildInvariantMassModel(wspace, altSignalShapeName, altBkgShapeName, altFitModelName, nEntries, false);
-
+  
         RooAddPdf invMassModel = *((RooAddPdf*)wspace.pdf("invMassModel"));
         invMassModel.setNormRange("MassFitRange");
 
@@ -509,7 +501,6 @@ void testPseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
 	pad1->cd();
 
     /// draw the generated pseudo-data
-
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 
 	frame->addObject(KinematicsText_YieldDiff(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
@@ -544,10 +535,6 @@ void testPseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = k
 	end = clock();
 	cpu_time = (double)(end - start) / CLOCKS_PER_SEC;
 	cout << "Time elapsed: " << cpu_time / 60. << "minutes" << endl;
-
-    // Double_t yield1SInput = 0.;
-
-    // generatePseudoData(ptMin, ptMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, &yield1SInput, massMin, massMax);
     
     return;
 
