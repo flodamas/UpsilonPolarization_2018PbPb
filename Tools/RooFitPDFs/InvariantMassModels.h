@@ -291,33 +291,33 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 	const char* totalFitModelName = Form("%s_%s", bkgShapeName, fitModelName);
 	const char* savedFitResultFileName = Form("%s%s.root", totalFitModelName, gMuonAccName);
 	
-	/// set the initial values of the parameters to the already fitted values
-	if (savedFitResultFileName) {
-		RooFitResult* fitResults = GetFitResults(totalFitModelName, gMuonAccName);
+	// /// set the initial values of the parameters to the already fitted values
+	// if (savedFitResultFileName) {
+	// 	RooFitResult* fitResults = GetFitResults(totalFitModelName, gMuonAccName);
 
-		RooArgSet* fitParams = new RooArgSet(fitResults->floatParsFinal());
+	// 	RooArgSet* fitParams = new RooArgSet(fitResults->floatParsFinal());
 
-		err_mu->setVal(((RooRealVar*)fitParams->find("err_mu"))->getVal());
-		err_sigma->setVal(((RooRealVar*)fitParams->find("err_sigma"))->getVal());
-		exp_lambda->setVal(((RooRealVar*)fitParams->find("exp_lambda"))->getVal());
+	// 	err_mu->setVal(((RooRealVar*)fitParams->find("err_mu"))->getVal());
+	// 	err_sigma->setVal(((RooRealVar*)fitParams->find("err_sigma"))->getVal());
+	// 	exp_lambda->setVal(((RooRealVar*)fitParams->find("exp_lambda"))->getVal());
 
-		cout << "err_mu: " << err_mu->getVal() << endl;
-		cout << "err_sigma: " << err_sigma->getVal() << endl;
-		cout << "exp_lambda: " << exp_lambda->getVal() << endl;
-	}
+	// 	cout << "err_mu: " << err_mu->getVal() << endl;
+	// 	cout << "err_sigma: " << err_sigma->getVal() << endl;
+	// 	cout << "exp_lambda: " << exp_lambda->getVal() << endl;
+	// }
 
-	else {
-		std::cerr << savedFitResultFileName << "does not exist!!!" << std::endl;
-	}
+	// else {
+	// 	std::cerr << savedFitResultFileName << "does not exist!!!" << std::endl;
+	// }
 
 	// /// set the initial values of the parameters to the fixed values
 	// err_mu->setVal(6.7);
 	// err_sigma->setVal(1.3);
 	// exp_lambda->setVal(30);
 
-	cout << "err_mu: " << err_mu->getVal() << endl;
-	cout << "err_sigma: " << err_sigma->getVal() << endl;
-	cout << "exp_lambda: " << exp_lambda->getVal() << endl;
+	// cout << "err_mu: " << err_mu->getVal() << endl;
+	// cout << "err_sigma: " << err_sigma->getVal() << endl;
+	// cout << "exp_lambda: " << exp_lambda->getVal() << endl;
 
 
 	if (BeVerbose) std::cout << "\nInvariant mass model exported to " << wspace.GetName() << std::endl;
