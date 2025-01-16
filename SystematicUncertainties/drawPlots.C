@@ -39,15 +39,20 @@ TPaveText* RefFrameTextPhiFolded_YieldDiff(Bool_t isCSframe = true, Float_t cosT
 }
 
 TPaveText* FitModelText(const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr") {
-    TPaveText* text = new TPaveText(0.7, 0.55, 0.9, 0.35, "NDCNB"); // on the left side
+    // TPaveText* text = new TPaveText(0.14, 0.55, 0.45, 0.35, "NDCNB"); // on the left side
     // TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB"); // on the right side
+    TPaveText* text = new TPaveText(0.7, 0.36, 0.94, 0.54, "NDCNB"); // in the middle
     text->SetFillColor(4000);
     text->SetBorderSize(0);
-    text->AddText(Form("Signal shape: %s", signalShapeName));
-    text->AddText(Form("Background shape: %s", bkgShapeName));
+    // text->AddText("Signal");
+    text->AddText(Form("%s", signalShapeName));
+    text->AddText("+");
+    // text->AddText("Background");
+    text->AddText(Form("%s", bkgShapeName));
 
     // text->SetAllWith("", "align", 12); // on the left side
-    text->SetAllWith("", "align", 32); // on the right side
+    // text->SetAllWith("", "align", 32); // on the right side
+    text->SetAllWith("", "align", 22); // in the middle
     return text;
 }
 
@@ -72,14 +77,15 @@ void drawPlots(const char* signalShapeName = "SymDSCB", const char* bkgShapeName
                 Bool_t isCSframe = false,
                 float cosThetaMin = -0.7, float cosThetaMax = -0.42, 
                 int phiMin = 0, int phiMax = 60, 
-                Long64_t nPseudoExperiments = 10) {
+                Long64_t nPseudoExperiments = 100) {
     
     writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
     const char* refFrameName = isCSframe? "CS":"HX";
 
-    const char* fileLocation = "YieldDifferencePlots_mass7to11p5_final";
+    // const char* fileLocation = "YieldDifferencePlots_mass7to11p5_final";
+    const char* fileLocation = "YieldDifferencePlots";
 
     /// open files under the each directory (/YieldDifferencePlot_mass7to11p5/signalshape_bkgShape_ptMintoMax_refFrameName_cosThetaMintoMax_phiMintoMax_n/merged_output.root)
     TFile *file = TFile::Open(Form("%s/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/merged_output.root", fileLocation, signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
