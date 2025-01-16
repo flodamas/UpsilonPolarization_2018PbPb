@@ -38,6 +38,19 @@ TPaveText* RefFrameTextPhiFolded_YieldDiff(Bool_t isCSframe = true, Float_t cosT
 	return text;
 }
 
+TPaveText* FitModelText(const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr") {
+    TPaveText* text = new TPaveText(0.7, 0.55, 0.9, 0.35, "NDCNB"); // on the left side
+    // TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB"); // on the right side
+    text->SetFillColor(4000);
+    text->SetBorderSize(0);
+    text->AddText(Form("Signal shape: %s", signalShapeName));
+    text->AddText(Form("Background shape: %s", bkgShapeName));
+
+    // text->SetAllWith("", "align", 12); // on the left side
+    text->SetAllWith("", "align", 32); // on the right side
+    return text;
+}
+
 void CustomizeStatBox(TH1D *hist, double x1 = 0.7, double x2 = 0.9, double y1 = 0.7, double y2 = 0.9) {
     if (!hist) return; // Ensure the histogram exists
 
@@ -102,6 +115,9 @@ void drawPlots(const char* signalShapeName = "SymDSCB", const char* bkgShapeName
     TPaveText *RefFrameLegendPhiFolded = RefFrameTextPhiFolded_YieldDiff(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
     RefFrameLegendPhiFolded->Draw();
 
+    TPaveText *FitModelLegend = FitModelText(signalShapeName, bkgShapeName);
+    FitModelLegend->Draw();
+    
     CustomizeStatBox(yield1SdiffHist, 0.7, 0.93, 0.73, 0.90);
 
     yield1SdiffCanvas->Update();  
