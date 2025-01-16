@@ -66,12 +66,14 @@ void drawPlots(const char* signalShapeName = "SymDSCB", const char* bkgShapeName
 
     const char* refFrameName = isCSframe? "CS":"HX";
 
+    const char* fileLocation = "YieldDifferencePlots_mass7to11p5_final";
+
     /// open files under the each directory (/YieldDifferencePlot_mass7to11p5/signalshape_bkgShape_ptMintoMax_refFrameName_cosThetaMintoMax_phiMintoMax_n/merged_output.root)
-    TFile *file = TFile::Open(Form("YieldDifferencePlots_mass7to11p5/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/merged_output.root", signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
+    TFile *file = TFile::Open(Form("%s/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/merged_output.root", fileLocation, signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
     
-    if (file) cout << "Opening file: " << Form("YieldDifferencePlots_mass7to11p5/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/merged_output.root", signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments) << endl;
+    if (file) cout << "Opening file: " << Form("%s/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/merged_output.root", fileLocation, signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments) << endl;
     else {
-        cout << "Error: Failed to open file" << Form("YieldDifferencePlots_mass7to11p5/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/merged_output.root", signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments) << "!" << endl;
+        cout << "Error: Failed to open file" << Form("%s/%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld/merged_output.root", fileLocation, signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments) << "!" << endl;
         return;
     }
 
@@ -107,14 +109,14 @@ void drawPlots(const char* signalShapeName = "SymDSCB", const char* bkgShapeName
     yield1SdiffCanvas->Update();  
 
     /// save under /YieldDifferencePlot_mass7to11p5/
-    gSystem->mkdir("YieldDifferencePlots_mass7to11p5", kTRUE);
+    gSystem->mkdir(fileLocation, kTRUE);
 
-    yield1SdiffCanvas->SaveAs(Form("YieldDifferencePlots_mass7to11p5/yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld.png", signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
+    yield1SdiffCanvas->SaveAs(Form("%s/yield1Sdiff_%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%lld.png", fileLocation, signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
 
     return;
 }
 
-void multipleDrawPlots(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr") {
+void multipleDrawPlots(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, const char* signalShapeName = "Johnson", const char* bkgShapeName = "ExpTimesErr") {
 
     Int_t nCosThetaBins = 5; 
     Double_t cosThetaMin = -0.7; 
