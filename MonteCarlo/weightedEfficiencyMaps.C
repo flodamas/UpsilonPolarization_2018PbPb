@@ -113,7 +113,9 @@ TH3D* RelSystEffHist3D(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficie
 				// store the RELATIVE SYSTEMATIC UNCERTAINTIES (not in % though) with respect to the nominal efficiency, more useful at the end
 				hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, iPtBin, (nominalEff == 0) ? 0 : finalSystEff / nominalEff);
 
-				//cout << "Efficiency in global bin " << globalBin << " = " << nominalEff << " +/- " << finalSystEff << endl;
+				// cout << "iCosTheta " << iCosThetaBin << ", iPhi " << iPhiBin << ", iPt " << iPtBin << endl; 
+				// cout << "systEffSquared = " << systEffSquared << ", statEffSquared = " << statEffSquared << endl;
+				// cout << "Efficiency in global bin " << globalBin << " = " << nominalEff << " +/- " << finalSystEff << endl;
 			}
 		}
 	}
@@ -388,6 +390,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				// passing hybrid-soft Id
 				hybridSoftMuons = (Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.) && (Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.);
 
+				/// numerator for the efficiency
 				allGood = firesTrigger && isRecoMatched && dimuonMatching && goodVertexProba && passHLTFilterMuons && trackerAndGlobalMuons && hybridSoftMuons;
 
 				// get muon coordinates
@@ -651,9 +654,9 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	gPad->Update();
 
-	//hSystHX3D->GetYaxis()->SetRangeUser(-190, 240);
+	hSystHX3D->GetYaxis()->SetRangeUser(-190, 240);
 
-	//canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX.png", gUpsilonState), "RECREATE");
+	canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX.png", gUpsilonState), "RECREATE");
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
