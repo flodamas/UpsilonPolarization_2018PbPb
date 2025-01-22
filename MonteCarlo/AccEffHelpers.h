@@ -157,7 +157,7 @@ TEfficiency* rebinTEff3DMapCosTheta(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int
 	Int_t iPtMin = hPassed->GetZaxis()->FindBin(ptMin);
 	Int_t iPtMax = hPassed->GetZaxis()->FindBin(ptMax);
 
-	std::cout << iPhiMin << " " << iPhiMax << " " << iPtMin << " " << iPtMax << std::endl;
+	// std::cout << iPhiMin << " " << iPhiMax << " " << iPtMin << " " << iPtMax << std::endl;
 
 	// obtain the projection histogram along the costheta axis within boundaries of phi and pt
 	// (option e: calculate errors, o: only bins inside the selected range will be filled)
@@ -232,7 +232,7 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 	// loop over the rebinning code along CosTheta and set the contents of the 2D map row by row
 	for (Int_t iRow = 0; iRow < nPhiBins; iRow++) {
 		TEfficiency* TEffCosTheta = rebinTEff3DMapCosTheta(TEff3DMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, (Int_t)phiBinEdges[iRow], (Int_t)phiBinEdges[iRow + 1]);
-		std::cout << "Phi: " << phiBinEdges[iRow] << " - " << phiBinEdges[iRow + 1] << std::endl;
+		// std::cout << "Phi: " << phiBinEdges[iRow] << " - " << phiBinEdges[iRow + 1] << std::endl;
 		
 		TH1D* hPassedCosTheta = (TH1D*)TEffCosTheta->GetPassedHistogram();
 		TH1D* hTotalCosTheta = (TH1D*)TEffCosTheta->GetTotalHistogram();
@@ -249,7 +249,7 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
             TEffCosThetaPhi->SetTotalEvents(iGlobalBin, totalEvents); 
             TEffCosThetaPhi->SetPassedEvents(iGlobalBin, passedEvents);  
 
-			std::cout << "CosTheta: " << binCenterCosTheta << " Phi: " << binCenterPhi << " Passed: " << passedEvents << " Total: " << totalEvents << std::endl;
+			// std::cout << "CosTheta: " << binCenterCosTheta << " Phi: " << binCenterPhi << " Passed: " << passedEvents << " Total: " << totalEvents << std::endl;
 		}
 	}
 
