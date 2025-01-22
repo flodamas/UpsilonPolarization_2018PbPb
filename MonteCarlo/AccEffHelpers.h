@@ -10,8 +10,7 @@
 TEfficiency::EStatOption gTEffStatOption = TEfficiency::EStatOption::kFCP; /*default = Clopper-Pearson as recommended by PDG*/
 
 // Define cosTheta bin edges for acceptance and efficiency 3D map grid
-std::vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins, Double_t cosThetaMin, Double_t cosThetaMax){
-
+std::vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins, Double_t cosThetaMin, Double_t cosThetaMax) {
 	std::vector<Double_t> cosThetaBinEdges = {};
 
 	// define the bin edges along the cosTheta axis depending on the number of bins
@@ -24,8 +23,7 @@ std::vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins, Double_t cosTheta
 	return cosThetaBinEdges;
 }
 
-std::vector<Double_t> setPhiBinEdges(Int_t nPhiBins, Int_t phiMin, Int_t phiMax){
-
+std::vector<Double_t> setPhiBinEdges(Int_t nPhiBins, Int_t phiMin, Int_t phiMax) {
 	std::vector<Double_t> phiBinEdges = {};
 
 	// define the bin edges along the phi axis depending on the number of bins
@@ -77,8 +75,8 @@ TEfficiency* CosThetaTEfficiency1D(const char* refFrameName = "CS", Int_t ptMin 
 }
 
 // (cos theta, phi) distribution for a given pT range
-const char* RelativeSystTEfficiency2DName(const char* refFrameName = "CS", Int_t ptMin = 0, Int_t ptMax = 30, Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
-	return Form("RelativeSyst2D%s", TEfficiencyEndName(refFrameName, ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi));
+const char* SystTEfficiency2DName(const char* refFrameName = "CS", Int_t ptMin = 0, Int_t ptMax = 30, Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
+	return Form("SystEff2D%s", TEfficiencyEndName(refFrameName, ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi));
 }
 
 const char* CosThetaPhiTEfficiency2DName(const char* refFrameName = "CS", Int_t ptMin = 0, Int_t ptMax = 30, Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
@@ -116,8 +114,8 @@ const char* NominalTEfficiency3DName(const char* refFrameName = "CS", Float_t la
 	return Form("Nominal3D%s%s_%s", refFrameName, gMuonAccName, PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
 }
 
-const char* RelativeSystTEfficiency3DName(const char* refFrameName = "CS", Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
-	return Form("RelativeSyst3D%s%s_%s", refFrameName, gMuonAccName, PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
+const char* SystTEfficiency3DName(const char* refFrameName = "CS", Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
+	return Form("SystEff3D%s%s_%s", refFrameName, gMuonAccName, PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
 }
 
 const char* TEfficiency3DAxisTitle(const char* refFrameName = "CS") {
@@ -145,7 +143,6 @@ TEfficiency* TEfficiency3D(const char* name, const char* refFrameName = "CS", in
 // rebin TEfficiency 3D maps to TEfficiency 1D cosTheta based on costheta, phi, and pT selection
 
 TEfficiency* rebinTEff3DMapCosTheta(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t phiMin = -180, Int_t phiMax = 180) {
-
 	// extract the numerator and the denominator from the 3D TEfficiency Map
 	TH3D* hPassed = (TH3D*)TEff3DMap->GetPassedHistogram();
 	TH3D* hTotal = (TH3D*)TEff3DMap->GetTotalHistogram();
@@ -185,7 +182,6 @@ TEfficiency* rebinTEff3DMapCosTheta(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int
 // rebin TEfficiency 3D maps to TEfficiency 1D phi based on costheta, phi, and pT selection
 
 TEfficiency* rebinTEff3DMapPhi(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1, Int_t nPhiBins = 10, const std::vector<Double_t>& phiBinEdges = {}) {
-
 	// extract the numerator and the denominator from the 3D TEfficiency Map
 	TH3D* hPassed = (TH3D*)TEff3DMap->GetPassedHistogram();
 	TH3D* hTotal = (TH3D*)TEff3DMap->GetTotalHistogram();
@@ -223,7 +219,6 @@ TEfficiency* rebinTEff3DMapPhi(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t pt
 // rebin TEfficiency 3D maps to TEfficiency 2D map (cosTheta, phi) based on costheta, phi, and pT selection
 
 TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 10, const std::vector<Double_t>& phiBinEdges = {}) {
-
 	// define TEfficiency that will contain cosTheta-phi 2D TEfficiency map
 	TEfficiency* TEffCosThetaPhi = new TEfficiency(TEff3DMap->GetName(), "cos #theta;#varphi; efficiency", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
 
@@ -246,8 +241,8 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 
 			Int_t iGlobalBin = TEffCosThetaPhi->FindFixBin(binCenterCosTheta, binCenterPhi);
 
-            TEffCosThetaPhi->SetTotalEvents(iGlobalBin, totalEvents); 
-            TEffCosThetaPhi->SetPassedEvents(iGlobalBin, passedEvents);  
+			TEffCosThetaPhi->SetTotalEvents(iGlobalBin, totalEvents);
+			TEffCosThetaPhi->SetPassedEvents(iGlobalBin, passedEvents);
 
 			// std::cout << "CosTheta: " << binCenterCosTheta << " Phi: " << binCenterPhi << " Passed: " << passedEvents << " Total: " << totalEvents << std::endl;
 		}
@@ -380,9 +375,8 @@ TH2D* rebinRel3DUncMap(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_
 
 // display the uncertainties signal extraction yield on each bin of 2D yield map
 
-void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6){
-
-	if(!effMap) {
+void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6) {
+	if (!effMap) {
 		std::cout << "no efficiency map found!!!" << std::endl;
 		exit(1);
 	}
@@ -486,7 +480,6 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 }
 
 void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t displayValues = kFALSE, const char* extraString = "") {
-
 	TCanvas* canvas;
 	if (isAcc)
 		canvas = new TCanvas("accCosThetaPhi", "", 680, 600);
@@ -544,8 +537,7 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	// frameHist2D->GetYaxis()->SetNdivisions(-500 - (5 + 1));
 
 	frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins) - 1);
-
+	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins)-1);
 
 	if (displayValues) displayEfficiencies(effHist, nCosThetaBins, nPhiBins);
 
