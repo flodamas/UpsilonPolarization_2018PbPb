@@ -170,8 +170,8 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
     /// calculate the total yield
     double yieldTot = yield1S->getVal() + yield2S->getVal() + yield3S->getVal() + yieldBkg->getVal();
 
-    /// radoimize the seed
-    RooRandom::randomGenerator()->SetSeed(time(0));
+    // /// radoimize the seed
+    // RooRandom::randomGenerator()->SetSeed(time(0));
 
     /// generate the pseudo-data
     // RooDataSet* pseudoData = nominalFitModel->generate(*wspace.var("mass"), NumEvents(yieldTot));
@@ -204,7 +204,7 @@ RooDataSet* generatePseudoData(Int_t ptMin = 2, Int_t ptMax = 6, Bool_t isCSfram
 
     // Generated events in range
     std::cout << "Generated Events in Range: " 
-              << pseudoData->sumEntries("mass > 6.5 && mass < 14.5") << std::endl;
+              << pseudoData->sumEntries("mass > 7. && mass < 11.5") << std::endl;
 
     // Draw the frame
     frame->Draw();
@@ -304,6 +304,14 @@ void pseudoExperiment(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALS
 
         RooAddPdf invMassModel = *((RooAddPdf*)wspace.pdf("invMassModel"));
         invMassModel.setNormRange("MassFitRange");
+
+        RooRealVar* err_mu = (RooRealVar*)wspace.var("err_mu");
+        RooRealVar* err_sigma = (RooRealVar*)wspace.var("err_sigma");
+        RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
+
+    	cout << "err_mu: " << err_mu->getVal() << endl;
+	    cout << "err_sigma: " << err_sigma->getVal() << endl;
+	    cout << "exp_lambda: " << exp_lambda->getVal() << endl;
 
         /// fit the pseudo-data with the alternative signal and background shapes
         fitResult = RawInvariantMassFit(wspace, *pseudoDataset);
