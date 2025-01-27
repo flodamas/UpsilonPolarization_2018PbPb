@@ -30,6 +30,7 @@ TH2D* SystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency* 
 	for (int iCosThetaBin = 1; iCosThetaBin <= hTotalSyst->GetNbinsX(); iCosThetaBin++) {
 		for (int iPhiBin = 1; iPhiBin <= hTotalSyst->GetNbinsY(); iPhiBin++) {
 			globalBin = hNominal->GetGlobalBin(iCosThetaBin, iPhiBin); // to run though the efficiency maps
+			// cout << "globalBin: " << globalBin << endl;
 
 			nominalEff = hNominal->GetEfficiency(globalBin);
 
@@ -58,8 +59,10 @@ TH2D* SystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency* 
 			finalSystEff = sqrt(systEffSquared + statEffSquared);
 
 			// store the nominal efficiency value + its uncertainty
-			hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, nominalEff + finalSystEff);
-
+			// hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, nominalEff + finalSystEff);
+			// hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, finalSystEff / nominalEff);
+			hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, finalSystEff);
+			
 			//cout << "Efficiency in global bin " << globalBin << " = " << nominalEff << " +/- " << finalSystEff << endl;
 		}
 	}
@@ -111,11 +114,16 @@ TH3D* SystEffHist3D(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency
 				finalSystEff = sqrt(systEffSquared + statEffSquared);
 
 				// store the nominal efficiency value + its uncertainty
-				hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, iPtBin, nominalEff + finalSystEff);
+				// hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, iPtBin, nominalEff + finalSystEff);
+				// hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, iPtBin, finalSystEff / nominalEff);
+				hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, iPtBin, finalSystEff);
 
 				// cout << "iCosTheta " << iCosThetaBin << ", iPhi " << iPhiBin << ", iPt " << iPtBin << endl; 
 				// cout << "systEffSquared = " << systEffSquared << ", statEffSquared = " << statEffSquared << endl;
 				// cout << "Efficiency in global bin " << globalBin << " = " << nominalEff << " +/- " << finalSystEff << endl;
+
+				// cout << hNominal->GetPassedHistogram()->GetBinContent(iCosThetaBin, iPhiBin, iPtBin) << endl;
+				// cout << hNominal->GetTotalHistogram()->GetBinContent(iCosThetaBin, iPhiBin, iPtBin) << endl;
 			}
 		}
 	}
@@ -238,7 +246,6 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	/// (cos theta, phi, pT) 3D distribution maps for CS and HX frames
 
 	// Collins-Soper
-
 	TEfficiency* hNominalEffCS = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
 
 	TEfficiency* hCS_trk_systUp = TEfficiency3D(Form("hCS_trk_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
@@ -255,6 +262,9 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	TEfficiency* hCS_trig_systDown = TEfficiency3D(Form("hCS_trig_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
 	TEfficiency* hCS_trig_statUp = TEfficiency3D(Form("hCS_trig_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
 	TEfficiency* hCS_trig_statDown = TEfficiency3D(Form("hCS_trig_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+
+	TEfficiency* hCS_total_systUp = TEfficiency3D(Form("hCS_total_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_total_systDown = TEfficiency3D(Form("hCS_total_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
 
 	// Helicity
 	TEfficiency* hNominalEffHX = TEfficiency3D(NominalTEfficiency3DName("HX", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
@@ -273,6 +283,9 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	TEfficiency* hHX_trig_systDown = TEfficiency3D(Form("hHX_trig_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
 	TEfficiency* hHX_trig_statUp = TEfficiency3D(Form("hHX_trig_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
 	TEfficiency* hHX_trig_statDown = TEfficiency3D(Form("hHX_trig_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+
+	TEfficiency* hHX_total_systUp = TEfficiency3D(Form("hHX_total_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_total_systDown = TEfficiency3D(Form("hHX_total_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
 
 	// (cos theta, phi) for the given pt range
 	TEfficiency* hEffCS2D = CosThetaPhiTEfficiency2D("CS", ptMin, ptMax, iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
@@ -298,6 +311,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	double dimuWeight_trk_systUp, dimuWeight_trk_systDown, dimuWeight_trk_statUp, dimuWeight_trk_statDown;
 	double dimuWeight_muId_systUp, dimuWeight_muId_systDown, dimuWeight_muId_statUp, dimuWeight_muId_statDown;
 	double dimuWeight_trig_systUp, dimuWeight_trig_systDown, dimuWeight_trig_statUp, dimuWeight_trig_statDown;
+	double dimuWeight_total_systUp, dimuWeight_total_systDown;
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
@@ -403,13 +417,13 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 				TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
 				double cosThetaCS = muPlus_CS.CosTheta();
-				// double phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
-				double phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
+				double phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
+				// double phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
 
 				TVector3 muPlus_HX = MuPlusVector_Helicity(*recoLorentzVector, *Reco_mupl_LV);
 				double cosThetaHX = muPlus_HX.CosTheta();
-				// double phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
-				double phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
+				double phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
+				// double phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
 
 				/// muon scale factors
 
@@ -460,11 +474,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				// dimuon efficiency weight = product of the total scale factors
 				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
-				// weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * fabs(muPlus_CS.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(fabs(muPlus_CS.Phi()));
-				// weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
+				weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * fabs(muPlus_CS.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(fabs(muPlus_CS.Phi()));
+				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
 
-				weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
-				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+				// weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
+				// weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
@@ -587,6 +601,54 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trig_statDown * weightHX;
 				hCS_trig_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
 				hHX_trig_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				
+				// track + muID + trigger, syst up
+				dimuWeight_total_systUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexSystUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexSystUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexSystUp) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexSystUp) * dimuTrigWeight_systUp;
+
+				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_total_systUp * weightCS;
+				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_total_systUp * weightHX;
+				hCS_total_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
+				hHX_total_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+
+				// track + muID + trigger, syst down
+				dimuWeight_total_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexSystDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexSystDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexSystDown) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexSystDown) * dimuTrigWeight_systDown;
+
+				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_total_systDown * weightCS;
+				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_total_systDown * weightHX;
+				hCS_total_systDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
+				hHX_total_systDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+
+				TH3D* hPassed = (TH3D*)hNominalEffCS->GetPassedHistogram();
+
+				Int_t iCosThetaBin = hPassed->GetXaxis()->FindBin(cosThetaCS);
+				Int_t iPhiBin = hPassed->GetYaxis()->FindBin(phiCS);
+				Int_t iPtBin = hPassed->GetZaxis()->FindBin(reco_QQ_pt);
+
+				int globalBin = hNominalEffCS->GetGlobalBin(iCosThetaBin, iPhiBin, iPtBin);
+
+				// cout << "Event " << iEvent << endl;
+				// cout << iCosThetaBin << " " << iPhiBin << " " << iPtBin << " " << globalBin << endl;
+				// cout << "CosTheta: " << cosThetaCS << ", " << "Phi: " << phiCS << ", " << "pT: " << reco_QQ_pt << endl;
+				// cout << "weightCS: " << totalWeightCS << endl;
+
+				// cout << "Nominal efficiency: " << hNominalEffCS->GetEfficiency(globalBin) << endl;
+				
+				// cout << "Trk Syst up efficiency: " << hCS_trk_systUp->GetEfficiency(globalBin) << endl;
+				// cout << "Trk Syst down efficiency: " << hCS_trk_systDown->GetEfficiency(globalBin) << endl;
+				// cout << "Trk Stat up efficiency: " << hCS_trk_statUp->GetEfficiency(globalBin) << endl;
+				// cout << "Trk Stat down efficiency: " << hCS_trk_statDown->GetEfficiency(globalBin) << endl;
+				
+				// cout << "Trigger Syst up efficiency: " << hCS_trig_statDown->GetEfficiency(globalBin) << endl;
+				// cout << "Trigger Syst down efficiency: " << hCS_trig_statDown->GetEfficiency(globalBin) << endl;
+				// cout << "Trigger Stat up efficiency: " << hCS_trig_statUp->GetEfficiency(globalBin) << endl;
+				// cout << "Trigger Stat down efficiency: " << hCS_trig_statDown->GetEfficiency(globalBin) << endl;
+				
+				// cout << "MuId Syst up efficiency: " << hCS_muId_systUp->GetEfficiency(globalBin) << endl;
+				// cout << "MuId Syst down efficiency: " << hCS_muId_systDown->GetEfficiency(globalBin) << endl;
+				// cout << "MuId Stat up efficiency: " << hCS_muId_statUp->GetEfficiency(globalBin) << endl;
+				// cout << "MuId Stat down efficiency: " << hCS_muId_statDown->GetEfficiency(globalBin) << endl;
+
+				// cout << endl;
 			}
 		} // end of gen upsilon loop
 	}
@@ -631,9 +693,9 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	gPad->Update();
 
-	//hSystCS3D->GetYaxis()->SetRangeUser(-190, 240);
+	hSystCS3D->GetYaxis()->SetRangeUser(-190, 240);
 
-	//canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS.png", gUpsilonState), "RECREATE");
+	canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS.png", gUpsilonState), "RECREATE");
 
 	// HelicityTEfficiency
 	auto* hSystHX2D = SystEffHist(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown);
@@ -665,6 +727,24 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	hNominalEffHX->Write();
 	hSystCS3D->Write();
 	hSystHX3D->Write();
+
+	hCS_trk_systUp->Write();
+	hCS_trk_systDown->Write();
+	hCS_muId_systUp->Write();
+	hCS_muId_systDown->Write();
+	hCS_trig_systUp->Write();
+	hCS_trig_systDown->Write();
+	hCS_total_systUp->Write();
+	hCS_total_systDown->Write();
+	
+	hHX_trk_systUp->Write();
+	hHX_trk_systDown->Write();
+	hHX_muId_systUp->Write();
+	hHX_muId_systDown->Write();
+	hHX_trig_systUp->Write();
+	hHX_trig_systDown->Write();
+	hHX_total_systUp->Write();
+	hHX_total_systDown->Write();
 
 	hSystHX2D->Write();
 

@@ -130,10 +130,17 @@ TEfficiency* TEfficiency3D(const char* name, const char* refFrameName = "CS", in
 	Int_t nCosThetaUltraFineBinning = 200; // cosTheta bin width: 0.01
 	Int_t nPhiUltraFineBinning = 360;      // phi bin width: 1 degree
 
+	// Int_t nCosThetaUltraFineBinning = 4; // cosTheta bin width: 0.01
+	// Int_t nPhiUltraFineBinning = 2;      // phi bin width: 1 degree
+
 	std::vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaUltraFineBinning, gCosThetaMin, gCosThetaMax);
 	std::vector<Double_t> phiBinEdges = setPhiBinEdges(nPhiUltraFineBinning, gPhiMin, gPhiMax);
 
+	// std::vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(5, -0.7, 0.7);
+	// std::vector<Double_t> phiBinEdges = setPhiBinEdges(3, 0, 180);
+
 	TEfficiency* tEff = new TEfficiency(name, TEfficiency3DTitle(refFrameName, iState), nCosThetaUltraFineBinning, cosThetaBinEdges.data(), nPhiUltraFineBinning, phiBinEdges.data(), NPtFineBins, gPtFineBinning); // variable size binning for the stats
+	// TEfficiency* tEff = new TEfficiency(name, TEfficiency3DTitle(refFrameName, iState), 5, cosThetaBinEdges.data(), 3, phiBinEdges.data(), NPtBins, gPtBinning); // variable size binning for the stats
 
 	tEff->SetStatisticOption(gTEffStatOption);
 
@@ -155,6 +162,19 @@ TEfficiency* rebinTEff3DMapCosTheta(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int
 	Int_t iPtMax = hPassed->GetZaxis()->FindBin(ptMax);
 
 	// std::cout << iPhiMin << " " << iPhiMax << " " << iPtMin << " " << iPtMax << std::endl;
+	// cout << "hPassed->GetXaxis()->GetNbins() = " << hPassed->GetXaxis()->GetNbins() << endl;
+	// cout << "hPassed->GetYaxis()->GetNbins() = " << hPassed->GetYaxis()->GetNbins() << endl;
+	// cout << "hPassed->GetZaxis()->GetNbins() = " << hPassed->GetZaxis()->GetNbins() << endl;
+	
+	// cout << "hPassed->GetBinContent(1, 1, 2) = " << hPassed->GetBinContent(1, 1, 2) << endl;
+	// cout << "hPassed->GetBinContent(1, 2, 2) = " << hPassed->GetBinContent(1, 2, 2) << endl;
+	// cout << "hPassed->GetBinContent(2, 1, 2) = " << hPassed->GetBinContent(2, 1, 2) << endl;
+	// cout << "hPassed->GetBinContent(2, 2, 2) = " << hPassed->GetBinContent(2, 2, 2) << endl;
+
+	// cout << "hTotal->GetBinContent(1, 1, 2) = " << hTotal->GetBinContent(1, 1, 2) << endl;
+	// cout << "hTotal->GetBinContent(1, 2, 2) = " << hTotal->GetBinContent(1, 2, 2) << endl;
+	// cout << "hTotal->GetBinContent(2, 1, 2) = " << hTotal->GetBinContent(2, 1, 2) << endl;
+	// cout << "hTotal->GetBinContent(2, 2, 2) = " << hTotal->GetBinContent(2, 2, 2) << endl;
 
 	// obtain the projection histogram along the costheta axis within boundaries of phi and pt
 	// (option e: calculate errors, o: only bins inside the selected range will be filled)
@@ -286,16 +306,21 @@ TH1D* rebinRel3DUncCosTheta(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0,
 				for (int iPt = iPtMin; iPt <= iPtMax; iPt++) {
 					Int_t globalBin = effMap->GetGlobalBin(iCosTheta, iPhi, iPt);
 
-					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt) * effMap->GetEfficiency(globalBin));
+					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt) /* effMap->GetEfficiency(globalBin)*/);
+					// cout << "systEff->GetBinContent(" << iCosTheta << ", " << iPhi << ", " << iPt << ") = " << systEff->GetBinContent(iCosTheta, iPhi, iPt) * effMap->GetEfficiency(globalBin) << endl;
+					// cout << "ptSumSystEff = " << ptSumSystEff << endl;
 				}
 
 				phiSumSystEff = TMath::Hypot(phiSumSystEff, ptSumSystEff);
+				// cout << "phiSumSystEff = " << phiSumSystEff << endl;
 			}
 
 			cosThetaSumSystEff = TMath::Hypot(cosThetaSumSystEff, phiSumSystEff);
+			// cout << "cosThetaSumSystEff = " << cosThetaSumSystEff << endl;
 		}
 
 		h1DSystEffCosTheta->SetBinContent(ibin, cosThetaSumSystEff);
+		// cout << "ibin = " << ibin << " cosThetaSumSystEff = " << cosThetaSumSystEff << endl;
 	}
 
 	return h1DSystEffCosTheta;
@@ -336,7 +361,7 @@ TH1D* rebinRel3DUncPhi(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_
 				for (int iPt = iPtMin; iPt <= iPtMax; iPt++) {
 					Int_t globalBin = effMap->GetGlobalBin(iCosTheta, iPhi, iPt);
 
-					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt) * effMap->GetEfficiency(globalBin));
+					ptSumSystEff = TMath::Hypot(ptSumSystEff, systEff->GetBinContent(iCosTheta, iPhi, iPt) /* effMap->GetEfficiency(globalBin)*/);
 				}
 
 				cosThetaSumSystEff = TMath::Hypot(cosThetaSumSystEff, ptSumSystEff);
@@ -367,6 +392,7 @@ TH2D* rebinRel3DUncMap(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_
 
 		for (int iCosTheta = 1; iCosTheta <= nCosThetaBins; iCosTheta++) {
 			h2DSystEffMap->SetBinContent(iCosTheta, iPhi, h1DSystEffCosTheta->GetBinContent(iCosTheta));
+			// cout << "iCosTheta = " << iCosTheta << " iPhi = " << iPhi << " h1DSystEffCosTheta->GetBinContent(iCosTheta) = " << h1DSystEffCosTheta->GetBinContent(iCosTheta) << endl;
 		}
 	}
 
