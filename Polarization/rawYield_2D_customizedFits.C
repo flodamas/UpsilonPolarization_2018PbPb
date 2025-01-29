@@ -349,10 +349,10 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 		double lambdaTildeVal = (lambdaThetaVal + 3. * lambdaPhiVal) / (1. - lambdaPhiVal);
 		double lambdaTildeErr = TMath::Hypot(1. / (1. - lambdaPhiVal) * lambdaPhiErr, (3. - lambdaThetaVal - 6. * lambdaPhiVal) / TMath::Power((1. - lambdaPhiVal), 2) * lambdaPhiErr);
 
-		RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.2, 1.2);
-		RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.2, 1.2);
-		RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1.2, 1.2);
-		RooRealVar lambdaTilde("lambdaTilde", "lambdaTilde", -1.2, 1.2);
+		RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -2., 2.);
+		RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -2., 2.);
+		RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -2., 2.);
+		RooRealVar lambdaTilde("lambdaTilde", "lambdaTilde", -2., 2.);
 
 		lambdaTheta.setVal(lambdaThetaVal);
 		lambdaTheta.setError(lambdaThetaErr);
@@ -535,7 +535,7 @@ void scanRawYield_2D_customizedFits(const char* refFrameName = "CS") {
 	for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
             for (Int_t idx = 0; idx < 2; idx++) {
                 if (idx == 0) rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr"); // 2D plot
-                else rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr"); // LEGO plot
+                else rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr"); // LEGO plot + fit
                 // if (idx == 0) rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr", chooseYield);
                 // else rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr", chooseYield);
             }
