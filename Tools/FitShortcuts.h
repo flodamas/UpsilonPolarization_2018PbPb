@@ -547,16 +547,17 @@ RooFitResult* GetFitResults(const char* totalFitModelName, const char* extraStri
 	return fitResults;
 }
 
-RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooRealVar* lambdaThetaPhi, RooRealVar* lambdaTilde, const char* methodName, const char* modelName, const char* extraString = "") {
+RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooRealVar* lambdaThetaPhi, RooRealVar* lambdaTilde, const char* methodName, const char* modelName, const char* extraString = "", bool verbose = true) {
 	RooArgSet polarParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
 
 	char paramsFileName[512];
 	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s_%s.txt", methodName, modelName, extraString);
 
-	cout << paramsFileName << endl;
+	if (vervose == true) {cout << paramsFileName << endl;}
 	if (fopen(paramsFileName, "r")) {
-		cout << endl
-		     << "Found" << paramsFileName << " file, will read polarization parameters from it" << endl;
+		if (verbose == true) {cout << endl
+		     				<< "Found" << paramsFileName << " file, will read polarization parameters from it" << endl;
+		}
 		polarParams.readFromFile(paramsFileName);
 	} else {
 		cout << endl
@@ -564,9 +565,10 @@ RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooReal
 		exit(1);
 	}
 
-	cout << endl
-	     << "Polarization parameter values:" << endl;
-	polarParams.Print("v");
+	if (verbose == true) {cout << endl
+	     	<< "Polarization parameter values:" << endl;
+			polarParams.Print("v");
+	}
 
 	return polarParams;
 }
