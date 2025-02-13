@@ -245,7 +245,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->Draw("LEGO E");
 
 		mapCosThetaPhi->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-		mapCosThetaPhi->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
+		mapCosThetaPhi->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
 		mapCosThetaPhi->SetZTitle(Form("Corrected #varUpsilon(%dS) Yields", iState));
 
 		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
@@ -273,7 +273,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->Draw("SAME COLZ");
 
 		frameHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-		frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
+		frameHist->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
 
 		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
 		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
