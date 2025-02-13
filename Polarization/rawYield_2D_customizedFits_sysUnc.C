@@ -82,7 +82,7 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
     /// Read accepatance and efficiecy files for correction
 	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
 
-    // polarization weight of the acceptance and efficiency maps (for now all 0)
+    /// polarization weight of the acceptance and efficiency maps (for now all 0)
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
 
 	/// get acceptance maps
@@ -107,10 +107,14 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
     auto* totalSysDownMap = (TEfficiency*)efficiencyFile->Get(Form("h%s_total_systDown_LambdaTheta%.2fPhi%.2fThetaPhi%.2f", refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
 	/// rebin efficiency maps based on costheta, phi, and pT selection
+	cout << "rebinning nominal efficiency map" << endl;
 	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
+	cout << "rebinning trkSysUp efficiency map" << endl;
     TEfficiency* trkSysUpCosThetaPhi = rebinTEff3DMap(trkSysUpMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
-    TEfficiency* trkSysDownCosThetaPhi = rebinTEff3DMap(trkSysDownMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
+    
+	cout << "rebinning trkSysDown efficiency map" << endl;
+	TEfficiency* trkSysDownCosThetaPhi = rebinTEff3DMap(trkSysDownMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
     TEfficiency* muIDSysUpCosThetaPhi = rebinTEff3DMap(muIDSysUpMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
     TEfficiency* muIDSysDownCosThetaPhi = rebinTEff3DMap(muIDSysDownMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
     TEfficiency* trigSysUpCosThetaPhi = rebinTEff3DMap(trigSysUpMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
@@ -149,20 +153,20 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
     DrawEfficiency2DHist(totalSysUpCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kTRUE);
     DrawEfficiency2DHist(totalSysDownCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kTRUE);
 
-    // get the total histogram of the acceptance map for the binning in the loop below
+    /// get the total histogram of the acceptance map for the binning in the loop below
 	TH2D* hTotalCosThetaPhi = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
 
-	// define a histogram to draw weight map
+	/// define a histogram to draw weight map
 	TH2D* weightMap = new TH2D("weightMap", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
 
-	// define histograms to draw uncertainty plots
+	/// define histograms to draw uncertainty plots
 	TH2D* relSystEffCosThetaPhi = new TH2D("relSystEffCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
-	// TH2D* statHighEffCosThetaPhi = new TH2D("statHighEffCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
-	// TH2D* statLowEffCosThetaPhi = new TH2D("statLowEffCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
-	// TH2D* statHighAccCosThetaPhi = new TH2D("statHighAccCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
-	// TH2D* statLowAccCosThetaPhi = new TH2D("statLowAccCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
-	// TH2D* yield1SUncCosThetaPhi = new TH2D("yield1SUncCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
-	// TH2D* totalRelUncCosThetaPhi = new TH2D("totalRelUncCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
+	TH2D* statHighEffCosThetaPhi = new TH2D("statHighEffCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
+	TH2D* statLowEffCosThetaPhi = new TH2D("statLowEffCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
+	TH2D* statHighAccCosThetaPhi = new TH2D("statHighAccCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
+	TH2D* statLowAccCosThetaPhi = new TH2D("statLowAccCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
+	TH2D* yield1SUncCosThetaPhi = new TH2D("yield1SUncCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
+	TH2D* totalRelUncCosThetaPhi = new TH2D("totalRelUncCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
 
 	TH2D* yield1SSysUncCosThetaPhi = new TH2D("yield1SSysUncCosThetaPhi", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
 
@@ -213,6 +217,8 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
 				weight = 0.;
 			else
 				weight = 1. / (acceptance * efficiency);
+			
+			cout << "weight: " << weight << endl;
 
             /// fill the weight map
 			weightMap->SetBinContent(iCosTheta + 1, iPhi + 1, weight);
@@ -262,9 +268,9 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
 
             /// shift the yield value based on the pseudo-experiment model
 			if (chooseYield == 0) yield1SVal = (yield1S->getVal());
-            else if (chooseYield == 1) {yield1SVal = (yield1S->getVal()) + yieldDiffMean_nominal; pseudoExpModelName = "nominal";}
-            else if (chooseYield == 2) {yield1SVal = (yield1S->getVal()) + yieldDiffMean_altBkg; pseudoExpModelName = "altBkg";}
-            else if (chooseYield == 3) {yield1SVal = (yield1S->getVal()) + yieldDiffMean_altSig; pseudoExpModelName = "altSig";}
+            else if (chooseYield == 1) {yield1SVal = (yield1S->getVal()) - yieldDiffMean_nominal; pseudoExpModelName = "nominal";}
+            else if (chooseYield == 2) {yield1SVal = (yield1S->getVal()) - yieldDiffMean_altBkg; pseudoExpModelName = "altBkg";}
+            else if (chooseYield == 3) {yield1SVal = (yield1S->getVal()) - yieldDiffMean_altSig; pseudoExpModelName = "altSig";}
             // cout << "yield1SVal: " << yield1SVal << endl;
 
             /// get the yield uncertainty
@@ -327,7 +333,7 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
 
 	display2DMapContents(weightMap, nCosThetaBins, nPhiBins, kFALSE);
 
-	TPaveText* kinematicsText = new TPaveText(0.14, 0.84, 0.81, 0.93, "NDCNB");
+	TPaveText* kinematicsText = new TPaveText(0.15, 0.86, 0.77, 0.95, "NDCNB");
 	kinematicsText->SetFillColor(4000);
 	kinematicsText->SetBorderSize(0);
 	kinematicsText->AddText(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
@@ -349,9 +355,18 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
 
 	// yieldCanvas->SetLogz(); // useful when the one of the bins has an exceptionally high value :')
 
-	if (!LEGOplot) display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE);
+	TPaveText* kinematicsText_2D = new TPaveText(0.17, 0.78, 0.79, 0.88, "NDCNB");
+	kinematicsText_2D ->SetFillColor(4000);
+	kinematicsText_2D ->SetBorderSize(0);
+	kinematicsText_2D ->AddText(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
+	kinematicsText_2D ->SetAllWith("", "align", 12);
 
-	kinematicsText->Draw("SAME");
+	if (LEGOplot) kinematicsText->Draw("SAME");
+
+	else if (!LEGOplot) {
+		display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE);
+		kinematicsText_2D ->Draw("SAME");
+	}
 
 	yieldCanvas->Modified();
 	yieldCanvas->Update();
@@ -361,16 +376,31 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
 	TCanvas* correctedMapCanvas = draw2DMap(standardCorrectedMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, LEGOplot);
 
 	standardCorrectedMap->GetZaxis()->SetTitle("Corrected #varUpsilon(1S) Yields");
-	if (!LEGOplot) standardCorrectedMap->GetZaxis()->SetTitleOffset(1.1);
+	standardCorrectedMap->GetZaxis()->SetTitleSize(0.055);
+	standardCorrectedMap->GetZaxis()->SetTitleOffset(1.4);
+	standardCorrectedMap->GetZaxis()->SetLabelSize(0.044);
+	
+	standardCorrectedMap->GetYaxis()->SetTitleSize(0.055);
+	standardCorrectedMap->GetYaxis()->SetTitleOffset(1.6);
+	standardCorrectedMap->GetYaxis()->SetLabelSize(0.044);
+	standardCorrectedMap->GetYaxis()->SetLabelOffset(0);
+
+	standardCorrectedMap->GetXaxis()->SetTitleSize(0.055);	
+	standardCorrectedMap->GetXaxis()->SetTitleOffset(1.2);
+	standardCorrectedMap->GetXaxis()->SetLabelSize(0.044);
+
+	if (!LEGOplot) standardCorrectedMap->GetZaxis()->SetTitleOffset(1.2);
 
 	standardCorrectedMap->GetZaxis()->SetRangeUser(0, maxYield * 2);
 
 	// standardCorrectedMap->SetMinimum(0);
 
-	if (!LEGOplot) display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kTRUE);
+	if (LEGOplot) kinematicsText->Draw("SAME");
 
-	kinematicsText->Draw("SAME");
-
+	else if (!LEGOplot) {
+		display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kTRUE);
+		kinematicsText_2D->Draw("SAME");
+	}
 	/// Polarization fit!!!
 
 	TF2* polarFunc2D = getGeneralPolarFunc(maxYield);
@@ -398,10 +428,10 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
 		double lambdaTildeVal = (lambdaThetaVal + 3. * lambdaPhiVal) / (1. - lambdaPhiVal);
 		double lambdaTildeErr = TMath::Hypot(1. / (1. - lambdaPhiVal) * lambdaPhiErr, (3. - lambdaThetaVal - 6. * lambdaPhiVal) / TMath::Power((1. - lambdaPhiVal), 2) * lambdaPhiErr);
 
-		RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -1.2, 1.2);
-		RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -1.2, 1.2);
-		RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -1.2, 1.2);
-		RooRealVar lambdaTilde("lambdaTilde", "lambdaTilde", -1.2, 1.2);
+		RooRealVar lambdaTheta("lambdaTheta", "lambdaTheta", -3., 3.);
+		RooRealVar lambdaPhi("lambdaPhi", "lambdaPhi", -3., 3.);
+		RooRealVar lambdaThetaPhi("lambdaThetaPhi", "lambdaThetaPhi", -3., 3.);
+		RooRealVar lambdaTilde("lambdaTilde", "lambdaTilde", -3., 3.);
 
 		lambdaTheta.setVal(lambdaThetaVal);
 		lambdaTheta.setError(lambdaThetaErr);
@@ -421,206 +451,240 @@ void rawYield_2D_customizedFits_sysUnc(Int_t ptMin = 0, Int_t ptMax = 2, const c
 
 		SavePolarizationFitParameters(savedParams, Form("rootFit_SysFitModels_%s_%s", pseudoExpModelName, efficiencyName), fitModelName, defaultBkgShapeName);
 
-		TLegend legend2(.17, .55, .28, .84);
-		legend2.SetTextSize(.05);
+		// TLegend legend2(.17, .55, .28, .84);
+		// legend2.SetTextSize(.05);
+		// legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
+		// legend2.AddEntry(polarFunc2D, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr), "l");
+		// legend2.AddEntry((TObject*)0, Form("                       #lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr), "");
+		// legend2.AddEntry((TObject*)0, Form("                       #lambda_{#theta#varphi} = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr), "");
+		// legend2.AddEntry((TObject*)0, Form("                       #tilde{#lambda} = %.2f #pm %.2f", lambdaTildeVal, lambdaTildeErr), "");
+		// legend2.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
+
+		// legend2.DrawClone();
+
+		TLegend legend2(.17, .76, .23, .87);
+		legend2.SetTextSize(.045);
+		legend2.SetFillColor(0);
+		legend2.SetFillStyle(1001);
+
 		legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
-		legend2.AddEntry(polarFunc2D, Form("distribution fit: #lambda_{#theta} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr), "l");
-		legend2.AddEntry((TObject*)0, Form("                       #lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr), "");
-		legend2.AddEntry((TObject*)0, Form("                       #lambda_{#theta#varphi} = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr), "");
-		legend2.AddEntry((TObject*)0, Form("                       #tilde{#lambda} = %.2f #pm %.2f", lambdaTildeVal, lambdaTildeErr), "");
-		legend2.AddEntry((TObject*)0, Form("                       n  = %.2f #pm %.2f", normVal, normErr), "");
+		// legend2.AddEntry(polarFunc2D, Form("fit: #lambda_{#theta}  = %.2f #pm %.2f    #lambda_{#varphi} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr, lambdaPhiVal, lambdaPhiErr), "l");
+		// legend2.AddEntry((TObject*)0, Form("     #lambda_{#theta#varphi} = %.2f #pm %.2f  #tilde{#lambda}  = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr, lambdaTildeVal, lambdaTildeErr), "");
+		legend2.AddEntry(polarFunc2D, "fit: ", "l");
 
 		legend2.DrawClone();
+
+		TPaveText *resultTextRight = new TPaveText(0.23, 0.70, 0.60, 0.81, "NDC"); // Adjust coordinates
+		resultTextRight->SetFillColor(0);   // White background
+		resultTextRight->SetFillStyle(1001); // Solid fill
+		resultTextRight->SetBorderSize(0);  // Optional: Thin border
+		resultTextRight->SetTextSize(0.045);
+		resultTextRight->SetTextAlign(12);  // Align text left
+		resultTextRight->SetMargin(0.03);
+		resultTextRight->AddText(Form("#lambda_{#theta}  = %.2f #pm %.2f ", lambdaThetaVal, lambdaThetaErr));
+		resultTextRight->AddText(Form("#lambda_{#theta#varphi} = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr));
+		resultTextRight->Draw();
+
+		TPaveText *resultTextLeft = new TPaveText(0.52, 0.72, 0.78, 0.805, "NDC"); // Adjust coordinates
+		resultTextLeft->SetFillColor(0);   // White background
+		resultTextLeft->SetFillStyle(1001); // Solid fill
+		resultTextLeft->SetBorderSize(0);  // Optional: Thin border
+		resultTextLeft->SetTextSize(0.045);
+		resultTextLeft->SetTextAlign(12);  // Align text left
+		resultTextLeft->SetMargin(0.03);
+		resultTextLeft->AddText(Form("#lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr));
+		resultTextLeft->AddText(Form("#tilde{#lambda}  = %.2f #pm %.2f", lambdaTildeVal, lambdaTildeErr));
+		resultTextLeft->Draw();
 
 		TLatex textChi2;
 		textChi2.SetTextAlign(12);
 		textChi2.SetTextSize(0.045);
-		textChi2.DrawLatexNDC(0.74, 0.044, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
+		textChi2.DrawLatexNDC(0.70, 0.043, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
 	}
 
 	gPad->Update();
 
-	// /// draw uncertainty 2D plots
+	// // /// draw uncertainty 2D plots
 
-	// // statistical uncertainty of acceptance up
-	// TCanvas* statHighAccCanvas = draw2DMap(statHighAccCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	// // // statistical uncertainty of acceptance up
+	// // TCanvas* statHighAccCanvas = draw2DMap(statHighAccCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
-	// statHighAccCosThetaPhi->GetZaxis()->SetTitle("stat uncer high of acceptance");
-	// statHighAccCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+	// // statHighAccCosThetaPhi->GetZaxis()->SetTitle("stat uncer high of acceptance");
+	// // statHighAccCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	// kinematicsText->Draw("SAME");
+	// // kinematicsText->Draw("SAME");
 
-	// display2DMapContents(statHighAccCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+	// // display2DMapContents(statHighAccCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
-	// statHighAccCanvas->Modified();
-	// statHighAccCanvas->Update();
+	// // statHighAccCanvas->Modified();
+	// // statHighAccCanvas->Update();
 
-	// // statistical uncertainty of acceptance down
-	// TCanvas* statLowAccCanvas = draw2DMap(statLowAccCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	// // // statistical uncertainty of acceptance down
+	// // TCanvas* statLowAccCanvas = draw2DMap(statLowAccCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
-	// statLowAccCosThetaPhi->GetZaxis()->SetTitle("stat uncer low of acceptance");
-	// statLowAccCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+	// // statLowAccCosThetaPhi->GetZaxis()->SetTitle("stat uncer low of acceptance");
+	// // statLowAccCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	// kinematicsText->Draw("SAME");
+	// // kinematicsText->Draw("SAME");
 
-	// display2DMapContents(statLowAccCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+	// // display2DMapContents(statLowAccCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
-	// statLowAccCanvas->Modified();
-	// statLowAccCanvas->Update();
+	// // statLowAccCanvas->Modified();
+	// // statLowAccCanvas->Update();
 
-	// // statistical uncertainty of efficiency up
-	// TCanvas* statHighEffCanvas = draw2DMap(statHighEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	// // // statistical uncertainty of efficiency up
+	// // TCanvas* statHighEffCanvas = draw2DMap(statHighEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
-	// statHighEffCosThetaPhi->GetZaxis()->SetTitle("stat uncer high of efficiency");
-	// statHighEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+	// // statHighEffCosThetaPhi->GetZaxis()->SetTitle("stat uncer high of efficiency");
+	// // statHighEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	// kinematicsText->Draw("SAME");
+	// // kinematicsText->Draw("SAME");
 
-	// display2DMapContents(statHighEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+	// // display2DMapContents(statHighEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
-	// statHighEffCanvas->Modified();
-	// statHighEffCanvas->Update();
+	// // statHighEffCanvas->Modified();
+	// // statHighEffCanvas->Update();
 
-	// /// statistical uncertainty of efficiency down
-	// TCanvas* statLowEffCanvas = draw2DMap(statLowEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	// // /// statistical uncertainty of efficiency down
+	// // TCanvas* statLowEffCanvas = draw2DMap(statLowEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
-	// statLowEffCosThetaPhi->GetZaxis()->SetTitle("stat uncer low of efficiency");
-	// statLowEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+	// // statLowEffCosThetaPhi->GetZaxis()->SetTitle("stat uncer low of efficiency");
+	// // statLowEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	// kinematicsText->Draw("SAME");
+	// // kinematicsText->Draw("SAME");
 
-	// display2DMapContents(statLowEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+	// // display2DMapContents(statLowEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
-	// statLowEffCanvas->Modified();
-	// statLowEffCanvas->Update();
-
-	/// systematic uncertainty of efficiency (muon scale factor)
-	TCanvas* systEffCanvas = draw2DMap(relSystEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
-
-	relSystEffCosThetaPhi->GetZaxis()->SetTitle("syst uncer of efficiency (muon SF)");
-	relSystEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
-
-	kinematicsText->Draw("SAME");
-
-	display2DMapContents(relSystEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
-
-	systEffCanvas->Modified();
-	systEffCanvas->Update();
+	// // statLowEffCanvas->Modified();
+	// // statLowEffCanvas->Update();
 
 	// /// systematic uncertainty of efficiency (muon scale factor)
-	// TCanvas* systEffFitModelCanvas = draw2DMap(yield1SSysUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+	// TCanvas* systEffCanvas = draw2DMap(relSystEffCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
-    // yield1SSysUncCosThetaPhi->GetZaxis()->SetTitle("syst uncertainty (fit models)");
-    // yield1SSysUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
-
-	// kinematicsText->Draw("SAME");
-
-	// display2DMapContents(yield1SSysUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
-
-	// systEffFitModelCanvas->Modified();
-	// systEffFitModelCanvas->Update();
-
-	// /// yield extraction uncertainty
-	// TCanvas* yieldUncCanvas = draw2DMap(yield1SUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
-
-	// yield1SUncCosThetaPhi->GetZaxis()->SetTitle("raw yield statistical uncertainty");
-	// //yield1SUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+	// relSystEffCosThetaPhi->GetZaxis()->SetTitle("syst uncer of efficiency (muon SF)");
+	// relSystEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
 	// kinematicsText->Draw("SAME");
 
-	// display2DMapContents(yield1SUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+	// display2DMapContents(relSystEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
-	// yieldUncCanvas->Modified();
-	// yieldUncCanvas->Update();
+	// systEffCanvas->Modified();
+	// systEffCanvas->Update();
 
-	// /// total uncertatinty
+	// // /// systematic uncertainty of efficiency (muon scale factor)
+	// // TCanvas* systEffFitModelCanvas = draw2DMap(yield1SSysUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
 
-	// TCanvas* totalUncCanvas = draw2DMap(totalRelUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+    // // yield1SSysUncCosThetaPhi->GetZaxis()->SetTitle("syst uncertainty (fit models)");
+    // // yield1SSysUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	// totalRelUncCosThetaPhi->GetZaxis()->SetTitle("total uncertainty");
-	// totalRelUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+	// // kinematicsText->Draw("SAME");
 
-	// kinematicsText->Draw("SAME");
+	// // display2DMapContents(yield1SSysUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
-	// display2DMapContents(totalRelUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+	// // systEffFitModelCanvas->Modified();
+	// // systEffFitModelCanvas->Update();
 
-	// totalUncCanvas->Modified();
-	// totalUncCanvas->Update();
+	// // /// yield extraction uncertainty
+	// // TCanvas* yieldUncCanvas = draw2DMap(yield1SUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+
+	// // yield1SUncCosThetaPhi->GetZaxis()->SetTitle("raw yield statistical uncertainty");
+	// // //yield1SUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+
+	// // kinematicsText->Draw("SAME");
+
+	// // display2DMapContents(yield1SUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+
+	// // yieldUncCanvas->Modified();
+	// // yieldUncCanvas->Update();
+
+	// // /// total uncertatinty
+
+	// // TCanvas* totalUncCanvas = draw2DMap(totalRelUncCosThetaPhi, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kTRUE);
+
+	// // totalRelUncCosThetaPhi->GetZaxis()->SetTitle("total uncertainty");
+	// // totalRelUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
+
+	// // kinematicsText->Draw("SAME");
+
+	// // display2DMapContents(totalRelUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+
+	// // totalUncCanvas->Modified();
+	// // totalUncCanvas->Update();
 
 	/// save canvas
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
 	weightCanvas->SaveAs(Form("EfficiencyMaps/%dS/WeightsMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 
 	gSystem->mkdir("YieldMap/2D_sysUnc", kTRUE);
-	if (!LEGOplot) yieldCanvas->SaveAs(Form("YieldMap/2D_sysUnc/YieldMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s_err%.2f_%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, pseudoExpModelName, errPercent, efficiencyName), "RECREATE");
-    else yieldCanvas->SaveAs(Form("YieldMap/2D/YieldMapCosTheta%s_fit_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s_err%.2f_%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, pseudoExpModelName, errPercent, efficiencyName), "RECREATE");
+	if (!LEGOplot) yieldCanvas->SaveAs(Form("YieldMap/2D_sysUnc/YieldMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s_err%.2f_%sEff.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, pseudoExpModelName, errPercent, efficiencyName), "RECREATE");
+    else yieldCanvas->SaveAs(Form("YieldMap/2D_sysUnc/YieldMapCosTheta%s_fit_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s_err%.2f_%sEff.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, pseudoExpModelName, errPercent, efficiencyName), "RECREATE");
  
-	// gSystem->mkdir("YieldMap/2D", kTRUE);
-	if (!LEGOplot) correctedMapCanvas->SaveAs(Form("YieldMap/2D_sysUnc/CorrectedMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s_err%.2f_%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, pseudoExpModelName, errPercent, efficiencyName), "RECREATE");
-    else correctedMapCanvas->SaveAs(Form("YieldMap/2D_sysUnc/CorrectedMapCosTheta%s_fit_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s_err%.2f_%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, pseudoExpModelName, errPercent, efficiencyName), "RECREATE");
+	if (!LEGOplot) correctedMapCanvas->SaveAs(Form("YieldMap/2D_sysUnc/CorrectedMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s_err%.2f_%sEff.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, pseudoExpModelName, errPercent, efficiencyName), "RECREATE");
+    else correctedMapCanvas->SaveAs(Form("YieldMap/2D_sysUnc/CorrectedMapCosTheta%s_fit_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s_err%.2f_%sEff.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, pseudoExpModelName, errPercent, efficiencyName), "RECREATE");
 
-	gSystem->mkdir("UncertaintyPlots/2D_sysUnc", kTRUE);
-	// statHighAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	// statLowAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	// statHighEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	// statLowEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	systEffCanvas->SaveAs(Form("UncertaintyPlots/2D/sysEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	// yieldUncCanvas->SaveAs(Form("UncertaintyPlots/2D/yieldUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	// totalUncCanvas->SaveAs(Form("UncertaintyPlots/2D/totalUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-    // systEffFitModelCanvas->SaveAs(Form("UncertaintyPlots/2D_sysUnc/systUncFitModels%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// gSystem->mkdir("UncertaintyPlots/2D_sysUnc", kTRUE);
+	// // statHighAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// // statLowAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// // statHighEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// // statLowEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// systEffCanvas->SaveAs(Form("UncertaintyPlots/2D/sysEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// // yieldUncCanvas->SaveAs(Form("UncertaintyPlots/2D/yieldUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// // totalUncCanvas->SaveAs(Form("UncertaintyPlots/2D/totalUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+    // // systEffFitModelCanvas->SaveAs(Form("UncertaintyPlots/2D_sysUnc/systUncFitModels%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 
-	// // save the histograms to the root files to see them with the root viewer
-	// TFile* EfficiencyOutFile = new TFile(Form("EfficiencyMaps/%dS/efficiencyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	// accMapCosThetaPhi->Write();
-	// effMapCosThetaPhi->Write();
-	// systEffCosThetaPhi->Write();
-	// weightMap->Write();
-	// EfficiencyOutFile->Close();
+	// // // save the histograms to the root files to see them with the root viewer
+	// // TFile* EfficiencyOutFile = new TFile(Form("EfficiencyMaps/%dS/efficiencyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// // accMapCosThetaPhi->Write();
+	// // effMapCosThetaPhi->Write();
+	// // systEffCosThetaPhi->Write();
+	// // weightMap->Write();
+	// // EfficiencyOutFile->Close();
 
-	// TFile* ResultOutFile = new TFile(Form("YieldMap/2D/resultsHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// TFile* ResultOutFile = new TFile(Form("YieldMap/2D_sysUnc/resultsHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 	// yieldMap->Write();
 	// standardCorrectedMap->Write();
 	// ResultOutFile->Close();
 
-	// TFile* uncOutFile = new TFile(Form("UncertaintyPlots/2D/uncertaintyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	// statLowAccCosThetaPhi->Write();
-	// statLowEffCosThetaPhi->Write();
-	// statHighAccCosThetaPhi->Write();
-	// statHighEffCosThetaPhi->Write();
-	// relSystEffCosThetaPhi->Write();
-	// yield1SUncCosThetaPhi->Write();
-	// totalRelUncCosThetaPhi->Write();
-	// uncOutFile->Close();
+	// // TFile* uncOutFile = new TFile(Form("UncertaintyPlots/2D/uncertaintyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	// // statLowAccCosThetaPhi->Write();
+	// // statLowEffCosThetaPhi->Write();
+	// // statHighAccCosThetaPhi->Write();
+	// // statHighEffCosThetaPhi->Write();
+	// // relSystEffCosThetaPhi->Write();
+	// // yield1SUncCosThetaPhi->Write();
+	// // totalRelUncCosThetaPhi->Write();
+	// // uncOutFile->Close();
 }
 
-void scanRawYield_2D_customizedFits_sysUnc(const char* refFrameName = "CS", double errPercent = 100) {
+void scanRawYield_2D_customizedFits_sysUnc(const char* refFrameName = "CS", double errPercent = 1) {
 	
 	/// loop over all pseudo-experiments
- 	// Int_t chooseEff = 0; // fix the efficiency to the nominal value (no shift)
+ 	Int_t chooseEff = 0; // fix the efficiency to the nominal value (no shift)
     
-	// for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
-    //     for (Int_t chooseYield = 1; chooseYield <= 3; chooseYield++) {
-    //         for (Int_t idx = 0; idx < 2; idx++) {
-    //             if (idx == 0) rawYield_2D_customizedFits_sysUnc(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr", chooseYield, errPercent);
-    //             else rawYield_2D_customizedFits_sysUnc(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr", chooseYield, errPercent);
-    //             // if (idx == 0) rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr", chooseYield);
-    //             // else rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr", chooseYield);
-    //         }
-    //     }
-    // }
-	
-	/// loop over different efficiency scenarios
-	Int_t chooseYield = 0; // fix the yield to the nominal value (no shift)
-
 	for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
-		for (Int_t chooseEff = 1; chooseEff <= 8; chooseEff++) {
+	// for (Int_t ptIdx = 1; ptIdx < 2; ptIdx++) {
+        for (Int_t chooseYield = 0; chooseYield <= 0; chooseYield++) {
             for (Int_t idx = 0; idx < 2; idx++) {
-                if (idx == 0) rawYield_2D_customizedFits_sysUnc(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr", chooseYield, errPercent, chooseEff);
-                else rawYield_2D_customizedFits_sysUnc(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr", chooseYield, errPercent, chooseEff);
+                if (idx == 0) rawYield_2D_customizedFits_sysUnc(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr", chooseYield, errPercent);
+                else rawYield_2D_customizedFits_sysUnc(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr", chooseYield, errPercent);
                 // if (idx == 0) rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr", chooseYield);
                 // else rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr", chooseYield);
             }
         }
     }
+	
+	// /// loop over different efficiency scenarios
+	// Int_t chooseYield = 0; // fix the yield to the nominal value (no shift)
+
+	// for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
+	// 	for (Int_t chooseEff = 1; chooseEff <= 8; chooseEff++) {
+    //         for (Int_t idx = 0; idx < 2; idx++) {
+    //             if (idx == 0) rawYield_2D_customizedFits_sysUnc(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr", chooseYield, errPercent, chooseEff);
+    //             else rawYield_2D_customizedFits_sysUnc(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr", chooseYield, errPercent, chooseEff);
+    //             // if (idx == 0) rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr", chooseYield);
+    //             // else rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr", chooseYield);
+    //         }
+    //     }
+    // }
 }
 
