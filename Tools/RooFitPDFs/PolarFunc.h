@@ -66,9 +66,9 @@ TF2* getGeneralPolarFunc(Float_t maxYield) {
 	generalPolarFunc->SetParameter(2, 0);
 	generalPolarFunc->SetParameter(3, 0);
  
-	generalPolarFunc->SetParLimits(1, -2, 2);
-	generalPolarFunc->SetParLimits(2, -2, 2);
-	generalPolarFunc->SetParLimits(3, -2, 2);
+	generalPolarFunc->SetParLimits(1, -3, 3);
+	generalPolarFunc->SetParLimits(2, -3, 3);
+	generalPolarFunc->SetParLimits(3, -3, 3);
 
 	generalPolarFunc->SetParName(0, "normFactor");
 	generalPolarFunc->SetParName(1, "lambdaTheta");
