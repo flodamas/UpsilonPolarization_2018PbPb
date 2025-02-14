@@ -5,10 +5,11 @@
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
-void calculateDelLambda(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
+void calculateDelLambda(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
+    /// define the polarization parameters for nominal and systematic variations
 	RooRealVar* lambdaTheta = new RooRealVar("lambdaTheta", "lambdaTheta", 0);
 	RooRealVar* lambdaPhi = new RooRealVar("lambdaPhi", "lambdaPhi", 0);
 	RooRealVar* lambdaThetaPhi = new RooRealVar("lambdaThetaPhi", "lambdaThetaPhi", 0);
@@ -19,18 +20,13 @@ void calculateDelLambda(Bool_t isCSframe = true, const char* bkgShapeName = "Exp
 	RooRealVar* lambdaThetaPhiSys = new RooRealVar("lambdaThetaPhi", "lambdaThetaPhi", 0);
 	RooRealVar* lambdaTildeSys = new RooRealVar("lambdaTilde", "lambdaTilde", 0);
 
-	// TH1D* lambdaThetaHist = new TH1D("lambdaThetaHist", "; p_{T} (GeV/c); #lambda_{#theta}", NPtBins, gPtBinning);
-	// TH1D* lambdaPhiHist = new TH1D("lambdaPhiHist", "; p_{T} (GeV/c); #lambda_{#varphi}", NPtBins, gPtBinning);
-	// TH1D* lambdaThetaPhiHist = new TH1D("lambdaThetaPhiHist", "; p_{T} (GeV/c); #lambda_{#theta#varphi}", NPtBins, gPtBinning);
-	// TH1D* lambdaTildeHist = new TH1D("lambdaTildeHist", "; p_{T} (GeV/c); #tilde{#lambda}", NPtBins, gPtBinning);
-
-	const char* refFrameName = (isCSframe ? "CS" : "HX");
+    /// some variables for the for loops
 	const char* signalShapeName = "SymDSCB";
 	const char* methodName = "rootFit";
 
-    // const char* methodNameSys = "rootFit_SysFitModels_altSig";
-    // // const char* methodNameSys = "rootFit_SysFitModels_altBkg";
-    // // const char* methodNameSys = "rootFit_SysFitModels_nominal";
+    const char* refFrameName =  "";
+
+    const int NRefFrame = 2;
 
     const char* methodNameSys[] = {
         "rootFit_SysFitModels_altSig_nominal",
@@ -46,103 +42,182 @@ void calculateDelLambda(Bool_t isCSframe = true, const char* bkgShapeName = "Exp
         "rootFit_SysFitModels__totalSysDown",
     };
 
-    double totalUncLambdaTheta[NPtBins] = {0};
-    double totalUncLambdaPhi[NPtBins] = {0};
-    double totalUncLambdaThetaPhi[NPtBins] = {0};
+    /// arrays to store the systematic uncertainties and calculate the total uncertainty
+    double totalUncLambdaTheta[NPtBins][NRefFrame] = {0};
+    double totalUncLambdaPhi[NPtBins][NRefFrame] = {0};
+    double totalUncLambdaThetaPhi[NPtBins][NRefFrame] = {0};
 
+    /// output file for the systematic uncertainty table
+    const char* outFileName = "systematic_errors.txt";
+    std::ofstream outFile(outFileName);
+
+    /// write table headers for the systematic uncertainty table
+    outFile << "\\begin{table}[htpb]" << std::endl;
+    outFile << "    \\centering" << std::endl;
+    outFile << "    \\resizebox{\\textwidth}{!}{" << std::endl;
+    outFile << "        \\begin{tabular}{|c|c|c|c|c|c|c|c|}" << std::endl;
+    outFile << "        \\hline" << std::endl;
+    outFile << "        \\multirow{2}{*}{\\begin{tabular}{@{}c@{}}Uncertainty \\\\ source\\end{tabular}} & " << std::endl;
+    outFile << "        \\multirow{2}{*}{\\pt (\\GeVc)} & " << std::endl;
+    outFile << "        \\multicolumn{3}{c|}{CS frame} & \\multicolumn{3}{c|}{HX frame} \\\\ " << std::endl;
+    outFile << "        \\cline{3-8}" << std::endl;
+    outFile << "        && $\\Delta\\lambda_{\\theta}$ & $\\Delta\\lambda_{\\varphi}$ & $\\Delta\\lambda_{\\theta\\varphi}$ & $\\Delta\\lambda_{\\theta}$ & $\\Delta\\lambda_{\\varphi}$ & $\\Delta\\lambda_{\\theta\\varphi}$ \\\\ " << std::endl;
+    outFile << "        \\hline" << std::endl;
+    outFile << "        \\hline" << std::endl;
+
+    /// loop over the systematic uncertainty types
     for (Int_t index = 0 ; index < 5; index++) {
 
-        cout << "------------------------------------------------------------------------" << endl;
-        cout << "** " << refFrameName << " frame" << endl;
-        cout << "** " << methodNameSys[index] << endl;
-        cout << "| pT (GeV/c) | deltaLambdaTheta | deltaLambdaPhi | deltaLambdaThetaPhi |" << endl;
+        /// set the first column of the table for the systematic uncertainty source
+        if (index == 0) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Alternative \\\\ signal shape\\end{tabular}}" << std::endl;
+        if (index == 1) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Alternative \\\\ background shape\\end{tabular}}" << std::endl;
+        if (index == 2) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Background peak \\\\ under signal peak\\end{tabular}}" << std::endl;
+        if (index == 3) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Muon scale factor \\\\ systematic up\\end{tabular}}" << std::endl;
+        if (index == 4) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Muon scale factor \\\\ systematic down\\end{tabular}}" << std::endl;
 
-        for (Int_t ibin = 1; ibin <= NPtBins; ibin++) {
-            // get polarization parameters
-            const char* fitModelName = GetFitModelName(signalShapeName, gPtBinning[ibin - 1], gPtBinning[ibin], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+        /// loop over the pt bins
+        for (Int_t ibin = 0; ibin < NPtBins; ibin++) {
 
-            RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName, false);
+            /// set the pt bin range (second column of the table)
+            outFile << "            & " << gPtBinning[ibin] << "-" << gPtBinning[ibin + 1];
 
-            double lambdaThetaVal = lambdaTheta->getVal();
-            double lambdaThetaUnc = lambdaTheta->getError();
+            /// loop over the reference frames
+            for (Int_t iRefFrame = 0; iRefFrame < NRefFrame; iRefFrame++) {
 
-            double lambdaPhiVal = lambdaPhi->getVal();
-            double lambdaPhiUnc = lambdaPhi->getError();
+                if (iRefFrame == 0) {
+                    refFrameName = "CS";
+                } else {
+                    refFrameName = "HX";
+                }
 
-            double lambdaThetaPhiVal = lambdaThetaPhi->getVal();
-            double lambdaThetaPhiUnc = lambdaThetaPhi->getError();
+                /// get polarization parameters for the nominal
+                const char* fitModelName = GetFitModelName(signalShapeName, gPtBinning[ibin], gPtBinning[ibin + 1], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-            double lambdaTildeVal = lambdaTilde->getVal();
-            double lambdaTildeUnc = lambdaTilde->getError();
+                RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName, false);
 
+                double lambdaThetaVal = lambdaTheta->getVal();
+                double lambdaThetaUnc = lambdaTheta->getError();
 
-            // get polarization parameters
-            // const char* fitModelNameSys = GetFitModelNameSys(signalShapeName, gPtBinning[ibin - 1], gPtBinning[ibin], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+                double lambdaPhiVal = lambdaPhi->getVal();
+                double lambdaPhiUnc = lambdaPhi->getError();
 
-            RooArgSet polarParamsSys = GetPolarParams(lambdaThetaSys, lambdaPhiSys, lambdaThetaPhiSys, lambdaTildeSys, methodNameSys[index], fitModelName, bkgShapeName, false);
+                double lambdaThetaPhiVal = lambdaThetaPhi->getVal();
+                double lambdaThetaPhiUnc = lambdaThetaPhi->getError();
 
-            double lambdaThetaValSys = lambdaThetaSys->getVal();
-            double lambdaThetaUncSys = lambdaThetaSys->getError();
+                double lambdaTildeVal = lambdaTilde->getVal();
+                double lambdaTildeUnc = lambdaTilde->getError();
 
-            double lambdaPhiValSys = lambdaPhiSys->getVal();
-            double lambdaPhiUncSys = lambdaPhiSys->getError();
+                /// get polarization parameters for the systematic variations
+                RooArgSet polarParamsSys = GetPolarParams(lambdaThetaSys, lambdaPhiSys, lambdaThetaPhiSys, lambdaTildeSys, methodNameSys[index], fitModelName, bkgShapeName, false);
 
-            double lambdaThetaPhiValSys = lambdaThetaPhiSys->getVal();
-            double lambdaThetaPhiUncSys = lambdaThetaPhiSys->getError();
+                double lambdaThetaValSys = lambdaThetaSys->getVal();
+                double lambdaThetaUncSys = lambdaThetaSys->getError();
 
-            double lambdaTildeValSys = lambdaTildeSys->getVal();
-            double lambdaTildeUncSys = lambdaTildeSys->getError();
+                double lambdaPhiValSys = lambdaPhiSys->getVal();
+                double lambdaPhiUncSys = lambdaPhiSys->getError();
 
-            // cout << "pt bin: " << gPtBinning[ibin - 1] << "to" << gPtBinning[ibin] << endl;
+                double lambdaThetaPhiValSys = lambdaThetaPhiSys->getVal();
+                double lambdaThetaPhiUncSys = lambdaThetaPhiSys->getError();
 
-            // cout << "lambdaThetaVal: " << lambdaThetaVal << endl;
-            // cout << "lambdaThetaUnc: " << lambdaThetaVal << endl;
+                double lambdaTildeValSys = lambdaTildeSys->getVal();
+                double lambdaTildeUncSys = lambdaTildeSys->getError();
 
-            // cout << "lambdaPhiVal: " << lambdaPhiVal << endl;
-            // cout << "lambdaPhiUnc: " << lambdaPhiUnc << endl;
+                /// print the values for cross-check
+                // cout << "pt bin: " << gPtBinning[ibin - 1] << "to" << gPtBinning[ibin] << endl;
 
-            // cout << "lambdaThetaPhiVal: " << lambdaThetaPhiVal << endl;
-            // cout << "lambdaThetaPhiUnc: " << lambdaThetaPhiUnc << endl;
+                // cout << "lambdaThetaVal: " << lambdaThetaVal << endl;
+                // cout << "lambdaThetaUnc: " << lambdaThetaVal << endl;
 
-            // cout << "lambdaTildeVal: " << lambdaTildeVal << endl;
-            // cout << "lambdaTildeUnc: " << lambdaTildeUnc << endl;
+                // cout << "lambdaPhiVal: " << lambdaPhiVal << endl;
+                // cout << "lambdaPhiUnc: " << lambdaPhiUnc << endl;
 
-            // cout << "lambdaThetaValSys: " << lambdaThetaValSys << endl;
-            // cout << "lambdaThetaUncSys: " << lambdaThetaValSys << endl;
+                // cout << "lambdaThetaPhiVal: " << lambdaThetaPhiVal << endl;
+                // cout << "lambdaThetaPhiUnc: " << lambdaThetaPhiUnc << endl;
 
-            // cout << "lambdaPhiValSys: " << lambdaPhiValSys << endl;
-            // cout << "lambdaPhiUncSys: " << lambdaPhiUncSys << endl;
+                // cout << "lambdaTildeVal: " << lambdaTildeVal << endl;
+                // cout << "lambdaTildeUnc: " << lambdaTildeUnc << endl;
 
-            // cout << "lambdaThetaPhiValSys: " << lambdaThetaPhiValSys << endl;
-            // cout << "lambdaThetaPhiUncSys: " << lambdaThetaPhiUncSys << endl;
+                // cout << "lambdaThetaValSys: " << lambdaThetaValSys << endl;
+                // cout << "lambdaThetaUncSys: " << lambdaThetaValSys << endl;
 
-            // cout << "lambdaTildeValSys: " << lambdaTildeValSys << endl;
-            // cout << "lambdaTildeUncSys: " << lambdaTildeUncSys << endl;
+                // cout << "lambdaPhiValSys: " << lambdaPhiValSys << endl;
+                // cout << "lambdaPhiUncSys: " << lambdaPhiUncSys << endl;
 
-            // cout << "deltaLambdaTheta: " << lambdaThetaVal - lambdaThetaValSys << endl;
-            // cout << "deltaLambdaPhi: " << lambdaPhiVal - lambdaPhiValSys << endl;
-            // cout << "deltaLambdaThetaPhi: " << lambdaThetaPhiVal - lambdaThetaPhiValSys << endl;
-            // cout << "deltaLambdaTilde: " << lambdaTildeVal - lambdaTildeValSys << endl;
+                // cout << "lambdaThetaPhiValSys: " << lambdaThetaPhiValSys << endl;
+                // cout << "lambdaThetaPhiUncSys: " << lambdaThetaPhiUncSys << endl;
 
-            cout << "|   " << gPtBinning[ibin - 1] << "-" << gPtBinning[ibin] << " & \\num{" << lambdaThetaVal - lambdaThetaValSys << "} & \\num{" << lambdaPhiVal - lambdaPhiValSys << "} & \\num{" << lambdaThetaPhiVal - lambdaThetaPhiValSys << "}      | " << endl;
+                // cout << "lambdaTildeValSys: " << lambdaTildeValSys << endl;
+                // cout << "lambdaTildeUncSys: " << lambdaTildeUncSys << endl;
 
-            // cout << "------------------------------------------------------------------------" << endl;
+                // cout << "deltaLambdaTheta: " << lambdaThetaVal - lambdaThetaValSys << endl;
+                // cout << "deltaLambdaPhi: " << lambdaPhiVal - lambdaPhiValSys << endl;
+                // cout << "deltaLambdaThetaPhi: " << lambdaThetaPhiVal - lambdaThetaPhiValSys << endl;
+                // cout << "deltaLambdaTilde: " << lambdaTildeVal - lambdaTildeValSys << endl;
 
-            if (index != 2) { 
-            totalUncLambdaTheta[ibin] += TMath::Power(lambdaThetaVal - lambdaThetaValSys, 2);
-            totalUncLambdaPhi[ibin] += TMath::Power(lambdaPhiVal - lambdaPhiValSys, 2);
-            totalUncLambdaThetaPhi[ibin] += TMath::Power(lambdaThetaPhiVal - lambdaThetaPhiValSys, 2);
+                /// write the values to the output file
+                outFile << std::fixed << std::setprecision(8); // Set fixed-point notation with 8 digits after the decimal point 
+                outFile << " & \\num{" << lambdaThetaVal - lambdaThetaValSys << "} & \\num{" << lambdaPhiVal - lambdaPhiValSys << "} & \\num{" << lambdaThetaPhiVal - lambdaThetaPhiValSys << "}" ;
+                
+                /// calculate the total uncertainty for the systematic variations (except for the systematic variations of background peak under signal peak)
+                if (index != 2) { 
+                totalUncLambdaTheta[ibin][iRefFrame] += TMath::Power(lambdaThetaVal - lambdaThetaValSys, 2);
+                totalUncLambdaPhi[ibin][iRefFrame] += TMath::Power(lambdaPhiVal - lambdaPhiValSys, 2);
+                totalUncLambdaThetaPhi[ibin][iRefFrame] += TMath::Power(lambdaThetaPhiVal - lambdaThetaPhiValSys, 2);
+                }
             }
+            outFile << " \\\\ " << std::endl;
+            outFile.unsetf(std::ios::fixed); // Unset fixed-point notation
         }
 
+        /// write the total uncertainty for the systematic variations
         if (index == 4){
-            for (Int_t ibin = 1; ibin <= NPtBins; ibin++) {
-                cout << "------------------------------------------------------------------------" << endl;
-                cout << "** " << refFrameName << " frame" << endl;
-                cout << "| pT (GeV/c) | totalUncLambdaTheta | totalUncLambdaPhi | totalUncLambdaThetaPhi |" << endl;
-                cout << "|   " << gPtBinning[ibin - 1] << "-" << gPtBinning[ibin] << " & \\num{" << TMath::Sqrt(totalUncLambdaTheta[ibin]) << "} & \\num{" << TMath::Sqrt(totalUncLambdaPhi[ibin]) << "} & \\num{" << TMath::Sqrt(totalUncLambdaThetaPhi[ibin]) << "}      | " << endl;
-                cout << "------------------------------------------------------------------------" << endl;
+            
+            outFile << "        \\hline" << std::endl;
+            outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Total \\end{tabular}}" << std::endl;
+
+            for (Int_t ibin = 0; ibin < NPtBins; ibin++) {
+                 outFile << "            & " << gPtBinning[ibin] << "-" << gPtBinning[ibin + 1] ;
+
+                for (Int_t iRefFrame = 0; iRefFrame < NRefFrame; iRefFrame++) {
+                    outFile << " & \\num{" << TMath::Sqrt(totalUncLambdaTheta[ibin][iRefFrame]) << "} & \\num{" << TMath::Sqrt(totalUncLambdaPhi[ibin][iRefFrame]) << "} & \\num{" << TMath::Sqrt(totalUncLambdaThetaPhi[ibin][iRefFrame]) << "}";  
+                }
+                outFile << " \\\\" << std::endl;
             }
-        }    
+        } 
+        outFile << "        \\hline" << std::endl; 
     }
-}
+
+    /// write the table footer
+    outFile << "        \\end{tabular}" << std::endl;
+    outFile << "    }" << std::endl;
+    outFile << "    \\caption{Summary of the systematic uncertainties.}" << std::endl;
+    outFile << "    \\label{tab:sysUnc}" << std::endl;
+    outFile << "\\end{table}" << std::endl;
+    
+    /// close the file
+    outFile.close();
+
+    /// print out the work done
+    cout << Form("... Systematic uncertainties in an Overleaf table form written to \"%s\".", outFileName) << endl;
+    cout << "... Copy and paste the whole portion of the txt to your Overleaf project!" << endl;  
+
+    /// save the total systematic uncertainties to a txt file
+    const char* outFileName_total = "systematic_errors_total.txt";
+    std::ofstream outFile_total("systematic_errors_total.txt");
+
+    outFile_total << "lambdaTheta lambdaPhi lambdaThetaPhi" << endl;
+
+    for (int iRF = 0; iRF < NRefFrame; iRF++) {
+        iRF == 0 ? refFrameName = "CS" : refFrameName = "HX";
+        for (int ipt = 0; ipt < NPtBins; ipt++) {
+            outFile_total << refFrameName << " pT" << gPtBinning[ipt] << "-" << gPtBinning[ipt + 1] <<  " " << TMath::Sqrt(totalUncLambdaTheta[ipt][iRF]) << " " << TMath::Sqrt(totalUncLambdaPhi[ipt][iRF]) << " " << TMath::Sqrt(totalUncLambdaThetaPhi[ipt][iRF]) << endl;
+        }
+    }
+
+    outFile_total.close();
+
+    cout << "" << endl;
+    cout << Form("... Total systematic uncertainties also saved in \"%s\".", outFileName_total) << endl; 
+
+    return;
+}   
