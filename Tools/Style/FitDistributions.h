@@ -107,7 +107,7 @@ TPad* GetPadPullDistribution(RooPlot* frame, const int nFitPars) {
 	TLatex textChi2;
 	textChi2.SetTextAlign(12);
 	textChi2.SetTextSize(0.15);
-	textChi2.DrawLatexNDC(0.75, 0.12, Form("#chi^{2} / n_{dof} = %.1f", frame->chiSquare(nFitPars)));
+	textChi2.DrawLatexNDC(0.78, 0.12, Form("#chi^{2} / n_{dof} = %.1f", frame->chiSquare(nFitPars)));
 
 	return bottomPad;
 }

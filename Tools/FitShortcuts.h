@@ -553,7 +553,7 @@ RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooReal
 	char paramsFileName[512];
 	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s_%s.txt", methodName, modelName, extraString);
 
-	if (vervose == true) {cout << paramsFileName << endl;}
+	if (verbose == true) {cout << paramsFileName << endl;}
 	if (fopen(paramsFileName, "r")) {
 		if (verbose == true) {cout << endl
 		     				<< "Found" << paramsFileName << " file, will read polarization parameters from it" << endl;
