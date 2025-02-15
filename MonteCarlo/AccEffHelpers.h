@@ -161,20 +161,20 @@ TEfficiency* rebinTEff3DMapCosTheta(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int
 	Int_t iPtMin = hPassed->GetZaxis()->FindBin(ptMin);
 	Int_t iPtMax = hPassed->GetZaxis()->FindBin(ptMax);
 
-	// std::cout << iPhiMin << " " << iPhiMax << " " << iPtMin << " " << iPtMax << std::endl;
-	// cout << "hPassed->GetXaxis()->GetNbins() = " << hPassed->GetXaxis()->GetNbins() << endl;
-	// cout << "hPassed->GetYaxis()->GetNbins() = " << hPassed->GetYaxis()->GetNbins() << endl;
-	// cout << "hPassed->GetZaxis()->GetNbins() = " << hPassed->GetZaxis()->GetNbins() << endl;
+	std::cout << iPhiMin << " " << iPhiMax << " " << iPtMin << " " << iPtMax << std::endl;
+	cout << "hPassed->GetXaxis()->GetNbins() = " << hPassed->GetXaxis()->GetNbins() << endl;
+	cout << "hPassed->GetYaxis()->GetNbins() = " << hPassed->GetYaxis()->GetNbins() << endl;
+	cout << "hPassed->GetZaxis()->GetNbins() = " << hPassed->GetZaxis()->GetNbins() << endl;
 	
-	// cout << "hPassed->GetBinContent(1, 1, 2) = " << hPassed->GetBinContent(1, 1, 2) << endl;
-	// cout << "hPassed->GetBinContent(1, 2, 2) = " << hPassed->GetBinContent(1, 2, 2) << endl;
-	// cout << "hPassed->GetBinContent(2, 1, 2) = " << hPassed->GetBinContent(2, 1, 2) << endl;
-	// cout << "hPassed->GetBinContent(2, 2, 2) = " << hPassed->GetBinContent(2, 2, 2) << endl;
+	cout << "hPassed->GetBinContent(1, 1, 2) = " << hPassed->GetBinContent(1, 1, 2) << endl;
+	cout << "hPassed->GetBinContent(1, 2, 2) = " << hPassed->GetBinContent(1, 2, 2) << endl;
+	cout << "hPassed->GetBinContent(2, 1, 2) = " << hPassed->GetBinContent(2, 1, 2) << endl;
+	cout << "hPassed->GetBinContent(2, 2, 2) = " << hPassed->GetBinContent(2, 2, 2) << endl;
 
-	// cout << "hTotal->GetBinContent(1, 1, 2) = " << hTotal->GetBinContent(1, 1, 2) << endl;
-	// cout << "hTotal->GetBinContent(1, 2, 2) = " << hTotal->GetBinContent(1, 2, 2) << endl;
-	// cout << "hTotal->GetBinContent(2, 1, 2) = " << hTotal->GetBinContent(2, 1, 2) << endl;
-	// cout << "hTotal->GetBinContent(2, 2, 2) = " << hTotal->GetBinContent(2, 2, 2) << endl;
+	cout << "hTotal->GetBinContent(1, 1, 2) = " << hTotal->GetBinContent(1, 1, 2) << endl;
+	cout << "hTotal->GetBinContent(1, 2, 2) = " << hTotal->GetBinContent(1, 2, 2) << endl;
+	cout << "hTotal->GetBinContent(2, 1, 2) = " << hTotal->GetBinContent(2, 1, 2) << endl;
+	cout << "hTotal->GetBinContent(2, 2, 2) = " << hTotal->GetBinContent(2, 2, 2) << endl;
 
 	// obtain the projection histogram along the costheta axis within boundaries of phi and pt
 	// (option e: calculate errors, o: only bins inside the selected range will be filled)
@@ -247,7 +247,7 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 	// loop over the rebinning code along CosTheta and set the contents of the 2D map row by row
 	for (Int_t iRow = 0; iRow < nPhiBins; iRow++) {
 		TEfficiency* TEffCosTheta = rebinTEff3DMapCosTheta(TEff3DMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, (Int_t)phiBinEdges[iRow], (Int_t)phiBinEdges[iRow + 1]);
-		// std::cout << "Phi: " << phiBinEdges[iRow] << " - " << phiBinEdges[iRow + 1] << std::endl;
+		std::cout << "Phi: " << phiBinEdges[iRow] << " - " << phiBinEdges[iRow + 1] << std::endl;
 		
 		TH1D* hPassedCosTheta = (TH1D*)TEffCosTheta->GetPassedHistogram();
 		TH1D* hTotalCosTheta = (TH1D*)TEffCosTheta->GetTotalHistogram();
@@ -264,7 +264,7 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 			TEffCosThetaPhi->SetTotalEvents(iGlobalBin, totalEvents);
 			TEffCosThetaPhi->SetPassedEvents(iGlobalBin, passedEvents);
 
-			// std::cout << "CosTheta: " << binCenterCosTheta << " Phi: " << binCenterPhi << " Passed: " << passedEvents << " Total: " << totalEvents << std::endl;
+			std::cout << "CosTheta: " << binCenterCosTheta << " Phi: " << binCenterPhi << " Passed: " << passedEvents << " Total: " << totalEvents << std::endl;
 		}
 	}
 
@@ -429,7 +429,7 @@ void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nP
 
 			// Create a TLatex object to write the signal extraction yield uncertainties on each bin
 			TLatex latex;
-			latex.SetTextSize(0.03); // Adjust text size as needed
+			latex.SetTextSize(0.05); // Adjust text size as needed
 			latex.SetTextAlign(22);  // Center alignment
 			latex.SetTextColor(kWhite);
 			latex.DrawLatex(x, y, Form("%.2f", effVal));
@@ -530,15 +530,15 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.04);
-	legend.DrawLatexNDC(.48, .89, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
-	legend.DrawLatexNDC(.48, .83, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	legend.DrawLatexNDC(.48, .86, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 
 	if (strstr(effHist->GetName(), "CS")) {
 		frameHist2D->SetXTitle(CosThetaVarTitle("CS"));
-		frameHist2D->SetYTitle(PhiVarTitle("CS"));
+		frameHist2D->SetYTitle(AbsPhiAxisTitle("CS"));
 	} else {
 		frameHist2D->SetXTitle(CosThetaVarTitle("HX"));
-		frameHist2D->SetYTitle(PhiVarTitle("HX"));
+		frameHist2D->SetYTitle(AbsPhiAxisTitle("HX"));
 	}
 
 	if (isAcc) {

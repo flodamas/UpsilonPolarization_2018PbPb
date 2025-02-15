@@ -80,7 +80,9 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	// save the invariant mass distribution fit for further checks
 	// one pad for the invariant mass data distribution with fit components, one for the pull distribution
 	auto* massCanvas = new TCanvas("massCanvas", "", 600, 600);
-	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, 1.0);
+	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.25, 1, .95);
+	
+	pad1->SetTopMargin(0.003);
 	pad1->SetBottomMargin(0.03);
 	pad1->SetRightMargin(0.035);
 
@@ -90,32 +92,40 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 
-	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax));
+	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, 0.63, 0.695, 0.94, 0.95));  // (HX, 2to6, -0.42to-0.14, 60to120): 0.67, 0.70, 0.94, 0.95 // (HX, 12to20, 0.42to0.70, 60to120): 0.63, 0.695, 0.94, 0.95
 
 	if (!isPhiFolded)
 		frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
-	else
-		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	else  
+		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, 0.605, 0.47, 0.945, 0.66, 32)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.595, 0.47, 0.945, 0.66 // (HX, 12to20, 0.42to0.70, 60to120): 0.605, 0.47, 0.945, 0.66
 	
 	if (strcmp(signalShapeName, "SymDSCB") == 0)
-		frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2)));
-    else
+		frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2), 0.147, 0.58, 0.458, 0.85, 12)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.14, 0.07, 0.48, 0.35 // (HX, 12to20, 0.42to0.70, 60to120): 0.147, 0.70, 0.458, 0.95
+    else    
         frame->addObject(FitResultText(*wspace.var("yield1S"), 0, *wspace.var("yield2S"), 0));
 
 	frame->Draw();
 
 	gPad->RedrawAxis();
 
+	// /// add 10^3 to the top left corner of the canvas
+	// TLatex *latex = new TLatex();
+	// latex->SetTextSize(0.052);  // Adjust the text size as needed
+	// latex->DrawLatexNDC(0.0515, 0.955, "10^{3}#times");  // (x, y) coordinates in normalized device coordinates
+
 	// pull distribution
 	massCanvas->cd();
 
 	TPad* pad2 = GetPadPullDistribution(frame, fitResult->floatParsFinal().getSize());
 
-	//canvas->Modified();
-	//canvas->Update();
 	massCanvas->cd();
 	pad1->Draw();
 	pad2->Draw();
+
+	// massCanvas->Modified();
+	// massCanvas->Update();
+
+	CMS_lumi(massCanvas, gCMSLumiText);
 
 	// const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
