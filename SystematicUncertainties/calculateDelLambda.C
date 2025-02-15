@@ -46,6 +46,7 @@ void calculateDelLambda(const char* bkgShapeName = "ExpTimesErr", const Int_t nC
     double totalUncLambdaTheta[NPtBins][NRefFrame] = {0};
     double totalUncLambdaPhi[NPtBins][NRefFrame] = {0};
     double totalUncLambdaThetaPhi[NPtBins][NRefFrame] = {0};
+    double totalUncLambdaTilde[NPtBins][NRefFrame] = {0};
 
     /// output file for the systematic uncertainty table
     const char* outFileName = "systematic_errors.txt";
@@ -163,6 +164,7 @@ void calculateDelLambda(const char* bkgShapeName = "ExpTimesErr", const Int_t nC
                 totalUncLambdaTheta[ibin][iRefFrame] += TMath::Power(lambdaThetaVal - lambdaThetaValSys, 2);
                 totalUncLambdaPhi[ibin][iRefFrame] += TMath::Power(lambdaPhiVal - lambdaPhiValSys, 2);
                 totalUncLambdaThetaPhi[ibin][iRefFrame] += TMath::Power(lambdaThetaPhiVal - lambdaThetaPhiValSys, 2);
+                totalUncLambdaTilde[ibin][iRefFrame] += TMath::Power(lambdaTildeVal - lambdaTildeValSys, 2);
                 }
             }
             outFile << " \\\\ " << std::endl;
@@ -205,12 +207,12 @@ void calculateDelLambda(const char* bkgShapeName = "ExpTimesErr", const Int_t nC
     const char* outFileName_total = "systematic_errors_total.txt";
     std::ofstream outFile_total("systematic_errors_total.txt");
 
-    outFile_total << "lambdaTheta lambdaPhi lambdaThetaPhi" << endl;
+    outFile_total << "lambdaTheta lambdaPhi lambdaThetaPhi lambdaTilde" << endl;
 
     for (int iRF = 0; iRF < NRefFrame; iRF++) {
         iRF == 0 ? refFrameName = "CS" : refFrameName = "HX";
         for (int ipt = 0; ipt < NPtBins; ipt++) {
-            outFile_total << refFrameName << " pT" << gPtBinning[ipt] << "-" << gPtBinning[ipt + 1] <<  " " << TMath::Sqrt(totalUncLambdaTheta[ipt][iRF]) << " " << TMath::Sqrt(totalUncLambdaPhi[ipt][iRF]) << " " << TMath::Sqrt(totalUncLambdaThetaPhi[ipt][iRF]) << endl;
+            outFile_total << refFrameName << " pT" << gPtBinning[ipt] << "-" << gPtBinning[ipt + 1] <<  " " << TMath::Sqrt(totalUncLambdaTheta[ipt][iRF]) << " " << TMath::Sqrt(totalUncLambdaPhi[ipt][iRF]) << " " << TMath::Sqrt(totalUncLambdaThetaPhi[ipt][iRF]) << " " << TMath::Sqrt(totalUncLambdaTilde[ipt][iRF]) << endl;
         }
     }
 
