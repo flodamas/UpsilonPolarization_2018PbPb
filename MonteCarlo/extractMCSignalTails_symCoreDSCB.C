@@ -105,13 +105,15 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 void scanExtractMCSignalTails_symCoreDSCB(Bool_t isCSframe = kFALSE) {
 	Float_t cosThetaEdges[6] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
-	// Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
-	Float_t phiEdges[4] = {0, 60, 120, 180};
+	// Float_t cosThetaEdges[7] = {-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6};
+	Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
+	// Float_t phiEdges[4] = {0, 60, 120, 180};
 
 	Int_t NumCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
 	Int_t NumPhiEle = sizeof(phiEdges) / sizeof(Float_t);
 
 	for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
+	// for (Int_t ptIdx = 0; ptIdx < 1; ptIdx++) {
 		for (Int_t cosThetaIdx = 0; cosThetaIdx < NumCosThetaEle - 1; cosThetaIdx++) {
 			for (Int_t phiIdx = 0; phiIdx < NumPhiEle - 1; phiIdx++) {
 				extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, gPtBinning[ptIdx], gPtBinning[ptIdx + 1], "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1], true);
