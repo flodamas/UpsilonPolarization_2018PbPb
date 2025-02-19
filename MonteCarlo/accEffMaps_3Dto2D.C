@@ -49,6 +49,7 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName));
 	// TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", "_2018Acc"));
+	// TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s_fullPhi.root", gMuonAccName));
 	cout << Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName) << endl;
 	
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
@@ -65,6 +66,7 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	// get efficiency maps
 	TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", gMuonAccName));
+	// TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s_fullPhi.root", gMuonAccName));
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 	// auto* effMap = (TEfficiency*)efficiencyFile->Get(Form("Nominal3D%s_%s_LambdaTheta0.00Phi0.00ThetaPhi0.00", refFrameName, gMuonAccName));
 	cout << nominalMapName << endl;
@@ -78,7 +80,7 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	// get relative systematic uncertainty of efficiency
-	auto* systEff = (TH3D*)efficiencyFile->Get(RelativeSystTEfficiency3DName(refFrameName));
+	auto* systEff = (TH3D*)efficiencyFile->Get(SystTEfficiency3DName(refFrameName));
 
 	// rebin uncertainty map based on costheta, phi, and pT selection
 	TH2D* systEffCosThetaPhi = rebinRel3DUncMap(effMap, systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
@@ -109,7 +111,7 @@ void accEffMaps_3Dto2D_scan(const char* refFrameName = "CS") {
 
 	for (int ipt = 0; ipt < NptBins; ipt++) {
 
-		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 20, -1, 1, 24, -200, 280, 1);
+		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 20, -1, 1, 23, -180, 280, 1);
 
 	}
 

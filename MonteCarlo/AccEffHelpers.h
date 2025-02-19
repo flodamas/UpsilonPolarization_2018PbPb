@@ -536,9 +536,11 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	if (strstr(effHist->GetName(), "CS")) {
 		frameHist2D->SetXTitle(CosThetaVarTitle("CS"));
 		frameHist2D->SetYTitle(AbsPhiAxisTitle("CS"));
+		// frameHist2D->SetYTitle(PhiAxisTitle("CS"));
 	} else {
 		frameHist2D->SetXTitle(CosThetaVarTitle("HX"));
 		frameHist2D->SetYTitle(AbsPhiAxisTitle("HX"));
+		// frameHist2D->SetYTitle(PhiAxisTitle("HX"));
 	}
 
 	if (isAcc) {
@@ -565,12 +567,22 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
 	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins)-1);
 
+	// /// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 23 bins from -180 to 280)
+	// frameHist2D->GetXaxis()->SetNdivisions(-210); //cosTheta
+	// frameHist2D->GetYaxis()->SetNdivisions(-308); //phi
+
+	// frameHist2D->GetXaxis()->SetLabelSize(0.045);
+	// frameHist2D->GetYaxis()->SetLabelSize(0.045);
+	
+
 	if (displayValues) displayEfficiencies(effHist, nCosThetaBins, nPhiBins);
 
 	// save the plot
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
 	if (isAcc)
 		canvas->SaveAs(Form("EfficiencyMaps/%dS/2Dacc_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
+		// canvas->SaveAs(Form("EfficiencyMaps/%dS/2Dacc_%s_pt%dto%d_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
 	else
 		canvas->SaveAs(Form("EfficiencyMaps/%dS/2Deff_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
+		// canvas->SaveAs(Form("EfficiencyMaps/%dS/2Deff_%s_pt%dto%d_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
 }
