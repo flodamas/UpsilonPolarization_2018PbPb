@@ -264,7 +264,6 @@ const char* GetMCFileName(const char* fitModelName = "SymDSCB_cent0to90_absy0p0t
 // Define and read the signal parameters from MC extracted values, define Gaussian constraints on the parameters that are set to constants
 
 RooArgList* ListOfSignalContraints(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12", bool fixSigmaToMC = false) {
-	
 	RooArgList* constraintsList = new RooArgList();
 
 	if (strcmp(signalShapeName, "SymDSCB") == 0) {
@@ -286,7 +285,7 @@ RooArgList* ListOfSignalContraints(RooWorkspace& wspace, const char* signalShape
 			parametersList.readFromFile(mcFileName);
 		} else {
 			cout << endl
-				<< mcFileName << " file does not seem to exist, you need to extract the signal paramaters from MC fit first!" << endl;
+			     << mcFileName << " file does not seem to exist, you need to extract the signal paramaters from MC fit first!" << endl;
 			exit(1);
 		}
 
@@ -480,7 +479,7 @@ void SaveRawSignalYields(RooArgSet* signalYields, const char* fitModelName, cons
 void SaveRawFitResults(RooFitResult* fitResult, const char* fitModelName, const char* extraString = gMuonAccName) {
 	gSystem->mkdir("../SignalExtraction/RawFitResults", kTRUE);
 	TFile fitResultsFile(Form("RawFitResults/%s%s.root", fitModelName, gMuonAccName), "RECREATE");
-	
+
 	fitResult->Write();
 	fitResultsFile.Close();
 }
@@ -521,27 +520,27 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 }
 
 RooFitResult* GetFitResults(const char* totalFitModelName, const char* extraString = "") {
-    TFile *fitResultsFile = TFile::Open(Form("../SignalExtraction/RawFitResults/%s%s.root", totalFitModelName, extraString), "READ");  
+	TFile* fitResultsFile = TFile::Open(Form("../SignalExtraction/RawFitResults/%s%s.root", totalFitModelName, extraString), "READ");
 
 	char fitResultsFileName[512];
 	snprintf(fitResultsFileName, sizeof(fitResultsFileName), "../SignalExtraction/RawFitResults/%s%s.root", totalFitModelName, extraString);
 
 	cout << fitResultsFileName << endl;
-    if (!fitResultsFile) {
+	if (!fitResultsFile) {
 		cout << endl
-       		 << fitResultsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << endl;
+		     << fitResultsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << endl;
 		exit(1);
 	}
 
-    else {
+	else {
 		cout << endl
-		     << "Found" << fitResultsFileName << " file, will read fit results from it" << endl;	
+		     << "Found" << fitResultsFileName << " file, will read fit results from it" << endl;
 	}
 
-    RooFitResult* fitResults = (RooFitResult*)fitResultsFile->Get("fitresult_invMassModel_dataset");
+	RooFitResult* fitResults = (RooFitResult*)fitResultsFile->Get("fitresult_invMassModel_dataset");
 
 	cout << endl
-         << "Fit result values:" << endl;
+	     << "Fit result values:" << endl;
 	fitResults->Print("v");
 
 	return fitResults;
@@ -553,10 +552,11 @@ RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooReal
 	char paramsFileName[512];
 	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s_%s.txt", methodName, modelName, extraString);
 
-	if (vervose == true) {cout << paramsFileName << endl;}
+	if (verbose == true) { cout << paramsFileName << endl; }
 	if (fopen(paramsFileName, "r")) {
-		if (verbose == true) {cout << endl
-		     				<< "Found" << paramsFileName << " file, will read polarization parameters from it" << endl;
+		if (verbose == true) {
+			cout << endl
+			     << "Found" << paramsFileName << " file, will read polarization parameters from it" << endl;
 		}
 		polarParams.readFromFile(paramsFileName);
 	} else {
@@ -565,9 +565,10 @@ RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooReal
 		exit(1);
 	}
 
-	if (verbose == true) {cout << endl
-	     	<< "Polarization parameter values:" << endl;
-			polarParams.Print("v");
+	if (verbose == true) {
+		cout << endl
+		     << "Polarization parameter values:" << endl;
+		polarParams.Print("v");
 	}
 
 	return polarParams;

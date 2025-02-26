@@ -230,4 +230,22 @@ TPaveText* PolarParamsText(double lambThetaIn, double lambPhiIn, RooRealVar norm
 	return text;
 }
 
+TLegend* LegendBlock(Float_t x, Float_t y, int nEntries = 1) {
+	TLegend* block = new TLegend(x, y, x + 0.25, y - nEntries * .05);
+
+	block->SetTextSize(.05);
+
+	return block;
+}
+
+void drawSingleLegend(TObject* graph, const char* text, Float_t x, Float_t y = .84, const char* opt = "p") {
+	TLegend* legend = new TLegend(x, y + 0.03, x + 0.3, y - 0.03);
+	// legend->SetTextAlign(12);
+	legend->SetTextSize(.05);
+
+	legend->AddEntry(graph, text, opt);
+
+	legend->Draw();
+}
+
 #endif
