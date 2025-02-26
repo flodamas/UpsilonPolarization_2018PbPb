@@ -319,7 +319,7 @@ void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t 
 
 			// Create a TLatex object to write the signal extraction yield uncertainties on each bin
 			TLatex latex;
-			latex.SetTextSize(0.04); // Adjust text size as needed
+			latex.SetTextSize(0.05); // Adjust text size as needed
 			latex.SetTextAlign(22);  // Center alignment
 			latex.SetTextColor(kWhite);
 
@@ -327,7 +327,7 @@ void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t 
 				latex.DrawLatex(x, y, Form("%.1f%%", binUnc / binVal * 100));
 
 			else
-				latex.DrawLatex(x, y, Form("%.4f", binVal));
+				latex.DrawLatex(x, y, Form("%.1f", binVal));
 		}
 	}
 }

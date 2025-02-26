@@ -7,8 +7,8 @@
 #include "RooRealVar.h"
 #include "../../AnalysisParameters.h"
 
-TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax) {
-	TPaveText* text = new TPaveText(0.57, 0.9, 0.95, 0.6, "NDCNB");
+TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax, float x1 = 0.57, float y1 = 0.9, float x2 = 0.95, float y2 = 0.6) {
+	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB");
 	// TPaveText* text = new TPaveText(0.65, 0.90, 0.95, 0.60, "NDCNB");
 
 	text->SetFillColor(4000);
@@ -22,8 +22,8 @@ TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax
 	return text;
 }
 
-TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB");
+TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, float x1 = 0.61, float y1 = 0.34, float x2 = 0.97, float y2 = 0.56) {
+	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	// text->AddText(Form("%d < p_{T}^{#mu#mu} < %d GeV/c", ptMin, ptMax));
@@ -35,8 +35,8 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 	return text;
 }
 
-TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
-	TPaveText* text = new TPaveText(0.14, 0.65, 0.50, 0.90, "NDCNB"); // on the left side
+TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, float x1 = 0.14, float y1 = 0.65, float x2 = 0.50, float y2 = 0.90, int alignment = 12) {
+	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB"); // on the left side
 	// TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB"); // on the right side
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
@@ -45,14 +45,14 @@ TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = 
 	text->AddText(CosThetaRangeText(isCSframe ? "CS" : "HX", cosThetaMin, cosThetaMax));
 	text->AddText(AbsPhiRangeText(isCSframe ? "CS" : "HX", phiMin, phiMax));
 
-	text->SetAllWith("", "align", 12); // on the left side
+	text->SetAllWith("", "align", alignment); // on the left side
 	// text->SetAllWith("", "align", 32); // on the right side
 	return text;
 }
 
-TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S /*, RooRealVar nBkg*/) {
+TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S /*, RooRealVar nBkg*/, float x1 = 0.57, float y1 = 0.35, float x2 = 0.95, float y2 = 0.08, int alignment = 12) {
 	// TPaveText* text = new TPaveText(0.6, 0.85, 0.95, 0.5, "NDCNB");
-	TPaveText* text = new TPaveText(0.57, 0.35, 0.95, 0.08, "NDCNB");
+	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
 	if (DoAsymptoticError) {
@@ -68,7 +68,7 @@ TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float
 	}
 
 	//	text->AddText(Form("N(bkg) = %.0f^{ #plus%.0f}_{ %.0f}", nBkg.getVal(), nBkg.getErrorHi(), nBkg.getErrorLo()));
-	text->SetAllWith("", "align", 32);
+	text->SetAllWith("", "align", alignment);
 	return text;
 }
 

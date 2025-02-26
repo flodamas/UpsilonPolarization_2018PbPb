@@ -5,172 +5,394 @@
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
+std::vector<std::vector<std::vector<double>>> readSystematicUncertainties() {
+    std::ifstream inFile("../SystematicUncertainties/systematic_errors_total.txt");
+    std::vector<std::vector<std::vector<double>>> sysError(2);
+	std::string line;
+
+    if (!inFile) {
+        std::cerr << "Error: Could not open file!" << std::endl;
+        return sysError;
+    }
+
+    /// Skip the header lines
+    std::getline(inFile, line); // Skip the first header line
+
+    /// Read the remaining lines
+    while (std::getline(inFile, line)) {
+
+        std::istringstream iss(line);
+        std::string refFrameName, ptRange;
+        double lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde;
+
+        // Parse the line
+        iss >> refFrameName >> ptRange >> lambdaTheta >> lambdaPhi >> lambdaThetaPhi >> lambdaTilde;
+
+		cout << "refFrameName: " << refFrameName << endl;
+		cout << (refFrameName == "CS") << endl;
+		cout << (refFrameName == "HX") << endl;
+
+        // Save the data to the 2D vector
+        if (refFrameName == "CS") sysError[0].push_back({lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde});
+		else sysError[1].push_back({lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde});
+    }
+
+    inFile.close();
+    return sysError;
+}
+
+void createSysErrorBox(TGraphErrors* gSys, const char* lineColor = "#A0B1BA") {
+	int nPoints = gSys->GetN();
+
+	for (int i = 1; i < nPoints; ++i) {
+		double x, y;
+		gSys->GetPoint(i, x, y);
+		double ex = 0.5;                         // x half-width, as set in SetPointError
+		double eyHigh = gSys->GetErrorYhigh(i);    // upper y error
+		double eyLow  = gSys->GetErrorYlow(i);     // lower y error
+
+		TBox *box = new TBox(x - ex, y - eyLow, x + ex, y + eyHigh);
+		box->SetLineColorAlpha(TColor::GetColor(lineColor), 0.6);                // Outline color
+		box->SetLineWidth(1);
+		box->Draw("same");
+	}
+}
+
 void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
+
+	const int NRefFrame = 2;
 
 	RooRealVar* lambdaTheta = new RooRealVar("lambdaTheta", "lambdaTheta", 0);
 	RooRealVar* lambdaPhi = new RooRealVar("lambdaPhi", "lambdaPhi", 0);
 	RooRealVar* lambdaThetaPhi = new RooRealVar("lambdaThetaPhi", "lambdaThetaPhi", 0);
 	RooRealVar* lambdaTilde = new RooRealVar("lambdaTilde", "lambdaTilde", 0);
 
-	TH1D* lambdaThetaHist = new TH1D("lambdaThetaHist", "; p_{T} (GeV/c); #lambda_{#theta}", NPtBins, gPtBinning);
-	TH1D* lambdaPhiHist = new TH1D("lambdaPhiHist", "; p_{T} (GeV/c); #lambda_{#varphi}", NPtBins, gPtBinning);
-	TH1D* lambdaThetaPhiHist = new TH1D("lambdaThetaPhiHist", "; p_{T} (GeV/c); #lambda_{#theta#varphi}", NPtBins, gPtBinning);
-	TH1D* lambdaTildeHist = new TH1D("lambdaTildeHist", "; p_{T} (GeV/c); #tilde{#lambda}", NPtBins, gPtBinning);
+	TH1D* lambdaThetaHist[NRefFrame]; 
+	TH1D* lambdaPhiHist[NRefFrame]; 
+	TH1D* lambdaThetaPhiHist[NRefFrame]; 
+	TH1D* lambdaTildeHist[NRefFrame];
 
-	const char* refFrameName = (isCSframe ? "CS" : "HX");
+	const char* CSColor = "#009ADE";
+	const char* HXColor = "#FF1F5B";
+
+	const char* color[NRefFrame] = {CSColor, HXColor};
+
 	const char* signalShapeName = "SymDSCB";
 	const char* methodName = "rootFit";
-	// const char* bkgShapeName = "ExpTimesErr";
-	// const char* bkgShapeName = "Chebychev";
 
-	for (Int_t ibin = 1; ibin <= NPtBins; ibin++) {
-		// get polarization parameters
-		const char* fitModelName = GetFitModelName(signalShapeName, gPtBinning[ibin - 1], gPtBinning[ibin], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	std::vector<std::vector<std::vector<double>>> totalSysError = readSystematicUncertainties();
 
-		RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName);
+	TGraphErrors *gSysLambTheta[NRefFrame]; 
+	TGraphErrors *gSysLambPhi[NRefFrame]; 
+	TGraphErrors *gSysLambThetaPhi[NRefFrame]; 
+	TGraphErrors *gSysLambTilde[NRefFrame];
 
-		double lambdaThetaVal = lambdaTheta->getVal();
-		double lambdaThetaUnc = lambdaTheta->getError();
+	const char* refFrameName = "CS";
 
-		double lambdaPhiVal = lambdaPhi->getVal();
-		double lambdaPhiUnc = lambdaPhi->getError();
+	for (Int_t iRefFrame = 0; iRefFrame < NRefFrame; iRefFrame++) {
+			
+		if (iRefFrame == 0) {
+			refFrameName = "CS";
+		} else {
+			refFrameName = "HX";
+		}
 
-		double lambdaThetaPhiVal = lambdaThetaPhi->getVal();
-		double lambdaThetaPhiUnc = lambdaThetaPhi->getError();
+		lambdaThetaHist[iRefFrame] = new TH1D(Form("lambdaTildeHist%s", "refFrameName"), "; p_{T} (GeV/c); #lambda_{#theta}", NPtBins, gPtBinning);
+		lambdaPhiHist[iRefFrame] = new TH1D(Form("lambdaTildeHist%s", "refFrameName"), "; p_{T} (GeV/c); #lambda_{#varphi}", NPtBins, gPtBinning);
+		lambdaThetaPhiHist[iRefFrame] = new TH1D(Form("lambdaTildeHist%s", "refFrameName"), "; p_{T} (GeV/c); #lambda_{#theta#varphi}", NPtBins, gPtBinning);
+		lambdaTildeHist[iRefFrame] = new TH1D(Form("lambdaTildeHist%s", "refFrameName"), "; p_{T} (GeV/c); #tilde{#lambda}", NPtBins, gPtBinning);
+			
+		gSysLambTheta[iRefFrame] = new TGraphErrors(NPtBins);
+		gSysLambPhi[iRefFrame] = new TGraphErrors(NPtBins);
+		gSysLambThetaPhi[iRefFrame] = new TGraphErrors(NPtBins);
+		gSysLambTilde[iRefFrame] = new TGraphErrors(NPtBins);
+        
+		// for (Int_t ibin = 1; ibin <= NPtBins; ibin++) {
+		for (Int_t ibin = 2; ibin <= NPtBins; ibin++) {
+			// get polarization parameters
+			const char* fitModelName = GetFitModelName(signalShapeName, gPtBinning[ibin - 1], gPtBinning[ibin], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-		double lambdaTildeVal = lambdaTilde->getVal();
-		double lambdaTildeUnc = lambdaTilde->getError();
+			RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName);
 
-		cout << "lambdaThetaVal: " << lambdaThetaVal << endl;
+			double lambdaThetaVal = lambdaTheta->getVal();
+			double lambdaThetaUnc = lambdaTheta->getError();
 
-		lambdaThetaHist->SetBinContent(ibin, lambdaThetaVal);
-		lambdaThetaHist->SetBinError(ibin, lambdaThetaUnc);
+			double lambdaPhiVal = lambdaPhi->getVal();
+			double lambdaPhiUnc = lambdaPhi->getError();
 
-		lambdaPhiHist->SetBinContent(ibin, lambdaPhiVal);
-		lambdaPhiHist->SetBinError(ibin, lambdaPhiUnc);
+			double lambdaThetaPhiVal = lambdaThetaPhi->getVal();
+			double lambdaThetaPhiUnc = lambdaThetaPhi->getError();
 
-		lambdaThetaPhiHist->SetBinContent(ibin, lambdaThetaPhiVal);
-		lambdaThetaPhiHist->SetBinError(ibin, lambdaThetaPhiUnc);
+			double lambdaTildeVal = lambdaTilde->getVal();
+			double lambdaTildeUnc = lambdaTilde->getError();
 
-		lambdaTildeHist->SetBinContent(ibin, lambdaTildeVal);
-		lambdaTildeHist->SetBinError(ibin, lambdaTildeUnc);
+			cout << "lambdaThetaVal: " << lambdaThetaVal << endl;
+
+			lambdaThetaHist[iRefFrame]->SetBinContent(ibin, lambdaThetaVal);
+			lambdaThetaHist[iRefFrame]->SetBinError(ibin, lambdaThetaUnc);
+
+			lambdaPhiHist[iRefFrame]->SetBinContent(ibin, lambdaPhiVal);
+			lambdaPhiHist[iRefFrame]->SetBinError(ibin, lambdaPhiUnc);
+
+			lambdaThetaPhiHist[iRefFrame]->SetBinContent(ibin, lambdaThetaPhiVal);
+			lambdaThetaPhiHist[iRefFrame]->SetBinError(ibin, lambdaThetaPhiUnc);
+
+			lambdaTildeHist[iRefFrame]->SetBinContent(ibin, lambdaTildeVal);
+			lambdaTildeHist[iRefFrame]->SetBinError(ibin, lambdaTildeUnc);
+
+			/// Fill the systematic uncertainties
+			double x = (gPtBinning[ibin - 1] + gPtBinning[ibin]) / 2;
+			double y = lambdaThetaVal;
+			double xError = 0.5;
+
+			gSysLambTheta[iRefFrame]->SetPoint(ibin - 1, x, lambdaThetaVal);
+			gSysLambTheta[iRefFrame]->SetPointError(ibin - 1, xError, totalSysError[iRefFrame][ibin - 1][0]);
+
+			gSysLambPhi[iRefFrame]->SetPoint(ibin - 1, x, lambdaPhiVal);
+			gSysLambPhi[iRefFrame]->SetPointError(ibin - 1, xError, totalSysError[iRefFrame][ibin - 1][1]);
+
+			gSysLambThetaPhi[iRefFrame]->SetPoint(ibin - 1, x, lambdaThetaPhiVal);
+			gSysLambThetaPhi[iRefFrame]->SetPointError(ibin - 1, xError, totalSysError[iRefFrame][ibin - 1][2]);
+
+			gSysLambTilde[iRefFrame]->SetPoint(ibin - 1, x, lambdaTildeVal);
+			gSysLambTilde[iRefFrame]->SetPointError(ibin - 1, xError, totalSysError[iRefFrame][ibin - 1][3]);
+		
+		}
 	}
 
-	TCanvas* polarParamsCanvas = new TCanvas("polarParamsCanvas", "polarParamsCanvas", 500, 900);
+	TCanvas* polarParamsCanvas = new TCanvas("polarParamsCanvas", "polarParamsCanvas", 900, 800);
 
-	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.66, 1, 1.0);
+	TPad* pad1[NRefFrame]; 
+	TPad* pad2[NRefFrame]; 
+	TPad* pad3[NRefFrame]; 
 
-	pad1->SetTopMargin(0.12);
-	pad1->SetBottomMargin(0.0);
-	pad1->SetLeftMargin(0.17);
-	pad1->Draw();
-	pad1->cd();
-
-	lambdaThetaHist->Draw();
-
-	// cosmetics
-	lambdaThetaHist->GetXaxis()->CenterTitle();
-	lambdaThetaHist->GetXaxis()->SetLabelSize(0);
-	lambdaThetaHist->GetXaxis()->SetTitleSize(0);
-
-	lambdaThetaHist->GetYaxis()->SetRangeUser(-1.2, 1.2);
-	lambdaThetaHist->GetYaxis()->CenterTitle();
-	lambdaThetaHist->GetYaxis()->SetTitleSize(0.1);
-	lambdaThetaHist->GetYaxis()->SetTitleOffset(0.8);
-
-	lambdaThetaHist->GetYaxis()->SetLabelSize(0.075);
+	TLine* zeroLine = new TLine(gPtBinning[0], 0, gPtBinning[NPtBins], 0);
+	zeroLine->SetLineStyle(kDashed);
 
 	TLatex text;
 	text.SetTextAlign(22);
 	text.SetTextSize(0.08);
-	text.DrawLatexNDC(.31, .8, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
 
-	TLatex refFrameText;
-	refFrameText.SetTextAlign(22);
-	refFrameText.SetTextSize(0.08);
-	if (isCSframe)
-		refFrameText.DrawLatexNDC(0.82, 0.8, "Collins-Soper");
-	else
-		refFrameText.DrawLatexNDC(0.86, 0.8, "Helicity");
+	CMS_lumi(polarParamsCanvas, gCMSLumiText);
 
-	TLine* zeroLine = new TLine(gPtBinning[0], 0, gPtBinning[NPtBins], 0);
-	zeroLine->Draw("SAME");
-	zeroLine->SetLineStyle(kDashed);
+	for (Int_t iRefFrame = 0; iRefFrame < NRefFrame; iRefFrame++) {
+			
+		if (iRefFrame == 0) {
+			refFrameName = "CS";
+		} else {
+			refFrameName = "HX";
+		}
 
-	CMS_lumi(pad1, gCMSLumiText);
+		float xPadMin = 0.5 * iRefFrame;
+		float xPadMax = 0.5 * (iRefFrame + 1);
 
-	polarParamsCanvas->cd();
+		/// Draw lambdaTheta pad
+		polarParamsCanvas->cd();
 
-	TPad* pad2 = new TPad("pad2", "pad2", 0, 0.35, 1, 0.66);
+		pad1[iRefFrame] = new TPad(Form("pad1%s", refFrameName), "pad1", xPadMin, 0.672, xPadMax, 1.0);
+		
+		pad1[iRefFrame]->SetTopMargin(0.12);
+		pad1[iRefFrame]->SetBottomMargin(0.0);
+		if (iRefFrame == 0) {pad1[iRefFrame]->SetLeftMargin(0.17); pad1[iRefFrame]->SetRightMargin(0.0);}
+		else {pad1[iRefFrame]->SetLeftMargin(0.0); pad1[iRefFrame]->SetRightMargin(0.17);}
+		pad1[iRefFrame]->Draw();
+		pad1[iRefFrame]->cd();
 
-	pad2->SetTopMargin(0.0);
-	pad2->SetBottomMargin(0.0);
-	pad2->SetLeftMargin(0.17);
-	pad2->Draw();
-	pad2->cd();
+		lambdaThetaHist[iRefFrame]->Draw("PL");
+		lambdaThetaHist[iRefFrame]->SetMarkerStyle(20);
+		lambdaThetaHist[iRefFrame]->SetMarkerSize(1.4);
+		lambdaThetaHist[iRefFrame]->SetMarkerColor(TColor::GetColor(color[iRefFrame]));
+		
+		lambdaThetaHist[iRefFrame]->SetLineColor(TColor::GetColor(color[iRefFrame]));
+		lambdaThetaHist[iRefFrame]->SetLineWidth(3);
 
-	lambdaPhiHist->Draw();
+		// cosmetics
+		lambdaThetaHist[iRefFrame]->GetXaxis()->CenterTitle();
+		lambdaThetaHist[iRefFrame]->GetXaxis()->SetLabelSize(0);
+		lambdaThetaHist[iRefFrame]->GetXaxis()->SetTitleSize(0);
 
-	// cosmetics
-	lambdaPhiHist->GetXaxis()->CenterTitle();
+		lambdaThetaHist[iRefFrame]->GetYaxis()->SetRangeUser(-1.2, 1.2);
+		lambdaThetaHist[iRefFrame]->GetYaxis()->CenterTitle();
 
-	lambdaPhiHist->GetYaxis()->SetRangeUser(-1.2, 1.2);
-	lambdaPhiHist->GetYaxis()->CenterTitle();
-	lambdaPhiHist->GetYaxis()->SetTitleSize(0.11);
-	lambdaPhiHist->GetYaxis()->SetTitleOffset(0.7);
+		if (iRefFrame == 0) {
+			lambdaThetaHist[iRefFrame]->GetYaxis()->SetTitleSize(0.105);
+			lambdaThetaHist[iRefFrame]->GetYaxis()->SetLabelSize(0.085);
+		}
+		else {
+			lambdaThetaHist[iRefFrame]->GetYaxis()->SetTitleSize(0);
+			lambdaThetaHist[iRefFrame]->GetYaxis()->SetLabelSize(0);
+		}
 
-	lambdaPhiHist->GetYaxis()->SetLabelSize(0.08);
+		lambdaThetaHist[iRefFrame]->GetYaxis()->SetTitleOffset(0.75);
 
-	TLatex kinematicText;
-	kinematicText.SetTextAlign(13);
-	kinematicText.SetTextSize(0.085);
-	kinematicText.DrawLatexNDC(.25, .85, Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(0, 2.4)));
+		/// Draw systematic error band
+		gSysLambTheta[iRefFrame]->SetFillColorAlpha(TColor::GetColor(color[iRefFrame]), 0.3);
 
-	zeroLine->Draw("SAME");
+		gSysLambTheta[iRefFrame]->Draw("E2 SAME");
+		
+		createSysErrorBox(gSysLambTheta[iRefFrame], color[iRefFrame]);
 
-	polarParamsCanvas->cd();
+		TLatex refFrameText;
+		refFrameText.SetTextAlign(22);
+		refFrameText.SetTextSize(0.08);
+		if (iRefFrame == 0){
+			refFrameText.DrawLatexNDC(0.82, 0.8, "Collins-Soper"); 
+			text.DrawLatexNDC(.31, .8, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
+		}
+		else
+			refFrameText.DrawLatexNDC(0.71, 0.8, "Helicity");
 
-	TPad* pad3 = new TPad("pad3", "pad3", 0, 0.00, 1, 0.35);
+		CMS_lumi(pad1[iRefFrame], gCMSLumiText);
 
-	pad3->SetTopMargin(0.0);
-	pad3->SetBottomMargin(0.25);
-	pad3->SetLeftMargin(0.17);
-	pad3->Draw();
-	pad3->cd();
+		zeroLine->Draw("SAME");
 
-	lambdaThetaPhiHist->Draw();
+		/// Draw lambdaPhi pad
+		polarParamsCanvas->cd();
 
-	// cosmetics
-	lambdaThetaPhiHist->GetXaxis()->CenterTitle();
-	lambdaThetaPhiHist->GetXaxis()->SetTitleSize(0.1);
+		pad2[iRefFrame] = new TPad(Form("pad2%s", refFrameName), "pad2", xPadMin, 0.384, xPadMax, 0.672);
 
-	lambdaThetaPhiHist->GetXaxis()->SetLabelSize(0.075);
+		pad2[iRefFrame]->SetTopMargin(0.0);
+		pad2[iRefFrame]->SetBottomMargin(0.0);
+		if (iRefFrame == 0) {pad2[iRefFrame]->SetLeftMargin(0.17); pad2[iRefFrame]->SetRightMargin(0.0);}
+		else {pad2[iRefFrame]->SetLeftMargin(0.0); pad2[iRefFrame]->SetRightMargin(0.17);}
+		pad2[iRefFrame]->Draw();
+		pad2[iRefFrame]->cd();
 
-	lambdaThetaPhiHist->GetYaxis()->SetRangeUser(-1.2, 1.2);
-	lambdaThetaPhiHist->GetYaxis()->CenterTitle();
-	lambdaThetaPhiHist->GetYaxis()->SetTitleSize(0.1);
-	lambdaThetaPhiHist->GetYaxis()->SetTitleOffset(0.75);
+		lambdaPhiHist[iRefFrame]->Draw();
+		lambdaPhiHist[iRefFrame]->SetMarkerStyle(20);
+		lambdaPhiHist[iRefFrame]->SetMarkerSize(1.4);
+		lambdaPhiHist[iRefFrame]->SetMarkerColor(TColor::GetColor(color[iRefFrame]));
+		
+		lambdaPhiHist[iRefFrame]->SetLineColor(TColor::GetColor(color[iRefFrame]));
+		lambdaPhiHist[iRefFrame]->SetLineWidth(3);
 
-	lambdaThetaPhiHist->GetYaxis()->SetLabelSize(0.075);
+		// cosmetics
+		lambdaPhiHist[iRefFrame]->GetXaxis()->CenterTitle();
 
-	zeroLine->Draw("SAME");
+		lambdaPhiHist[iRefFrame]->GetYaxis()->SetRangeUser(-1.2, 1.2);
+		lambdaPhiHist[iRefFrame]->GetYaxis()->CenterTitle();
 
-	const char* fitModelName2 = GetFitModelName(signalShapeName, gPtBinning[0], gPtBinning[NPtBins], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
+		if (iRefFrame == 0) {
+			lambdaPhiHist[iRefFrame]->GetYaxis()->SetTitleSize(0.12);
+			lambdaPhiHist[iRefFrame]->GetYaxis()->SetLabelSize(0.10);
+		}
+
+		else {
+			lambdaPhiHist[iRefFrame]->GetYaxis()->SetTitleSize(0);
+			lambdaPhiHist[iRefFrame]->GetYaxis()->SetLabelSize(0);
+		}
+
+		lambdaPhiHist[iRefFrame]->GetYaxis()->SetTitleOffset(0.65);
+
+		gSysLambPhi[iRefFrame]->SetFillColorAlpha(TColor::GetColor(color[iRefFrame]), 0.3);
+
+		gSysLambPhi[iRefFrame]->Draw("E2 SAME");
+		
+		createSysErrorBox(gSysLambPhi[iRefFrame], color[iRefFrame]);
+
+		TLatex kinematicText;
+		kinematicText.SetTextAlign(13);
+		kinematicText.SetTextSize(0.085);
+		if (iRefFrame == 0) kinematicText.DrawLatexNDC(.29, .85, Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(0, 2.4)));
+		else kinematicText.DrawLatexNDC(.14, .85, Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(0, 2.4)));
+
+		zeroLine->Draw("SAME");
+
+		/// Draw lambdaThetaPhi pad
+		polarParamsCanvas->cd();
+
+		pad3[iRefFrame] = new TPad(Form("pad3%s", refFrameName), "pad3", xPadMin, 0.00, xPadMax, 0.384);
+
+		pad3[iRefFrame]->SetTopMargin(0.0);
+		pad3[iRefFrame]->SetBottomMargin(0.25);
+		if (iRefFrame == 0) {pad3[iRefFrame]->SetLeftMargin(0.17); pad3[iRefFrame]->SetRightMargin(0.0);}
+		else {pad3[iRefFrame]->SetLeftMargin(0.0); pad3[iRefFrame]->SetRightMargin(0.17);}
+		pad3[iRefFrame]->Draw();
+		pad3[iRefFrame]->cd();
+
+		lambdaThetaPhiHist[iRefFrame]->Draw();
+		lambdaThetaPhiHist[iRefFrame]->SetMarkerStyle(20);
+		lambdaThetaPhiHist[iRefFrame]->SetMarkerSize(1.4);
+		lambdaThetaPhiHist[iRefFrame]->SetMarkerColor(TColor::GetColor(color[iRefFrame]));
+		
+		lambdaThetaPhiHist[iRefFrame]->SetLineColor(TColor::GetColor(color[iRefFrame]));
+		lambdaThetaPhiHist[iRefFrame]->SetLineWidth(3);
+
+		// cosmetics
+		lambdaThetaPhiHist[iRefFrame]->GetXaxis()->CenterTitle();
+		lambdaThetaPhiHist[iRefFrame]->GetXaxis()->SetTitleSize(0.08);
+		lambdaThetaPhiHist[iRefFrame]->GetXaxis()->SetTitleOffset(1.2);
+
+		lambdaThetaPhiHist[iRefFrame]->GetXaxis()->SetLabelSize(0.075);
+
+		lambdaThetaPhiHist[iRefFrame]->GetYaxis()->SetRangeUser(-1.2, 1.2);
+		lambdaThetaPhiHist[iRefFrame]->GetYaxis()->CenterTitle();
+		
+		if (iRefFrame == 0) {
+			lambdaThetaPhiHist[iRefFrame]->GetYaxis()->SetTitleSize(0.09);
+			lambdaThetaPhiHist[iRefFrame]->GetYaxis()->SetLabelSize(0.075);
+		}
+
+		else {
+			lambdaThetaPhiHist[iRefFrame]->GetYaxis()->SetTitleSize(0);
+			lambdaThetaPhiHist[iRefFrame]->GetYaxis()->SetLabelSize(0);
+		}
+
+		lambdaThetaPhiHist[iRefFrame]->GetYaxis()->SetTitleOffset(0.85);
+
+		gSysLambThetaPhi[iRefFrame]->SetFillColorAlpha(TColor::GetColor(color[iRefFrame]), 0.3);
+
+		gSysLambThetaPhi[iRefFrame]->Draw("E2 SAME");
+		
+		createSysErrorBox(gSysLambThetaPhi[iRefFrame], color[iRefFrame]);
+
+		zeroLine->Draw("SAME");
+	}
+
+	const char* fitModelName2 = GetFitModelName(signalShapeName, gPtBinning[1], gPtBinning[NPtBins], "CSHX", cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	gSystem->mkdir("ParametersResults", kTRUE);
 	polarParamsCanvas->SaveAs(Form("ParametersResults/polarParams_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
 
 	TCanvas* invPolarParamsCanvas = new TCanvas("invPolarParamsCanvas", "invPolarParamsCanvas", 500, 500);
 
-	lambdaTildeHist->Draw();
+	lambdaTildeHist[0]->Draw();
+	
+	lambdaTildeHist[0]->SetMarkerStyle(20);
+	lambdaTildeHist[0]->SetMarkerSize(1.4);
+	lambdaTildeHist[0]->SetMarkerColor(TColor::GetColor(CSColor));
+	
+	lambdaTildeHist[0]->SetLineColor(TColor::GetColor(CSColor));
+	lambdaTildeHist[0]->SetLineWidth(3);
+
+	lambdaTildeHist[1]->Draw("same");
+
+	lambdaTildeHist[1]->SetMarkerStyle(20);
+	lambdaTildeHist[1]->SetMarkerSize(1.4);
+	lambdaTildeHist[1]->SetMarkerColor(TColor::GetColor(HXColor));
+
+	lambdaTildeHist[1]->SetLineColor(TColor::GetColor(HXColor));
+	lambdaTildeHist[1]->SetLineWidth(3);
 
 	// cosmetics
-	lambdaTildeHist->GetXaxis()->CenterTitle();
+	lambdaTildeHist[0]->GetXaxis()->CenterTitle();
 
-	lambdaTildeHist->GetYaxis()->SetRangeUser(-1.4, 1.4);
-	lambdaTildeHist->GetYaxis()->CenterTitle();
+	lambdaTildeHist[0]->GetYaxis()->SetRangeUser(-1.4, 1.4);
+	lambdaTildeHist[0]->GetYaxis()->CenterTitle();
+
+	gSysLambTilde[0]->SetFillColorAlpha(TColor::GetColor(CSColor), 0.3);
+
+	gSysLambTilde[0]->Draw("E2 SAME");
+
+	createSysErrorBox(gSysLambTilde[0], CSColor);
+
+	gSysLambTilde[1]->SetFillColorAlpha(TColor::GetColor(HXColor), 0.3);
+
+	gSysLambTilde[1]->Draw("E2 SAME");
+
+	createSysErrorBox(gSysLambTilde[1], HXColor);
 
 	zeroLine->Draw("SAME");
 
@@ -179,11 +401,15 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 	text.SetTextSize(0.058);
 	text.DrawLatexNDC(.32, .85, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
 
-	refFrameText.SetTextSize(0.058);
-	if (isCSframe)
-		refFrameText.DrawLatexNDC(0.78, 0.85, "Collins-Soper");
-	else
-		refFrameText.DrawLatexNDC(0.85, 0.85, "Helicity");
+	TLegend* legend = new TLegend(0.6, 0.77, 0.9, 0.9);
+	legend->SetBorderSize(0);
+	legend->SetFillStyle(0);
+	legend->SetTextSize(0.05);
+	legend->AddEntry(lambdaTildeHist[0], "Collins-Soper", "lp");
+	legend->AddEntry(lambdaTildeHist[1], "Helicity", "lp");
+	legend->Draw("SAME");
 
 	invPolarParamsCanvas->SaveAs(Form("ParametersResults/invariantParameter_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
+
+	return;
 }
