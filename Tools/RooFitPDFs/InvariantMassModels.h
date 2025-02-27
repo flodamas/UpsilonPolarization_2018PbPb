@@ -26,6 +26,14 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace, const char* signa
 	RooRealVar mass = *wspace.var("mass");
 	mass.setRange("MassFitRange", MassBinMin, MassBinMax);
 
+	RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
+
+	RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
+	RooFormulaVar mean_2S("mean_2S", "@0*@1", RooArgSet(massScaling_2S, mean_1S));
+
+	RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
+	RooFormulaVar mean_3S("mean_3S", "@0*@1", RooArgSet(massScaling_3S, mean_1S));
+
 	if (strcmp(signalShapeName, "SymDSCB") == 0) {
 		// get the tail parameters, assuming that they have been imported to the workspace first!!
 		RooRealVar sigma_1S = *wspace.var("sigmaSymDSCB");
@@ -36,7 +44,6 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace, const char* signa
 		RooRealVar orderSup = *wspace.var("orderSupSymDSCB");
 
 		// Y(1S) signal shape
-		RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
 		// RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S);
 		//RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .03, .15);
 
@@ -44,18 +51,14 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace, const char* signa
 		list.push_back(signalPDF_1S.GetName());
 
 		// Y(2S) signal shape, mass scaling for mean and widths
-		RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
 
-		RooFormulaVar mean_2S("mean_2S", "@0*@1", RooArgSet(massScaling_2S, mean_1S));
 		RooFormulaVar sigma_2S("sigma_2S", "@0*@1", RooArgSet(massScaling_2S, sigma_1S));
 
 		RooCrystalBall signalPDF_2S("signalPDF_2S", "Symmetric DSCB pdf for Y(2S) mass peak", mass, mean_2S, sigma_2S, alphaInf, orderInf, alphaSup, orderSup);
 		list.push_back(signalPDF_2S.GetName());
 
 		// Y(3S) signal shape, mass scaling for mean and widths
-		RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
 
-		RooFormulaVar mean_3S("mean_3S", "@0*@1", RooArgSet(massScaling_3S, mean_1S));
 		RooFormulaVar sigma_3S("sigma_3S", "@0*@1", RooArgSet(massScaling_3S, sigma_1S));
 
 		RooCrystalBall signalPDF_3S("signalPDF_3S", "Symmetric DSCB pdf for Y(3S) mass peak", mass, mean_3S, sigma_3S, alphaInf, orderInf, alphaSup, orderSup);
@@ -71,26 +74,19 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace, const char* signa
 		RooRealVar delta = *wspace.var("deltaJohnson");
 
 		// Y(1S) signal shape
-		RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.4, 9.5);
 
 		RooJohnson signalPDF_1S("signalPDF_1S", "Johnson pdf for Y(1S) mass peak", mass, mean_1S, lambda, gamma, delta);
 		list.push_back(signalPDF_1S.GetName());
 
-		// Y(2S) signal shape, mass scaling for mean and widths
-		RooConstVar massScaling_2S("massScaling_2S", "", PDGmass_2S / PDGmass_1S);
-
-		RooFormulaVar mean_2S("mean_2S", "@0*@1", RooArgSet(massScaling_2S, mean_1S));
+		// Y(2S) signal shape, mass scaling for mean
 
 		RooJohnson signalPDF_2S("signalPDF_2S", "Johnson pdf for Y(2S) mass peak", mass, mean_2S, lambda, gamma, delta);
 		list.push_back(signalPDF_2S.GetName());
 
-		// Y(3S) signal shape, mass scaling for mean and widths
-		RooConstVar massScaling_3S("massScaling_3S", "", PDGmass_3S / PDGmass_1S);
-
-		RooFormulaVar mean_3S("mean_3S", "@0*@1", RooArgSet(massScaling_3S, mean_1S));
+		// Y(3S) signal shape, mass scaling for mean
 
 		RooJohnson signalPDF_3S("signalPDF_3S", "Johnson pdf for Y(3S) mass peak", mass, mean_3S, lambda, gamma, delta);
-		list.push_back(signalPDF_3S.GetName());	
+		list.push_back(signalPDF_3S.GetName());
 
 		wspace.import({signalPDF_1S, signalPDF_2S, signalPDF_3S}, RecycleConflictNodes());
 	}
@@ -98,11 +94,10 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace, const char* signa
 	else if (strcmp(signalShapeName, "Voigtian") == 0) {
 		// this function is not complete yet, need to add the mass scaling for the excited states
 		// Voigtian distribution
-		RooRealVar mean("meanVoigtian", "", PDGmass_1S, 9., 10.);
 		RooRealVar sigma("sigmaVoigtian", "", 0.08, .03, .15);
 		RooRealVar width("widthVoigtian", "", 0.08, .03, .15);
 
-		RooVoigtian signalPDF("signalPDF", "Voigtian distribution", mass, mean, sigma, width);
+		RooVoigtian signalPDF("signalPDF", "Voigtian distribution", mass, mean_1S, sigma, width);
 		list.push_back(signalPDF.GetName());
 
 		wspace.import(signalPDF, RecycleConflictNodes());
@@ -238,7 +233,7 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName, const c
 void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, const char* fitModelName, Long64_t nEntries = 1e6, bool fixSigmaToMC = false) {
 	RooRealVar* invMass = wspace.var("mass");
 	invMass->setRange("MassFitRange", MassBinMin, MassBinMax);
-	
+
 	if (BeVerbose) std::cout << "\nBuilding invariant mass fit model with " << signalShapeName << " for the Y signal shapes and " << bkgShapeName << " for the background modeling\n";
 
 	// 1. tail parameters fixed to MC extracted values, and identical for the three resonances
@@ -278,20 +273,20 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 	RooAddPdf model("invMassModel", "", {*signalPDF_1S, *signalPDF_2S, *signalPDF_3S, *bkgPDF}, {*yield1S, *yield2S, *yield3S, *yieldBkg});
 	model.setNormRange("MassFitRange");
 
-	RooArgSet normSet(*invMass);  // Define normalization set for the mass variable
+	RooArgSet normSet(*invMass); // Define normalization set for the mass variable
 	model.fixCoefNormalization(normSet);
-	
+
 	// wspace.import(model);
 	wspace.import(model, RecycleConflictNodes());
 
 	/// if the fit was already performed, get the seeds of the parameters from the fit results
 	RooRealVar* err_mu = (RooRealVar*)wspace.var("err_mu");
-    RooRealVar* err_sigma = (RooRealVar*)wspace.var("err_sigma");
-    RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
-	
+	RooRealVar* err_sigma = (RooRealVar*)wspace.var("err_sigma");
+	RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
+
 	const char* totalFitModelName = Form("%s_%s", bkgShapeName, fitModelName);
 	const char* savedFitResultFileName = Form("%s%s.root", totalFitModelName, gMuonAccName);
-	
+
 	// /// set the initial values of the parameters to the already fitted values
 	// if (savedFitResultFileName) {
 	// 	RooFitResult* fitResults = GetFitResults(totalFitModelName, gMuonAccName);
@@ -319,7 +314,6 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 	// cout << "err_mu: " << err_mu->getVal() << endl;
 	// cout << "err_sigma: " << err_sigma->getVal() << endl;
 	// cout << "exp_lambda: " << exp_lambda->getVal() << endl;
-
 
 	if (BeVerbose) std::cout << "\nInvariant mass model exported to " << wspace.GetName() << std::endl;
 	//wspace.Print("v");

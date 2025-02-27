@@ -189,10 +189,10 @@ TPaveText* HypatiaParamsText(RooRealVar mean, RooRealVar lambda, RooRealVar zeta
 }
 
 TPaveText* JohnsonParamsText(RooRealVar mean, RooRealVar lambda, RooRealVar gamma, RooRealVar delta) {
-	auto* text = new TPaveText(0.16, 0.8, 0.48, 0.48, "NDCNB");
+	auto* text = new TPaveText(0.16, 0.6, 0.48, 0.3, "NDCNB");
 	text->SetBorderSize(0);
 
-	text->AddText("Johnson      ");
+	text->AddText("Johnson's PDF");
 	text->AddText(Form("m = %.3f #pm %.3f GeV", mean.getVal(), mean.getError()));
 	text->AddText(Form("#lambda = %.3f #pm %.3f", lambda.getVal(), lambda.getError()));
 	text->AddText(Form("#gamma = %.3f #pm %.3f", gamma.getVal(), gamma.getError()));
