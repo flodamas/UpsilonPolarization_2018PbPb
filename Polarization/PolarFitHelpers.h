@@ -81,7 +81,7 @@ TCanvas* drawUncertaintyPlot1D(const char* refFrameName, TH1D* uncPlot1, TH1D* u
 	uncPlot1->GetYaxis()->SetRangeUser(0, 1);
 
 	uncPlot1->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-	uncPlot1->SetYTitle("Relative Uncertainty");
+	uncPlot1->SetYTitle("Relative uncertainty");
 
 	uncPlot1->GetXaxis()->CenterTitle();
 	uncPlot1->GetYaxis()->CenterTitle();
@@ -246,7 +246,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 
 		mapCosThetaPhi->SetXTitle(Form("cos #theta_{%s}", refFrameName));
 		mapCosThetaPhi->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
-		mapCosThetaPhi->SetZTitle(Form("Corrected #varUpsilon(%dS) Yields", iState));
+		mapCosThetaPhi->SetZTitle(Form("#varUpsilon(%dS) yields", iState));
 
 		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
 		mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
@@ -290,7 +290,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 			frameHist->GetZaxis()->SetRangeUser(0, 1);
 	}
 
-	CMS_lumi(map2DCanvas, Form("Unpolarized #varUpsilon(%dS) Pythia 8 MC", iState));
+	CMS_lumi(map2DCanvas, gCMSLumiText);
 
 	map2DCanvas->Modified();
 	map2DCanvas->Update();
@@ -333,26 +333,25 @@ void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t 
 }
 
 double readYieldDiffMean(Int_t ptMin = 0, Int_t ptMax = 2, const char* refFrameName = "HX", Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t phiMin = 0, Int_t phiMax = 180, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr", int nPseudoExperiments = 10) {
+	const char* fileLocation = "../SystematicUncertainties/YieldDifferencePlots_mass7to11p5_final/";
 
-    const char* fileLocation = "../SystematicUncertainties/YieldDifferencePlots_mass7to11p5_final/";
+	// Open the ROOT file
+	TFile* file = openFile(Form("%s%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%d.root", fileLocation, signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
 
-    // Open the ROOT file
-    TFile *file = openFile(Form("%s%s_%s_pt%dto%d_%s_cosTheta%.2fto%.2f_phi%dto%d_n%d.root", fileLocation, signalShapeName, bkgShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax, nPseudoExperiments));
+	// Retrieve the histogram
+	TH1* hist = (TH1*)file->Get("mergedHist"); // Replace "histogram_name" with your actual histogram's name
+	if (!hist) {
+		std::cerr << "Error: Could not find the histogram in the file!" << std::endl;
+		file->Close();
+		exit(1);
+	}
 
-    // Retrieve the histogram
-    TH1 *hist = (TH1*)file->Get("mergedHist"); // Replace "histogram_name" with your actual histogram's name
-    if (!hist) {
-        std::cerr << "Error: Could not find the histogram in the file!" << std::endl;
-        file->Close();
-        exit(1);
-    }
+	// Get the mean value
+	double mean = hist->GetMean();
+	std::cout << "The mean value of the histogram is: " << mean << std::endl;
 
-    // Get the mean value
-    double mean = hist->GetMean();
-    std::cout << "The mean value of the histogram is: " << mean << std::endl;
+	// Close the file
+	file->Close();
 
-    // Close the file
-    file->Close();
-
-    return mean;
+	return mean;
 }
