@@ -80,7 +80,7 @@ const char* SystTEfficiency2DName(const char* refFrameName = "CS", Int_t ptMin =
 }
 
 const char* CosThetaPhiTEfficiency2DName(const char* refFrameName = "CS", Int_t ptMin = 0, Int_t ptMax = 30, Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
-	return Form("CosThetaPhi%s", TEfficiencyEndName(refFrameName, ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	return Form("CosThetaAbsPhi%s", TEfficiencyEndName(refFrameName, ptMin, ptMax, lambdaTheta, lambdaPhi, lambdaThetaPhi));
 }
 
 TEfficiency* CosThetaPhiTEfficiency2D(const char* refFrameName = "CS", Int_t ptMin = 0, Int_t ptMax = 30, int iState = gUpsilonState, Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
@@ -165,7 +165,7 @@ TEfficiency* rebinTEff3DMapCosTheta(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int
 	cout << "hPassed->GetXaxis()->GetNbins() = " << hPassed->GetXaxis()->GetNbins() << endl;
 	cout << "hPassed->GetYaxis()->GetNbins() = " << hPassed->GetYaxis()->GetNbins() << endl;
 	cout << "hPassed->GetZaxis()->GetNbins() = " << hPassed->GetZaxis()->GetNbins() << endl;
-	
+
 	cout << "hPassed->GetBinContent(1, 1, 2) = " << hPassed->GetBinContent(1, 1, 2) << endl;
 	cout << "hPassed->GetBinContent(1, 2, 2) = " << hPassed->GetBinContent(1, 2, 2) << endl;
 	cout << "hPassed->GetBinContent(2, 1, 2) = " << hPassed->GetBinContent(2, 1, 2) << endl;
@@ -248,7 +248,7 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 	for (Int_t iRow = 0; iRow < nPhiBins; iRow++) {
 		TEfficiency* TEffCosTheta = rebinTEff3DMapCosTheta(TEff3DMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, (Int_t)phiBinEdges[iRow], (Int_t)phiBinEdges[iRow + 1]);
 		std::cout << "Phi: " << phiBinEdges[iRow] << " - " << phiBinEdges[iRow + 1] << std::endl;
-		
+
 		TH1D* hPassedCosTheta = (TH1D*)TEffCosTheta->GetPassedHistogram();
 		TH1D* hTotalCosTheta = (TH1D*)TEffCosTheta->GetTotalHistogram();
 
@@ -573,7 +573,6 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 
 	// frameHist2D->GetXaxis()->SetLabelSize(0.045);
 	// frameHist2D->GetYaxis()->SetLabelSize(0.045);
-	
 
 	if (displayValues) displayEfficiencies(effHist, nCosThetaBins, nPhiBins);
 
@@ -581,8 +580,8 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
 	if (isAcc)
 		canvas->SaveAs(Form("EfficiencyMaps/%dS/2Dacc_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
-		// canvas->SaveAs(Form("EfficiencyMaps/%dS/2Dacc_%s_pt%dto%d_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
+	// canvas->SaveAs(Form("EfficiencyMaps/%dS/2Dacc_%s_pt%dto%d_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
 	else
 		canvas->SaveAs(Form("EfficiencyMaps/%dS/2Deff_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
-		// canvas->SaveAs(Form("EfficiencyMaps/%dS/2Deff_%s_pt%dto%d_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
+	// canvas->SaveAs(Form("EfficiencyMaps/%dS/2Deff_%s_pt%dto%d_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
 }
