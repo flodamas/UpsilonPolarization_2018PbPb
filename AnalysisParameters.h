@@ -58,8 +58,8 @@ const float gCosThetaMin = -1;
 const float gCosThetaMax = 1;
 
 const int NPhiBins = 18;
-const float gPhiMin = -180;
-// const float gPhiMin = 0;
+//const float gPhiMin = -180;
+const float gPhiMin = 0;
 const float gPhiMax = 180;
 
 // select one and comment out the others!!
