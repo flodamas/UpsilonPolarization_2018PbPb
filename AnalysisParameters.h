@@ -10,7 +10,7 @@ bool BeVerbose = true;
 
 /// Definition of all global parameters to be used within this analysis framework
 
-const char* gCMSLumiText = "PbPb 1.61 nb^{-1} (5.02 TeV) ";
+const char* gCMSLumiText = "PbPb 1.61 nb^{#minus1} (5.02 TeV)";
 
 const char* gMuonAccName = "_TriggerAcc";
 // const char* gMuonAccName = "_2018Acc";
@@ -58,8 +58,8 @@ const float gCosThetaMin = -1;
 const float gCosThetaMax = 1;
 
 const int NPhiBins = 18;
-const float gPhiMin = -180;
-// const float gPhiMin = 0;
+//const float gPhiMin = -180;
+const float gPhiMin = 0;
 const float gPhiMax = 180;
 
 // select one and comment out the others!!
@@ -149,17 +149,17 @@ const char* gPtAxisTitle = Form("%s (%s)", gPtVarName, gPtUnit);
 const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > thresholds"; // "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
 // const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
 
-const char* gDimuonPtVarTitle = "#it{p}_{T}^{ #mu#mu}";
+const char* gDimuonPtVarTitle = "#it{p}_{T}";
 const char* DimuonPtRangeText(int ptMin, int ptMax) {
 	return Form("%d < %s < %d %s", ptMin, gDimuonPtVarTitle, ptMax, gPtUnit);
 }
 
-const char* gDimuonRapidityVarTitle = "|#it{y}^{#mu#mu}|";
+const char* gDimuonRapidityVarTitle = "|#it{y}|";
 const char* DimuonRapidityRangeText(float rapidityMin, float rapidityMax) {
 	return Form("%1.1f < %s < %1.1f", rapidityMin, gDimuonRapidityVarTitle, rapidityMax);
 }
 
-const char* gMassVarTitle = "#it{m}_{ #mu^{#plus}#mu^{#font[122]{\55}}}";
+const char* gMassVarTitle = "#it{m}_{#mu^{#plus}#mu^{#font[122]{\55}}}";
 const char* gMassUnit = "GeV/#it{c}^{ 2}";
 const char* gMassAxisTitle = Form("%s (%s)", gMassVarTitle, gMassUnit);
 

@@ -37,7 +37,7 @@ void extractMCSignalTails_Johnson(Int_t centMin = 0, Int_t centMax = 90, Int_t p
 	RooWorkspace wspace("workspace");
 	wspace.import(*allDataset);
 
-	RooDataSet massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, massMin, massMax, isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax);
+	RooDataSet massDataset = ReducedMassDataset(allDataset, wspace, ptMin, ptMax, refFrameName, massMin, massMax, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	RooRealVar massVar = *wspace.var("mass");
 	massVar.setRange("MassFitRange", massMin, massMax);
