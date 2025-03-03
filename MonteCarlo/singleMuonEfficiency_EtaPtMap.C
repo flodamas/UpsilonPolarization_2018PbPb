@@ -48,9 +48,9 @@ TLine* MyLine(float x1, float y1, float x2, float y2, Color_t lineColor = kBlack
 }
 
 TLine* drawTrigger2018acc(float etaMin = 1., float ptMax = 3., Color_t lineColor = kMagenta, int lineStyle = 1, int lineWidth = 3) {
-	float eta1 = 1.2, eta2 = 2.1, eta3 = 2.4;
+	float eta1 = 1.2, eta2 = 1.57, eta3 = 2.4;
 
-	float pt1 = 3.5, pt1prime = 5.47 - 1.89 * eta1, pt2 = 1.5;
+	float pt1 = 3.5, pt1prime = 5.47 - 1.89 * eta1, pt2 = 2.5;
 
 	auto* line1 = MyLine(etaMin, pt1, eta1, pt1, lineColor, lineStyle, lineWidth);
 	if (pt1 < ptMax && etaMin < eta1) line1->Draw("l");
@@ -140,7 +140,7 @@ void singleMuonEfficiency_EtaPtMap() {
 
 	// granular binning for acceptance studies
 
-	TEfficiency* hEffMap = new TEfficiency("hEffMap", ";muon |#eta|;muon p_{T} (GeV);(reco + ID + trigger) / generated", 26, 0, 2.6, 60, 0, 6);
+	TEfficiency* hEffMap = new TEfficiency("hEffMap", ";muon |#eta|;muon p_{T} (GeV);(reco + ID + trigger) efficiency", 26, 0, 2.6, 60, 0, 6);
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
@@ -216,11 +216,11 @@ void singleMuonEfficiency_EtaPtMap() {
 	hEffMap->Draw("COLZ");
 
 	auto* triggerAcc = drawTrigger2018acc(0, 6);
-	auto* triggerL3pT = drawL3pTThreshold(1.571, 2.5);
+	// auto* triggerL3pT = drawL3pTThreshold(1.571, 2.5);
 
 	auto* legend = new TLegend(.15, .3, .38, .17);
-	legend->AddEntry(triggerAcc, "acceptance for 2018 PbPb data", "l");
-	legend->AddEntry(triggerL3pT, "p_{T} threshold for L3 muons", "l");
+	legend->AddEntry(triggerAcc, "acceptance for this analysis", "l");
+	// legend->AddEntry(triggerL3pT, "p_{T} threshold for L3 muons", "l");
 	legend->Draw();
 
 	CMS_lumi(canvas, "#varUpsilon(1S) Hydjet-embedded MC");
