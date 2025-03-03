@@ -479,7 +479,7 @@ void SaveRawSignalYields(RooArgSet* signalYields, const char* fitModelName, cons
 
 void SaveRawFitResults(RooFitResult* fitResult, const char* fitModelName, const char* extraString = gMuonAccName) {
 	gSystem->mkdir("../SignalExtraction/RawFitResults", kTRUE);
-	TFile fitResultsFile(Form("RawFitResults/%s%s.root", fitModelName, gMuonAccName), "RECREATE");
+	TFile fitResultsFile(Form("RawFitResults/%s%s.root", fitModelName, extraString), "RECREATE");
 	
 	fitResult->Write();
 	fitResultsFile.Close();
@@ -501,6 +501,27 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 
 	char yieldsFileName[512];
 	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/RawYields/%s_%s%s.txt", bkgShapeName, fitModelName, extraString);
+
+	cout << yieldsFileName << endl;
+	if (fopen(yieldsFileName, "r")) {
+		cout << endl
+		     << "Found" << yieldsFileName << " file, will read signal yields from it" << endl;
+		signalYields.readFromFile(yieldsFileName);
+	} else {
+		cout << endl
+		     << yieldsFileName << " file does not seem to exist, you need to perform the signal extraction first!" << endl;
+		exit(1);
+	}
+
+	cout << endl
+	     << "Signal yields values:" << endl;
+	signalYields.Print("v");
+
+	return signalYields;
+}
+
+RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* yieldsFileName = "") {
+	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
 	cout << yieldsFileName << endl;
 	if (fopen(yieldsFileName, "r")) {
