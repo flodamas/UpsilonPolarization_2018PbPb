@@ -56,7 +56,7 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
-	auto histo = new TH1D("histo", ";centrality (in %);Self-normalized distribution", 200, 0, 200);
+	auto histo = new TH1D("histo", ";centrality (in %);Self-normalized distribution", 180, 0, 90);
 	histo->SetDirectory(0);
 
 	Long64_t totEntries = OniaTree->GetEntries();
@@ -93,7 +93,7 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue;
 
-			if (Reco_QQ_VtxProb[iQQ] < 0.02) continue;
+			if (Reco_QQ_VtxProb[iQQ] < 0.05) continue;
 
 			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iQQ);
 
@@ -125,7 +125,7 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 		if (skipEvent) continue;
 
-		histo->Fill(Centrality, weight);
+		histo->Fill(Centrality / 2., weight);
 	}
 
 	infile->Close();
@@ -139,7 +139,7 @@ void centralityDistrib() {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
-	gStyle->SetPadRightMargin(.04);
+	gStyle->SetPadRightMargin(.03);
 
 	auto canvas = new TCanvas("canvas", "", 600, 650);
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.4, 1, 1.0);
@@ -176,7 +176,7 @@ void centralityDistrib() {
 
 	// few cosmetics
 
-	TLegend* legend = new TLegend(.33, .8, .63, .5);
+	TLegend* legend = new TLegend(.35, .8, .65, .5);
 	legend->SetTextSize(.06);
 	legend->AddEntry(distribData, "#varUpsilon(1S) data candidates", "lep");
 	legend->AddEntry((TObject*)0, "Hydjet-embedded MC events", "");
@@ -219,7 +219,7 @@ void centralityDistrib() {
 	ratioPlot->Draw("SAME PZ");
 
 	ratioPlot->SetMinimum(0.);
-	ratioPlot->SetMaximum(1.99);
+	ratioPlot->SetMaximum(1.92);
 
 	canvas->Modified();
 	canvas->Update();
