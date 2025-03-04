@@ -2,6 +2,8 @@
 
 #include "../AnalysisParameters.h"
 
+#include "../Tools/FitShortcuts.h"
+
 #include "TEfficiency.h"
 
 /// Definition of common helping functions for acceptance and efficiency distribution making codes
@@ -437,6 +439,71 @@ void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nP
 	}
 }
 
+void displayYields(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6, std::string prefix = "", std::string postfix = "") {
+	if (!effMap) {
+		std::cout << "no efficiency map found!!!" << std::endl;
+		exit(1);
+	}
+
+	TH2D* hTotal2D = (TH2D*)effMap->GetTotalHistogram();
+
+	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
+		for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+			// get the global bin number of Efficiency
+			Double_t binCenterCosTheta = hTotal2D->GetXaxis()->GetBinCenter(iCosTheta + 1);
+			Double_t binCenterPhi = hTotal2D->GetYaxis()->GetBinCenter(iPhi + 1);
+
+			Double_t binEdgeCosThetaMin = hTotal2D->GetXaxis()->GetBinLowEdge(iCosTheta + 1);
+			Double_t binEdgeCosThetaMax = hTotal2D->GetXaxis()->GetBinUpEdge(iCosTheta + 1);
+
+			Int_t binEdgePhiMin = (int)(hTotal2D->GetYaxis()->GetBinLowEdge(iPhi + 1));
+			Int_t binEdgePhiMax = (int)(hTotal2D->GetYaxis()->GetBinUpEdge(iPhi + 1));
+
+			// Get the yield and uncertainty values
+
+			RooRealVar yield1S("yield1S", "", 1000);
+			RooRealVar yield2S("yield2S", "", 100);
+			RooRealVar yield3S("yield3S", "", 10);
+
+			RooRealVar yield1S_freeSigma("yield1S", "", 1000);
+			RooRealVar yield2S_freeSigma("yield2S", "", 100);
+			RooRealVar yield3S_freeSigma("yield3S", "", 10);
+
+			// RooRealVar* yield1S_freeSigma = new RooRealVar("yield1S", "", 1000);
+			// RooRealVar* yield2S_freeSigma = new RooRealVar("yield2S", "", 100);
+			// RooRealVar* yield3S_freeSigma = new RooRealVar("yield3S", "", 10);
+			// cout << "prefix = " << prefix << endl;
+			// cout << "postfix = " << postfix << endl;
+			// cout << "effMap name = " << effMap->GetName() << endl;
+			// cout << Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", prefix, binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix) << endl;
+			// const char* fileName = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s.txt", prefix, binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix);
+			// const char* fileName_freeSigma = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s_%s.txt", prefix, binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix, "woSigmaConstraints");
+			
+			std::string fileName = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s.txt", prefix.c_str(), binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix.c_str());
+			std::string fileName_freeSigma = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s_%s.txt", prefix.c_str(), binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix.c_str(), "woSigmaConstraints");
+			
+			// get yields and their uncertainties
+			RooArgSet signalYields = GetSignalYields(&yield1S, &yield2S, &yield3S, fileName.c_str());
+			cout << "fileName_freeSigma = " << fileName_freeSigma.c_str() << endl;
+			RooArgSet signalYields_freeSigma = GetSignalYields(&yield1S_freeSigma, &yield2S_freeSigma, &yield3S_freeSigma, fileName_freeSigma.c_str());
+
+			double yield1Sdiff = (yield1S.getVal()) - (yield1S_freeSigma.getVal());
+
+			// Get the bin center coordinates
+			double x = hTotal2D->GetXaxis()->GetBinCenter(iCosTheta + 1);
+
+			double y = hTotal2D->GetYaxis()->GetBinCenter(iPhi + 1);
+
+			// Create a TLatex object to write the signal extraction yield uncertainties on each bin
+			TLatex latex;
+			latex.SetTextSize(0.05); // Adjust text size as needed
+			latex.SetTextAlign(22);  // Center alignment
+			latex.SetTextColor(kWhite);
+			latex.DrawLatex(x, y, Form("%.0f", yield1Sdiff));
+		}
+	}
+}
+
 // Draw 1D efficincy plot
 
 void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t isCosTheta = kTRUE, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0) {
@@ -584,4 +651,115 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	else
 		canvas->SaveAs(Form("EfficiencyMaps/%dS/2Deff_%s_pt%dto%d.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
 	// canvas->SaveAs(Form("EfficiencyMaps/%dS/2Deff_%s_pt%dto%d_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax), "RECREATE");
+}
+
+TEfficiency* MultiplyTEfficiencies2D(const TEfficiency* eff1, const TEfficiency* eff2) {
+    if (!eff1 || !eff2) return nullptr;
+
+    auto* h1 = eff1->GetCopyTotalHisto();
+    auto* h2 = eff2->GetCopyTotalHisto();
+
+    if (h1->GetNbinsX() != h2->GetNbinsX() || h1->GetNbinsY() != h2->GetNbinsY()) {
+        std::cerr << "Error: The efficiency histograms have different binning!" << std::endl;
+        return nullptr;
+    }
+
+    auto* result = new TEfficiency(*eff1); // Clone structure
+
+    for (int i = 1; i <= h1->GetNbinsX(); i++) {
+        for (int j = 1; j <= h1->GetNbinsY(); j++) {
+            double e1 = eff1->GetEfficiency(h1->GetBin(i, j));
+			cout << "e1 = " << e1 << endl;
+			cout << "h1->GetBinContent(" << i << ", " << j << ") = " << h1->GetBinContent(i, j) << endl;
+            double e2 = eff2->GetEfficiency(h2->GetBin(i, j));
+			cout << "e2 = " << e2 << endl;
+			cout << "h2->GetBinContent(" << i << ", " << j << ") = " << h2->GetBinContent(i, j) << endl;
+
+            double err1 = eff1->GetEfficiencyErrorUp(h1->GetBin(i, j));
+            double err2 = eff2->GetEfficiencyErrorUp(h2->GetBin(i, j));
+
+            if (e1 == 0 || e2 == 0) continue; // Avoid division by zero
+
+            double eff_product = e1 * e2;
+            double err_product = eff_product * sqrt(pow(err1 / e1, 2) + pow(err2 / e2, 2)); // Error propagation
+
+            int bin = h1->GetBin(i, j);
+            result->SetTotalEvents(bin, h1->GetBinContent(bin));  
+            result->SetPassedEvents(bin, eff_product * h1->GetBinContent(bin)); 
+        }
+    }
+
+    return result;
+}
+
+void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t displayValues = kFALSE, const char* extraString = "") {
+	TCanvas* canvas = new TCanvas("EffxAccCosThetaPhi", "", 680, 600);
+
+	canvas->SetRightMargin(0.18);
+	canvas->SetLeftMargin(0.15);
+	canvas->SetBottomMargin(0.15);
+
+	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
+
+	TEfficiency* EffxAccHist = MultiplyTEfficiencies2D(accHist, effHist);
+
+	// empty frame for the axes
+	TH2D* frameHist2D = new TH2D("frameHist2D", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
+
+	frameHist2D->Draw("COLZ");
+
+	// draw efficiency plot on top of the histogram frame
+	EffxAccHist->SetLineWidth(3);
+	EffxAccHist->Draw("COLZ SAME");
+
+	// cosmetics of the histogram
+	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
+
+	TLatex legend;
+	legend.SetTextAlign(22);
+	legend.SetTextSize(0.04);
+	legend.DrawLatexNDC(.48, .86, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+
+	const char* refFrameName = "";
+
+	if (strstr(EffxAccHist->GetName(), "CS")) {
+		frameHist2D->SetXTitle(CosThetaVarTitle("CS"));
+		frameHist2D->SetYTitle(AbsPhiAxisTitle("CS"));
+		// frameHist2D->SetYTitle(PhiAxisTitle("CS"));
+		refFrameName = "CS";
+	} else {
+		frameHist2D->SetXTitle(CosThetaVarTitle("HX"));
+		frameHist2D->SetYTitle(AbsPhiAxisTitle("HX"));
+		// frameHist2D->SetYTitle(PhiAxisTitle("HX"));
+		refFrameName = "HX";
+	}
+
+	EffxAccHist->SetTitle(Form(";;;%s", TEfficiencyMainTitle(iState, "Acc x Eff")));
+	SetColorPalette(gAcceptanceColorPaletteName);
+
+	frameHist2D->GetXaxis()->CenterTitle();
+	frameHist2D->GetYaxis()->CenterTitle();
+	frameHist2D->GetYaxis()->SetTitleOffset(1.2);
+
+	frameHist2D->GetXaxis()->SetRangeUser(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
+	frameHist2D->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
+	frameHist2D->GetZaxis()->SetRangeUser(0, 1);
+
+	frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins)-1);
+
+	if (displayValues) displayEfficiencies(EffxAccHist, nCosThetaBins, nPhiBins);
+
+	// if (displayYieldsValues) displayYields(EffxAccHist, nCosThetaBins, nPhiBins);
+	std::string prefix = Form("RawYields/ExpTimesErr_SymDSCB_cent0to90_absy0p0to2p4_pt%dto%d", ptMin, ptMax);
+	std::string postfix = Form("%s%s%s", refFrameName, gMuonAccName, extraString);
+
+	displayYields(EffxAccHist, nCosThetaBins, nPhiBins, prefix, postfix);
+
+	// save the plot
+	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
+
+	canvas->SaveAs(Form("EfficiencyMaps/%dS/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
+	canvas->SaveAs(Form("EfficiencyMaps/%dS/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, "_diff"), "RECREATE");
 }

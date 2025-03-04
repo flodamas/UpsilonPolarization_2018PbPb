@@ -7,7 +7,7 @@
 #include "RooRealVar.h"
 #include "../../AnalysisParameters.h"
 
-TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax, float x1 = 0.57, float y1 = 0.9, float x2 = 0.95, float y2 = 0.6) {
+TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax, float x1 = 0.57, float y1 = 0.95, float x2 = 0.95, float y2 = 0.65) {
 	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB");
 	// TPaveText* text = new TPaveText(0.65, 0.90, 0.95, 0.60, "NDCNB");
 
@@ -35,7 +35,7 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 	return text;
 }
 
-TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, float x1 = 0.14, float y1 = 0.65, float x2 = 0.50, float y2 = 0.90, int alignment = 12) {
+TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, float x1 = 0.14, float y1 = 0.70, float x2 = 0.50, float y2 = 0.95, int alignment = 12) {
 	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB"); // on the left side
 	// TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB"); // on the right side
 	text->SetFillColor(4000);
@@ -50,7 +50,7 @@ TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = 
 	return text;
 }
 
-TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S /*, RooRealVar nBkg*/, float x1 = 0.57, float y1 = 0.35, float x2 = 0.95, float y2 = 0.08, int alignment = 12) {
+TPaveText* FitResultText(RooRealVar n1S, Float_t signif1S, RooRealVar n2S, Float_t signif2S /*, RooRealVar nBkg*/, float x1 = 0.57, float y1 = 0.37, float x2 = 0.95, float y2 = 0.10, int alignment = 32) {
 	// TPaveText* text = new TPaveText(0.6, 0.85, 0.95, 0.5, "NDCNB");
 	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB");
 	text->SetFillColor(4000);
