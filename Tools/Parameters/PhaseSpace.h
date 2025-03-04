@@ -19,3 +19,13 @@ Bool_t MuonUpsilonTriggerAcc(const TLorentzVector& muonLV) {
 
 	return muonLV.Pt() > 2.5; // threshold applied at L3
 }
+
+Bool_t MuonEffStepAcc(const TLorentzVector& muonLV) {
+	float eta = fabs(muonLV.Eta());
+	float pt = muonLV.Pt();
+
+	return (fabs(eta) < 2.4 &&
+	        ((fabs(eta) < 1.3 && pt >= 4.0) ||
+	         (1.3 <= fabs(eta) && fabs(eta) < 1.5 && pt >= 3.5) ||
+	         (1.5 <= fabs(eta) && pt >= 3.0)));
+}
