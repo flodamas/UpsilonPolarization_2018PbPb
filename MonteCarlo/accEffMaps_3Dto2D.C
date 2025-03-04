@@ -21,7 +21,7 @@
 #include "../ReferenceFrameTransform/Transformations.h"
 
 
-void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState) {
+void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -46,15 +46,26 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	// get acceptance maps
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
+	
+	TString MuonAccName = "";
+	TString accFileName = "";
 
-	TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName));
-	// TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", "_2018Acc"));
-	// TFile* acceptanceFile = openFile(Form("./AcceptanceMaps/1S/AcceptanceResults%s_fullPhi.root", gMuonAccName));
-	cout << Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", gMuonAccName) << endl;
+	if (accName == TString("MuonUpsilonTriggerAcc")) MuonAccName = "_TriggerAcc";
+	else if (accName == TString("MuonWithin2018PbPbAcc")) MuonAccName = "_2018PbPbAcc";
+	else if (accName == TString("MuonSimpleAcc")) MuonAccName = "_SimpleAcc";
+	else {
+		cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
+		return;
+	}
+
+	if (isPhiFolded == kTRUE) accFileName = Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", MuonAccName.Data());
+	else accFileName = Form("./AcceptanceMaps/1S/AcceptanceResults%s_fullPhi.root", MuonAccName.Data());
+
+	TFile* acceptanceFile = openFile(accFileName);
+	cout << accFileName << " opened" << endl;
 	
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
-	// auto* accMap = (TEfficiency*)acceptanceFile->Get(Form("Nominal3D%s_%s_LambdaTheta0.00Phi0.00ThetaPhi0.00", refFrameName, gMuonAccName));
-	cout << nominalMapName << endl;
+	// cout << "Nominal map name: " << nominalMapName << endl;
 
 	if (!accMap) {
     	std::cerr << "Error: accMap is null." << std::endl;
@@ -65,11 +76,15 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	// get efficiency maps
-	TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", gMuonAccName));
-	// TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s_fullPhi.root", gMuonAccName));
+	// TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", gMuonAccName));
+	TString effFileName = "";
+
+	if (isPhiFolded == kTRUE) effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", MuonAccName.Data());
+	else effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s_fullPhi.root", MuonAccName.Data());
+
+	TFile* efficiencyFile = openFile(effFileName);
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
-	// auto* effMap = (TEfficiency*)efficiencyFile->Get(Form("Nominal3D%s_%s_LambdaTheta0.00Phi0.00ThetaPhi0.00", refFrameName, gMuonAccName));
-	cout << nominalMapName << endl;
+	// cout << "Nominal map name: " << nominalMapName << endl;
 
 	if (!effMap) {
     	std::cerr << "Error: effMap is null." << std::endl;
@@ -96,23 +111,21 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	TCanvas* massCanvas = 0;
 
 	// draw acc and eff histograms to check if the rebinning works well
- 	// (last three variables: isAcc, displayValues, extraString)
-	DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kFALSE, gMuonAccName);
-	// DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kFALSE, "");
+ 	// (last three variables: isAcc, displayValues, extraString, isPhiFolded)
+	DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded);
 
-	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kFALSE, gMuonAccName);
-	// DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kFALSE, "_2018Acc");
+	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kFALSE, MuonAccName.Data(), isPhiFolded);
+
+	DrawEffxAcc2DHist(accMapCosThetaPhi, effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, MuonAccName.Data(), kFALSE, isPhiFolded);
 }
 
-void accEffMaps_3Dto2D_scan(const char* refFrameName = "CS") {
+void accEffMaps_3Dto2D_scan(const char* refFrameName = "CS", Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc") {
 
 	const int NptBins = 4;
 	int ptBinEdges[NptBins + 1] = {0, 2, 6, 12, 20};
 
 	for (int ipt = 0; ipt < NptBins; ipt++) {
-
-		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 20, -1, 1, 23, -180, 280, 1);
-
+		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 20, -1, 1, 23, -180, 280, 1, isPhiFolded, accName);
 	}
 
 }
