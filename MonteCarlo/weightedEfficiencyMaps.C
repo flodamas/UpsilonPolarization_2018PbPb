@@ -138,7 +138,7 @@ const char* EfficiencyLegendText(int ptMin, int ptMax) {
 	return Form("cent. %d-%d%%, %s < 2.4, %s", gCentralityBinMin, gCentralityBinMax, gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax));
 }
 
-void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, int iState = gUpsilonState) {
+void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, int iState = gUpsilonState, Bool_t isPhiFolded = kFALSE) {
 	TCanvas* canvas = new TCanvas(effMap->GetName(), "", 700, 600);
 	effMap->Draw("COLZ");
 
@@ -158,13 +158,13 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, int iState
 	effMap->GetPaintedHistogram()->GetYaxis()->CenterTitle();
 
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effMap->GetName()), "RECREATE");
-	// canvas->SaveAs(Form("EfficiencyMaps/%dS/%s_fullPhi.png", iState, effMap->GetName()), "RECREATE");
+	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effMap->GetName()), "RECREATE");
+	else canvas->SaveAs(Form("EfficiencyMaps/%dS/%s_fullPhi.png", iState, effMap->GetName()), "RECREATE");
 }
 
 // create the (cos theta, phi) map of the total efficiency (fully reweighted) for a given pT range
 
-void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUpsilonState, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0) {
+void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUpsilonState, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -323,6 +323,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	Float_t weightCS = 0, weightHX = 0;
 
+	TString MuonAccName = "";
+
 	Bool_t allGood, firesTrigger, isRecoMatched, dimuonMatching, goodVertexProba, passHLTFilterMuons, trackerAndGlobalMuons, hybridSoftMuons;
 
 	Long64_t totEntries = OniaTree->GetEntries();
@@ -357,14 +359,24 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 			// positive muon first
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
-			// if (!MuonSimpleAcc(*genLorentzVector)) continue;
-			if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;
+			if (accName == TString("MuonUpsilonTriggerAcc")) {if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue; MuonAccName = "_TriggerAcc";}
+			else if (accName == TString("MuonSimpleAcc")) {if (!MuonSimpleAcc(*genLorentzVector)) continue; MuonAccName = "_SimpleAcc";}
+			else if (accName == TString("MuonWithin2018PbPbAcc")) {if (!MuonWithin2018PbPbAcc(*genLorentzVector)) continue; MuonAccName = "_2018Acc";}
+			else {
+				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
+				return;
+			}
 
 			// then negative muon
 			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
-			// if (!MuonSimpleAcc(*genLorentzVector)) continue;
-			if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;
+			if (accName == TString("MuonUpsilonTriggerAcc")) {if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;}
+			else if (accName == TString("MuonSimpleAcc")) {if (!MuonSimpleAcc(*genLorentzVector)) continue;}
+			else if (accName == TString("MuonWithin2018PbPbAcc")) {if (!MuonWithin2018PbPbAcc(*genLorentzVector)) continue;}
+			else {
+				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
+				return;
+			}
 
 			// go to reco level
 			Int_t iReco = Gen_QQ_whichRec[iGen];
@@ -418,13 +430,17 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 				TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
 				double cosThetaCS = muPlus_CS.CosTheta();
-				double phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
-				// double phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
+				double phiCS = 0;
+
+				if (isPhiFolded == kTRUE) phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
+				else phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
 
 				TVector3 muPlus_HX = MuPlusVector_Helicity(*recoLorentzVector, *Reco_mupl_LV);
-				// double cosThetaHX = muPlus_HX.CosTheta();
-				double phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
-				double phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
+				double cosThetaHX = muPlus_HX.CosTheta();
+				double phiHX = 0;
+				
+				if (isPhiFolded == kTRUE) phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
+				else phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
 
 				/// muon scale factors
 
@@ -475,11 +491,15 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				// dimuon efficiency weight = product of the total scale factors
 				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
-				weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * fabs(muPlus_CS.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(fabs(muPlus_CS.Phi()));
-				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
+				if (isPhiFolded == kTRUE) {
+					weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * fabs(muPlus_CS.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(fabs(muPlus_CS.Phi()));
+					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
+				}
 
-				// weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
-				// weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+				else {
+					weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
+					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+				}
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
@@ -702,10 +722,10 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	/// display the nominal results
 
-	DrawEfficiencyMap(hEffCS2D, ptMin, ptMax, iState);
+	DrawEfficiencyMap(hEffCS2D, ptMin, ptMax, iState, isPhiFolded);
 	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, iState, false, true, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	DrawEfficiencyMap(hEffHX2D, ptMin, ptMax, iState);
+	DrawEfficiencyMap(hEffHX2D, ptMin, ptMax, iState, isPhiFolded);
 	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, iState, false, true, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	/// compute the systematics in this macro since we have all the ingredients for that
@@ -736,8 +756,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	hSystCS3D->GetYaxis()->SetRangeUser(-190, 240);
 
-	canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS.png", gUpsilonState), "RECREATE");
-	// canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS_fullPhi.png", gUpsilonState), "RECREATE");
+	if (isPhiFolded == kTRUE) canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS.png", gUpsilonState), "RECREATE");
+	else canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS_fullPhi.png", gUpsilonState), "RECREATE");
 
 	// HelicityTEfficiency
 	auto* hSystHX2D = SystEffHist(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown);
@@ -758,13 +778,15 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	hSystHX3D->GetYaxis()->SetRangeUser(-190, 240);
 
-	canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX.png", gUpsilonState), "RECREATE");
-	// canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX_fullPhi.png", gUpsilonState), "RECREATE");
+	if (isPhiFolded == kTRUE) canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX.png", gUpsilonState), "RECREATE");
+	else canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX_fullPhi.png", gUpsilonState), "RECREATE");
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
 	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults%s.root", iState, gMuonAccName);
-	// const char* outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults%s_fullPhi.root", iState, gMuonAccName);
+	const char* outputFileName = "";
+	if (isPhiFolded == kTRUE) outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults%s.root", iState, MuonAccName.Data());
+	else outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults%s_fullPhi.root", iState, MuonAccName.Data());
+	
 	TFile outputFile(outputFileName, "UPDATE");
 
 	hNominalEffCS->Write();
