@@ -1581,7 +1581,7 @@ double tnp_weight_trg_pbpb_mc(double pt, double eta, int filterId, int idx) {
 				}
 			}
 		}
-	} else if (filterId == 2) { //L2 Jpsi
+	} else if (filterId == 2) { //L2 Upsilon
 		// SF for 0 < |eta| < 1.2
 		if (fabs(eta) >= 0 && fabs(eta) < 1.2) {
 			if (x >= 3.5 && x < 4) {
@@ -1874,7 +1874,7 @@ double tnp_weight_trg_pbpb_mc(double pt, double eta, int filterId, int idx) {
 			else
 				syst = 0.00848748;
 		}
-	} else if (filterId == 3) { //L3 Jpsi
+	} else if (filterId == 3) { //L3 Upsilon
 		// SF for 0 < |eta| < 1.2
 		if (fabs(eta) >= 0 && fabs(eta) < 1.2) {
 			if (x >= 3.5 && x < 4) {
