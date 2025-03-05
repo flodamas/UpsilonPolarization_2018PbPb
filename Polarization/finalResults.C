@@ -58,7 +58,7 @@ void createSysErrorBox(TGraphErrors* gSys, const char* lineColor = "#A0B1BA") {
 	}
 }
 
-void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
+void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
@@ -91,6 +91,7 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 
 	const char* refFrameName = "CS";
 
+	/// Loop over the reference frames
 	for (Int_t iRefFrame = 0; iRefFrame < NRefFrame; iRefFrame++) {
 			
 		if (iRefFrame == 0) {
@@ -99,6 +100,7 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 			refFrameName = "HX";
 		}
 
+		/// generate the polarization parameter histograms
 		lambdaThetaHist[iRefFrame] = new TH1D(Form("lambdaTildeHist%s", "refFrameName"), "; p_{T} (GeV/c); #lambda_{#theta}", NPtBins, gPtBinning);
 		lambdaPhiHist[iRefFrame] = new TH1D(Form("lambdaTildeHist%s", "refFrameName"), "; p_{T} (GeV/c); #lambda_{#varphi}", NPtBins, gPtBinning);
 		lambdaThetaPhiHist[iRefFrame] = new TH1D(Form("lambdaTildeHist%s", "refFrameName"), "; p_{T} (GeV/c); #lambda_{#theta#varphi}", NPtBins, gPtBinning);
@@ -109,9 +111,11 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 		gSysLambThetaPhi[iRefFrame] = new TGraphErrors(NPtBins);
 		gSysLambTilde[iRefFrame] = new TGraphErrors(NPtBins);
         
-		// for (Int_t ibin = 1; ibin <= NPtBins; ibin++) {
-		for (Int_t ibin = 2; ibin <= NPtBins; ibin++) {
-			// get polarization parameters
+		/// fill the polarization parameter histograms
+		// for (Int_t ibin = 1; ibin <= NPtBins; ibin++) { // start from 0 < pT < 2 GeV bin
+		for (Int_t ibin = 2; ibin <= NPtBins; ibin++) { // start from 2 < pT < 6 GeV bin
+			
+			/// get polarization parameters
 			const char* fitModelName = GetFitModelName(signalShapeName, gPtBinning[ibin - 1], gPtBinning[ibin], refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 			RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName);
@@ -130,6 +134,7 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 
 			cout << "lambdaThetaVal: " << lambdaThetaVal << endl;
 
+			/// Fill the histograms
 			lambdaThetaHist[iRefFrame]->SetBinContent(ibin, lambdaThetaVal);
 			lambdaThetaHist[iRefFrame]->SetBinError(ibin, lambdaThetaUnc);
 
@@ -162,6 +167,7 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 		}
 	}
 
+	/// Draw the polarization parameters histograms
 	TCanvas* polarParamsCanvas = new TCanvas("polarParamsCanvas", "polarParamsCanvas", 900, 800);
 
 	TPad* pad1[NRefFrame]; 
@@ -199,7 +205,8 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 		else {pad1[iRefFrame]->SetLeftMargin(0.0); pad1[iRefFrame]->SetRightMargin(0.17);}
 		pad1[iRefFrame]->Draw();
 		pad1[iRefFrame]->cd();
-
+		
+		/// cosmetics
 		lambdaThetaHist[iRefFrame]->Draw("PL");
 		lambdaThetaHist[iRefFrame]->SetMarkerStyle(20);
 		lambdaThetaHist[iRefFrame]->SetMarkerSize(1.4);
@@ -208,7 +215,6 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 		lambdaThetaHist[iRefFrame]->SetLineColor(TColor::GetColor(color[iRefFrame]));
 		lambdaThetaHist[iRefFrame]->SetLineWidth(3);
 
-		// cosmetics
 		lambdaThetaHist[iRefFrame]->GetXaxis()->CenterTitle();
 		lambdaThetaHist[iRefFrame]->GetXaxis()->SetLabelSize(0);
 		lambdaThetaHist[iRefFrame]->GetXaxis()->SetTitleSize(0);
@@ -261,6 +267,7 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 		pad2[iRefFrame]->cd();
 
 		lambdaPhiHist[iRefFrame]->Draw();
+		/// cosmetics
 		lambdaPhiHist[iRefFrame]->SetMarkerStyle(20);
 		lambdaPhiHist[iRefFrame]->SetMarkerSize(1.4);
 		lambdaPhiHist[iRefFrame]->SetMarkerColor(TColor::GetColor(color[iRefFrame]));
@@ -268,7 +275,6 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 		lambdaPhiHist[iRefFrame]->SetLineColor(TColor::GetColor(color[iRefFrame]));
 		lambdaPhiHist[iRefFrame]->SetLineWidth(3);
 
-		// cosmetics
 		lambdaPhiHist[iRefFrame]->GetXaxis()->CenterTitle();
 
 		lambdaPhiHist[iRefFrame]->GetYaxis()->SetRangeUser(-1.2, 1.2);
@@ -313,6 +319,8 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 		pad3[iRefFrame]->cd();
 
 		lambdaThetaPhiHist[iRefFrame]->Draw();
+		
+		/// cosmetics
 		lambdaThetaPhiHist[iRefFrame]->SetMarkerStyle(20);
 		lambdaThetaPhiHist[iRefFrame]->SetMarkerSize(1.4);
 		lambdaThetaPhiHist[iRefFrame]->SetMarkerColor(TColor::GetColor(color[iRefFrame]));
@@ -320,7 +328,6 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 		lambdaThetaPhiHist[iRefFrame]->SetLineColor(TColor::GetColor(color[iRefFrame]));
 		lambdaThetaPhiHist[iRefFrame]->SetLineWidth(3);
 
-		// cosmetics
 		lambdaThetaPhiHist[iRefFrame]->GetXaxis()->CenterTitle();
 		lambdaThetaPhiHist[iRefFrame]->GetXaxis()->SetTitleSize(0.08);
 		lambdaThetaPhiHist[iRefFrame]->GetXaxis()->SetTitleOffset(1.2);
@@ -351,6 +358,7 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 		zeroLine->Draw("SAME");
 	}
 
+	/// draw lambdaTilde histogram
 	const char* fitModelName2 = GetFitModelName(signalShapeName, gPtBinning[1], gPtBinning[NPtBins], "CSHX", cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	gSystem->mkdir("ParametersResults", kTRUE);
@@ -410,6 +418,64 @@ void finalResults(Bool_t isCSframe = true, const char* bkgShapeName = "ExpTimesE
 	legend->Draw("SAME");
 
 	invPolarParamsCanvas->SaveAs(Form("ParametersResults/invariantParameter_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
+
+    /// output file for the polarization parameter table
+    const char* outFileName = "polarizationParameters.txt";
+    std::ofstream outFile(outFileName);
+
+    /// write table headers for the polarization parameter table
+    outFile << "\\begin{table}[htpb]" << std::endl;
+    outFile << "    \\centering" << std::endl;
+    // outFile << "    \\resizebox{\\textwidth}{!}{" << std::endl;
+    outFile << "        \\begin{tabular}{|c|c|c|c|}" << std::endl;
+    outFile << "        \\hline" << std::endl;
+    outFile << "        & \\pt (\\GeVc) & Collins-Soper & Helicity \\\\ " << std::endl;
+    outFile << "        \\hline" << std::endl;
+    outFile << "        \\hline" << std::endl;
+
+	/// loop over the polarization parameter names
+	for (Int_t index = 0; index < 3; index++){
+		if (index == 0) outFile << "	\\multirow{3}*{\\begin{tabular}[l]{@{}c@{}} $\\lambda_\\theta$ \\end{tabular}}" << std::endl;	
+		if (index == 1) outFile << "	\\multirow{3}*{\\begin{tabular}[l]{@{}c@{}} $\\lambda_\\varphi$ \\end{tabular}}" << std::endl;
+		if (index == 2) outFile << "	\\multirow{3}*{\\begin{tabular}[l]{@{}c@{}} $\\lambda_{\\theta\\varphi}$ \\end{tabular}}" << std::endl;
+		
+		/// loop over the pt bins
+		for (Int_t ibin = 1; ibin < NPtBins; ibin++) {
+
+			/// set the pt bin range (second column of the table)
+			outFile << std::fixed << std::setprecision(0);
+			outFile << "        & $" << gPtBinning[ibin] << " < \\pt < " << gPtBinning[ibin + 1] << "$"; 
+
+			/// loop over the reference frames
+			for (Int_t iRefFrame = 0; iRefFrame < NRefFrame; iRefFrame++) {
+
+				if (iRefFrame == 0) {
+					refFrameName = "CS";
+				} else {
+					refFrameName = "HX";
+				}
+				
+				outFile << std::fixed << std::setprecision(3);
+				if (index == 0) outFile << " & $" << lambdaThetaHist[iRefFrame]->GetBinContent(ibin + 1) << " \\pm " << lambdaThetaHist[iRefFrame]->GetBinError(ibin + 1) << " \\pm " << gSysLambTheta[iRefFrame]->GetErrorY(ibin) << "$"; 
+				else if (index == 1) outFile << " & $" << lambdaPhiHist[iRefFrame]->GetBinContent(ibin + 1) << " \\pm " << lambdaPhiHist[iRefFrame]->GetBinError(ibin + 1) << " \\pm " << gSysLambPhi[iRefFrame]->GetErrorY(ibin) << "$"; 
+				else if (index == 2) outFile << " & $" << lambdaThetaPhiHist[iRefFrame]->GetBinContent(ibin + 1) << " \\pm " << lambdaThetaPhiHist[iRefFrame]->GetBinError(ibin + 1) << " \\pm " << gSysLambThetaPhi[iRefFrame]->GetErrorY(ibin) << "$";
+			
+			}
+			outFile << " \\\\" << std::endl;
+		}
+
+		outFile << "        \\hline" << std::endl;
+	}
+
+	/// write the table footer
+	outFile << "        \\end{tabular}" << std::endl;
+	// outFile << "    }" << std::endl;
+	outFile << "    \\caption{Polarization parameters measured for each \pt range for both helicity and Collins-Soper frames. The first uncertainty is statistical while the second is systematic.}" << std::endl;
+	outFile << "    \\label{tab:pola_results}" << std::endl;
+	outFile << "\\end{table}" << std::endl;
+	
+	/// close the file
+	outFile.close();
 
 	return;
 }
