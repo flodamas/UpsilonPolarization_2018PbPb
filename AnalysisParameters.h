@@ -53,14 +53,16 @@ const double gPhiFineBinning[NCosThetaFineBins + 1] = {-180, -160, -140, -120, -
 
 /// cos theta and phi binning, specific to each pt interval
 
-const int NCosThetaBins = 20;
-const float gCosThetaMin = -1;
-const float gCosThetaMax = 1;
+const int NCosThetaBins = 5;
+const float gCosThetaMin = -0.7;
+const float gCosThetaMax = 0.7;
+const double gCosThetaBinning[NCosThetaBins + 1] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
 
-const int NPhiBins = 18;
+const int NPhiBins = 3;
 //const float gPhiMin = -180;
 const float gPhiMin = 0;
 const float gPhiMax = 180;
+const double gPhiBinning[NPhiBins + 1] = {0, 60, 120, 180};
 
 // select one and comment out the others!!
 /*
