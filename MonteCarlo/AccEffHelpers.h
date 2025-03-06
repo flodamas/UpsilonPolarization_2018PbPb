@@ -736,6 +736,7 @@ TEfficiency* MultiplyTEfficiencies1D(const TEfficiency* eff1, const TEfficiency*
 		int bin = h1->GetBin(i);
 		result->SetTotalEvents(bin, h1->GetBinContent(bin));  
 		result->SetPassedEvents(bin, eff_product * h1->GetBinContent(bin)); 
+		// cout << "accxeff value" << result->GetEfficiency(bin) << endl;
     }
 
     return result;
@@ -803,7 +804,7 @@ double GetMaxEfficiencyValue(TEfficiency& eff) {
 }
 
 
-void DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nBins = 5, const std::vector<Double_t>& BinEdges = {}, Bool_t isCosTheta = kTRUE, const char* refFrameName = "CS", Int_t iState = gUpsilonState, const char* extraString = "", Bool_t isPhiFolded = kFALSE) {
+TEfficiency* DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nBins = 5, const std::vector<Double_t>& BinEdges = {}, Double_t intRangeMin = -1, Double_t intRangeMax = 1, Bool_t isCosTheta = kTRUE, const char* refFrameName = "CS", Int_t iState = gUpsilonState, const char* extraString = "", Bool_t isPhiFolded = kFALSE) {
 	TCanvas* canvas = new TCanvas("EffxAccCosThetaPhi", "", 600, 600);
 	canvas->SetRightMargin(0.05);
 
@@ -816,7 +817,13 @@ void DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 
 	// draw efficiency plot on top of the histogram frame
 	EffxAccHist->SetLineWidth(3);
-	EffxAccHist->Draw("PL E0 SAME");
+	EffxAccHist->Draw("PE SAME");
+	EffxAccHist->SetMarkerStyle(20);
+	EffxAccHist->SetMarkerSize(1.5);
+	EffxAccHist->SetMarkerColor(TColor::GetColor("#A559AA"));
+
+	EffxAccHist->SetLineColor(TColor::GetColor("#A559AA"));
+	EffxAccHist->SetLineWidth(3);
 
 	// cosmetics of the histogram
 	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
@@ -829,6 +836,9 @@ void DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	if (strcmp(extraString, "_TriggerAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 	else if (strcmp(extraString, "_SimpleAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
 	else if (strcmp(extraString, "_2018PbPbAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+
+	if (isCosTheta == kTRUE) legend.DrawLatexNDC(.55, .72, Form( "%.0f < #varphi < %.0f #circ", intRangeMin, intRangeMax));
+	else legend.DrawLatexNDC(.55, .72, Form( "%.2f < cos#theta < %.2f", intRangeMin, intRangeMax));
 
 	if (isCosTheta) {
 		if (strstr(refFrameName, "CS")) {
@@ -868,8 +878,16 @@ void DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	// save the plot
 	gSystem->mkdir(Form("EfficiencyMaps/%dS/analysisBin", iState), kTRUE);
 
-	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax), "RECREATE");
-	else canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, extraString, "_fullPhi"), "RECREATE");
+	if (isPhiFolded == kTRUE) {
+		if (isCosTheta == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
+		else canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
+	}
+	else {
+		if (isCosTheta == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
+		else canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
+	}
+
+	return EffxAccHist;
 }
 
 void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t displayValues = kFALSE, const char* extraString = "", Bool_t displayYieldValues = kTRUE, Bool_t isPhiFolded = kFALSE) {
