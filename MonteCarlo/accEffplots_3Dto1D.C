@@ -224,8 +224,8 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 	CMS_lumi(comparisonCanvas, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
 
 	gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
-	if (isCosTheta == kTRUE) comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_|phi|%dto%d_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
-	else comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_|cosTheta|%.2fto%.2f_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+	if (isCosTheta == kTRUE) comparisonCanvas->SaveAs(Form("1DAccxEff/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absphi%dto%d_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+	else comparisonCanvas->SaveAs(Form("1DAccxEff/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_abscosTheta%.2fto%.2f_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
 
 	delete comparisonCanvas;
 	delete frameHist1D;
