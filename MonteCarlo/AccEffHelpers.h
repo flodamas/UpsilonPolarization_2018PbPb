@@ -856,7 +856,7 @@ TEfficiency* DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t
 		}
 		else{
 			if (isPhiFolded == kTRUE) frameHist1D->SetXTitle(AbsPhiAxisTitle("HX"));
-			else frameHist1D->SetXTitle(PhiVarTitle("HX"));
+			else frameHist1D->SetXTitle(PhiAxisTitle("HX"));
 		}
 	}
 
@@ -870,21 +870,21 @@ TEfficiency* DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t
 	frameHist1D->GetYaxis()->SetRangeUser(0, 1);
 
 	// // save the plot
-	// gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
+	// gSystem->mkdir(Form("AccxEffMaps/%dS", iState), kTRUE);
 
-	// if (isPhiFolded == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/1DAccxEff_%s%s_pt%dto%d.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax), "RECREATE");
-	// else canvas->SaveAs(Form("EfficiencyMaps/%dS/1DAccxEff_%s%s_pt%dto%d%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, extraString, "_fullPhi"), "RECREATE");
+	// if (isPhiFolded == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/1DAccxEff_%s%s_pt%dto%d.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax), "RECREATE");
+	// else canvas->SaveAs(Form("AccxEffMaps/%dS/1DAccxEff_%s%s_pt%dto%d%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, extraString, "_fullPhi"), "RECREATE");
 
 	// save the plot
-	gSystem->mkdir(Form("EfficiencyMaps/%dS/analysisBin", iState), kTRUE);
+	gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
 
 	if (isPhiFolded == kTRUE) {
-		if (isCosTheta == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
-		else canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
+		if (isCosTheta == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
+		else canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
 	}
 	else {
-		if (isCosTheta == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
-		else canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
+		if (isCosTheta == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
+		else canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
 	}
 
 	return EffxAccHist;
@@ -971,17 +971,17 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	if (displayYieldValues) displayYields(EffxAccHist, nCosThetaBins, nPhiBins, prefix, postfix);
 
 	// // save the plot
-	// gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
+	// gSystem->mkdir(Form("AccxEffMaps/%dS", iState), kTRUE);
 
-	// if (isPhiFolded == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/2DAccxEff_%s_pt%dto%d.png", iState, EffxAccHist->GetName(), ptMin, ptMax), "RECREATE");
-	// else canvas->SaveAs(Form("EfficiencyMaps/%dS/2DAccxEff_%s_pt%dto%d%s%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString, "_fullPhi"), "RECREATE");
-	// // canvas->SaveAs(Form("EfficiencyMaps/%dS/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, "_diff"), "RECREATE");
+	// if (isPhiFolded == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/2DAccxEff_%s_pt%dto%d.png", iState, EffxAccHist->GetName(), ptMin, ptMax), "RECREATE");
+	// else canvas->SaveAs(Form("AccxEffMaps/%dS/2DAccxEff_%s_pt%dto%d%s%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString, "_fullPhi"), "RECREATE");
+	// // canvas->SaveAs(Form("AccxEffMaps/%dS/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, "_diff"), "RECREATE");
 
 	// save the plot
-	gSystem->mkdir(Form("EfficiencyMaps/%dS/analysisBin", iState), kTRUE);
+	gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
 
-	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d.png", iState, EffxAccHist->GetName(), ptMin, ptMax), "RECREATE");
-	else canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString, "_fullPhi"), "RECREATE");
-	// canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, "_diff"), "RECREATE");
+	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d.png", iState, EffxAccHist->GetName(), ptMin, ptMax), "RECREATE");
+	else canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString, "_fullPhi"), "RECREATE");
+	// canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, "_diff"), "RECREATE");
 
 }

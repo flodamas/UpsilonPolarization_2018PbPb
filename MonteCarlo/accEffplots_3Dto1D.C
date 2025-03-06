@@ -154,7 +154,7 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 		positiveHists = accEffplots_3Dto1D(ptMin, ptMax, refFrameName, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax, iState, isPhiFolded, accName);
 		negativeHists = accEffplots_3Dto1D(ptMin, ptMax, refFrameName, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, -phiMax, -phiMin, iState, isPhiFolded, accName);
 		positiveHist = positiveHists[0];
-		negativeHist = positiveHists[0];
+		negativeHist = negativeHists[0];
 	}
 	else {
 		positiveHists = accEffplots_3Dto1D(ptMin, ptMax, refFrameName, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax, iState, isPhiFolded, accName);
@@ -179,10 +179,10 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 
 	if (isCosTheta == kTRUE) {
 		frameHist1D->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName));
-		frameHist1D->GetXaxis()->SetNdivisions(-505);
+		frameHist1D->GetXaxis()->SetNdivisions(-5);
 	}
 	else {
-		frameHist1D->GetXaxis()->SetTitle(PhiVarTitle(refFrameName));
+		frameHist1D->GetXaxis()->SetTitle(PhiAxisTitle(refFrameName));
 		frameHist1D->GetXaxis()->SetNdivisions(-6);
 	}
 
@@ -224,8 +224,8 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 	CMS_lumi(comparisonCanvas, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
 
 	gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
-	if (isCosTheta == kTRUE) comparisonCanvas->SaveAs(Form("1DAccxEff/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absphi%dto%d_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
-	else comparisonCanvas->SaveAs(Form("1DAccxEff/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_abscosTheta%.2fto%.2f_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+	if (isCosTheta == kTRUE) comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absPhi%dto%d_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+	else comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absCosTheta%.2fto%.2f_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
 
 	delete comparisonCanvas;
 	delete frameHist1D;
@@ -237,14 +237,14 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 
 void scan_accEffplots_3Dto1D_comparison(){
 
-	// // for (int ptBin = 0; ptBin < NPtBins; ++ptBin) {
-	// for (int ptBin = 1; ptBin < NPtBins; ++ptBin) {
-	// 	for (int phiBin = 0; phiBin < NPhiBins; ++phiBin) {
-	// 		for (int refFrame = 0; refFrame < 2; ++refFrame) {
-	// 			accEffplots_3Dto1D_comparison(gPtBinning[ptBin], gPtBinning[ptBin + 1], refFrame == 0 ? "CS" : "HX", 5, -0.7, 0.7, 1, gPhiBinning[phiBin], gPhiBinning[phiBin + 1], gUpsilonState, kFALSE, kTRUE, "MuonUpsilonTriggerAcc");
-	// 		}
-	// 	}
-	// }	
+	// for (int ptBin = 0; ptBin < NPtBins; ++ptBin) {
+	for (int ptBin = 1; ptBin < NPtBins; ++ptBin) {
+		for (int phiBin = 0; phiBin < NPhiBins; ++phiBin) {
+			for (int refFrame = 0; refFrame < 2; ++refFrame) {
+				accEffplots_3Dto1D_comparison(gPtBinning[ptBin], gPtBinning[ptBin + 1], refFrame == 0 ? "CS" : "HX", 5, -0.7, 0.7, 1, gPhiBinning[phiBin], gPhiBinning[phiBin + 1], gUpsilonState, kFALSE, kTRUE, "MuonUpsilonTriggerAcc");
+			}
+		}
+	}	
 
 	// for (int ptBin = 0; ptBin < NPtBins; ++ptBin) {
 	for (int ptBin = 1; ptBin < NPtBins; ++ptBin) {
