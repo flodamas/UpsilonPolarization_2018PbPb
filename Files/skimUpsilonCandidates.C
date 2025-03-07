@@ -68,24 +68,27 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
 	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
+	
+	RooRealVar ptLabMuplVar("ptLabMupl", "pt of positive muon in the lab frame", 0, 100, gPtUnit);
+	RooRealVar ptLabMumiVar("ptLabMumi", "pt of negative muon in the lab frame", 0, 100, gPtUnit);
 
-	RooDataSet datasetLab(RawDatasetName(refFrameName), "skimmed dataset for the Lab frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar));
+	RooDataSet datasetLab(RawDatasetName(refFrameName), "skimmed dataset for the Lab frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, ptLabMuplVar, ptLabMumiVar));
 
 	refFrameName = (char*)"CS";
 	RooRealVar cosThetaCSVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar phiTildeCSVar(PhiTildeVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooDataSet datasetCS(RawDatasetName(refFrameName), "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar));
+	RooDataSet datasetCS(RawDatasetName(refFrameName), "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, ptLabMuplVar, ptLabMumiVar));
 
 	refFrameName = (char*)"HX";
 	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar phiTildeHXVar(PhiTildeVarName(refFrameName), PhiTildeVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooDataSet datasetHX(RawDatasetName(refFrameName), "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar));
+	RooDataSet datasetHX(RawDatasetName(refFrameName), "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, ptLabMuplVar, ptLabMumiVar));
 
-	RooDataSet dataset(RawDatasetName(""), "skimmed dataset for both CS and HX frames", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
+	RooDataSet dataset(RawDatasetName(""), "skimmed dataset for both CS and HX frames", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar, ptLabMuplVar, ptLabMumiVar));
 
 	// loop variables
 	Long64_t totEntries = OniaTree->GetEntries();
@@ -163,11 +166,15 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 			etaLabMuplVar = Reco_mupl_4mom->PseudoRapidity();
 			etaLabMumiVar = Reco_mumi_4mom->PseudoRapidity();
 
-			datasetLab.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar));
+			ptLabMuplVar = Reco_mupl_4mom->Pt();
+			ptLabMumiVar = Reco_mumi_4mom->Pt();
+
+			datasetLab.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, ptLabMuplVar, ptLabMumiVar));
 
 			// Collins-Soper
 			cosThetaCSVar = muPlus_CS.CosTheta();
 			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
+
 
 			if (cosThetaCSVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
@@ -185,7 +192,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 					phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
 			}
 
-			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar));
+			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, ptLabMuplVar, ptLabMumiVar));
 
 			// Helicity
 			cosThetaHXVar = muPlus_HX.CosTheta();
@@ -207,14 +214,14 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 					phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
-			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar));
+			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, ptLabMuplVar, ptLabMumiVar));
 
-			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar));
+			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar, ptLabMuplVar, ptLabMumiVar));
 
 		} // end of reco QQ loop
 	}   // enf of event loop
 
-	const char* outputFileName = Form("UpsilonSkimmedDataset%s.root", gMuonAccName);
+	const char* outputFileName = Form("UpsilonSkimmedDataset%s_pTmu.root", gMuonAccName);
 
 	TFile file(outputFileName, "RECREATE");
 
