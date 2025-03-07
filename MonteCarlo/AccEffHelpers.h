@@ -415,7 +415,7 @@ TH2D* rebinRel3DUncMap(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_
 
 // display the uncertainties signal extraction yield on each bin of 2D yield map
 
-void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6) {
+void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6, Bool_t displayErrors = kFALSE) {
 	if (!effMap) {
 		std::cout << "no efficiency map found!!!" << std::endl;
 		exit(1);
@@ -443,10 +443,16 @@ void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nP
 
 			// Create a TLatex object to write the signal extraction yield uncertainties on each bin
 			TLatex latex;
-			latex.SetTextSize(0.05); // Adjust text size as needed
 			latex.SetTextAlign(22);  // Center alignment
 			latex.SetTextColor(kWhite);
-			latex.DrawLatex(x, y, Form("%.2f", effVal));
+			if (displayErrors == kTRUE) {
+				latex.SetTextSize(0.035); 
+				latex.DrawLatex(x, y, Form("#pm %.4f", effUncUp)); 
+			}
+			else {
+				latex.SetTextSize(0.05);
+				latex.DrawLatex(x, y, Form("%.2f", effVal)); 
+			}
 		}
 	}
 }
@@ -603,7 +609,7 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	}
 }
 
-void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t displayValues = kFALSE, const char* extraString = "", Bool_t isPhiFolded = kTRUE) {
+void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t displayValues = kFALSE, Bool_t displayErrors = kFALSE, const char* extraString = "", Bool_t isPhiFolded = kTRUE) {
 	TCanvas* canvas;
 	if (isAcc)
 		canvas = new TCanvas("accCosThetaPhi", "", 680, 600);
@@ -625,7 +631,7 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	// cosmetics of the histogram
 	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
 
-	if (displayValues) displayEfficiencies(effHist, nCosThetaBins, nPhiBins);
+	if (displayValues) displayEfficiencies(effHist, nCosThetaBins, nPhiBins, displayErrors);
 
 	TLatex legend;
 	legend.SetTextAlign(22);
@@ -890,7 +896,7 @@ TEfficiency* DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t
 	return EffxAccHist;
 }
 
-void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t displayValues = kFALSE, const char* extraString = "", Bool_t displayYieldValues = kTRUE, Bool_t isPhiFolded = kFALSE) {
+void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t displayValues = kFALSE, Bool_t displayErrors = kFALSE, Bool_t displayYieldValues = kTRUE, const char* extraString = "", Bool_t isPhiFolded = kFALSE) {
 	TCanvas* canvas = new TCanvas("EffxAccCosThetaPhi", "", 680, 600);
 
 	canvas->SetRightMargin(0.18);
@@ -913,7 +919,7 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	// cosmetics of the histogram
 	CMS_lumi(canvas, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
 
-	if (displayValues) displayEfficiencies(EffxAccHist, nCosThetaBins, nPhiBins);
+	if (displayValues) displayEfficiencies(EffxAccHist, nCosThetaBins, nPhiBins, displayErrors);
 
 	TLatex legend;
 	legend.SetTextAlign(22);
@@ -980,8 +986,8 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	// save the plot
 	gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
 
-	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d.png", iState, EffxAccHist->GetName(), ptMin, ptMax), "RECREATE");
-	else canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString, "_fullPhi"), "RECREATE");
+	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, displayErrors? "_DisplayUnc": "_DisplayEff"), "RECREATE");
+	else canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s%s%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString, displayErrors? "_DisplayUnc": "_DisplayEff", "_fullPhi"), "RECREATE");
 	// canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, "_diff"), "RECREATE");
 
 }
