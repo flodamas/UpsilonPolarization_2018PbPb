@@ -20,6 +20,119 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
+TLine* drawLine(double x1, double y1, double x2, double y2) {
+    TLine* line = new TLine(x1, y1, x2, y2);
+    line->SetLineStyle(2);
+    line->SetLineColor(kBlack);
+
+    line->Draw("SAME");
+    return line;
+}
+
+TPad* drawPulls(TEfficiency* positiveHist, TEfficiency* negativeHist, const char* xTitle, bool isCosTheta = kTRUE) {
+
+	/// Create a new pad
+	TPad* bottomPad = new TPad("bottomPad", "bottomPad", 0, 0, 1, .25);
+	bottomPad->SetTopMargin(0.01);
+	bottomPad->SetBottomMargin(0.4);
+	bottomPad->SetRightMargin(0.03);
+	
+	bottomPad->SetTicks(1, 1);
+	
+	bottomPad->Draw();
+	bottomPad->cd();
+
+	/// Get the number of bins and the range of the histogram
+	int nBins = positiveHist->GetTotalHistogram()->GetNbinsX();
+	double xmin = positiveHist->GetTotalHistogram()->GetXaxis()->GetBinLowEdge(1);
+	double xmax = positiveHist->GetTotalHistogram()->GetXaxis()->GetBinUpEdge(nBins);
+
+	// cout << nBins << " " << xmin << " " << xmax << endl;
+
+	/// Create a new frame
+	TH1D* frameHist = new TH1D("frameHist", "", nBins, xmin, xmax);
+
+	frameHist->GetXaxis()->SetTitle(xTitle);
+	frameHist->GetXaxis()->SetTitleSize(0.2);
+	frameHist->GetXaxis()->SetLabelSize(0.15);
+	frameHist->GetXaxis()->SetTitleOffset(0.8);
+	frameHist->GetXaxis()->CenterTitle();
+
+	frameHist->GetYaxis()->SetTitle("Pull");
+	frameHist->GetYaxis()->SetTitleOffset(0.37);
+	frameHist->GetYaxis()->SetTitleSize(0.18);
+	frameHist->GetYaxis()->SetLabelSize(0.15);
+	frameHist->GetYaxis()->CenterTitle();
+
+	if (isCosTheta) frameHist->GetXaxis()->SetNdivisions(-5);
+	else frameHist->GetXaxis()->SetNdivisions(-6);
+
+	frameHist->GetYaxis()->SetRangeUser(-4.5, 4.5);
+	frameHist->GetYaxis()->SetNdivisions(405);
+
+	/// Create a new graph
+	TGraphErrors* pullGraph = new TGraphErrors(nBins);
+
+	/// Styling the graph
+	pullGraph->SetMarkerStyle(20);
+	pullGraph->SetMarkerSize(1.2);
+	pullGraph->SetMarkerColor(TColor::GetColor("#333333"));
+	pullGraph->SetLineColor(TColor::GetColor("#333333"));
+
+	/// Fill the graph
+	for (int iBin = 0; iBin < nBins; iBin++) {
+
+		double positiveEff = positiveHist->GetEfficiency(positiveHist->GetGlobalBin(iBin + 1));
+		double negativeEff = negativeHist->GetEfficiency(negativeHist->GetGlobalBin(iBin + 1));
+
+		double positiveEffErrUp = positiveHist->GetEfficiencyErrorUp(positiveHist->GetGlobalBin(iBin + 1));
+		double negativeEffErrUp = negativeHist->GetEfficiencyErrorUp(negativeHist->GetGlobalBin(iBin + 1));
+
+		double positiveEffErrDown = positiveHist->GetEfficiencyErrorLow(positiveHist->GetGlobalBin(iBin + 1));
+		double negativeEffErrDown = negativeHist->GetEfficiencyErrorLow(negativeHist->GetGlobalBin(iBin + 1));
+
+		double xpoint = positiveHist->GetTotalHistogram()->GetXaxis()->GetBinCenter(iBin + 1);
+		// cout << xpoint << " " << positiveEff << " " << negativeEff << " " << positiveEffErrUp << " " << negativeEffErrUp << " " << positiveEffErrDown << " " << negativeEffErrDown << endl;
+
+		double pull = 0;
+		double pullerr = 0;
+
+		if (positiveEff > negativeEff) {
+			pull = (positiveEff - negativeEff) / sqrt(positiveEffErrUp * positiveEffErrUp + negativeEffErrDown * negativeEffErrDown);
+			pullerr = sqrt(pow(positiveEffErrUp / sqrt(pow(positiveEffErrUp, 2) + pow(negativeEffErrDown, 2)), 2) + pow(negativeEffErrDown / sqrt(pow(positiveEffErrUp, 2) + pow(negativeEffErrDown, 2)), 2));
+		}
+
+		else {
+			pull = (positiveEff - negativeEff) / sqrt(positiveEffErrDown * positiveEffErrDown + negativeEffErrUp * negativeEffErrUp);
+			pullerr = sqrt(pow(positiveEffErrDown / sqrt(pow(positiveEffErrDown, 2) + pow(negativeEffErrUp, 2)), 2) + pow(negativeEffErrUp / sqrt(pow(positiveEffErrDown, 2) + pow(negativeEffErrUp, 2)), 2));
+		}
+		// cout << "iBin: " << iBin << " xpoint: " << xpoint << " pull: " << pull << " pullerr: " << pullerr << endl;
+		pullGraph->SetPoint(iBin, xpoint, pull);
+		pullGraph->SetPointError(iBin, 0, pullerr);
+	}
+
+	/// Draw the frame
+	frameHist->Draw();
+
+	/// Draw white line at y = 0 to hide the x-axis
+	TLine* line1 = new TLine(xmin, 0, xmax, 0);  // Horizontal line at y = 0
+	line1->SetLineColor(kWhite);  // Set to white or transparent
+	line1->SetLineWidth(4);
+	line1->Draw("SAME");
+
+	/// Draw a horizontal line at y = 0
+	TLine* line = drawLine(xmin, 0, xmax, 0);
+
+	/// Draw the graph
+	pullGraph->Draw("P");	
+
+	/// Redraw the axis
+	bottomPad->RedrawAxis();
+
+	/// Return the pad
+	return bottomPad;
+}
+
 std::vector<TEfficiency*> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
@@ -36,14 +149,14 @@ std::vector<TEfficiency*> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t ptMax = 30, 
 
 	std::vector<Double_t> phiBinEdges = setPhiBinEdges(nPhiBins, phiMin, phiMax);
 
-	// bin width
+	/// bin width
 	Double_t cosThetaStep = (cosThetaBinEdges[nCosThetaBins] - cosThetaBinEdges[0]) / nCosThetaBins;
 
 	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
 
 	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
 
-	// get acceptance maps
+	/// get acceptance maps
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;	
 
 	TString MuonAccName = "";
@@ -71,12 +184,11 @@ std::vector<TEfficiency*> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t ptMax = 30, 
     	return {};
 	}
 
-	// rebin acceptance maps based on costheta, phi, and pT selection
+	/// rebin acceptance maps based on costheta, phi, and pT selection
 	TEfficiency* accMapCosTheta = rebinTEff3DMapCosTheta(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiMin, phiMax);
 	TEfficiency* accMapPhi = rebinTEff3DMapPhi(accMap, ptMin, ptMax, cosThetaMin, cosThetaMax, nPhiBins, phiBinEdges);
 
-	// get efficiency maps
-	// TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", gMuonAccName));
+	/// get efficiency maps
 	TString effFileName = "";
 
 	if (isPhiFolded == kTRUE) effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", MuonAccName.Data());
@@ -91,7 +203,7 @@ std::vector<TEfficiency*> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t ptMax = 30, 
     	return {};
 	}
 
-	// rebin efficiency maps based on costheta, phi, and pT selection
+	/// rebin efficiency maps based on costheta, phi, and pT selection
 	TEfficiency* effMapCosTheta = rebinTEff3DMapCosTheta(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiMin, phiMax);
 	TEfficiency* effMapPhi = rebinTEff3DMapPhi(effMap, ptMin, ptMax, cosThetaMin, cosThetaMax, nPhiBins, phiBinEdges);
 
@@ -129,7 +241,7 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 
 	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
 
-	// get acceptance maps
+	/// get acceptance maps 
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;	
 
 	TString MuonAccName = "";
@@ -145,6 +257,7 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 
 	cout << "Drawing acceptance x efficiency 1D histograms for |phi| range " << phiMin << " to " << phiMax << " degrees..." << endl;
 
+	/// get acceptance x efficiency 1D histograms: positive and negative sides
 	std::vector<TEfficiency*> positiveHists;
 	std::vector<TEfficiency*> negativeHists;
 	TEfficiency* positiveHist;
@@ -163,7 +276,8 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 		negativeHist = negativeHists[1];
 	}
 
-	// empty frame for the axes
+	/// draw plots
+	/// empty frame for the axes
 	TH1D* frameHist1D;
 	
 	if (isCosTheta == kTRUE) frameHist1D = new TH1D("frameHist1D", "", nCosThetaBins, cosThetaBinEdges.data());
@@ -174,30 +288,49 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 	
 	comparisonCanvas->SetRightMargin(0.05);
 
-	frameHist1D->Draw();
-	frameHist1D->GetYaxis()->SetRangeUser(0, 1);
+	TPad *pad1 = new TPad("pad1", "First Pad", 0.0, 0.25, 1.0, 1.0);
+	pad1->Draw();
+	pad1->cd(); 
+
+	/// Set the margins
+	pad1->SetTopMargin(0.07);
+	pad1->SetBottomMargin(0.03);
+	pad1->SetRightMargin(0.03);
+
+	frameHist1D->Draw("same");
+	frameHist1D->GetYaxis()->SetRangeUser(0, 1.4);
+
+	/// Set the axis titles
+	TString xTitle = "";
 
 	if (isCosTheta == kTRUE) {
+		xTitle = CosThetaVarTitle(refFrameName);
 		frameHist1D->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName));
 		frameHist1D->GetXaxis()->SetNdivisions(-5);
 	}
 	else {
+		xTitle = PhiAxisTitle(refFrameName);
 		frameHist1D->GetXaxis()->SetTitle(PhiAxisTitle(refFrameName));
 		frameHist1D->GetXaxis()->SetNdivisions(-6);
 	}
 
 	frameHist1D->GetXaxis()->CenterTitle();
+	frameHist1D->GetXaxis()->SetTitleSize(0);
+	frameHist1D->GetXaxis()->SetLabelSize(0);
+	
 	frameHist1D->GetYaxis()->SetTitle(TEfficiencyMainTitle(iState, "acceptance x efficiency"));
 
+	/// draw legend
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.05);
-	legend.DrawLatexNDC(.55, .87, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.55, .85, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 
-	if (strcmp(MuonAccName.Data(), "_TriggerAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-	else if (strcmp(MuonAccName.Data(), "_SimpleAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
-	else if (strcmp(MuonAccName.Data(), "_2018PbPbAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+	if (strcmp(MuonAccName.Data(), "_TriggerAcc") == 0) legend.DrawLatexNDC(.55, .78, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	else if (strcmp(MuonAccName.Data(), "_SimpleAcc") == 0) legend.DrawLatexNDC(.55, .78, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+	else if (strcmp(MuonAccName.Data(), "_2018PbPbAcc") == 0) legend.DrawLatexNDC(.55, .78, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
 
+	/// draw acceptance x efficiency 1D histograms for positive and negative sides
 	positiveHist->Draw("EP same");
 	positiveHist->SetMarkerColor(TColor::GetColor("#A559AA"));
 	positiveHist->SetMarkerStyle(20);
@@ -208,7 +341,7 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 	negativeHist->SetMarkerStyle(24);
 	negativeHist->SetLineColor(TColor::GetColor("#009ADE"));
 
-	TLegend* legend1D = new TLegend(0.17, 0.6, 0.4, 0.76);
+	TLegend* legend1D = new TLegend(0.17, 0.58, 0.4, 0.73);
 	legend1D->SetBorderSize(0);
 	legend1D->SetFillStyle(0);
 	if (isCosTheta == kTRUE) {
@@ -221,8 +354,22 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 	}
 	legend1D->Draw();
 	
-	CMS_lumi(comparisonCanvas, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
+	CMS_lumi(pad1, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
 
+	gPad->Update();
+	comparisonCanvas->Update();
+
+	/// Draw the pulls at the bottom
+	comparisonCanvas->cd();
+	
+	TPad* bottomPad = drawPulls(positiveHist, negativeHist, xTitle.Data(), isCosTheta);
+
+	bottomPad->Draw();
+
+	gPad->Update();
+	comparisonCanvas->Update();
+
+	/// Save the canvas
 	gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
 	if (isCosTheta == kTRUE) comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absPhi%dto%d_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
 	else comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absCosTheta%.2fto%.2f_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
