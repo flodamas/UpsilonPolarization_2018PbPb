@@ -115,13 +115,25 @@ TPad* drawPulls(TEfficiency* positiveHist, TEfficiency* negativeHist, const char
 	frameHist->Draw();
 
 	/// Draw white line at y = 0 to hide the x-axis
-	TLine* line1 = new TLine(xmin, 0, xmax, 0);  // Horizontal line at y = 0
-	line1->SetLineColor(kWhite);  // Set to white or transparent
-	line1->SetLineWidth(4);
-	line1->Draw("SAME");
+	TLine* whiteline = new TLine(xmin, 0, xmax, 0);  // Horizontal line at y = 0
+	whiteline->SetLineColor(kWhite);  // Set to white or transparent
+	whiteline->SetLineWidth(4);
+	whiteline->Draw("SAME");
 
 	/// Draw a horizontal line at y = 0
-	TLine* line = drawLine(xmin, 0, xmax, 0);
+	TLine* line0 = drawLine(xmin, 0, xmax, 0);
+
+	TLine* line1 = drawLine(xmin, 1, xmax, 1);
+	TLine* line_1 = drawLine(xmin, -1, xmax, -1);
+
+	TLine* line2 = drawLine(xmin, 2, xmax, 2);
+	TLine* line_2 = drawLine(xmin, -2, xmax, -2);
+
+	TLine* line3 = drawLine(xmin, 3, xmax, 3);
+	TLine* line_3 = drawLine(xmin, -3, xmax, -3);
+
+	TLine* line4 = drawLine(xmin, 4, xmax, 4);
+	TLine* line_4 = drawLine(xmin, -4, xmax, -4);
 
 	/// Draw the graph
 	pullGraph->Draw("P");	
@@ -374,6 +386,7 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 	if (isCosTheta == kTRUE) comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absPhi%dto%d_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
 	else comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absCosTheta%.2fto%.2f_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
 
+	/// delete objects when running the scan function to avoid memory leak (comment out to check the plots)
 	delete comparisonCanvas;
 	delete frameHist1D;
 	delete positiveHist;
