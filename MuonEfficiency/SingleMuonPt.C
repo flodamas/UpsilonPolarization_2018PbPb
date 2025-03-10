@@ -23,7 +23,7 @@ TH1D* drawSFEff(const double* ptBinEdges, int nBins = 10, double etaMin = 0, dou
     int filterID;
 
     if (isL3) filterID = 3; // Upsilon L3
-    else filterID = 1; // Upsilon L2
+    else filterID = 2; // Upsilon L2
 
     int idx = 0;
 
@@ -108,7 +108,7 @@ TH1D* drawSFEff(const double* ptBinEdges, int nBins = 10, double etaMin = 0, dou
         sfGraph->SetPoint(ptBin, pt, sf);
         sfGraph->SetPointError(ptBin, xLow, xHigh, statUp, statDown); // Using statistical errors
     
-        cout << "pt: " << pt << ", SF: " << sf << ", statUp: " << statUp << ", statDown: " << statDown << endl;
+        // cout << "pt: " << pt << ", SF: " << sf << ", statUp: " << statUp << ", statDown: " << statDown << endl;
     }
 
     // TCanvas* canvasSF = new TCanvas("canvasSF", "", 600, 250);
@@ -164,6 +164,8 @@ TH1D* drawSFEff(const double* ptBinEdges, int nBins = 10, double etaMin = 0, dou
     
     canvasSFEff->Update();
 
+    canvasSFEff->SaveAs(Form("SingleMuonEfficiency_SF_Ups%s_%.1f_%.1f.png", isL3 ? "L3" : "L2", etaMin, etaMax));
+
     return nullptr;
 }
 
@@ -206,8 +208,8 @@ TH1* drawPtDistribution(const char* refFrameName = "CS", double etaMin = 0, doub
     RooRealVar ptLabMumiVar = *wspace.var("ptLabMumi");
 
 	// reduce the whole dataset (N dimensions) to 2D (cos theta, phi)
-	const char* kinematicCutMupl = Form("(centrality >= %d && centrality < %d) && (mass > %f && mass < %f) && (rapidity > %f && rapidity < %f) && (fabs(etaLabMupl) > %f && fabs(etaLabMupl) < %f) && (pt > %d && pt < %d) && (%s > %f && %s < %f) && (fabs(%s) > %d && fabs(%s) < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, massMin, massMax, gRapidityMin, gRapidityMax, etaMin, etaMax, ptMin, ptMax, CosThetaVarName(refFrameName), cosThetaMin, CosThetaVarName(refFrameName), cosThetaMax, PhiVarName(refFrameName), phiMin, PhiVarName(refFrameName), phiMax);
-	const char* kinematicCutMumi = Form("(centrality >= %d && centrality < %d) && (mass > %f && mass < %f) && (rapidity > %f && rapidity < %f) && (fabs(etaLabMupl) > %f && fabs(etaLabMupl) < %f) && (pt > %d && pt < %d) && (%s > %f && %s < %f) && (fabs(%s) > %d && fabs(%s) < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, massMin, massMax, gRapidityMin, gRapidityMax, etaMin, etaMax, ptMin, ptMax, CosThetaVarName(refFrameName), cosThetaMin, CosThetaVarName(refFrameName), cosThetaMax, PhiVarName(refFrameName), phiMin, PhiVarName(refFrameName), phiMax);
+	const char* kinematicCutMupl = Form("(centrality >= %d && centrality < %d) && (mass > %f && mass < %f) && (rapidity > %f && rapidity < %f) && (fabs(etaLabMupl) > %f && fabs(etaLabMupl) < %f) && (fabs(etaLabMumi) > %f && fabs(etaLabMumi) < %f) && (pt > %d && pt < %d) && (%s > %f && %s < %f) && (fabs(%s) > %d && fabs(%s) < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, massMin, massMax, gRapidityMin, gRapidityMax, etaMin, etaMax, etaMin, etaMax, ptMin, ptMax, CosThetaVarName(refFrameName), cosThetaMin, CosThetaVarName(refFrameName), cosThetaMax, PhiVarName(refFrameName), phiMin, PhiVarName(refFrameName), phiMax);
+	const char* kinematicCutMumi = Form("(centrality >= %d && centrality < %d) && (mass > %f && mass < %f) && (rapidity > %f && rapidity < %f) && (fabs(etaLabMupl) > %f && fabs(etaLabMupl) < %f) && (fabs(etaLabMumi) > %f && fabs(etaLabMumi) < %f) && (pt > %d && pt < %d) && (%s > %f && %s < %f) && (fabs(%s) > %d && fabs(%s) < %d)", 2 * gCentralityBinMin, 2 * gCentralityBinMax, massMin, massMax, gRapidityMin, gRapidityMax, etaMin, etaMax, etaMin, etaMax, ptMin, ptMax, CosThetaVarName(refFrameName), cosThetaMin, CosThetaVarName(refFrameName), cosThetaMax, PhiVarName(refFrameName), phiMin, PhiVarName(refFrameName), phiMax);
 
     RooDataSet* reducedDatasetMupl = (RooDataSet*)dataset->reduce(RooArgSet(ptVar, massVar, ptLabMuplVar, ptLabMumiVar), kinematicCutMupl);
     RooDataSet* reducedDatasetMumi = (RooDataSet*)dataset->reduce(RooArgSet(ptVar, massVar, ptLabMuplVar, ptLabMumiVar), kinematicCutMumi);
@@ -217,7 +219,6 @@ TH1* drawPtDistribution(const char* refFrameName = "CS", double etaMin = 0, doub
     RooBinning ptBinning(nBins, ptBinEdges);
 
     drawSFEff(ptBinEdges, nBins, etaMin, etaMax, isL3);
-    // drawSF(ptBinEdges, nBins, etaMin, etaMax, isL3);
 
     TCanvas* canvas = new TCanvas(Form("canvas%s", refFrameName), "canvas", 600, 600);
 
@@ -272,6 +273,8 @@ TH1* drawPtDistribution(const char* refFrameName = "CS", double etaMin = 0, doub
     histoMumi->SetLineWidth(3);
 
     gPad->Update();
+
+    cout << "Mupl integral: " << histoMupl->Integral() << ", Mumi integral: " << histoMumi->Integral() << endl;
 
     // TPaveStats* ptstats = (TPaveStats*)histoMupl->FindObject("stats");
     // if (ptstats) {
@@ -330,8 +333,8 @@ TH1* drawPtDistribution(const char* refFrameName = "CS", double etaMin = 0, doub
 	gPad->Update();
 
     CMS_lumi(canvas, gCMSLumiText);
-    canvas->SaveAs(Form("singleMuonPt_%s_cosTheta%.2fto%.2f_absphi%dto%d.png", histoName, cosThetaMin, cosThetaMax, phiMin, phiMax), "RECREATE");
-	// canvas->SaveAs(Form("frame_distrib/%s.png", histoName), "RECREATE");
+    gSystem->mkdir("SingleMuonPtDistribution/", kTRUE);
+    canvas->SaveAs(Form("SingleMuonPtDistribution/singleMuonPt_%s_cosTheta%.2fto%.2f_absphi%dto%d.png", histoName, cosThetaMin, cosThetaMax, phiMin, phiMax), "RECREATE");
 
     // TFile outputFile(Form("singleMuonPt_%s_cosTheta%.2fto%.2f_absphi%dto%d.root", histoName, cosThetaMin, cosThetaMax, phiMin, phiMax), "UPDATE");
 
