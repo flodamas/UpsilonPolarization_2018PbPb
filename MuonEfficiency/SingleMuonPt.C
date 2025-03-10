@@ -4,9 +4,9 @@
 
 #include "../Tools/Style/Legends.h"
 
-// #include "../Tools/Parameters/MuonScaleFactors.h"
+#include "../Tools/Parameters/MuonScaleFactors.h"
 
-#include "../Tools/Parameters/tnp_weight_lowptPbPb.h"
+// #include "../Tools/Parameters/tnp_weight_lowptPbPb.h"
 
 TLine* drawLine(double x1, double y1, double x2, double y2) {
     TLine* line = new TLine(x1, y1, x2, y2);
@@ -17,55 +17,82 @@ TLine* drawLine(double x1, double y1, double x2, double y2) {
     return line;
 }
 
-TH1D* drawSF(const double* ptBinEdges, int nBins = 10, double etaMin = 0, double etaMax = 1.2, Bool_t isL3 = kTRUE) {
-    double pt;
-
+TH1D* drawSFEff(const double* ptBinEdges, int nBins = 10, double etaMin = 0, double etaMax = 1.2, Bool_t isL3 = kTRUE) {
     double eta = (etaMin + etaMax) / 2;
 
     int filterID;
 
-    if (isL3) filterID = 3;
-    else filterID = 1;
+    if (isL3) filterID = 3; // Upsilon L3
+    else filterID = 1; // Upsilon L2
 
     int idx = 0;
 
     gStyle->SetOptStat(0);
 
-    TH1D* frameHist = new TH1D("frameHist", "", 60, 0, 30);
+    TH1D* frameHistEff = new TH1D("frameHistEff", "", 60, 0, 30);
 
-    frameHist->GetXaxis()->SetTitle("p_{T}^{#mu} [GeV/c]");
-    frameHist->GetXaxis()->SetTitleSize(0.1);
-    frameHist->GetXaxis()->SetLabelSize(0.1);
-    frameHist->GetXaxis()->CenterTitle();
+    frameHistEff->GetXaxis()->SetTitleSize(0.0);
+    frameHistEff->GetXaxis()->SetLabelSize(0.0);
 
-    frameHist->GetYaxis()->SetTitle("SF");
-    frameHist->GetYaxis()->SetTitleOffset(0.5);
-    frameHist->GetYaxis()->SetTitleSize(0.1);
-    frameHist->GetYaxis()->SetLabelSize(0.1);
-    frameHist->GetYaxis()->CenterTitle();
+    frameHistEff->GetYaxis()->SetTitle("Single #mu Efficiency");
+    frameHistEff->GetYaxis()->SetTitleOffset(1.2);
+    frameHistEff->GetYaxis()->SetTitleSize(0.05);
+    frameHistEff->GetYaxis()->SetLabelSize(0.05);
+    // frameHistEff->GetYaxis()->CenterTitle();
 
-    frameHist->GetXaxis()->SetNdivisions(506);
+    frameHistEff->GetYaxis()->SetRangeUser(0, 1.0);
+    frameHistEff->GetYaxis()->SetNdivisions(405);
 
-    frameHist->GetYaxis()->SetRangeUser(0.7, 1.5);
-    frameHist->GetYaxis()->SetNdivisions(404);
+    TH1D* frameHistSF = new TH1D("frameHistSF", "", 60, 0, 30);
 
+    frameHistSF->GetXaxis()->SetTitle("p_{T}^{#mu} [GeV/c]");
+    frameHistSF->GetXaxis()->SetTitleSize(0.15);
+    frameHistSF->GetXaxis()->SetLabelSize(0.15);
+    frameHistSF->GetXaxis()->CenterTitle();
+
+    frameHistSF->GetYaxis()->SetTitle("SF");
+    frameHistSF->GetYaxis()->SetTitleOffset(0.4);
+    frameHistSF->GetYaxis()->SetTitleSize(0.15);
+    frameHistSF->GetYaxis()->SetLabelSize(0.15);
+    frameHistSF->GetYaxis()->CenterTitle();
+
+    frameHistSF->GetXaxis()->SetNdivisions(506);
+
+    frameHistSF->GetYaxis()->SetRangeUser(0.7, 1.5);
+    frameHistSF->GetYaxis()->SetNdivisions(404);
+
+    TGraphAsymmErrors* sfNumEffGraph = new TGraphAsymmErrors(nBins);
+    TGraphAsymmErrors* sfDenEffGraph = new TGraphAsymmErrors(nBins);
     TGraphAsymmErrors* sfGraph = new TGraphAsymmErrors(nBins);
 
     // Styling the graph
+    sfNumEffGraph->SetMarkerStyle(25);
+    sfNumEffGraph->SetMarkerSize(1.2);
+    sfNumEffGraph->SetMarkerColor(4);
+    sfNumEffGraph->SetLineColor(4);
+
+    sfDenEffGraph->SetMarkerStyle(20);
+    sfDenEffGraph->SetMarkerSize(1.2);
+    sfDenEffGraph->SetMarkerColor(2);
+    sfDenEffGraph->SetLineColor(2);
+
     sfGraph->SetMarkerStyle(20);
     sfGraph->SetMarkerSize(1.2);
-    sfGraph->SetMarkerColor(TColor::GetColor("#045275"));
-    sfGraph->SetLineColor(TColor::GetColor("#045275"));
+    sfGraph->SetMarkerColor(TColor::GetColor("#333333"));
+    sfGraph->SetLineColor(TColor::GetColor("#333333"));
 
     for (int ptBin = 0; ptBin < nBins; ptBin++) {
+        double numEff = 1;
+        double denEff = 1;
+
         double pt = (ptBinEdges[ptBin] + ptBinEdges[ptBin + 1]) / 2;  // Bin center
-        double sf = tnp_weight_trg_pbpb(pt, eta, filterID, idx);      // Scale factor
+        double sf = tnp_weight_trg_pbpb(pt, eta, filterID, idx, &numEff, &denEff);      // Scale factor
     
-        double statUp = tnp_weight_trg_pbpb(pt, eta, filterID, 1) - sf;
-        double statDown = sf - tnp_weight_trg_pbpb(pt, eta, filterID, 2);
+        double statUp = tnp_weight_trg_pbpb(pt, eta, filterID, 1, &numEff, &denEff) - sf;
+        double statDown = sf - tnp_weight_trg_pbpb(pt, eta, filterID, 2, &numEff, &denEff);
     
-        double systUp = tnp_weight_trg_pbpb(pt, eta, filterID, -1) - sf;
-        double systDown = sf - tnp_weight_trg_pbpb(pt, eta, filterID, -2);
+        double systUp = tnp_weight_trg_pbpb(pt, eta, filterID, -1, &numEff, &denEff) - sf;
+        double systDown = sf - tnp_weight_trg_pbpb(pt, eta, filterID, -2, &numEff, &denEff);
     
         double errUp = sqrt(statUp * statUp + systUp * systUp);
         double errDown = sqrt(statDown * statDown + systDown * systDown);
@@ -75,21 +102,57 @@ TH1D* drawSF(const double* ptBinEdges, int nBins = 10, double etaMin = 0, double
         double xHigh = (ptBinEdges[ptBin + 1] - pt);
     
         // Set the point and errors in TGraphAsymmErrors
+        sfNumEffGraph->SetPoint(ptBin, pt, numEff);
+        sfDenEffGraph->SetPoint(ptBin, pt, denEff);
+
         sfGraph->SetPoint(ptBin, pt, sf);
         sfGraph->SetPointError(ptBin, xLow, xHigh, statUp, statDown); // Using statistical errors
     
         cout << "pt: " << pt << ", SF: " << sf << ", statUp: " << statUp << ", statDown: " << statDown << endl;
     }
 
-    TCanvas* canvasSF = new TCanvas("canvasSF", "", 600, 250);
+    // TCanvas* canvasSF = new TCanvas("canvasSF", "", 600, 250);
+    TCanvas* canvasSFEff = new TCanvas("canvasSFEff", "", 600, 600);
 
-    canvasSF->SetRightMargin(0.05);
-    canvasSF->SetLeftMargin(0.12);
-    canvasSF->SetBottomMargin(0.22);
+    TPad* padEff = new TPad("padEff", "pad for efficiency", 0.0, 0.25, 1.0, 1.0);
 
-    CMS_lumi(canvasSF, gCMSLumiText);
+    padEff->Draw();
+    padEff->cd();
 
-    frameHist->Draw();
+    padEff->SetRightMargin(0.05);
+    padEff->SetLeftMargin(0.12);
+    padEff->SetTopMargin(0.07);
+    padEff->SetBottomMargin(0.02);
+
+    frameHistEff->Draw();
+    sfNumEffGraph->Draw("P SAME");  // Draw asymmetric error bars on top
+    sfDenEffGraph->Draw("P SAME");
+
+	TLegend* legendEff = new TLegend(0.5, 0.2, 0.95, 0.5);
+	legendEff->SetBorderSize(0);
+	legendEff->SetFillStyle(0);
+    legendEff->SetHeader(Form("#splitline{%s Upsilon Trigger Efficiency}{(p_{T}^{#mu} < 3.5 GeV, |#eta| #in [%.1f, %.1f])} ", isL3 ? "L3" : "L2", etaMin, etaMax));
+    legendEff->AddEntry((TObject*)0, "", "");
+    legendEff->AddEntry(sfDenEffGraph, "MC PYTHIA+HYDJET", "lep");
+    legendEff->AddEntry(sfNumEffGraph, "DATA", "lep");
+	legendEff->Draw();
+
+    gPad->Update();
+    canvasSFEff->Update();
+
+    canvasSFEff->cd();
+
+    TPad* padSF = new TPad("padSF", "pad for SF", 0.0, 0.0, 1.0, 0.25);
+
+    padSF->Draw();
+    padSF->cd();
+
+    padSF->SetTopMargin(0.01);
+    padSF->SetRightMargin(0.05);
+    padSF->SetLeftMargin(0.12);
+    padSF->SetBottomMargin(0.40);
+
+    frameHistSF->Draw();
     sfGraph->Draw("P SAME");  // Draw asymmetric error bars on top
 
     drawLine(0, 0.8, 30, 0.8);
@@ -97,7 +160,9 @@ TH1D* drawSF(const double* ptBinEdges, int nBins = 10, double etaMin = 0, double
     drawLine(0, 1.2, 30, 1.2);
     drawLine(0, 1.4, 30, 1.4);
 
-    canvasSF->Update();
+    CMS_lumi(padEff, gCMSLumiText);
+    
+    canvasSFEff->Update();
 
     return nullptr;
 }
@@ -151,7 +216,8 @@ TH1* drawPtDistribution(const char* refFrameName = "CS", double etaMin = 0, doub
     double ptBinEdges[nBins + 1] = {3.5, 4, 4.5, 5, 5.5, 6.5, 8, 10.5, 14, 18, 30};
     RooBinning ptBinning(nBins, ptBinEdges);
 
-    drawSF(ptBinEdges, nBins, etaMin, etaMax, isL3);
+    drawSFEff(ptBinEdges, nBins, etaMin, etaMax, isL3);
+    // drawSF(ptBinEdges, nBins, etaMin, etaMax, isL3);
 
     TCanvas* canvas = new TCanvas(Form("canvas%s", refFrameName), "canvas", 600, 600);
 
