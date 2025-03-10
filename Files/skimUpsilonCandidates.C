@@ -79,16 +79,16 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar phiCSVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar phiTildeCSVar(PhiTildeVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooDataSet datasetCS(RawDatasetName(refFrameName), "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, ptLabMuplVar, ptLabMumiVar));
+	RooDataSet datasetCS(RawDatasetName(refFrameName), "skimmed dataset for the CS frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, etaLabMuplVar, etaLabMumiVar, ptLabMuplVar, ptLabMumiVar));
 
 	refFrameName = (char*)"HX";
 	RooRealVar cosThetaHXVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiHXVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar phiTildeHXVar(PhiTildeVarName(refFrameName), PhiTildeVarTitle(refFrameName), -180, 180, gPhiUnit);
 
-	RooDataSet datasetHX(RawDatasetName(refFrameName), "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, ptLabMuplVar, ptLabMumiVar));
+	RooDataSet datasetHX(RawDatasetName(refFrameName), "skimmed dataset for the HX frame", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, etaLabMuplVar, etaLabMumiVar, ptLabMuplVar, ptLabMumiVar));
 
-	RooDataSet dataset(RawDatasetName(""), "skimmed dataset for both CS and HX frames", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar, ptLabMuplVar, ptLabMumiVar));
+	RooDataSet dataset(RawDatasetName(""), "skimmed dataset for both CS and HX frames", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar, etaLabMuplVar, etaLabMumiVar, ptLabMuplVar, ptLabMumiVar));
 
 	// loop variables
 	Long64_t totEntries = OniaTree->GetEntries();
@@ -192,7 +192,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 					phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
 			}
 
-			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, ptLabMuplVar, ptLabMumiVar));
+			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, etaLabMuplVar, etaLabMumiVar, ptLabMuplVar, ptLabMumiVar));
 
 			// Helicity
 			cosThetaHXVar = muPlus_HX.CosTheta();
@@ -214,9 +214,9 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 					phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
-			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, ptLabMuplVar, ptLabMumiVar));
+			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, etaLabMuplVar, etaLabMumiVar, ptLabMuplVar, ptLabMumiVar));
 
-			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar, ptLabMuplVar, ptLabMumiVar));
+			dataset.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaCSVar, phiCSVar, cosThetaHXVar, phiHXVar, etaLabMuplVar, etaLabMumiVar, ptLabMuplVar, ptLabMumiVar));
 
 		} // end of reco QQ loop
 	}   // enf of event loop
