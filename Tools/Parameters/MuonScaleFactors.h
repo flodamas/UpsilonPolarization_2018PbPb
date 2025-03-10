@@ -31,10 +31,10 @@
 //   * idx = 99: syst variation, tag selection
 // +++++++++++++++++++++++++++++++++++++++
 
-double tnp_weight_muid_pbpb(double pt, double eta, int idx = 0, double *num, double *den);
-double tnp_weight_trk_pbpb(double eta, int idx = 0, double *num, double *den);
-double tnp_weight_trg_pbpb(double pt, double eta, int filterId = 0, int idx = 0, double *num, double *den);
-double tnp_weight_trg_pbpb_mc(double pt, double eta, int filterId = 0, int idx = 0,	double *num, double *den);
+double tnp_weight_muid_pbpb(double pt, double eta, int idx = 0);
+double tnp_weight_trk_pbpb(double eta, int idx = 0);
+double tnp_weight_trg_pbpb(double pt, double eta, int filterId = 0, int idx = 0);
+double tnp_weight_trg_pbpb_mc(double pt, double eta, int filterId = 0, int idx = 0);
 
 ///////////////////////////////////////////////////
 //             M u I D    P b P b                //
@@ -3976,13 +3976,13 @@ double tnp_weight_trk_pbpb(double eta, int idx, double *num, double *den) {
 }
 
 // helping function to compute the product of the muon trigger efficiency scale factors when the two muons pass the L3 filter
-double DimuonL3TriggerWeight(float pt_mupl, float eta_mupl, float pt_mumi, float eta_mumi, int indexSF = 0) {
-	double T1_ = tnp_weight_trg_pbpb_mc(pt_mupl, eta_mupl, 3, indexSF);
-	double T2_ = tnp_weight_trg_pbpb_mc(pt_mumi, eta_mumi, 3, indexSF);
-	double T1 = tnp_weight_trg_pbpb_mc(pt_mupl, eta_mupl, 2, indexSF);
-	double T2 = tnp_weight_trg_pbpb_mc(pt_mumi, eta_mumi, 2, indexSF);
+double DimuonL3TriggerWeight(float pt_mupl, float eta_mupl, float pt_mumi, float eta_mumi, int indexSF = 0, double *num = 0, double *den = 0) {
+	double T1_ = tnp_weight_trg_pbpb_mc(pt_mupl, eta_mupl, 3, indexSF, num, den);
+	double T2_ = tnp_weight_trg_pbpb_mc(pt_mumi, eta_mumi, 3, indexSF, num, den);
+	double T1 = tnp_weight_trg_pbpb_mc(pt_mupl, eta_mupl, 2, indexSF, num, den);
+	double T2 = tnp_weight_trg_pbpb_mc(pt_mumi, eta_mumi, 2, indexSF, num, den);
 	double den_ = T1_ * T2 + (T1 - T1_) * T2_;
-	double num_ = T1_ * tnp_weight_trg_pbpb(pt_mupl, eta_mupl, 3, indexSF) * T2 * tnp_weight_trg_pbpb(pt_mumi, eta_mumi, 2, indexSF) + (T1 * tnp_weight_trg_pbpb(pt_mupl, eta_mupl, 2, indexSF) - T1_ * tnp_weight_trg_pbpb(pt_mupl, eta_mupl, 3, indexSF)) * T2_ * tnp_weight_trg_pbpb(pt_mumi, eta_mumi, 3, indexSF);
+	double num_ = T1_ * tnp_weight_trg_pbpb(pt_mupl, eta_mupl, 3, indexSF, num, den) * T2 * tnp_weight_trg_pbpb(pt_mumi, eta_mumi, 2, indexSF, num, den) + (T1 * tnp_weight_trg_pbpb(pt_mupl, eta_mupl, 2, indexSF, num, den) - T1_ * tnp_weight_trg_pbpb(pt_mupl, eta_mupl, 3, indexSF, num, den)) * T2_ * tnp_weight_trg_pbpb(pt_mumi, eta_mumi, 3, indexSF, num, den);
 
 	if (den_ <= 0 || num_ <= 0) {
 		cout << "ERROR wrong calculation" << endl;
