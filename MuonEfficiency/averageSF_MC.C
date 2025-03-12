@@ -99,13 +99,25 @@ void averageSF_MC(Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TSt
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
     // Create a 3D histogram to store sums of SF and counts per bin
-    TH3D* hSF_sum[2]; 
-    hSF_sum[0] = new TH3D("hSF_sumCS", "Sum of SF in CS", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
-    hSF_sum[1] = new TH3D("hSF_sumHX", "Sum of SF in HX", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
-    
-    TH3D* hSF_count[2]; 
-    hSF_count[0] = new TH3D("hSF_countCS", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
-    hSF_count[1] = new TH3D("hSF_countHX", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    TH3D* hSF_sum[2][4]; 
+    hSF_sum[0][0] = new TH3D("hSF_sumCS_total", "Sum of SF in CS", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_sum[1][0] = new TH3D("hSF_sumHX_total", "Sum of SF in HX", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_sum[0][1] = new TH3D("hSF_sumCS_trk", "Sum of SF in CS", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_sum[1][1] = new TH3D("hSF_sumHX_trk", "Sum of SF in HX", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+	hSF_sum[0][2] = new TH3D("hSF_sumCS_trig", "Sum of SF in CS", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_sum[1][2] = new TH3D("hSF_sumHX_trig", "Sum of SF in HX", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+	hSF_sum[0][3] = new TH3D("hSF_sumCS_muID", "Sum of SF in CS", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_sum[1][3] = new TH3D("hSF_sumHX_muID", "Sum of SF in HX", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);      
+
+    TH3D* hSF_count[2][4]; 
+    hSF_count[0][0] = new TH3D("hSF_countCS_total", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_count[1][0] = new TH3D("hSF_countHX_total", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_count[0][1] = new TH3D("hSF_countCS_trk", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_count[1][1] = new TH3D("hSF_countHX_trk", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_count[0][2] = new TH3D("hSF_countCS_trig", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_count[1][2] = new TH3D("hSF_countHX_trig", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_count[0][3] = new TH3D("hSF_countCS_muID", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
+    hSF_count[1][3] = new TH3D("hSF_countHX_muID", "Count of events", NPtBins, gPtBinning, NCosThetaBins, gCosThetaBinning, NPhiBins, gPhiBinning);
 
 	// we want to estimate the uncertainties from scale factors at the same time
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
@@ -128,6 +140,7 @@ void averageSF_MC(Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TSt
 
 	double eventWeight, dimuonPtWeight, totalWeightCS, totalWeightHX;
 	double dimuTrigWeight_nominal = -1, dimuTrigWeight_systUp = -1, dimuTrigWeight_systDown = -1, dimuTrigWeight_statUp = -1, dimuTrigWeight_statDown = -1;
+	double dimuTrkWeight_nominal = -1, dimuMuIdWeight_nominal = -1;
 
 	Float_t weightCS = 0, weightHX = 0;
 
@@ -289,19 +302,44 @@ void averageSF_MC(Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TSt
 				// dimuon efficiency weight = product of the total scale factors
 				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;            
                 
-                int binX = hSF_sum[0]->GetXaxis()->FindBin(reco_QQ_pt);
-                int binY_CS = hSF_sum[0]->GetYaxis()->FindBin(cosThetaCS);
-                int binZ_CS = hSF_sum[0]->GetZaxis()->FindBin(phiCS);
-            
-                int binY_HX = hSF_sum[1]->GetYaxis()->FindBin(cosThetaHX);
-                int binZ_HX = hSF_sum[1]->GetZaxis()->FindBin(phiHX);
-                
-                hSF_sum[0]->SetBinContent(binX, binY_CS, binZ_CS, hSF_sum[0]->GetBinContent(binX, binY_CS, binZ_CS) + dimuWeight_nominal);
-                hSF_count[0]->SetBinContent(binX, binY_CS, binZ_CS, (hSF_count[0]->GetBinContent(binX, binY_CS, binZ_CS) + 1));
+				dimuTrkWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal);
+				dimuMuIdWeight_nominal = tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal);
 
-                hSF_sum[1]->SetBinContent(binX, binY_HX, binZ_HX, hSF_sum[1]->GetBinContent(binX, binY_HX, binZ_HX) + dimuWeight_nominal);
-                hSF_count[1]->SetBinContent(binX, binY_HX, binZ_HX, (hSF_count[1]->GetBinContent(binX, binY_HX, binZ_HX) + 1));
-            }
+                int binX = hSF_sum[0][0]->GetXaxis()->FindBin(reco_QQ_pt);
+                int binY_CS = hSF_sum[0][0]->GetYaxis()->FindBin(cosThetaCS);
+                int binZ_CS = hSF_sum[0][0]->GetZaxis()->FindBin(phiCS);
+            
+                int binY_HX = hSF_sum[1][0]->GetYaxis()->FindBin(cosThetaHX);
+                int binZ_HX = hSF_sum[1][0]->GetZaxis()->FindBin(phiHX);
+				
+				/// fill total SF histograms
+                hSF_sum[0][0]->SetBinContent(binX, binY_CS, binZ_CS, hSF_sum[0][0]->GetBinContent(binX, binY_CS, binZ_CS) + dimuWeight_nominal);
+                hSF_count[0][0]->SetBinContent(binX, binY_CS, binZ_CS, (hSF_count[0][0]->GetBinContent(binX, binY_CS, binZ_CS) + 1));
+
+                hSF_sum[1][0]->SetBinContent(binX, binY_HX, binZ_HX, hSF_sum[1][0]->GetBinContent(binX, binY_HX, binZ_HX) + dimuWeight_nominal);
+                hSF_count[1][0]->SetBinContent(binX, binY_HX, binZ_HX, (hSF_count[1][0]->GetBinContent(binX, binY_HX, binZ_HX) + 1));
+            
+				/// fill tracker SF histograms
+				hSF_sum[0][1]->SetBinContent(binX, binY_CS, binZ_CS, hSF_sum[0][1]->GetBinContent(binX, binY_CS, binZ_CS) + dimuTrkWeight_nominal);
+				hSF_count[0][1]->SetBinContent(binX, binY_CS, binZ_CS, (hSF_count[0][1]->GetBinContent(binX, binY_CS, binZ_CS) + 1));
+
+				hSF_sum[1][1]->SetBinContent(binX, binY_HX, binZ_HX, hSF_sum[1][1]->GetBinContent(binX, binY_HX, binZ_HX) + dimuTrkWeight_nominal);
+				hSF_count[1][1]->SetBinContent(binX, binY_HX, binZ_HX, (hSF_count[1][1]->GetBinContent(binX, binY_HX, binZ_HX) + 1));
+
+				/// fill trigger SF histograms
+				hSF_sum[0][2]->SetBinContent(binX, binY_CS, binZ_CS, hSF_sum[0][2]->GetBinContent(binX, binY_CS, binZ_CS) + dimuTrigWeight_nominal);
+				hSF_count[0][2]->SetBinContent(binX, binY_CS, binZ_CS, (hSF_count[0][2]->GetBinContent(binX, binY_CS, binZ_CS) + 1));
+
+				hSF_sum[1][2]->SetBinContent(binX, binY_HX, binZ_HX, hSF_sum[1][2]->GetBinContent(binX, binY_HX, binZ_HX) + dimuTrigWeight_nominal);
+				hSF_count[1][2]->SetBinContent(binX, binY_HX, binZ_HX, (hSF_count[1][2]->GetBinContent(binX, binY_HX, binZ_HX) + 1));
+
+				/// fill muon ID SF histograms
+				hSF_sum[0][3]->SetBinContent(binX, binY_CS, binZ_CS, hSF_sum[0][3]->GetBinContent(binX, binY_CS, binZ_CS) + dimuMuIdWeight_nominal);
+				hSF_count[0][3]->SetBinContent(binX, binY_CS, binZ_CS, (hSF_count[0][3]->GetBinContent(binX, binY_CS, binZ_CS) + 1));
+
+				hSF_sum[1][3]->SetBinContent(binX, binY_HX, binZ_HX, hSF_sum[1][3]->GetBinContent(binX, binY_HX, binZ_HX) + dimuMuIdWeight_nominal);
+				hSF_count[1][3]->SetBinContent(binX, binY_HX, binZ_HX, (hSF_count[1][3]->GetBinContent(binX, binY_HX, binZ_HX) + 1));			
+			}
         }
     }
 
@@ -309,10 +347,12 @@ void averageSF_MC(Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TSt
     TString outputFileName = Form("averageSF_MC_%s.root", accName.Data());
     TFile* outputFile = new TFile(outputFileName, "RECREATE");
     
-    hSF_sum[0]->Write();
-    hSF_count[0]->Write();
-    hSF_sum[1]->Write();
-    hSF_count[1]->Write();
+	for (int i = 0; i < 2; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			hSF_sum[i][j]->Write();
+			hSF_count[i][j]->Write();
+		}
+	}
 
     outputFile->Close();
 
@@ -333,82 +373,119 @@ void drawAverageSF_MC(TString accName = "MuonUpsilonTriggerAcc") { // accName = 
         return;
     }
 
-    TH3D* hSF_sum[2]; 
-	hSF_sum[0] = (TH3D*)file->Get("hSF_sumCS");
-	hSF_sum[1] = (TH3D*)file->Get("hSF_sumHX");
-    TH3D* hSF_count[2]; 
-	hSF_count[0] = (TH3D*)file->Get("hSF_countCS");
-	hSF_count[1] = (TH3D*)file->Get("hSF_countHX");
+    TH3D* hSF_sum[2][4]; 
+	hSF_sum[0][0] = (TH3D*)file->Get("hSF_sumCS_total");
+	hSF_sum[1][0] = (TH3D*)file->Get("hSF_sumHX_total");
 
-    TH3D* hSF_average[2];
-	hSF_average[0] = (TH3D*)hSF_sum[0]->Clone("hSF_averageCS");
-	hSF_average[1] = (TH3D*)hSF_sum[1]->Clone("hSF_averageHX");
+	hSF_sum[0][1] = (TH3D*)file->Get("hSF_sumCS_trk");
+	hSF_sum[1][1] = (TH3D*)file->Get("hSF_sumHX_trk");
 
-    hSF_average[0]->Divide(hSF_count[0]); // divide sum by count to get average   
-	hSF_average[1]->Divide(hSF_count[1]); // divide sum by count to get average
+	hSF_sum[0][2] = (TH3D*)file->Get("hSF_sumCS_trig");
+	hSF_sum[1][2] = (TH3D*)file->Get("hSF_sumHX_trig");
+
+	hSF_sum[0][3] = (TH3D*)file->Get("hSF_sumCS_muID");
+	hSF_sum[1][3] = (TH3D*)file->Get("hSF_sumHX_muID");
+
+    TH3D* hSF_count[2][4]; 
+	hSF_count[0][0] = (TH3D*)file->Get("hSF_countCS_total");
+	hSF_count[1][0] = (TH3D*)file->Get("hSF_countHX_total");
+
+	hSF_count[0][1] = (TH3D*)file->Get("hSF_countCS_trk");
+	hSF_count[1][1] = (TH3D*)file->Get("hSF_countHX_trk");
+
+	hSF_count[0][2] = (TH3D*)file->Get("hSF_countCS_trig");
+	hSF_count[1][2] = (TH3D*)file->Get("hSF_countHX_trig");
+
+	hSF_count[0][3] = (TH3D*)file->Get("hSF_countCS_muID");
+	hSF_count[1][3] = (TH3D*)file->Get("hSF_countHX_muID");
+
+    TH3D* hSF_average[2][4];
+	hSF_average[0][0] = (TH3D*)hSF_sum[0][0]->Clone("hSF_averageCS_total");
+	hSF_average[1][0] = (TH3D*)hSF_sum[1][0]->Clone("hSF_averageHX_total");
+
+	hSF_average[0][1] = (TH3D*)hSF_sum[0][1]->Clone("hSF_averageCS_trk");
+	hSF_average[1][1] = (TH3D*)hSF_sum[1][1]->Clone("hSF_averageHX_trk");
+
+	hSF_average[0][2] = (TH3D*)hSF_sum[0][2]->Clone("hSF_averageCS_trig");
+	hSF_average[1][2] = (TH3D*)hSF_sum[1][2]->Clone("hSF_averageHX_trig");
+
+	hSF_average[0][3] = (TH3D*)hSF_sum[0][3]->Clone("hSF_averageCS_muID");
+	hSF_average[1][3] = (TH3D*)hSF_sum[1][3]->Clone("hSF_averageHX_muID");
+
+	for (int i = 0; i < 2; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			hSF_average[i][j]->Divide(hSF_count[i][j]); // divide sum by count to get average   
+		}
+	}
 
     // Create a new TH2D to store the result for a specific x-bin
-    TH2D* hSF_Avg2D[NPtBins][2];
-    TCanvas* canvas[NPtBins][2];
+    TH2D* hSF_Avg2D[NPtBins][2][4];
+    TCanvas* canvas[NPtBins][2][4];
     
     // Loop over the y and z bins and sum the content for the selected x-bin
 	for (int refFrameBin = 0; refFrameBin < 2; refFrameBin++) {
 		const char* refFrameName = (refFrameBin == 0) ? "CS" : "HX";
 
 		for (int ptBin = 0; ptBin < NPtBins; ptBin++) {
-			hSF_Avg2D[ptBin][refFrameBin] = new TH2D(Form("hSF_Avg2D_pt%dto%d_%s", (int)gPtBinning[ptBin], (int)gPtBinning[ptBin +1], refFrameName), "", 
-				hSF_average[refFrameBin]->GetNbinsY(), hSF_average[refFrameBin]->GetYaxis()->GetXmin(), hSF_average[refFrameBin]->GetYaxis()->GetXmax(),
-				hSF_average[refFrameBin]->GetNbinsZ(), hSF_average[refFrameBin]->GetZaxis()->GetXmin(), hSF_average[refFrameBin]->GetZaxis()->GetXmax());
+
+			for (int SFType = 0; SFType < 4; SFType++) {
+				const char* SFTypeName = (SFType == 0) ? "total" : (SFType == 1) ? "trk" : (SFType == 2) ? "trig" : "muID";
+
+				// Create a new TH2D to store the result for a specific x-bin
+				hSF_Avg2D[ptBin][refFrameBin][SFType] = new TH2D(Form("hSF_Avg2D_pt%dto%d_%s_%s", (int)gPtBinning[ptBin], (int)gPtBinning[ptBin +1], refFrameName, SFTypeName), "", 
+				hSF_average[refFrameBin][SFType]->GetNbinsY(), hSF_average[refFrameBin][SFType]->GetYaxis()->GetXmin(), hSF_average[refFrameBin][SFType]->GetYaxis()->GetXmax(),
+				hSF_average[refFrameBin][SFType]->GetNbinsZ(), hSF_average[refFrameBin][SFType]->GetZaxis()->GetXmin(), hSF_average[refFrameBin][SFType]->GetZaxis()->GetXmax());
 			
-				for (int cosThetaBin = 1; cosThetaBin <= hSF_average[refFrameBin]->GetNbinsY(); cosThetaBin++) {
-					for (int phiBin = 1; phiBin <= hSF_average[refFrameBin]->GetNbinsZ(); phiBin++) {
+				for (int cosThetaBin = 1; cosThetaBin <= hSF_average[refFrameBin][SFType]->GetNbinsY(); cosThetaBin++) {
+					for (int phiBin = 1; phiBin <= hSF_average[refFrameBin][SFType]->GetNbinsZ(); phiBin++) {
 						
 						// Get the content of the selected x-bin, y-bin, and z-bin
-						double content = hSF_average[refFrameBin]->GetBinContent(ptBin + 1, cosThetaBin, phiBin);
+						double content = hSF_average[refFrameBin][SFType]->GetBinContent(ptBin + 1, cosThetaBin, phiBin);
 
 						// Set the content in the new 2D histogram for the selected x-bin
-						hSF_Avg2D[ptBin][refFrameBin]->SetBinContent(cosThetaBin, phiBin, content);
+						hSF_Avg2D[ptBin][refFrameBin][SFType]->SetBinContent(cosThetaBin, phiBin, content);
 					}
 				}
-			canvas[ptBin][refFrameBin] = new TCanvas(Form("canvas_pt%dto%d_%s", (int)gPtBinning[ptBin], (int)gPtBinning[ptBin + 1], refFrameName), Form("canvas_pt%dto%d_%s", (int)gPtBinning[ptBin], (int)gPtBinning[ptBin + 1], refFrameName), 650, 600);
-			canvas[ptBin][refFrameBin]->SetRightMargin(0.18);
-			canvas[ptBin][refFrameBin]->SetLeftMargin(0.15);
-			canvas[ptBin][refFrameBin]->SetBottomMargin(0.15);
+				canvas[ptBin][refFrameBin][SFType] = new TCanvas(Form("canvas_pt%dto%d_%s_%s", (int)gPtBinning[ptBin], (int)gPtBinning[ptBin + 1], refFrameName, SFTypeName), Form("canvas_pt%dto%d_%s", (int)gPtBinning[ptBin], (int)gPtBinning[ptBin + 1], refFrameName), 650, 600);
+				canvas[ptBin][refFrameBin][SFType]->SetRightMargin(0.18);
+				canvas[ptBin][refFrameBin][SFType]->SetLeftMargin(0.15);
+				canvas[ptBin][refFrameBin][SFType]->SetBottomMargin(0.15);
 
-			hSF_Avg2D[ptBin][refFrameBin]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName));
-			hSF_Avg2D[ptBin][refFrameBin]->GetYaxis()->SetTitle(AbsPhiAxisTitle(refFrameName));
-			hSF_Avg2D[ptBin][refFrameBin]->GetZaxis()->SetTitle("average SF");
-			
-			hSF_Avg2D[ptBin][refFrameBin]->GetYaxis()->SetTitleOffset(1.1);
-			hSF_Avg2D[ptBin][refFrameBin]->GetZaxis()->SetTitleOffset(1.0);
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName));
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetYaxis()->SetTitle(AbsPhiAxisTitle(refFrameName));
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetZaxis()->SetTitle(Form("average %s SF", SFTypeName));
+				
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetYaxis()->SetTitleOffset(1.1);
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetZaxis()->SetTitleOffset(1.0);
 
-			hSF_Avg2D[ptBin][refFrameBin]->GetXaxis()->CenterTitle();
-			hSF_Avg2D[ptBin][refFrameBin]->GetYaxis()->CenterTitle();
-			
-			hSF_Avg2D[ptBin][refFrameBin]->GetYaxis()->SetNdivisions(4);
-			hSF_Avg2D[ptBin][refFrameBin]->GetYaxis()->SetRangeUser(0, 240);
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetXaxis()->CenterTitle();
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetYaxis()->CenterTitle();
+				
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetYaxis()->SetNdivisions(4);
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetYaxis()->SetRangeUser(0, 240);
 
-			hSF_Avg2D[ptBin][refFrameBin]->GetZaxis()->SetMaxDigits(1);
-			hSF_Avg2D[ptBin][refFrameBin]->GetZaxis()->SetRangeUser(0.8, 1.2);
-			hSF_Avg2D[ptBin][refFrameBin]->GetZaxis()->SetNdivisions(4);
-			hSF_Avg2D[ptBin][refFrameBin]->Draw("colz");    
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetZaxis()->SetMaxDigits(1);
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetZaxis()->SetRangeUser(0.8, 1.2);
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->GetZaxis()->SetNdivisions(4);
+				hSF_Avg2D[ptBin][refFrameBin][SFType]->Draw("colz");    
 
-			display2DMapContents(hSF_Avg2D[ptBin][refFrameBin], NCosThetaBins, NPhiBins, kFALSE);
+				display2DMapContents(hSF_Avg2D[ptBin][refFrameBin][SFType], NCosThetaBins, NPhiBins, kFALSE);
 
-			/// draw legend
-			TLatex legend;
-			legend.SetTextAlign(22);
-			legend.SetTextSize(0.04);
-			legend.DrawLatexNDC(.5, .87, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(gPtBinning[ptBin], gPtBinning[ptBin + 1])));
+				/// draw legend
+				TLatex legend;
+				legend.SetTextAlign(22);
+				legend.SetTextSize(0.04);
+				legend.DrawLatexNDC(.5, .87, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(gPtBinning[ptBin], gPtBinning[ptBin + 1])));
 
-			if (strcmp(accName, "MuonUpsilonTriggerAcc") == 0) legend.DrawLatexNDC(.49, .81, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", gUpsilonState, gMuonPtCutText));
-			else if (strcmp(accName, "MuonSimpleAcc") == 0) legend.DrawLatexNDC(.49, .81, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", gUpsilonState));
-			else if (strcmp(accName, "MuonWithin2018PbPbAcc") == 0) legend.DrawLatexNDC(.49, .81, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", gUpsilonState));
+				if (strcmp(accName, "MuonUpsilonTriggerAcc") == 0) legend.DrawLatexNDC(.49, .81, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", gUpsilonState, gMuonPtCutText));
+				else if (strcmp(accName, "MuonSimpleAcc") == 0) legend.DrawLatexNDC(.49, .81, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", gUpsilonState));
+				else if (strcmp(accName, "MuonWithin2018PbPbAcc") == 0) legend.DrawLatexNDC(.49, .81, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", gUpsilonState));
 
-			CMS_lumi(canvas[ptBin][refFrameBin], gCMSLumiText);
+				CMS_lumi(canvas[ptBin][refFrameBin][SFType], gCMSLumiText);
 
-			gSystem->mkdir("averageSF", kTRUE);
-			canvas[ptBin][refFrameBin]->SaveAs(Form("averageSF/averageSF_MC_pt%dto%d_%s.png", (int)gPtBinning[ptBin], (int)gPtBinning[ptBin + 1], refFrameName));
+				gSystem->mkdir("averageSF", kTRUE);
+				canvas[ptBin][refFrameBin][SFType]->SaveAs(Form("averageSF/averageTotalSF_MC_pt%dto%d_%s_%s.png", (int)gPtBinning[ptBin], (int)gPtBinning[ptBin + 1], refFrameName, SFTypeName));
+			}
 		}
 	}
 
