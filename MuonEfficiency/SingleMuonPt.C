@@ -6,7 +6,7 @@
 
 #include "../Tools/Parameters/MuonScaleFactors_extractEff.h"
 
-// #include "../Tools/Parameters/tnp_weight_lowptPbPb.h"
+// #include "../Tools/Parameters/tnp_weight_lowptPbPb_officialRepo_extractEff.h"
 
 TLine* drawLine(double x1, double y1, double x2, double y2) {
     TLine* line = new TLine(x1, y1, x2, y2);
@@ -40,8 +40,8 @@ TH1D* drawSFEff(const double* ptBinEdges, int nBins = 10, double etaMin = 0, dou
     frameHistEff->GetYaxis()->SetLabelSize(0.05);
     // frameHistEff->GetYaxis()->CenterTitle();
 
-    frameHistEff->GetYaxis()->SetRangeUser(0, 1.0);
-    frameHistEff->GetYaxis()->SetNdivisions(405);
+    frameHistEff->GetYaxis()->SetRangeUser(0, 1.05);
+    frameHistEff->GetYaxis()->SetNdivisions(409);
 
     TH1D* frameHistSF = new TH1D("frameHistSF", "", 60, 0, 30);
 
@@ -128,16 +128,18 @@ TH1D* drawSFEff(const double* ptBinEdges, int nBins = 10, double etaMin = 0, dou
     sfNumEffGraph->Draw("P SAME");  // Draw asymmetric error bars on top
     sfDenEffGraph->Draw("P SAME");
 
-	TLegend* legendEff = new TLegend(0.5, 0.2, 0.95, 0.5);
-	legendEff->SetBorderSize(0);
+	TLegend* legendEff = new TLegend(0.5, 0.2, 0.7, 0.5);
+    legendEff->SetTextSize(0.045);
+    legendEff->SetBorderSize(0);
 	legendEff->SetFillStyle(0);
-    legendEff->SetHeader(Form("#splitline{%s Upsilon Trigger Efficiency}{(p_{T}^{#mu} < 3.5 GeV, |#eta| #in [%.1f, %.1f])} ", isL3 ? "L3" : "L2", etaMin, etaMax));
+    legendEff->SetHeader(Form("#splitline{%s Upsilon Trigger Efficiency}{(p_{T}^{#mu} > %.1f GeV, |#eta| #in [%.1f, %.1f])} ", isL3 ? "L3" : "L2", ptBinEdges[0], etaMin, etaMax));
     legendEff->AddEntry((TObject*)0, "", "");
     legendEff->AddEntry(sfDenEffGraph, "MC PYTHIA+HYDJET", "lep");
     legendEff->AddEntry(sfNumEffGraph, "DATA", "lep");
-	legendEff->Draw();
+	legendEff->Draw("SAME");
 
-    gPad->Update();
+    padEff->Update();
+    // gPad->Update();
     canvasSFEff->Update();
 
     canvasSFEff->cd();
@@ -162,9 +164,11 @@ TH1D* drawSFEff(const double* ptBinEdges, int nBins = 10, double etaMin = 0, dou
 
     CMS_lumi(padEff, gCMSLumiText);
     
+    gPad->Update();
     canvasSFEff->Update();
 
     canvasSFEff->SaveAs(Form("SingleMuonEfficiency_SF_Ups%s_%.1f_%.1f.png", isL3 ? "L3" : "L2", etaMin, etaMax));
+    // canvasSFEff->SaveAs(Form("SingleMuonEfficiency_SF_Ups%s_%.1f_%.1f_old.png", isL3 ? "L3" : "L2", etaMin, etaMax));
 
     return nullptr;
 }
@@ -214,11 +218,56 @@ TH1* drawPtDistribution(const char* refFrameName = "CS", double etaMin = 0, doub
     RooDataSet* reducedDatasetMupl = (RooDataSet*)dataset->reduce(RooArgSet(ptVar, massVar, ptLabMuplVar, ptLabMumiVar), kinematicCutMupl);
     RooDataSet* reducedDatasetMumi = (RooDataSet*)dataset->reduce(RooArgSet(ptVar, massVar, ptLabMuplVar, ptLabMumiVar), kinematicCutMumi);
 
-    const int nBins = 10;
-    double ptBinEdges[nBins + 1] = {3.5, 4, 4.5, 5, 5.5, 6.5, 8, 10.5, 14, 18, 30};
-    RooBinning ptBinning(nBins, ptBinEdges);
+    int nbins = 0;
+    double* ptBinEdges = nullptr;
+  
+    /// Jul 2020
+    if (etaMin == 0 && etaMax == 1.2) {
+        nbins = 10;
+        ptBinEdges = new double[nbins+1]{3.5, 4, 4.5, 5, 5.5, 6.5, 8, 10.5, 14, 18, 30};
+    }
+    else if (etaMin == 1.2 && etaMax == 1.8) {
+        nbins = 10;
+        ptBinEdges = new double[nbins+1]{2.07, 3, 3.5, 4, 4.5, 5, 6, 7.5, 10, 15, 30};
+    }
+    else if (etaMin == 1.8 && etaMax == 2.1) {
+        nbins = 11;
+        ptBinEdges = new double[nbins+1]{1.5, 2.5, 3, 3.5, 4, 4.5, 5.5, 6.5, 8, 9.5, 13, 30};
+    }
+    else if (etaMin == 2.1 && etaMax == 2.4) {
+        nbins = 7;
+        ptBinEdges = new double[nbins+1]{1.5, 2.5, 3, 4.5, 6.5, 8.5, 11, 30};
+    }
+    else {
+        cout << "Invalid eta range" << endl;
+        return nullptr;
+    }
 
-    drawSFEff(ptBinEdges, nBins, etaMin, etaMax, isL3);
+    // /// Oct 2019 (Upsilon)
+    // if (etaMin == 0 && etaMax == 1.2) {
+    //     nbins = 10;
+    //     ptBinEdges = new double[nbins+1]{3.5, 4, 4.5, 5, 5.5, 6.5, 8, 10.5, 14, 18, 30};
+    // }
+    // else if (etaMin == 1.2 && etaMax == 1.8) {
+    //     nbins = 10;
+    //     ptBinEdges = new double[nbins+1]{2.37, 3, 3.5, 4, 4.5, 5, 6, 7.5, 10, 15, 30};
+    // }
+    // else if (etaMin == 1.8 && etaMax == 2.1) {
+    //     nbins = 12;
+    //     ptBinEdges = new double[nbins+1]{1.8, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7.5, 10, 15, 30};
+    // }
+    // else if (etaMin == 2.1 && etaMax == 2.4) {
+    //     nbins = 9;
+    //     ptBinEdges = new double[nbins+1]{1.8, 2.2, 2.7, 3.2, 3.7, 4.7, 6.5, 8.5, 11, 30};
+    // }
+    // else {
+    //     cout << "Invalid eta range" << endl;
+    //     return nullptr;
+    // }
+
+    RooBinning ptBinning(nbins, ptBinEdges);
+
+    drawSFEff(ptBinEdges, nbins, etaMin, etaMax, isL3);
 
     TCanvas* canvas = new TCanvas(Form("canvas%s", refFrameName), "canvas", 600, 600);
 
@@ -350,7 +399,6 @@ TH1* drawPtDistribution(const char* refFrameName = "CS", double etaMin = 0, doub
 
     return histoMupl;
 }
-
 
 void SingleMuonPt(Int_t ptMin = 0, Int_t ptMax = 30, double etaMin = 0, double etaMax = 1.2, const char* extraString = "", const char* refFrameName = "HX", Bool_t isL3 = kTRUE) {
 
