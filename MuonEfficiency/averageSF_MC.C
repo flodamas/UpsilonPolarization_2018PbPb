@@ -319,7 +319,7 @@ void averageSF_MC(Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TSt
                 hSF_sum[1][0]->SetBinContent(binX, binY_HX, binZ_HX, hSF_sum[1][0]->GetBinContent(binX, binY_HX, binZ_HX) + dimuWeight_nominal);
                 hSF_count[1][0]->SetBinContent(binX, binY_HX, binZ_HX, (hSF_count[1][0]->GetBinContent(binX, binY_HX, binZ_HX) + 1));
             
-				/// fill tracker SF histograms
+				/// fill tracking SF histograms
 				hSF_sum[0][1]->SetBinContent(binX, binY_CS, binZ_CS, hSF_sum[0][1]->GetBinContent(binX, binY_CS, binZ_CS) + dimuTrkWeight_nominal);
 				hSF_count[0][1]->SetBinContent(binX, binY_CS, binZ_CS, (hSF_count[0][1]->GetBinContent(binX, binY_CS, binZ_CS) + 1));
 
