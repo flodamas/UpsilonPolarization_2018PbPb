@@ -123,14 +123,14 @@ TPad* drawPulls(TEfficiency* positiveHist, TEfficiency* negativeHist, const char
 	/// Draw a horizontal line at y = 0
 	TLine* line0 = drawLine(xmin, 0, xmax, 0);
 
-	TLine* line1 = drawLine(xmin, 1, xmax, 1);
-	TLine* line_1 = drawLine(xmin, -1, xmax, -1);
+	// TLine* line1 = drawLine(xmin, 1, xmax, 1);
+	// TLine* line_1 = drawLine(xmin, -1, xmax, -1);
 
 	TLine* line2 = drawLine(xmin, 2, xmax, 2);
 	TLine* line_2 = drawLine(xmin, -2, xmax, -2);
 
-	TLine* line3 = drawLine(xmin, 3, xmax, 3);
-	TLine* line_3 = drawLine(xmin, -3, xmax, -3);
+	// TLine* line3 = drawLine(xmin, 3, xmax, 3);
+	// TLine* line_3 = drawLine(xmin, -3, xmax, -3);
 
 	TLine* line4 = drawLine(xmin, 4, xmax, 4);
 	TLine* line_4 = drawLine(xmin, -4, xmax, -4);
@@ -145,7 +145,7 @@ TPad* drawPulls(TEfficiency* positiveHist, TEfficiency* negativeHist, const char
 	return bottomPad;
 }
 
-std::vector<TEfficiency*> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
+std::vector<std::vector<TEfficiency*>> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -228,10 +228,12 @@ std::vector<TEfficiency*> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t ptMax = 30, 
 	DrawEfficiency1DHist(effMapPhi, ptMin, ptMax, iState, kFALSE, kFALSE, refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi, MuonAccName.Data(), isPhiFolded);
 
 	/// draw acceptance x efficiency 1D histograms
-	TEfficiency* phiHist = DrawEffxAcc1DHist(accMapCosTheta, effMapCosTheta, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, (double)phiMin, (double)phiMax, kTRUE, refFrameName, iState, MuonAccName.Data(), isPhiFolded);
-	TEfficiency* cosThetaHist = DrawEffxAcc1DHist(accMapPhi, effMapPhi, ptMin, ptMax, nPhiBins, phiBinEdges, cosThetaMin, cosThetaMax, kFALSE, refFrameName, iState, MuonAccName.Data(), isPhiFolded);
+	TEfficiency* cosThetaHist = DrawEffxAcc1DHist(accMapCosTheta, effMapCosTheta, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, (double)phiMin, (double)phiMax, kTRUE, refFrameName, iState, MuonAccName.Data(), isPhiFolded);
+	TEfficiency* phiHist = DrawEffxAcc1DHist(accMapPhi, effMapPhi, ptMin, ptMax, nPhiBins, phiBinEdges, cosThetaMin, cosThetaMax, kFALSE, refFrameName, iState, MuonAccName.Data(), isPhiFolded);
 
-	std::vector<TEfficiency*> hists = {phiHist, cosThetaHist};
+	std::vector<std::vector<TEfficiency*>> hists = {{accMapCosTheta, accMapPhi},
+									                {effMapCosTheta, effMapPhi},
+									                {cosThetaHist, phiHist}};
 	return hists;
 }
 
@@ -269,129 +271,154 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 
 	cout << "Drawing acceptance x efficiency 1D histograms for |phi| range " << phiMin << " to " << phiMax << " degrees..." << endl;
 
-	/// get acceptance x efficiency 1D histograms: positive and negative sides
-	std::vector<TEfficiency*> positiveHists;
-	std::vector<TEfficiency*> negativeHists;
-	TEfficiency* positiveHist;
-	TEfficiency* negativeHist;
+	/// get acceptance, efficiency, and, acceptance x efficiency 1D histograms: positive and negative sides
+	std::vector<std::vector<TEfficiency*>> positiveHists;
+	std::vector<std::vector<TEfficiency*>> negativeHists;
+	std::vector<TEfficiency*> positiveHist;
+	std::vector<TEfficiency*> negativeHist;
 
 	if (isCosTheta == kTRUE) {
 		positiveHists = accEffplots_3Dto1D(ptMin, ptMax, refFrameName, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax, iState, isPhiFolded, accName);
 		negativeHists = accEffplots_3Dto1D(ptMin, ptMax, refFrameName, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, -phiMax, -phiMin, iState, isPhiFolded, accName);
-		positiveHist = positiveHists[0];
-		negativeHist = negativeHists[0];
+		positiveHist = {positiveHists[0][0], positiveHists[1][0], positiveHists[2][0]};
+		negativeHist = {negativeHists[0][0], negativeHists[1][0], negativeHists[2][0]};
 	}
 	else {
 		positiveHists = accEffplots_3Dto1D(ptMin, ptMax, refFrameName, nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax, iState, isPhiFolded, accName);
 		negativeHists = accEffplots_3Dto1D(ptMin, ptMax, refFrameName, nCosThetaBins, -cosThetaMax, -cosThetaMin, nPhiBins, phiMin, phiMax, iState, isPhiFolded, accName);
-		positiveHist = positiveHists[1];
-		negativeHist = negativeHists[1];
+		positiveHist = {positiveHists[0][1], positiveHists[1][1], positiveHists[2][1]};
+		negativeHist = {negativeHists[0][1], negativeHists[1][1], negativeHists[2][1]};
 	}
 
 	/// draw plots
 	/// empty frame for the axes
-	TH1D* frameHist1D;
+	std::vector<TH1D*> frameHist1D = {nullptr, nullptr, nullptr};
+	std::vector<TCanvas*> comparisonCanvas = {nullptr, nullptr, nullptr};
 	
-	if (isCosTheta == kTRUE) frameHist1D = new TH1D("frameHist1D", "", nCosThetaBins, cosThetaBinEdges.data());
-	else frameHist1D = new TH1D("frameHist1D", "", nPhiBins, phiBinEdges.data());
+	/// loop over for acceptance, efficiency, and acceptance x efficiency 1D histograms each
+	for (int plotTypeBin = 0; plotTypeBin < 3; plotTypeBin++) {
 
-	/// draw acceptance x efficiency 1D histograms for positive and negative phi
-	TCanvas* comparisonCanvas = new TCanvas("comparisonCanvas", "comparisonCanvas", 600, 600);
-	
-	comparisonCanvas->SetRightMargin(0.05);
+		if (isCosTheta == kTRUE) {
+			if (plotTypeBin == 0) frameHist1D[plotTypeBin] = new TH1D(Form("frameHist1D%s", "_acceptance"), "", nCosThetaBins, cosThetaBinEdges.data());
+			else if (plotTypeBin == 1) frameHist1D[plotTypeBin] = new TH1D(Form("frameHist1D%s", "_efficiency"), "", nCosThetaBins, cosThetaBinEdges.data());
+			else frameHist1D[plotTypeBin] = new TH1D(Form("frameHist1D%s", "_accxeff"), "", nCosThetaBins, cosThetaBinEdges.data());
+		}
+		else {
+			if (plotTypeBin == 0) frameHist1D[plotTypeBin] = new TH1D(Form("frameHist1D%s", "_acceptance"), "", nPhiBins, phiBinEdges.data());
+			else if (plotTypeBin == 1) frameHist1D[plotTypeBin] = new TH1D(Form("frameHist1D%s", "_efficiency"), "", nPhiBins, phiBinEdges.data());
+			else frameHist1D[plotTypeBin] = new TH1D(Form("frameHist1D%s", "_accxeff"), "", nPhiBins, phiBinEdges.data());
+		}
 
-	TPad *pad1 = new TPad("pad1", "First Pad", 0.0, 0.25, 1.0, 1.0);
-	pad1->Draw();
-	pad1->cd(); 
+		/// draw acceptance x efficiency 1D histograms for positive and negative phi
+		comparisonCanvas[plotTypeBin] = new TCanvas(Form("comparisonCanvas%d", plotTypeBin), Form("comparisonCanvas%d", plotTypeBin), 600, 600);
+		
+		comparisonCanvas[plotTypeBin]->SetRightMargin(0.05);
 
-	/// Set the margins
-	pad1->SetTopMargin(0.07);
-	pad1->SetBottomMargin(0.03);
-	pad1->SetRightMargin(0.03);
+		TPad *pad1 = new TPad("pad1", "First Pad", 0.0, 0.25, 1.0, 1.0);
+		pad1->Draw();
+		pad1->cd(); 
 
-	frameHist1D->Draw("same");
-	frameHist1D->GetYaxis()->SetRangeUser(0, 1.4);
+		/// Set the margins
+		pad1->SetTopMargin(0.07);
+		pad1->SetBottomMargin(0.03);
+		pad1->SetRightMargin(0.03);
 
-	/// Set the axis titles
-	TString xTitle = "";
+		frameHist1D[plotTypeBin]->Draw("same");
+		frameHist1D[plotTypeBin]->GetYaxis()->SetRangeUser(0, 1.4);
 
-	if (isCosTheta == kTRUE) {
-		xTitle = CosThetaVarTitle(refFrameName);
-		frameHist1D->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName));
-		frameHist1D->GetXaxis()->SetNdivisions(-5);
+		/// Set the axis titles
+		TString xTitle = "";
+
+		if (isCosTheta == kTRUE) {
+			xTitle = CosThetaVarTitle(refFrameName);
+			frameHist1D[plotTypeBin]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName));
+			frameHist1D[plotTypeBin]->GetXaxis()->SetNdivisions(-5);
+		}
+		else {
+			xTitle = PhiAxisTitle(refFrameName);
+			frameHist1D[plotTypeBin]->GetXaxis()->SetTitle(PhiAxisTitle(refFrameName));
+			frameHist1D[plotTypeBin]->GetXaxis()->SetNdivisions(-6);
+		}
+
+		frameHist1D[plotTypeBin]->GetXaxis()->CenterTitle();
+		frameHist1D[plotTypeBin]->GetXaxis()->SetTitleSize(0);
+		frameHist1D[plotTypeBin]->GetXaxis()->SetLabelSize(0);
+		
+		if (plotTypeBin == 0) frameHist1D[plotTypeBin]->GetYaxis()->SetTitle("Acceptance");
+		else if (plotTypeBin == 1) frameHist1D[plotTypeBin]->GetYaxis()->SetTitle("Efficiency");
+		else frameHist1D[plotTypeBin]->GetYaxis()->SetTitle(TEfficiencyMainTitle(iState, "Acceptance x Efficiency"));
+
+		/// draw legend
+		TLatex legend;
+		legend.SetTextAlign(22);
+		legend.SetTextSize(0.05);
+		legend.DrawLatexNDC(.55, .85, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+
+		if (strcmp(MuonAccName.Data(), "_TriggerAcc") == 0) legend.DrawLatexNDC(.55, .78, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+		else if (strcmp(MuonAccName.Data(), "_SimpleAcc") == 0) legend.DrawLatexNDC(.55, .78, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+		else if (strcmp(MuonAccName.Data(), "_2018PbPbAcc") == 0) legend.DrawLatexNDC(.55, .78, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+
+		/// draw acceptance x efficiency 1D histograms for positive and negative sides
+		positiveHist[plotTypeBin]->Draw("EP same");
+		positiveHist[plotTypeBin]->SetMarkerColor(TColor::GetColor("#A559AA"));
+		positiveHist[plotTypeBin]->SetMarkerStyle(20);
+		positiveHist[plotTypeBin]->SetLineColor(TColor::GetColor("#A559AA"));
+		
+		negativeHist[plotTypeBin]->Draw("PE same");
+		negativeHist[plotTypeBin]->SetMarkerColor(TColor::GetColor("#009ADE"));
+		negativeHist[plotTypeBin]->SetMarkerStyle(24);
+		negativeHist[plotTypeBin]->SetLineColor(TColor::GetColor("#009ADE"));
+
+		TLegend* legend1D = new TLegend(0.17, 0.58, 0.4, 0.73);
+		legend1D->SetBorderSize(0);
+		legend1D->SetFillStyle(0);
+		if (isCosTheta == kTRUE) {
+			legend1D->AddEntry(positiveHist[plotTypeBin], Form("%d < #varphi < %d#circ", phiMin, phiMax), "lep");
+			legend1D->AddEntry(negativeHist[plotTypeBin], Form("%d < #varphi < %d#circ", -phiMax, -phiMin), "lep");
+		}
+		else {
+			legend1D->AddEntry(positiveHist[plotTypeBin], Form("%.2f < cos#theta < %.2f", cosThetaMin, cosThetaMax), "lep");
+			legend1D->AddEntry(negativeHist[plotTypeBin], Form("%.2f < cos#theta < %.2f", -cosThetaMax, -cosThetaMin), "lep");
+		}
+		legend1D->Draw();
+		
+		CMS_lumi(pad1, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
+
+		gPad->Update();
+		comparisonCanvas[plotTypeBin]->Update();
+
+		/// Draw the pulls at the bottom
+		comparisonCanvas[plotTypeBin]->cd();
+		
+		TPad* bottomPad = drawPulls(positiveHist[plotTypeBin], negativeHist[plotTypeBin], xTitle.Data(), isCosTheta);
+
+		bottomPad->Draw();
+
+		gPad->Update();
+		comparisonCanvas[plotTypeBin]->Update();
+
+		/// Save the canvas
+		gSystem->mkdir(Form("AcceptanceMaps/%dS/analysisBin", iState), kTRUE);
+		gSystem->mkdir(Form("EfficiencyMaps/%dS/analysisBin", iState), kTRUE);
+		gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
+
+		if (isCosTheta == kTRUE) { 
+			if (plotTypeBin == 0) comparisonCanvas[plotTypeBin]->SaveAs(Form("AcceptanceMaps/%dS/analysisBin/1DAccComp_%s%s%s_pt%dto%d_absPhi%dto%d_%s.png", iState, positiveHist[plotTypeBin]->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+			else if (plotTypeBin == 1) comparisonCanvas[plotTypeBin]->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DEffComp_%s%s%s_pt%dto%d_absPhi%dto%d_%s.png", iState, positiveHist[plotTypeBin]->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+			else if (plotTypeBin == 2) comparisonCanvas[plotTypeBin]->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absPhi%dto%d_%s.png", iState, positiveHist[plotTypeBin]->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+		}
+		
+		else {
+			if (plotTypeBin == 0) comparisonCanvas[plotTypeBin]->SaveAs(Form("AcceptanceMaps/%dS/analysisBin/1DAccComp_%s%s%s_pt%dto%d_absCosTheta%.2fto%.2f_%s.png", iState, positiveHist[plotTypeBin]->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+			else if (plotTypeBin == 1) comparisonCanvas[plotTypeBin]->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1DEffComp_%s%s%s_pt%dto%d_absCosTheta%.2fto%.2f_%s.png", iState, positiveHist[plotTypeBin]->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+			else if (plotTypeBin == 2) comparisonCanvas[plotTypeBin]->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absCosTheta%.2fto%.2f_%s.png", iState, positiveHist[plotTypeBin]->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
+		}
+		/// delete objects when running the scan function to avoid memory leak (comment out to check the plots)
+		delete comparisonCanvas[plotTypeBin];
+		delete frameHist1D[plotTypeBin];
+		delete positiveHist[plotTypeBin];
+		delete negativeHist[plotTypeBin];
 	}
-	else {
-		xTitle = PhiAxisTitle(refFrameName);
-		frameHist1D->GetXaxis()->SetTitle(PhiAxisTitle(refFrameName));
-		frameHist1D->GetXaxis()->SetNdivisions(-6);
-	}
-
-	frameHist1D->GetXaxis()->CenterTitle();
-	frameHist1D->GetXaxis()->SetTitleSize(0);
-	frameHist1D->GetXaxis()->SetLabelSize(0);
-	
-	frameHist1D->GetYaxis()->SetTitle(TEfficiencyMainTitle(iState, "acceptance x efficiency"));
-
-	/// draw legend
-	TLatex legend;
-	legend.SetTextAlign(22);
-	legend.SetTextSize(0.05);
-	legend.DrawLatexNDC(.55, .85, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
-
-	if (strcmp(MuonAccName.Data(), "_TriggerAcc") == 0) legend.DrawLatexNDC(.55, .78, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-	else if (strcmp(MuonAccName.Data(), "_SimpleAcc") == 0) legend.DrawLatexNDC(.55, .78, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
-	else if (strcmp(MuonAccName.Data(), "_2018PbPbAcc") == 0) legend.DrawLatexNDC(.55, .78, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
-
-	/// draw acceptance x efficiency 1D histograms for positive and negative sides
-	positiveHist->Draw("EP same");
-	positiveHist->SetMarkerColor(TColor::GetColor("#A559AA"));
-	positiveHist->SetMarkerStyle(20);
-	positiveHist->SetLineColor(TColor::GetColor("#A559AA"));
-	
-	negativeHist->Draw("PE same");
-	negativeHist->SetMarkerColor(TColor::GetColor("#009ADE"));
-	negativeHist->SetMarkerStyle(24);
-	negativeHist->SetLineColor(TColor::GetColor("#009ADE"));
-
-	TLegend* legend1D = new TLegend(0.17, 0.58, 0.4, 0.73);
-	legend1D->SetBorderSize(0);
-	legend1D->SetFillStyle(0);
-	if (isCosTheta == kTRUE) {
-		legend1D->AddEntry(positiveHist, Form("%d < #varphi < %d#circ", phiMin, phiMax), "lep");
-		legend1D->AddEntry(negativeHist, Form("%d < #varphi < %d#circ", -phiMax, -phiMin), "lep");
-	}
-	else {
-		legend1D->AddEntry(positiveHist, Form("%.2f < cos#theta < %.2f", cosThetaMin, cosThetaMax), "lep");
-		legend1D->AddEntry(negativeHist, Form("%.2f < cos#theta < %.2f", -cosThetaMax, -cosThetaMin), "lep");
-	}
-	legend1D->Draw();
-	
-	CMS_lumi(pad1, Form("#varUpsilon(%dS) Pythia 8 (5.02 TeV)", iState));
-
-	gPad->Update();
-	comparisonCanvas->Update();
-
-	/// Draw the pulls at the bottom
-	comparisonCanvas->cd();
-	
-	TPad* bottomPad = drawPulls(positiveHist, negativeHist, xTitle.Data(), isCosTheta);
-
-	bottomPad->Draw();
-
-	gPad->Update();
-	comparisonCanvas->Update();
-
-	/// Save the canvas
-	gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
-	if (isCosTheta == kTRUE) comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absPhi%dto%d_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, phiMin, phiMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
-	else comparisonCanvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEffComp_%s%s%s_pt%dto%d_absCosTheta%.2fto%.2f_%s.png", iState, positiveHist->GetName(), refFrameName, MuonAccName.Data(), ptMin, ptMax, cosThetaMin, cosThetaMax, isPhiFolded ? "folded" : "fullPhi"), "RECREATE");
-
-	/// delete objects when running the scan function to avoid memory leak (comment out to check the plots)
-	delete comparisonCanvas;
-	delete frameHist1D;
-	delete positiveHist;
-	delete negativeHist;
-
 	return;
 }
 
