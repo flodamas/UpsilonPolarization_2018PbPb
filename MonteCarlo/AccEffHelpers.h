@@ -435,6 +435,7 @@ void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nP
 			Double_t effVal = effMap->GetEfficiency(iGlobalBin);
 
 			Double_t effUncUp = effMap->GetEfficiencyErrorUp(iGlobalBin);
+			Double_t effUncDown = effMap->GetEfficiencyErrorLow(iGlobalBin);
 
 			// Get the bin center coordinates
 			double x = hTotal2D->GetXaxis()->GetBinCenter(iCosTheta + 1);
@@ -446,8 +447,8 @@ void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nP
 			latex.SetTextAlign(22);  // Center alignment
 			latex.SetTextColor(kWhite);
 			if (displayErrors == kTRUE) {
-				latex.SetTextSize(0.035); 
-				latex.DrawLatex(x, y, Form("#pm %.4f", effUncUp)); 
+				latex.SetTextSize(0.05); 
+				latex.DrawLatex(x, y, Form(" ^{+%.4f}_{-%.4f}", effUncUp, effUncDown)); 
 			}
 			else {
 				latex.SetTextSize(0.05);
