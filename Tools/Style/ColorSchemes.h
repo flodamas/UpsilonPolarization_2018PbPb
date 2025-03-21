@@ -65,8 +65,6 @@ const int KlimtGoldPaletteBlue[] = {16, 27, 39, 49, 105};
 /// Palettes for multi-dimensional distributions
 
 void SetColorPalette(std::string styleName = "cividis", bool invert = false, int nContours = 255) {
-	int nColors = 0;
-
 	// palettes defined in ROOT
 	if (styleName == "cividis") {
 		gStyle->SetPalette(kCividis);
@@ -79,7 +77,7 @@ void SetColorPalette(std::string styleName = "cividis", bool invert = false, int
 	// custom palettes based on the color schemes defined above
 
 	else if (styleName == "CMS6") {
-		nColors = NCMSColorScheme6;
+		const int nColors = NCMSColorScheme6;
 		int colors[nColors];
 
 		for (int i = 0; i < nColors; ++i) {
@@ -89,7 +87,7 @@ void SetColorPalette(std::string styleName = "cividis", bool invert = false, int
 	}
 
 	else if (styleName == "KlimtGold") {
-		nColors = NKlimtGoldColors;
+		const int nColors = NKlimtGoldColors;
 
 		double red[nColors], green[nColors], blue[nColors], stops[nColors];
 		for (int i = 0; i < nColors; ++i) {
@@ -103,7 +101,7 @@ void SetColorPalette(std::string styleName = "cividis", bool invert = false, int
 	}
 
 	else if (styleName == "OKeeffeCliffs") {
-		nColors = NOKeffeCliffsColors;
+		const int nColors = NOKeffeCliffsColors;
 		int colors[nColors];
 
 		for (int i = 0; i < nColors; ++i) {
@@ -113,7 +111,7 @@ void SetColorPalette(std::string styleName = "cividis", bool invert = false, int
 	}
 
 	else if (styleName == "TamDragon") {
-		nColors = NTamDragonColors;
+		const int nColors = NTamDragonColors;
 
 		double red[nColors], green[nColors], blue[nColors], stops[nColors];
 		for (int i = 0; i < nColors; ++i) {
