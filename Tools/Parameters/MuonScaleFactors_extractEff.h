@@ -31,10 +31,10 @@
 //   * idx = 99: syst variation, tag selection
 // +++++++++++++++++++++++++++++++++++++++
 
-double tnp_weight_muid_pbpb(double pt, double eta, int idx = 0);
-double tnp_weight_trk_pbpb(double eta, int idx = 0);
-double tnp_weight_trg_pbpb(double pt, double eta, int filterId = 0, int idx = 0);
-double tnp_weight_trg_pbpb_mc(double pt, double eta, int filterId = 0, int idx = 0);
+// double tnp_weight_muid_pbpb(double pt, double eta, int idx = 0);
+// double tnp_weight_trk_pbpb(double eta, int idx = 0);
+// double tnp_weight_trg_pbpb(double pt, double eta, int filterId = 0, int idx = 0);
+// double tnp_weight_trg_pbpb_mc(double pt, double eta, int filterId = 0, int idx = 0);
 
 ///////////////////////////////////////////////////
 //             M u I D    P b P b                //

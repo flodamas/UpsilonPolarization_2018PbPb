@@ -116,7 +116,7 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kTRUE, kTRUE, MuonAccName.Data(), isPhiFolded);
  	
-	// (last five variables: isAcc, displayValues, displayErrors, displayYieldValues, extraString, isPhiFolded)
+	// (last five variables: isAcc, displayEffValues, displayEffErrors, displayYieldValues, extraString, isPhiFolded)
 	DrawEffxAcc2DHist(accMapCosThetaPhi, effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded);
 }
 
