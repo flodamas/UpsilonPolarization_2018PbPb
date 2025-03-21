@@ -945,7 +945,8 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 		else
 			frameHist2D->SetYTitle(PhiAxisTitle(refFrameName));
 	} else {
-		refFrameName = "HX" frameHist2D->SetXTitle(CosThetaVarTitle(refFrameName));
+		refFrameName = "HX";
+		frameHist2D->SetXTitle(CosThetaVarTitle(refFrameName));
 		if (isPhiFolded == kTRUE)
 			frameHist2D->SetYTitle(AbsPhiAxisTitle(refFrameName));
 		else
