@@ -174,10 +174,16 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
 			//withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV);
-			if (accName == TString("MuonUpsilonTriggerAcc")) {withinAcceptance = MuonUpsilonTriggerAcc(*gen_mupl_LV) && MuonUpsilonTriggerAcc(*gen_mumi_LV); MuonAccName = "_TriggerAcc";}
-			else if (accName == TString("MuonWithin2018PbPbAcc")) {withinAcceptance = MuonWithin2018PbPbAcc(*gen_mupl_LV) && MuonWithin2018PbPbAcc(*gen_mumi_LV); MuonAccName = "_2018Acc";}
-			else if (accName == TString("MuonSimpleAcc")) {withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV); MuonAccName = "_SimpleAcc";}
-			else {
+			if (accName == TString("MuonUpsilonTriggerAcc")) {
+				withinAcceptance = MuonUpsilonTriggerAcc(*gen_mupl_LV) && MuonUpsilonTriggerAcc(*gen_mumi_LV);
+				MuonAccName = "_TriggerAcc";
+			} else if (accName == TString("MuonWithin2018PbPbAcc")) {
+				withinAcceptance = MuonWithin2018PbPbAcc(*gen_mupl_LV) && MuonWithin2018PbPbAcc(*gen_mumi_LV);
+				MuonAccName = "_2018Acc";
+			} else if (accName == TString("MuonSimpleAcc")) {
+				withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV);
+				MuonAccName = "_SimpleAcc";
+			} else {
 				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
 				return;
 			}
@@ -190,28 +196,35 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
 
 			cosThetaCS = muPlus_CS.CosTheta();
-			if (isPhiFolded == kTRUE) phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
-			else phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
+
+			phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
+			if (isPhiFolded == kTRUE) phiCS = fabs(phiCS);
 			// cout << "cosThetaCS: " << cosThetaCS << endl;
 			// cout << "phiCS: " << phiCS << endl;
 
-			if (isPhiFolded == kTRUE) weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * fabs(muPlus_CS.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(fabs(muPlus_CS.Phi()));
-			else weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
+			if (isPhiFolded == kTRUE)
+				weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * fabs(muPlus_CS.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(fabs(muPlus_CS.Phi()));
+			else
+				weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
 
 			// cout << "weightCS: " << weightCS << endl;
 			// cout << "cosThetaCS: " << cosThetaCS << endl;
 			// cout << "phiCS: " << phiCS << endl;
-			
+
 			accMatrixCS->FillWeighted(withinAcceptance, weightCS, cosThetaCS, phiCS, gen_QQ_LV->Pt());
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 
 			cosThetaHX = muPlus_HX.CosTheta();
-			if (isPhiFolded == kTRUE) phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
-			else phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
+			if (isPhiFolded == kTRUE)
+				phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
+			else
+				phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
 
-			if (isPhiFolded == kTRUE) weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
-			else weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+			if (isPhiFolded == kTRUE)
+				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
+			else
+				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
 
 			// cout << "weightHX: " << weightHX << endl;
 			// cout << "cosThetaHX: " << cosThetaHX << endl;
@@ -265,14 +278,15 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	DrawAcceptance1DHist(hAccHX1D, ptMin, ptMax, iState);
 
 	// cout << "Phi axis range: " << accMatrixCS->GetTotalHistogram()->GetYaxis()->GetXmin()
-    //  << " to " << accMatrixCS->GetTotalHistogram()->GetYaxis()->GetXmax() << endl;
+	//  << " to " << accMatrixCS->GetTotalHistogram()->GetYaxis()->GetXmax() << endl;
 
 	/// save the results in a file for later usage
 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
 	const char* outputFileName = "";
-	if (isPhiFolded == kTRUE) outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, MuonAccName.Data());
-	else outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s_fullPhi.root", iState, MuonAccName.Data());
-	
+	if (isPhiFolded == kTRUE)
+		outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, MuonAccName.Data());
+	else
+		outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s_fullPhi.root", iState, MuonAccName.Data());
 
 	TFile outputFile(outputFileName, "UPDATE");
 

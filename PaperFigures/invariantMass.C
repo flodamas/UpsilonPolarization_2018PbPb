@@ -44,6 +44,7 @@ void invariantMass(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* refFrameNa
 	TCanvas* canvas = MyCanvas("canvas", 650, 600);
 
 	RooPlot* frame = InvariantMassRooPlot(wspace, data);
+	frame->GetXaxis()->SetTitle("#it{m}_{#mu^{#plus}#mu^{#font[122]{\55}}} (GeV/#it{c}^{ 2})");
 	frame->Draw();
 
 	frame->SetMaximum(frame->GetMaximum() * 1.1);
