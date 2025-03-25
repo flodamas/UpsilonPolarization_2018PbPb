@@ -9,9 +9,9 @@
 
 #include "../Tools/Style/Legends.h"
 
-#include "../Tools/Parameters/MuonScaleFactors_extractEff.h"
+// #include "../Tools/Parameters/MuonScaleFactors_extractEff.h"
 
-// #include "../Tools/Parameters/tnp_weight_lowptPbPb_officialRepo_extractEff.h" // plots in the analysis note (AN-2018-316)
+#include "../Tools/Parameters/tnp_weight_lowptPbPb_officialRepo_extractEff.h" // plots in the analysis note (AN-2018-316)
 
 TLine* drawLine(double x1, double y1, double x2, double y2) {
     TLine* line = new TLine(x1, y1, x2, y2);
@@ -32,6 +32,7 @@ double getSF(TString effType = "trg", double pt = 1, double eta = 1, int filterI
     }
 }
 
+/// Draw the single muon TnP efficiency (muID and Trigger) for a given eta range (trk efficiency is in the function below due to different binning)
 TH1D* drawSFEff(double etaMin = 0, double etaMax = 1.2, TString effType = "trg", Bool_t isL3 = kTRUE, Bool_t isANGraph = kFALSE) {
 
     /// Define the bin edges for the pT bins
@@ -188,6 +189,9 @@ TH1D* drawSFEff(double etaMin = 0, double etaMax = 1.2, TString effType = "trg",
     TGraphAsymmErrors* sfNumEffGraph = new TGraphAsymmErrors(nBins);
     TGraphAsymmErrors* sfDenEffGraph = new TGraphAsymmErrors(nBins);
     TGraphAsymmErrors* sfGraph = new TGraphAsymmErrors(nBins);
+    
+    TGraphAsymmErrors* systEffGraph = new TGraphAsymmErrors(nBins);
+    TGraphAsymmErrors* systRatioGraph = new TGraphAsymmErrors(nBins);
 
     /// Styling the graph
     sfNumEffGraph->SetMarkerStyle(25);
@@ -205,6 +209,16 @@ TH1D* drawSFEff(double etaMin = 0, double etaMax = 1.2, TString effType = "trg",
     sfGraph->SetMarkerColor(TColor::GetColor("#333333"));
     sfGraph->SetLineColor(TColor::GetColor("#333333"));
 
+    systEffGraph->SetMarkerStyle(22);
+    systEffGraph->SetMarkerSize(1.2);
+    systEffGraph->SetMarkerColor(TColor::GetColor("#46AEA0"));
+    systEffGraph->SetLineColor(TColor::GetColor("#46AEA0"));
+
+    systRatioGraph->SetMarkerStyle(20);
+    systRatioGraph->SetMarkerSize(1.2);
+    systRatioGraph->SetMarkerColor(TColor::GetColor("#333333"));
+    systRatioGraph->SetLineColor(TColor::GetColor("#333333"));
+
     /// Read the efficiencies and scale factors from the header file
     for (int ptBin = 0; ptBin < nBins; ptBin++) {
         double numEff = 1;
@@ -212,13 +226,13 @@ TH1D* drawSFEff(double etaMin = 0, double etaMax = 1.2, TString effType = "trg",
 
         double pt = (ptBinEdges[ptBin] + ptBinEdges[ptBin + 1]) / 2;  // Bin center
         
-        double sf = getSF(effType, pt, eta, filterID, idx, &numEff, &denEff); // Scale factor
+        double sf = getSF(effType, pt, eta, filterID, idx, &numEff, &denEff); // nominal scale factor
 
         double statUp = getSF(effType, pt, eta, filterID, 1, &numEff, &denEff) - sf;
         double statDown = sf - getSF(effType, pt, eta, filterID, 2, &numEff, &denEff);
     
-        double systUp = getSF(effType, pt, eta, filterID, -1, &numEff, &denEff) - sf;
-        double systDown = sf - getSF(effType, pt, eta, filterID, -2, &numEff, &denEff);
+        double systUp = getSF(effType, pt, eta, filterID, -1, &numEff, &denEff) * denEff;
+        double systDown = getSF(effType, pt, eta, filterID, -2, &numEff, &denEff) * denEff;
     
         double errUp = sqrt(statUp * statUp + systUp * systUp);
         double errDown = sqrt(statDown * statDown + systDown * systDown);
@@ -236,6 +250,12 @@ TH1D* drawSFEff(double etaMin = 0, double etaMax = 1.2, TString effType = "trg",
 
         sfGraph->SetPoint(ptBin, pt, sf);
         sfGraph->SetPointError(ptBin, xLow, xHigh, statDown, statUp); // Using statistical errors
+
+        systEffGraph->SetPoint(ptBin, pt, systUp);
+        systEffGraph->SetPointError(ptBin, xLow, xHigh, 0, 0); // No errors info for systematic uncertainties
+
+        systRatioGraph->SetPoint(ptBin, pt, systUp / numEff);
+        systRatioGraph->SetPointError(ptBin, xLow, xHigh, 0, 0); // No errors info for systematic uncertainties
     
         // cout << "pt: " << pt << ", SF: " << sf << ", statUp: " << statUp << ", statDown: " << statDown << endl;
     }
@@ -300,11 +320,74 @@ TH1D* drawSFEff(double etaMin = 0, double etaMax = 1.2, TString effType = "trg",
     gSystem->mkdir("SingleMuonEfficiency/", kTRUE);
     
     if (isANGraph == kFALSE) canvasSFEff->SaveAs(Form("SingleMuonEfficiency/SingleMuonEfficiency_SF_%s%s_%.1f_%.1f.png", effType.Data(), effType == TString("trg") ? (isL3 ? "_UpsL3" : "_UpsL2") : "", etaMin, etaMax));
-    else canvasSFEff->SaveAs(Form("SingleMuonEfficiency/SingleMuonEfficiency_SF_%s_Ups%s_%.1f_%.1f_old.png", effType.Data(), isL3 ? "L3" : "L2", etaMin, etaMax));
+    else canvasSFEff->SaveAs(Form("SingleMuonEfficiency/SingleMuonEfficiency_SF_%s%s_%.1f_%.1f_old.png", effType.Data(), effType == TString("trg") ? (isL3 ? "_UpsL3" : "_UpsL2") : "", etaMin, etaMax));
+
+    /// draw the efficiency with the systematic variation
+    TCanvas* canvasSystEff = new TCanvas("canvasSystEff", "", 600, 600);
+
+    TPad* padSystEff = new TPad("padSystEff", "pad for systematic efficiency", 0.0, 0.25, 1.0, 1.0);
+
+    padSystEff->Draw();
+    padSystEff->cd();
+
+    padSystEff->SetRightMargin(0.05);
+    padSystEff->SetLeftMargin(0.12);
+    padSystEff->SetTopMargin(0.07);
+    padSystEff->SetBottomMargin(0.02);
+
+    frameHistEff->Draw();
+    sfNumEffGraph->Draw("P SAME"); 
+    systEffGraph->Draw("P SAME");
+
+	TLegend* legendSystEff = new TLegend(0.5, 0.2, 0.7, 0.5);
+    legendSystEff->SetTextSize(0.045);
+    legendSystEff->SetBorderSize(0);
+	legendSystEff->SetFillStyle(0);
+    if (effType == TString("trg")) legendSystEff->SetHeader(Form("#splitline{%s Upsilon Trigger Efficiency}{(p_{T}^{#mu} > %.1f GeV, |#eta| #in [%.1f, %.1f])} ", isL3 ? "L3" : "L2", ptBinEdges[0], etaMin, etaMax));
+    else if (effType == TString("muid")) legendSystEff->SetHeader(Form("#splitline{Hybrid Soft ID 2018 Efficiency}{(p_{T}^{#mu} > %.1f GeV, |#eta| #in [%.1f, %.1f])} ", ptBinEdges[0], etaMin, etaMax));
+    else if (effType == TString("trk")) legendSystEff->SetHeader(Form("#splitline{Inner tracking Efficiency}{(p_{T}^{#mu} > 0.0 GeV, |#eta| #in [%.1f, %.1f])} ", etaMin, etaMax));
+    legendSystEff->AddEntry((TObject*)0, "", "");
+    legendSystEff->AddEntry(sfNumEffGraph, "nominal", "lep");
+    legendSystEff->AddEntry(systEffGraph, "max syst", "lep");
+	legendSystEff->Draw("SAME");
+
+    padSystEff->Update();
+    // gPad->Update();
+    canvasSystEff->Update();
+
+    canvasSystEff->cd();
+
+    TPad* padRatio = new TPad("padRatio", "pad for Ratio", 0.0, 0.0, 1.0, 0.25);
+
+    padRatio->Draw();
+    padRatio->cd();
+
+    padRatio->SetTopMargin(0.01);
+    padRatio->SetRightMargin(0.05);
+    padRatio->SetLeftMargin(0.12);
+    padRatio->SetBottomMargin(0.40);
+
+    frameHistSF->GetYaxis()->SetTitle("Ratio");
+    frameHistSF->Draw();
+    systRatioGraph->Draw("P SAME");  // Draw asymmetric error bars on top
+
+    drawLine(0, 0.8, 30, 0.8);
+    drawLine(0, 1, 30, 1);    
+    drawLine(0, 1.2, 30, 1.2);
+    drawLine(0, 1.4, 30, 1.4);
+
+    CMS_lumi(padSystEff, gCMSLumiText);
+    
+    gPad->Update();
+    canvasSystEff->Update();
+
+    if (isANGraph == kFALSE) canvasSystEff->SaveAs(Form("SingleMuonEfficiency/SingleMuonEfficiency_syst_%s%s_%.1f_%.1f.png", effType.Data(), effType == TString("trg") ? (isL3 ? "_UpsL3" : "_UpsL2") : "", etaMin, etaMax));
+    else canvasSystEff->SaveAs(Form("SingleMuonEfficiency/SingleMuonEfficiency_syst_%s%s_%.1f_%.1f_old.png", effType.Data(), effType == TString("trg") ? (isL3 ? "_UpsL3" : "_UpsL2") : "", etaMin, etaMax));
 
     return nullptr;
 }
 
+/// Draw trcking TnP efficiency and SF (It's separate from the trigger and muon ID efficiencies due to the different binning)
 void drawSFEff_trk(Bool_t isANGraph = kFALSE) {
 
     const int nEtaBins_trk = 11;
@@ -360,6 +443,9 @@ void drawSFEff_trk(Bool_t isANGraph = kFALSE) {
     TGraphAsymmErrors* sfDenEffGraph = new TGraphAsymmErrors(nEtaBins_trk);
     TGraphAsymmErrors* sfGraph = new TGraphAsymmErrors(nEtaBins_trk);
 
+    TGraphAsymmErrors* systEffGraph = new TGraphAsymmErrors(nEtaBins_trk);
+    TGraphAsymmErrors* systRatioGraph = new TGraphAsymmErrors(nEtaBins_trk);
+
     /// Styling the graph
     sfNumEffGraph->SetMarkerStyle(25);
     sfNumEffGraph->SetMarkerSize(1.2);
@@ -376,6 +462,16 @@ void drawSFEff_trk(Bool_t isANGraph = kFALSE) {
     sfGraph->SetMarkerColor(TColor::GetColor("#333333"));
     sfGraph->SetLineColor(TColor::GetColor("#333333"));
 
+    systEffGraph->SetMarkerStyle(22);
+    systEffGraph->SetMarkerSize(1.2);
+    systEffGraph->SetMarkerColor(TColor::GetColor("#46AEA0"));
+    systEffGraph->SetLineColor(TColor::GetColor("#46AEA0"));
+
+    systRatioGraph->SetMarkerStyle(20);
+    systRatioGraph->SetMarkerSize(1.2);
+    systRatioGraph->SetMarkerColor(TColor::GetColor("#333333"));
+    systRatioGraph->SetLineColor(TColor::GetColor("#333333"));
+    
     /// Read the efficiencies and scale factors from the header file
     for (int etaBin = 0; etaBin < nEtaBins_trk; etaBin++) {
 
@@ -389,8 +485,8 @@ void drawSFEff_trk(Bool_t isANGraph = kFALSE) {
         double statUp = getSF(effType, dummy, eta, dummy, 1, &numEff, &denEff) - sf;
         double statDown = sf - getSF(effType, dummy, eta, dummy, 2, &numEff, &denEff);
 
-        double systUp = getSF(effType, dummy, eta, dummy, -1, &numEff, &denEff) - sf;
-        double systDown = sf - getSF(effType, dummy, eta, dummy, -2, &numEff, &denEff);
+        double systUp = getSF(effType, dummy, eta, dummy, -1, &numEff, &denEff) * denEff;
+        double systDown = getSF(effType, dummy, eta, dummy, -2, &numEff, &denEff) * denEff;
 
         double errUp = sqrt(statUp * statUp + systUp * systUp);
         double errDown = sqrt(statDown * statDown + systDown * systDown);
@@ -408,7 +504,12 @@ void drawSFEff_trk(Bool_t isANGraph = kFALSE) {
 
         sfGraph->SetPoint(etaBin, eta, sf);
         sfGraph->SetPointError(etaBin, xLow, xHigh, statDown, statUp); // Using statistical errors
-    
+
+        systEffGraph->SetPoint(etaBin, eta, systUp);
+        systEffGraph->SetPointError(etaBin, xLow, xHigh, 0, 0); // No errors info for systematic uncertainties
+
+        systRatioGraph->SetPoint(etaBin, eta, systUp / numEff);
+        systRatioGraph->SetPointError(etaBin, xLow, xHigh, 0, 0); // No errors info for systematic uncertainties
     }
 
     TCanvas* canvasSFEff = new TCanvas("canvasSFEff", "", 600, 600);
@@ -472,11 +573,73 @@ void drawSFEff_trk(Bool_t isANGraph = kFALSE) {
     if (isANGraph == kFALSE) canvasSFEff->SaveAs(Form("SingleMuonEfficiency/SingleMuonEfficiency_SF_%s.png", effType.Data()));
     else canvasSFEff->SaveAs(Form("SingleMuonEfficiency/SingleMuonEfficiency_SF_%s_old.png", effType.Data()));
 
+    /// draw the efficiency with the systematic variation
+    TCanvas* canvasSystEff = new TCanvas("canvasSystEff", "", 600, 600);
+
+    TPad* padSystEff = new TPad("padSystEff", "pad for systematic efficiency", 0.0, 0.25, 1.0, 1.0);
+
+    padSystEff->Draw();
+    padSystEff->cd();
+
+    padSystEff->SetRightMargin(0.05);
+    padSystEff->SetLeftMargin(0.12);
+    padSystEff->SetTopMargin(0.07);
+    padSystEff->SetBottomMargin(0.02);
+
+    frameHistEff->Draw();
+    sfNumEffGraph->Draw("P SAME"); 
+    systEffGraph->Draw("P SAME");
+
+	TLegend* legendSystEff = new TLegend(0.5, 0.2, 0.7, 0.5);
+    legendSystEff->SetTextSize(0.045);
+    legendSystEff->SetBorderSize(0);
+	legendSystEff->SetFillStyle(0);
+    legendSystEff->SetHeader("#splitline{Inner tracking Efficiency}{(p_{T}^{#mu} > 0.0 GeV)}");
+    legendSystEff->AddEntry((TObject*)0, "", "");
+    legendSystEff->AddEntry(sfNumEffGraph, "nominal", "lep");
+    legendSystEff->AddEntry(systEffGraph, "max syst", "lep");
+	legendSystEff->Draw("SAME");
+
+    padSystEff->Update();
+    // gPad->Update();
+    canvasSystEff->Update();
+
+    canvasSystEff->cd();
+
+    TPad* padRatio = new TPad("padRatio", "pad for Ratio", 0.0, 0.0, 1.0, 0.25);
+
+    padRatio->Draw();
+    padRatio->cd();
+
+    padRatio->SetTopMargin(0.01);
+    padRatio->SetRightMargin(0.05);
+    padRatio->SetLeftMargin(0.12);
+    padRatio->SetBottomMargin(0.40);
+
+    frameHistSF->GetYaxis()->SetTitle("Ratio");
+    frameHistSF->Draw();
+    systRatioGraph->Draw("P SAME");  // Draw asymmetric error bars on top
+
+    drawLine(etaBinning_trk[0], 0.97, etaBinning_trk[nEtaBins_trk], 0.97);
+    drawLine(etaBinning_trk[0], 0.98, etaBinning_trk[nEtaBins_trk], 0.98);
+    drawLine(etaBinning_trk[0], 0.99, etaBinning_trk[nEtaBins_trk], 0.99);
+    drawLine(etaBinning_trk[0], 1, etaBinning_trk[nEtaBins_trk], 1);
+    drawLine(etaBinning_trk[0], 1.01, etaBinning_trk[nEtaBins_trk], 1.01);
+
+    CMS_lumi(padSystEff, gCMSLumiText);
+    
+    gPad->Update();
+    canvasSystEff->Update();
+
+    if (isANGraph == kFALSE) canvasSystEff->SaveAs(Form("SingleMuonEfficiency/SingleMuonEfficiency_syst_%s.png", effType.Data()));
+    else canvasSystEff->SaveAs(Form("SingleMuonEfficiency/SingleMuonEfficiency_syst_%s_old.png", effType.Data()));
+
+
     return;
 }
 
 /// scan drawSFEff
-void SingleMuonTnPEff() {
+void SingleMuonTnPEff(Bool_t isANGraph = kFALSE) { // plots in the analysis note (AN-2018-316) if isANGraph = kTRUE (need to change the header file)
 
     const int nEtaBins = 4;
     double etaBinning[nEtaBins + 1] = {0, 1.2, 1.8, 2.1, 2.4};
@@ -495,18 +658,15 @@ void SingleMuonTnPEff() {
                     if (filterBin == 0) isL3 = kTRUE; // Upsilon L3
                     else isL3 = kFALSE; // Upsilon L2  
 
-                    drawSFEff(etaBinning[etaBin], etaBinning[etaBin + 1], effType[effTypeBin], isL3);
-                    // drawSFEff(etaBinning[etaBin], etaBinning[etaBin + 1], effType[effTypeBin], isL3, kTRUE); // plots in the analysis note (AN-2018-316)
+                    drawSFEff(etaBinning[etaBin], etaBinning[etaBin + 1], effType[effTypeBin], isL3, isANGraph);
                 }
             }
 
-            else drawSFEff(etaBinning[etaBin], etaBinning[etaBin + 1], effType[effTypeBin], isL3);
+            else drawSFEff(etaBinning[etaBin], etaBinning[etaBin + 1], effType[effTypeBin], isL3, isANGraph);
         }    
     }
 
-    drawSFEff_trk();
-    // drawSFEff_trk(kTRUE); // plots in the analysis note (AN-2018-316)
-
+    drawSFEff_trk(isANGraph);
 
     return;
 }
