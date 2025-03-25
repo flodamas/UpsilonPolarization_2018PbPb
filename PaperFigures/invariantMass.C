@@ -44,13 +44,14 @@ void invariantMass(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* refFrameNa
 	TCanvas* canvas = MyCanvas("canvas", 650, 600);
 
 	RooPlot* frame = InvariantMassRooPlot(wspace, data);
+	frame->GetXaxis()->SetTitle("#it{m}_{#mu^{#plus}#mu^{#font[122]{\55}}} (GeV/#it{c}^{ 2})");
 	frame->Draw();
 
 	frame->SetMaximum(frame->GetMaximum() * 1.1);
 
 	// legend and text
 
-	auto legend = LegendBlock(0.2, 0.5, 6);
+	auto legend = LegendBlock(0.2, 0.8, 6);
 	legend->AddEntry("data", "Data", "ep");
 	legend->AddEntry("total", "Total fit", "l");
 	legend->AddEntry("1S", "#varUpsilon(1S)", "l");
@@ -62,16 +63,16 @@ void invariantMass(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* refFrameNa
 
 	TPaveText* kinematics = new TPaveText(0.6, 0.9, 0.95, 0.5, "NDCNB");
 	// TPaveText* text = new TPaveText(0.65, 0.90, 0.95, 0.60, "NDCNB");
-	kinematics->SetTextSize(0.05);
+	kinematics->SetTextSize(0.045);
 	kinematics->SetFillColor(4000);
 	kinematics->SetBorderSize(0);
 	kinematics->AddText(CentralityRangeText(gCentralityBinMin, gCentralityBinMax));
 	kinematics->AddText(DimuonRapidityRangeText(gRapidityMin, gRapidityMax));
-	kinematics->AddText(DimuonPtRangeText(ptMin, ptMax));
+	kinematics->AddText(Form("%d < %s < %d %s", ptMin, gDimuonPtVarTitle, ptMax, gPtUnit));
 	kinematics->AddText(" ");
 	kinematics->AddText("Helicity frame");
-	kinematics->AddText(CosThetaRangeText(refFrameName, cosThetaMin, cosThetaMax));
-	kinematics->AddText(AbsPhiRangeText(refFrameName, phiMin, phiMax));
+	kinematics->AddText(Form("%.2f < cos #theta < %.2f", cosThetaMin, cosThetaMax));
+	kinematics->AddText(Form("%d < |%s| < %d %s", phiMin, gPhiSymbol, phiMax, gPhiUnit));
 
 	kinematics->SetAllWith("", "align", 32);
 	kinematics->Draw();

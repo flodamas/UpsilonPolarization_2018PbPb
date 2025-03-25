@@ -19,6 +19,27 @@ void nRecoSpectra() {
 
 	TH1D* hRawData_absy1p2to2p4 = new TH1D("hRawData_absy1p2to2p4", histoTitle, NPtFineBins, gPtFineBinning);
 
+	TFile* HEPDataFile = TFile::Open("./HEPData-ins1674529-v2-Table_1.root", "READ");
+    if (!HEPDataFile || HEPDataFile->IsZombie()) {
+        std::cerr << "Error: Could not open file!" << std::endl;
+        return;
+    }
+
+    TDirectory* dir = (TDirectory*)HEPDataFile->Get("Table 1");
+    if (!dir) {
+        std::cerr << "Error: Could not find directory 'Table 1'!" << std::endl;
+        HEPDataFile->Close();
+        return;
+    }
+    
+    // Retrieve the histogram from the directory
+    TH1D* hppXSec = (TH1D*)dir->Get("Hist1D_y1");
+    if (!hppXSec) {
+        std::cerr << "Error: Could not find histogram 'Hist1D_y1'!" << std::endl;
+        HEPDataFile->Close();
+        return;
+    }
+
 	for (int i = 0; i < NPtFineBins; i++) {
 		hRawData_absy0to1p2->SetBinContent(i + 1, nSignal1S_absy0to1p2[i]);
 		hRawData_absy0to1p2->SetBinError(i + 1, statSignal1S_absy0to1p2[i]);
@@ -56,37 +77,38 @@ void nRecoSpectra() {
 	pad1->Draw();
 	pad1->cd();
 
-	hRecoMC_absy0to1p2->SetLineColor(kRed + 1);
-	hRecoMC_absy0to1p2->SetMarkerColor(kRed + 1);
-	hRecoMC_absy0to1p2->SetLineWidth(2);
+	hRecoMC_absy1p2to2p4->SetLineColor(kRed + 1);
+	hRecoMC_absy1p2to2p4->SetMarkerColor(kRed + 1);
+	hRecoMC_absy1p2to2p4->SetLineWidth(2);
 
-	hRawData_absy0to1p2->SetLineColor(kAzure + 1);
-	hRawData_absy0to1p2->SetMarkerColor(kAzure + 1);
-	hRawData_absy0to1p2->SetLineWidth(2);
+	hRawData_absy1p2to2p4->SetLineColor(kAzure + 1);
+	hRawData_absy1p2to2p4->SetMarkerColor(kAzure + 1);
+	hRawData_absy1p2to2p4->SetLineWidth(2);
 
-	hRawData_absy0to1p2->GetXaxis()->SetLabelOffset(1);
-	hRawData_absy0to1p2->GetYaxis()->SetTitleOffset(1);
-	hRawData_absy0to1p2->GetYaxis()->SetTitleSize(0.085);
-	hRawData_absy0to1p2->GetYaxis()->SetLabelSize(0.075);
+	hRawData_absy1p2to2p4->GetXaxis()->SetLabelOffset(1);
+	hRawData_absy1p2to2p4->GetYaxis()->SetTitleOffset(1);
+	hRawData_absy1p2to2p4->GetYaxis()->SetTitleSize(0.085);
+	hRawData_absy1p2to2p4->GetYaxis()->SetLabelSize(0.075);
+	// hRawData_absy0to1p2->GetYaxis()->SetRangeUser(0, 0.3);
+	hRawData_absy1p2to2p4->Draw("PZ");
 
-	hRawData_absy0to1p2->Draw("PZ");
+	hRecoMC_absy1p2to2p4->Draw("SAME PZ");
 
-	hRecoMC_absy0to1p2->Draw("SAME PZ");
-
+	// hppXSec->Draw("SAME P");
 	// few cosmetics
 
 	TPaveText* header = new TPaveText(.3, .85, .9, .75, "NDCNB");
 	header->SetFillColor(4000);
 	header->SetBorderSize(0);
 	header->SetTextSize(.07);
-	header->AddText(Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(0, 1.2)));
+	header->AddText(Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(1.2, 2.4)));
 	header->SetAllWith("", "align", 12);
 	header->Draw();
 
 	TLegend* legend = new TLegend(.6, .7, .9, .55);
 	legend->SetTextSize(.07);
-	legend->AddEntry(hRawData_absy0to1p2, "Raw yield", "lep");
-	legend->AddEntry(hRecoMC_absy0to1p2, "Reco MC", "lep");
+	legend->AddEntry(hRawData_absy1p2to2p4, "Raw yield", "lep");
+	legend->AddEntry(hRecoMC_absy1p2to2p4, "Reco MC", "lep");
 
 	legend->Draw();
 
@@ -100,32 +122,33 @@ void nRecoSpectra() {
 	pad2->Draw();
 	pad2->cd();
 
-	hRatio_absy0to1p2->SetTitle(" ");
-	hRatio_absy0to1p2->GetYaxis()->SetTitleOffset(0.65);
-	hRatio_absy0to1p2->GetYaxis()->SetTitle("Data / MC");
-	hRatio_absy0to1p2->GetYaxis()->SetTitleSize(0.13);
-	hRatio_absy0to1p2->GetYaxis()->SetLabelSize(0.11);
-	hRatio_absy0to1p2->GetYaxis()->CenterTitle();
+	hRatio_absy1p2to2p4->SetTitle(" ");
+	hRatio_absy1p2to2p4->GetYaxis()->SetTitleOffset(0.65);
+	hRatio_absy1p2to2p4->GetYaxis()->SetTitle("Data / MC");
+	hRatio_absy1p2to2p4->GetYaxis()->SetTitleSize(0.13);
+	hRatio_absy1p2to2p4->GetYaxis()->SetLabelSize(0.11);
+	hRatio_absy1p2to2p4->GetYaxis()->CenterTitle();
 
-	hRatio_absy0to1p2->GetXaxis()->SetTitle(gPtAxisTitle);
-	hRatio_absy0to1p2->GetXaxis()->SetLabelSize(0.11);
-	hRatio_absy0to1p2->GetXaxis()->SetTitleSize(0.13);
-	hRatio_absy0to1p2->GetXaxis()->SetTickSize(0.06);
+	hRatio_absy1p2to2p4->GetXaxis()->SetTitle(gPtAxisTitle);
+	hRatio_absy1p2to2p4->GetXaxis()->SetLabelSize(0.11);
+	hRatio_absy1p2to2p4->GetXaxis()->SetTitleSize(0.13);
+	hRatio_absy1p2to2p4->GetXaxis()->SetTickSize(0.06);
 
-	hRatio_absy0to1p2->GetYaxis()->SetNdivisions(505);
+	hRatio_absy1p2to2p4->GetYaxis()->SetNdivisions(505);
 
-	hRatio_absy0to1p2->Draw("PZ");
+	hRatio_absy1p2to2p4->Draw("PZ");
 
-	hRatio_absy0to1p2->SetMinimum(0.1);
-	hRatio_absy0to1p2->SetMaximum(2.3);
+	hRatio_absy1p2to2p4->SetMinimum(0.1);
+	hRatio_absy1p2to2p4->SetMaximum(2.3);
 
 	// fit the ratio
 
 	//TF1* fitFunc = new TF1("fitFunc", "([0]  + [1]*x*x) / ( x - [2])^3", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
 
-	TF1* fitFunc = new TF1("fitFunc", "[0]/([1] + x)", gPtBinning[0], gPtBinning[NPtBins]);
+	// TF1* fitFunc = new TF1("fitFunc", "[0]/([1] + x)", gPtBinning[0], gPtBinning[NPtBins]);
+	TF1* fitFunc = new TF1("fitFunc", "[0]/([1] + x)", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
 
-	auto fitResult = hRatio_absy0to1p2->Fit(fitFunc, "QEMSR");
+	auto fitResult = hRatio_absy1p2to2p4->Fit(fitFunc, "QEMSR");
 	fitResult->Print("v");
 
 	// legend with fit result info
@@ -156,9 +179,9 @@ void nRecoSpectra() {
 
 	pad2->Draw();
 
-	CMS_lumi(canvas, gCMSLumiText);
+	CMS_lumi(pad1, gCMSLumiText);
 
-	canvas->SaveAs("plots/recoPtSpectra_absy0to1p2_bis.pdf", "RECREATE");
+	canvas->SaveAs("plots/recoPtSpectra_absy1p2to2p4_bis.png", "RECREATE");
 	/*
 	// print the data / MC factors
 	auto ratioGraph = ratioPlot->GetLowerRefGraph();

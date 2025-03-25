@@ -130,7 +130,7 @@ const char* TEfficiency3DTitle(const char* refFrameName = "CS", int iState = gUp
 
 TEfficiency* TEfficiency3D(const char* name, const char* refFrameName = "CS", int iState = gUpsilonState, Bool_t isPhiFolded = kFALSE) {
 	Int_t nCosThetaUltraFineBinning = 200; // cosTheta bin width: 0.01
-	Int_t nPhiUltraFineBinning;      // phi bin width: 1 degree
+	Int_t nPhiUltraFineBinning;            // phi bin width: 1 degree
 
 	// Int_t nCosThetaUltraFineBinning = 4; // cosTheta bin width: 0.01
 	// Int_t nPhiUltraFineBinning = 2;      // phi bin width: 1 degree
@@ -140,8 +140,7 @@ TEfficiency* TEfficiency3D(const char* name, const char* refFrameName = "CS", in
 		phiMax = gPhiMax;
 		phiMin = gPhiMin;
 		nPhiUltraFineBinning = 180; // phi bin width: 2 degree
-	}
-	else {
+	} else {
 		phiMax = gPhiMax;
 		phiMin = -180;
 		nPhiUltraFineBinning = 360; // phi bin width: 1 degree
@@ -444,13 +443,12 @@ void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nP
 
 			// Create a TLatex object to write the signal extraction yield uncertainties on each bin
 			TLatex latex;
-			latex.SetTextAlign(22);  // Center alignment
+			latex.SetTextAlign(22); // Center alignment
 			latex.SetTextColor(kWhite);
 			if (displayErrors == kTRUE) {
-				latex.SetTextSize(0.05); 
-				latex.DrawLatex(x, y, Form(" ^{+%.4f}_{-%.4f}", effUncUp, effUncDown)); 
-			}
-			else {
+				latex.SetTextSize(0.05);
+				latex.DrawLatex(x, y, Form(" ^{+%.4f}_{-%.4f}", effUncUp, effUncDown));
+			} else {
 				latex.SetTextSize(0.05);
 				latex.DrawLatex(x, y, Form("%.3f", effVal)); 
 			}
@@ -497,10 +495,10 @@ void displayYields(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nPhiBins
 			// cout << Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s", prefix, binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix) << endl;
 			// const char* fileName = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s.txt", prefix, binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix);
 			// const char* fileName_freeSigma = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s_%s.txt", prefix, binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix, "woSigmaConstraints");
-			
+
 			std::string fileName = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s.txt", prefix.c_str(), binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix.c_str());
 			std::string fileName_freeSigma = Form("%s_cosTheta%.2fto%.2f_phi%dto%d_%s_%s.txt", prefix.c_str(), binEdgeCosThetaMin, binEdgeCosThetaMax, binEdgePhiMin, binEdgePhiMax, postfix.c_str(), "woSigmaConstraints");
-			
+
 			// get yields and their uncertainties
 			RooArgSet signalYields = GetSignalYields(&yield1S, &yield2S, &yield3S, fileName.c_str());
 			cout << "fileName_freeSigma = " << fileName_freeSigma.c_str() << endl;
@@ -551,31 +549,26 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.05);
 	legend.DrawLatexNDC(.55, .87, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
-	
-	if (strcmp(extraString, "_TriggerAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-	else if (strcmp(extraString, "_SimpleAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
-	else if (strcmp(extraString, "_2018PbPbAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+
+	if (strcmp(extraString, "_TriggerAcc") == 0)
+		legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	else if (strcmp(extraString, "_SimpleAcc") == 0)
+		legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+	else if (strcmp(extraString, "_2018PbPbAcc") == 0)
+		legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
 
 	// legend.DrawLatexNDC(.55, .72, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
 	if (isCosTheta) {
-		if (strstr(refFrameName, "CS")) {
-			frameHist->SetXTitle(CosThetaVarTitle("CS")); 
-		}
-		else {
-			frameHist->SetXTitle(CosThetaVarTitle("HX")); 
-		}
+		frameHist->SetXTitle(CosThetaVarTitle(refFrameName));
+
 	}
 
 	else {
-		if (strstr(refFrameName, "CS")) {
-			if (isPhiFolded == kTRUE) frameHist->SetXTitle(AbsPhiAxisTitle("CS"));
-			else frameHist->SetXTitle(PhiAxisTitle("CS"));
-		}
-		else{
-			if (isPhiFolded == kTRUE) frameHist->SetXTitle(AbsPhiAxisTitle("HX"));
-			else frameHist->SetXTitle(PhiVarTitle("HX"));
-		}
+		if (isPhiFolded == kTRUE)
+			frameHist->SetXTitle(AbsPhiAxisTitle(refFrameName));
+		else
+			frameHist->SetXTitle(PhiVarTitle(refFrameName));
 	}
 
 	if (isAcc)
@@ -638,19 +631,26 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.04);
 	legend.DrawLatexNDC(.48, .86, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
-	
-	if (strcmp(extraString, "_TriggerAcc") == 0) legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-	else if (strcmp(extraString, "_SimpleAcc") == 0) legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
-	else if (strcmp(extraString, "_2018PbPbAcc") == 0) legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+
+	if (strcmp(extraString, "_TriggerAcc") == 0)
+		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	else if (strcmp(extraString, "_SimpleAcc") == 0)
+		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+	else if (strcmp(extraString, "_2018PbPbAcc") == 0)
+		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
 
 	if (strstr(effHist->GetName(), "CS")) {
 		frameHist2D->SetXTitle(CosThetaVarTitle("CS"));
-		if (isPhiFolded == kTRUE) frameHist2D->SetYTitle(AbsPhiAxisTitle("CS"));
-		else frameHist2D->SetYTitle(PhiAxisTitle("CS"));
+		if (isPhiFolded == kTRUE)
+			frameHist2D->SetYTitle(AbsPhiAxisTitle("CS"));
+		else
+			frameHist2D->SetYTitle(PhiAxisTitle("CS"));
 	} else {
 		frameHist2D->SetXTitle(CosThetaVarTitle("HX"));
-		if (isPhiFolded == kTRUE) frameHist2D->SetYTitle(AbsPhiAxisTitle("HX"));
-		else frameHist2D->SetYTitle(PhiAxisTitle("HX"));
+		if (isPhiFolded == kTRUE)
+			frameHist2D->SetYTitle(AbsPhiAxisTitle("HX"));
+		else
+			frameHist2D->SetYTitle(PhiAxisTitle("HX"));
 	}
 
 	if (isAcc) {
@@ -700,31 +700,32 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	// save the plot
 	gSystem->mkdir(Form("EfficiencyMaps/%dS/analysisBin", iState), kTRUE);
 	if (isAcc) {
-		if (isPhiFolded == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2Dacc_%s_pt%dto%d%s.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
-		else canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2Dacc_%s_pt%dto%d%s_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
+		if (isPhiFolded == kTRUE)
+			canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2Dacc_%s_pt%dto%d%s.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
+		else
+			canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2Dacc_%s_pt%dto%d%s_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
+	} else {
+		if (isPhiFolded == kTRUE)
+			canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2Deff_%s_pt%dto%d%s.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
+		else
+			canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2Deff_%s_pt%dto%d%s_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
 	}
-	else {
-		if (isPhiFolded == kTRUE)  canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2Deff_%s_pt%dto%d%s.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
-		else canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2Deff_%s_pt%dto%d%s_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
-
-	}
-
 }
 
 TEfficiency* MultiplyTEfficiencies1D(const TEfficiency* eff1, const TEfficiency* eff2) {
-    if (!eff1 || !eff2) return nullptr;
+	if (!eff1 || !eff2) return nullptr;
 
-    auto* h1 = eff1->GetCopyTotalHisto();
-    auto* h2 = eff2->GetCopyTotalHisto();
+	auto* h1 = eff1->GetCopyTotalHisto();
+	auto* h2 = eff2->GetCopyTotalHisto();
 
-    if (h1->GetNbinsX() != h2->GetNbinsX()) {
-        std::cerr << "Error: The efficiency histograms have different binning!" << std::endl;
-        return nullptr;
-    }
+	if (h1->GetNbinsX() != h2->GetNbinsX()) {
+		std::cerr << "Error: The efficiency histograms have different binning!" << std::endl;
+		return nullptr;
+	}
 
-    auto* result = new TEfficiency(*eff1); // Clone structure
+	auto* result = new TEfficiency(*eff1); // Clone structure
 
-    for (int i = 1; i <= h1->GetNbinsX(); i++) {
+	for (int i = 1; i <= h1->GetNbinsX(); i++) {
 		double e1 = eff1->GetEfficiency(h1->GetBin(i));
 		// cout << "e1 = " << e1 << endl;
 		// cout << "h1->GetBinContent(" << i << ", " << j << ") = " << h1->GetBinContent(i, j) << endl;
@@ -741,51 +742,51 @@ TEfficiency* MultiplyTEfficiencies1D(const TEfficiency* eff1, const TEfficiency*
 		double err_product = eff_product * sqrt(pow(err1 / e1, 2) + pow(err2 / e2, 2)); // Error propagation
 
 		int bin = h1->GetBin(i);
-		result->SetTotalEvents(bin, h1->GetBinContent(bin));  
-		result->SetPassedEvents(bin, eff_product * h1->GetBinContent(bin)); 
+		result->SetTotalEvents(bin, h1->GetBinContent(bin));
+		result->SetPassedEvents(bin, eff_product * h1->GetBinContent(bin));
 		// cout << "accxeff value" << result->GetEfficiency(bin) << endl;
-    }
+	}
 
-    return result;
+	return result;
 }
 
 TEfficiency* MultiplyTEfficiencies2D(const TEfficiency* eff1, const TEfficiency* eff2) {
-    if (!eff1 || !eff2) return nullptr;
+	if (!eff1 || !eff2) return nullptr;
 
-    auto* h1 = eff1->GetCopyTotalHisto();
-    auto* h2 = eff2->GetCopyTotalHisto();
+	auto* h1 = eff1->GetCopyTotalHisto();
+	auto* h2 = eff2->GetCopyTotalHisto();
 
-    if (h1->GetNbinsX() != h2->GetNbinsX() || h1->GetNbinsY() != h2->GetNbinsY()) {
-        std::cerr << "Error: The efficiency histograms have different binning!" << std::endl;
-        return nullptr;
-    }
+	if (h1->GetNbinsX() != h2->GetNbinsX() || h1->GetNbinsY() != h2->GetNbinsY()) {
+		std::cerr << "Error: The efficiency histograms have different binning!" << std::endl;
+		return nullptr;
+	}
 
-    auto* result = new TEfficiency(*eff1); // Clone structure
+	auto* result = new TEfficiency(*eff1); // Clone structure
 
-    for (int i = 1; i <= h1->GetNbinsX(); i++) {
-        for (int j = 1; j <= h1->GetNbinsY(); j++) {
-            double e1 = eff1->GetEfficiency(h1->GetBin(i, j));
+	for (int i = 1; i <= h1->GetNbinsX(); i++) {
+		for (int j = 1; j <= h1->GetNbinsY(); j++) {
+			double e1 = eff1->GetEfficiency(h1->GetBin(i, j));
 			// cout << "e1 = " << e1 << endl;
 			// cout << "h1->GetBinContent(" << i << ", " << j << ") = " << h1->GetBinContent(i, j) << endl;
-            double e2 = eff2->GetEfficiency(h2->GetBin(i, j));
+			double e2 = eff2->GetEfficiency(h2->GetBin(i, j));
 			// cout << "e2 = " << e2 << endl;
 			// cout << "h2->GetBinContent(" << i << ", " << j << ") = " << h2->GetBinContent(i, j) << endl;
 
-            double err1 = eff1->GetEfficiencyErrorUp(h1->GetBin(i, j));
-            double err2 = eff2->GetEfficiencyErrorUp(h2->GetBin(i, j));
+			double err1 = eff1->GetEfficiencyErrorUp(h1->GetBin(i, j));
+			double err2 = eff2->GetEfficiencyErrorUp(h2->GetBin(i, j));
 
-            if (e1 == 0 || e2 == 0) continue; // Avoid division by zero
+			if (e1 == 0 || e2 == 0) continue; // Avoid division by zero
 
-            double eff_product = e1 * e2;
-            double err_product = eff_product * sqrt(pow(err1 / e1, 2) + pow(err2 / e2, 2)); // Error propagation
+			double eff_product = e1 * e2;
+			double err_product = eff_product * sqrt(pow(err1 / e1, 2) + pow(err2 / e2, 2)); // Error propagation
 
-            int bin = h1->GetBin(i, j);
-            result->SetTotalEvents(bin, h1->GetBinContent(bin));  
-            result->SetPassedEvents(bin, eff_product * h1->GetBinContent(bin)); 
-        }
-    }
+			int bin = h1->GetBin(i, j);
+			result->SetTotalEvents(bin, h1->GetBinContent(bin));
+			result->SetPassedEvents(bin, eff_product * h1->GetBinContent(bin));
+		}
+	}
 
-    return result;
+	return result;
 }
 
 double GetMaxEfficiencyValue(TEfficiency& eff) {
@@ -798,7 +799,7 @@ double GetMaxEfficiencyValue(TEfficiency& eff) {
 	for (int i = 1; i <= nBinsX; ++i) {
 		for (int j = 1; j <= nBinsY; ++j) {
 			int globalbin = eff.GetGlobalBin(i, j);
-			
+
 			double efficiency = eff.GetEfficiency(globalbin); // Get efficiency for bin (i, j)
 			if (efficiency > maxEfficiency) {
 				maxEfficiency = efficiency;
@@ -806,10 +807,9 @@ double GetMaxEfficiencyValue(TEfficiency& eff) {
 		}
 	}
 	std::cout << "Maximum efficiency: " << maxEfficiency << std::endl;
-	
+
 	return maxEfficiency;
 }
-
 
 TEfficiency* DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nBins = 5, const std::vector<Double_t>& BinEdges = {}, Double_t intRangeMin = -1, Double_t intRangeMax = 1, Bool_t isCosTheta = kTRUE, const char* refFrameName = "CS", Int_t iState = gUpsilonState, const char* extraString = "", Bool_t isPhiFolded = kFALSE) {
 	TCanvas* canvas = new TCanvas("EffxAccCosThetaPhi", "", 600, 600);
@@ -840,31 +840,28 @@ TEfficiency* DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t
 	legend.SetTextSize(0.05);
 	legend.DrawLatexNDC(.55, .87, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 
-	if (strcmp(extraString, "_TriggerAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-	else if (strcmp(extraString, "_SimpleAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
-	else if (strcmp(extraString, "_2018PbPbAcc") == 0) legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+	if (strcmp(extraString, "_TriggerAcc") == 0)
+		legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	else if (strcmp(extraString, "_SimpleAcc") == 0)
+		legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+	else if (strcmp(extraString, "_2018PbPbAcc") == 0)
+		legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
 
-	if (isCosTheta == kTRUE) legend.DrawLatexNDC(.55, .72, Form( "%.0f < #varphi < %.0f #circ", intRangeMin, intRangeMax));
-	else legend.DrawLatexNDC(.55, .72, Form( "%.2f < cos#theta < %.2f", intRangeMin, intRangeMax));
+	if (isCosTheta == kTRUE)
+		legend.DrawLatexNDC(.55, .72, Form("%.0f < #varphi < %.0f #circ", intRangeMin, intRangeMax));
+	else
+		legend.DrawLatexNDC(.55, .72, Form("%.2f < cos#theta < %.2f", intRangeMin, intRangeMax));
 
 	if (isCosTheta) {
-		if (strstr(refFrameName, "CS")) {
-			frameHist1D->SetXTitle(CosThetaVarTitle("CS")); 
-		}
-		else {
-			frameHist1D->SetXTitle(CosThetaVarTitle("HX")); 
-		}
+		frameHist1D->SetXTitle(CosThetaVarTitle(refFrameName));
+
 	}
 
 	else {
-		if (strstr(refFrameName, "CS")) {
-			if (isPhiFolded == kTRUE) frameHist1D->SetXTitle(AbsPhiAxisTitle("CS"));
-			else frameHist1D->SetXTitle(PhiAxisTitle("CS"));
-		}
-		else{
-			if (isPhiFolded == kTRUE) frameHist1D->SetXTitle(AbsPhiAxisTitle("HX"));
-			else frameHist1D->SetXTitle(PhiAxisTitle("HX"));
-		}
+		if (isPhiFolded == kTRUE)
+			frameHist1D->SetXTitle(AbsPhiAxisTitle(refFrameName));
+		else
+			frameHist1D->SetXTitle(PhiAxisTitle(refFrameName));
 	}
 
 	frameHist1D->SetYTitle(TEfficiencyMainTitle(iState, "acceptance x efficiency"));
@@ -886,12 +883,15 @@ TEfficiency* DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t
 	gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
 
 	if (isPhiFolded == kTRUE) {
-		if (isCosTheta == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
-		else canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
-	}
-	else {
-		if (isCosTheta == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
-		else canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
+		if (isCosTheta == kTRUE)
+			canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
+		else
+			canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax), "RECREATE");
+	} else {
+		if (isCosTheta == kTRUE)
+			canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_cosTheta%.2fto%.2f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
+		else
+			canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/1DAccxEff_%s%s_pt%dto%d_phi%.0fto%.0f%s%s.png", iState, EffxAccHist->GetName(), refFrameName, ptMin, ptMax, intRangeMin, intRangeMax, extraString, "_fullPhi"), "RECREATE");
 	}
 
 	return EffxAccHist;
@@ -927,22 +927,30 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	legend.SetTextSize(0.04);
 	legend.DrawLatexNDC(.48, .86, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 
-	if (strcmp(extraString, "_TriggerAcc") == 0) legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-	else if (strcmp(extraString, "_SimpleAcc") == 0) legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
-	else if (strcmp(extraString, "_2018PbPbAcc") == 0) legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+	if (strcmp(extraString, "_TriggerAcc") == 0)
+		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	else if (strcmp(extraString, "_SimpleAcc") == 0)
+		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+	else if (strcmp(extraString, "_2018PbPbAcc") == 0)
+		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
 
 	const char* refFrameName = "";
 
 	if (strstr(EffxAccHist->GetName(), "CS")) {
-		frameHist2D->SetXTitle(CosThetaVarTitle("CS"));
-		if (isPhiFolded == kTRUE) frameHist2D->SetYTitle(AbsPhiAxisTitle("CS"));
-		else frameHist2D->SetYTitle(PhiAxisTitle("CS"));
 		refFrameName = "CS";
+
+		frameHist2D->SetXTitle(CosThetaVarTitle(refFrameName));
+		if (isPhiFolded == kTRUE)
+			frameHist2D->SetYTitle(AbsPhiAxisTitle(refFrameName));
+		else
+			frameHist2D->SetYTitle(PhiAxisTitle(refFrameName));
 	} else {
-		frameHist2D->SetXTitle(CosThetaVarTitle("HX"));
-		if (isPhiFolded == kTRUE) frameHist2D->SetYTitle(AbsPhiAxisTitle("HX"));
-		else frameHist2D->SetYTitle(PhiAxisTitle("HX"));
 		refFrameName = "HX";
+		frameHist2D->SetXTitle(CosThetaVarTitle(refFrameName));
+		if (isPhiFolded == kTRUE)
+			frameHist2D->SetYTitle(AbsPhiAxisTitle(refFrameName));
+		else
+			frameHist2D->SetYTitle(PhiAxisTitle(refFrameName));
 	}
 
 	EffxAccHist->SetTitle(Form(";;;%s", TEfficiencyMainTitle(iState, "acceptance x efficiency")));
@@ -955,7 +963,7 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 
 	frameHist2D->GetXaxis()->SetRangeUser(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
 	frameHist2D->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
-	
+
 	double maxEffxAcc = GetMaxEfficiencyValue(*EffxAccHist);
 	frameHist2D->GetZaxis()->SetRangeUser(0, maxEffxAcc);
 	// frameHist2D->GetZaxis()->SetRangeUser(0, 1);
@@ -987,8 +995,9 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	// save the plot
 	gSystem->mkdir(Form("AccxEffMaps/%dS/analysisBin", iState), kTRUE);
 
-	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, displayErrors? "_DisplayUnc": "_DisplayEff"), "RECREATE");
-	else canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s%s%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString, displayErrors? "_DisplayUnc": "_DisplayEff", "_fullPhi"), "RECREATE");
+	if (isPhiFolded == kTRUE)
+		canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, displayErrors ? "_DisplayUnc" : "_DisplayEff"), "RECREATE");
+	else
+		canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s%s%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString, displayErrors ? "_DisplayUnc" : "_DisplayEff", "_fullPhi"), "RECREATE");
 	// canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, "_diff"), "RECREATE");
-
 }
