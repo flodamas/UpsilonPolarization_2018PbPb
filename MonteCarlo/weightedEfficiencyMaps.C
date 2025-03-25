@@ -244,7 +244,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
-	/// (cos theta, phi, pT) 3D distribution maps for CS and HX frames
+	/// (cos theta, phi, pT) 3D distribution maps for Lab, CS and HX frames
+	TEfficiency* hNominalEffLab = TEfficiency3D(NominalTEfficiency3DName("Lab", lambdaTheta, lambdaPhi, lambdaThetaPhi), "Lab", iState);
 
 	// Collins-Soper
 	TEfficiency* hNominalEffCS = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState);
@@ -266,6 +267,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	TEfficiency* hCS_total_systUp = TEfficiency3D(Form("hCS_total_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
 	TEfficiency* hCS_total_systDown = TEfficiency3D(Form("hCS_total_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_total_statUp = TEfficiency3D(Form("hCS_total_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
+	TEfficiency* hCS_total_statDown = TEfficiency3D(Form("hCS_total_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "CS", iState);
 
 	// Helicity
 	TEfficiency* hNominalEffHX = TEfficiency3D(NominalTEfficiency3DName("HX", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState);
@@ -287,6 +290,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	TEfficiency* hHX_total_systUp = TEfficiency3D(Form("hHX_total_systUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
 	TEfficiency* hHX_total_systDown = TEfficiency3D(Form("hHX_total_systDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_total_statUp = TEfficiency3D(Form("hHX_total_statUp_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
+	TEfficiency* hHX_total_statDown = TEfficiency3D(Form("hHX_total_statDown_%s", PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi)), "HX", iState);
 
 	// (cos theta, phi) for the given pt range
 	TEfficiency* hEffCS2D = CosThetaPhiTEfficiency2D("CS", ptMin, ptMax, iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
@@ -312,14 +317,16 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	double dimuWeight_trk_systUp, dimuWeight_trk_systDown, dimuWeight_trk_statUp, dimuWeight_trk_statDown;
 	double dimuWeight_muId_systUp, dimuWeight_muId_systDown, dimuWeight_muId_statUp, dimuWeight_muId_statDown;
 	double dimuWeight_trig_systUp, dimuWeight_trig_systDown, dimuWeight_trig_statUp, dimuWeight_trig_statDown;
-	double dimuWeight_total_systUp, dimuWeight_total_systDown;
+	double dimuWeight_total_systUp, dimuWeight_total_systDown, dimuWeight_total_statUp, dimuWeight_total_statDown;
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
 	TLorentzVector* recoLorentzVector = new TLorentzVector();
 
-	double eventWeight, dimuonPtWeight, totalWeightCS, totalWeightHX;
-	double dimuTrigWeight_nominal = -1, dimuTrigWeight_systUp = -1, dimuTrigWeight_systDown = -1, dimuTrigWeight_statUp = -1, dimuTrigWeight_statDown = -1;
+	double eventWeight, dimuonPtWeight, totalWeightCS, totalWeightHX, totalWeightLab;
+	double dimuTrigWeight_nominal = -1, 
+		   dimuTrigWeight_systUp = -1, dimuTrigWeight_systDown = -1, 
+		   dimuTrigWeight_statUp = -1, dimuTrigWeight_statDown = -1;
 
 	Float_t weightCS = 0, weightHX = 0;
 
@@ -428,6 +435,12 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				double Reco_mumi_eta = Reco_mumi_LV->Eta();
 				double Reco_mumi_pt = Reco_mumi_LV->Pt();
 
+				double cosThetaLab = Reco_mupl_LV->CosTheta();
+				double phiLab = 0;
+				
+				if (isPhiFolded == kTRUE) phiLab = fabs(Reco_mupl_LV->Phi() * 180 / TMath::Pi());
+				else phiLab = Reco_mupl_LV->Phi() * 180 / TMath::Pi();
+
 				TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
 				double cosThetaCS = muPlus_CS.CosTheta();
 				double phiCS = 0;
@@ -501,15 +514,18 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
 				}
 
+				// total weight
+				totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
+
 
 				// cout << "eventWeight: " << eventWeight << endl;
 				// cout << "dimuonPtWeight: " << dimuonPtWeight << endl;
 				// cout << "dimuWeight_nominal: " << dimuWeight_nominal << endl;
 				// cout << "weightCS: " << weightCS << endl;
 				// cout << "totalWeightCS: " << totalWeightCS << endl;
-
+				hNominalEffLab->FillWeighted(allGood, totalWeightLab, cosThetaLab, phiLab, reco_QQ_pt);
 				hNominalEffCS->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
 				hNominalEffHX->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
 
@@ -678,6 +694,23 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				// cout << "Event " << iEvent << endl;
 				// cout << "systDown total weight CS: " << totalWeightCS << endl;
 				// cout << "systDown total weight HX: " << totalWeightHX << endl;
+				
+				// track + muID + trigger, stat up
+				dimuWeight_total_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexStatUp) * dimuTrigWeight_statUp;
+
+				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_total_statUp * weightCS;
+				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_total_statUp * weightHX;
+				hCS_total_statUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
+				hHX_total_statUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+
+				// track + muID + trigger, stat down
+				dimuWeight_total_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexStatDown) * dimuTrigWeight_statDown;
+
+				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_total_statDown * weightCS;
+				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_total_statDown * weightHX;
+				hCS_total_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
+				hHX_total_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+
 
 				TH3D* hPassed = (TH3D*)hNominalEffCS->GetPassedHistogram();
 
@@ -723,10 +756,10 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	/// display the nominal results
 
 	DrawEfficiencyMap(hEffCS2D, ptMin, ptMax, iState, isPhiFolded);
-	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, iState, false, true, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, iState, false, true, "CS", MuonAccName.Data(), isPhiFolded);
 
 	DrawEfficiencyMap(hEffHX2D, ptMin, ptMax, iState, isPhiFolded);
-	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, iState, false, true, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, iState, false, true, "HX", MuonAccName.Data(), isPhiFolded);
 
 	/// compute the systematics in this macro since we have all the ingredients for that
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
@@ -789,8 +822,10 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	
 	TFile outputFile(outputFileName, "UPDATE");
 
+	hNominalEffLab->Write();
 	hNominalEffCS->Write();
 	hNominalEffHX->Write();
+	
 	hSystCS3D->Write();
 	hSystHX3D->Write();
 
@@ -802,6 +837,15 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	hCS_trig_systDown->Write();
 	hCS_total_systUp->Write();
 	hCS_total_systDown->Write();
+
+	hCS_trk_statUp->Write();
+	hCS_trk_statDown->Write();
+	hCS_muId_statUp->Write();
+	hCS_muId_statDown->Write();
+	hCS_trig_statUp->Write();
+	hCS_trig_statDown->Write();
+	hCS_total_statUp->Write();
+	hCS_total_statDown->Write();
 	
 	hHX_trk_systUp->Write();
 	hHX_trk_systDown->Write();
@@ -811,6 +855,15 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	hHX_trig_systDown->Write();
 	hHX_total_systUp->Write();
 	hHX_total_systDown->Write();
+
+	hHX_trk_statUp->Write();
+	hHX_trk_statDown->Write();
+	hHX_muId_statUp->Write();
+	hHX_muId_statDown->Write();
+	hHX_trig_statUp->Write();
+	hHX_trig_statDown->Write();
+	hHX_total_statUp->Write();
+	hHX_total_statDown->Write();
 
 	hSystHX2D->Write();
 
