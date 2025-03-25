@@ -120,8 +120,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
 
 	// (cos theta, phi, pT) 3D maps for final acceptance correction, variable size binning for the stats
+	TEfficiency* accMatrixLab = TEfficiency3D(NominalTEfficiency3DName("Lab", lambdaTheta, lambdaPhi, lambdaThetaPhi), "Lab", iState, isPhiFolded);
 	TEfficiency* accMatrixCS = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState, isPhiFolded);
-
 	TEfficiency* accMatrixHX = TEfficiency3D(NominalTEfficiency3DName("HX", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState, isPhiFolded);
 
 	// (cos theta, phi) 2D distribution maps for Lab, CS and HX frames
@@ -147,7 +147,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 
 	Bool_t withinAcceptance;
 
-	Double_t cosThetaCS, phiCS, cosThetaHX, phiHX;
+	Double_t cosThetaCS, phiCS, cosThetaHX, phiHX, cosThetaLab, phiLab;
 
 	Float_t weightCS = 0, weightHX = 0;
 
@@ -174,9 +174,12 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
 			//withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV);
+			// withinAcceptance = gen_mumi_LV->Pt() > 3.5 && gen_mupl_LV->Pt() > 3.5; MuonAccName = "_test";
+			// withinAcceptance = fabs(gen_mumi_LV->Eta()) < 2.4 && fabs(gen_mupl_LV->Eta()) < 2.4;
 			if (accName == TString("MuonUpsilonTriggerAcc")) {withinAcceptance = MuonUpsilonTriggerAcc(*gen_mupl_LV) && MuonUpsilonTriggerAcc(*gen_mumi_LV); MuonAccName = "_TriggerAcc";}
 			else if (accName == TString("MuonWithin2018PbPbAcc")) {withinAcceptance = MuonWithin2018PbPbAcc(*gen_mupl_LV) && MuonWithin2018PbPbAcc(*gen_mumi_LV); MuonAccName = "_2018Acc";}
 			else if (accName == TString("MuonSimpleAcc")) {withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV); MuonAccName = "_SimpleAcc";}
+			else if (accName == TString("test")) {withinAcceptance = fabs(gen_mumi_LV->Eta()) < 2.4 && fabs(gen_mupl_LV->Eta()) < 2.4; MuonAccName = "_test";}
 			else {
 				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
 				return;
@@ -185,6 +188,14 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			// cout << "withinAcceptance: " << withinAcceptance << endl;
 			// cout << "gen_QQ_LV->Pt(): " << gen_QQ_LV->Pt() << endl;
 			// cout << "accName: " << accName << endl;
+
+			TVector3 muPlus_Lab = gen_mupl_LV->Vect();
+
+			cosThetaLab = muPlus_Lab.CosTheta();
+			if (isPhiFolded == kTRUE) phiLab = fabs(muPlus_Lab.Phi() * 180 / TMath::Pi());
+			else phiLab = muPlus_Lab.Phi() * 180 / TMath::Pi();
+
+			accMatrixLab->FillWeighted(withinAcceptance, 1, cosThetaLab, phiLab, gen_QQ_LV->Pt());
 
 			// Reference frame transformations
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
@@ -276,6 +287,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 
 	TFile outputFile(outputFileName, "UPDATE");
 
+	accMatrixLab->Write();
 	accMatrixCS->Write();
 	accMatrixHX->Write();
 
