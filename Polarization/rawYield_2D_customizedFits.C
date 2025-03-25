@@ -278,11 +278,11 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 	display2DMapContents(weightMap, nCosThetaBins, nPhiBins, kFALSE);
 
-	TPaveText* kinematicsText = new TPaveText(0.15, 0.79, 0.77, 0.88, "NDCNB");
+	TPaveText* kinematicsText = new TPaveText(0.15, 0.79, 0.77, 0.99, "NDCNB");
 	kinematicsText->SetFillColor(4000);
 	kinematicsText->SetBorderSize(0);
 	kinematicsText->AddText(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
-	kinematicsText->SetAllWith("", "align", 12);
+	kinematicsText->SetAllWith("", "align", 31);
 	kinematicsText->Draw("SAME");
 
 	weightCanvas->Modified();
@@ -300,7 +300,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 	// yieldCanvas->SetLogz(); // useful when the one of the bins has an exceptionally high value :')
 
-	TPaveText* kinematicsText_2D = new TPaveText(0.17, 0.78, 0.79, 0.88, "NDCNB");
+	TPaveText* kinematicsText_2D = new TPaveText(0.17, 0.83, 0.79, 0.93, "NDCNB");
 	kinematicsText_2D ->SetFillColor(4000);
 	kinematicsText_2D ->SetBorderSize(0);
 	kinematicsText_2D ->AddText(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
@@ -358,6 +358,9 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 		double chi2 = fitResults->Chi2();
 		double nDOF = nCosThetaBins * nPhiBins - polarFunc2D->GetNpar();
+		double reducedChi2 = chi2 / nDOF;
+
+		double pValue = 1 - TMath::Prob(reducedChi2, nDOF);
 
 		double normVal = fitResults->Parameter(0);
 		double normErr = fitResults->ParError(0);
@@ -433,11 +436,15 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 		resultTextLeft->Draw();
 
 		TLatex textChi2;
-		textChi2.SetTextAlign(12);
+		textChi2.SetTextAlign(22);
+		// textChi2.SetTextAlign(12);
 		textChi2.SetTextSize(0.04);
-		textChi2.DrawLatexNDC(0.74, 0.044, Form("#chi^{2} / n_{dof} = %.2f", chi2 / nDOF));
+		textChi2.DrawLatexNDC(0.68, 0.044, Form("#chi^{2} / n_{dof} = %.2f, p-value = %.5f", chi2 / nDOF, pValue));
 
 		correctedMapCanvas->SetTopMargin(0.2);
+
+		gPad->Modified();
+		gPad->Update();
 	}
 
 	gPad->Update();
@@ -450,7 +457,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	statHighAccCosThetaPhi->GetZaxis()->SetTitle("stat uncer high of acceptance");
 	statHighAccCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	kinematicsText->Draw("SAME");
+	kinematicsText_2D->Draw("SAME");
 
 	display2DMapContents(statHighAccCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
@@ -463,7 +470,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	statLowAccCosThetaPhi->GetZaxis()->SetTitle("stat uncer low of acceptance");
 	statLowAccCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	kinematicsText->Draw("SAME");
+	kinematicsText_2D->Draw("SAME");
 
 	display2DMapContents(statLowAccCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
@@ -476,7 +483,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	statHighEffCosThetaPhi->GetZaxis()->SetTitle("stat uncer high of efficiency");
 	statHighEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	kinematicsText->Draw("SAME");
+	kinematicsText_2D->Draw("SAME");
 
 	display2DMapContents(statHighEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
@@ -489,7 +496,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	statLowEffCosThetaPhi->GetZaxis()->SetTitle("stat uncer low of efficiency");
 	statLowEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	kinematicsText->Draw("SAME");
+	kinematicsText_2D->Draw("SAME");
 
 	display2DMapContents(statLowEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
@@ -502,7 +509,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	relSystEffCosThetaPhi->GetZaxis()->SetTitle("syst uncer of efficiency (muon SF)");
 	relSystEffCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	kinematicsText->Draw("SAME");
+	kinematicsText_2D->Draw("SAME");
 
 	display2DMapContents(relSystEffCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
@@ -515,7 +522,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	yield1SUncCosThetaPhi->GetZaxis()->SetTitle("raw yield statistical uncertainty");
 	//yield1SUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	kinematicsText->Draw("SAME");
+	kinematicsText_2D->Draw("SAME");
 
 	display2DMapContents(yield1SUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
@@ -529,7 +536,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	totalRelUncCosThetaPhi->GetZaxis()->SetTitle("total uncertainty");
 	totalRelUncCosThetaPhi->GetZaxis()->SetRangeUser(0, 1);
 
-	kinematicsText->Draw("SAME");
+	kinematicsText_2D->Draw("SAME");
 
 	display2DMapContents(totalRelUncCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
 
