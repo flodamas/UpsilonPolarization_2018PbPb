@@ -32,7 +32,7 @@ RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 3
 	return reducedDataset;
 }
 
-void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* signalShapeName = "SymDSCB",  const char* bkgShapeName = "ChebychevOrder2") {
+void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* signalShapeName = "SymDSCB",  const char* bkgShapeName = "ExpTimesErr") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -70,11 +70,13 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true);
+	// BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true);
+	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, false); // not fix sigma to MC
 
 	RooAddPdf invMassModel = *((RooAddPdf*)wspace.pdf("invMassModel"));
 	invMassModel.setNormRange("MassFitRange");
 
+	/// fit!!!
 	auto* fitResult = RawInvariantMassFit(wspace, reducedDataset);
 
 	// save the invariant mass distribution fit for further checks
@@ -92,15 +94,15 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
 
-	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, 0.63, 0.695, 0.94, 0.95));  // (HX, 2to6, -0.42to-0.14, 60to120): 0.67, 0.70, 0.94, 0.95 // (HX, 12to20, 0.42to0.70, 60to120): 0.63, 0.695, 0.94, 0.95
+	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, 0.67, 0.70, 0.94, 0.95));  // (HX, 2to6, -0.42to-0.14, 60to120): 0.67, 0.70, 0.94, 0.95 // (HX, 12to20, 0.42to0.70, 60to120): 0.63, 0.695, 0.94, 0.95
 
 	if (!isPhiFolded)
 		frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 	else  
-		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, 0.605, 0.47, 0.945, 0.66, 32)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.595, 0.47, 0.945, 0.66 // (HX, 12to20, 0.42to0.70, 60to120): 0.605, 0.47, 0.945, 0.66
+		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, 0.595, 0.47, 0.945, 0.66, 32)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.595, 0.47, 0.945, 0.66, 32 // (HX, 12to20, 0.42to0.70, 60to120): 0.605, 0.47, 0.945, 0.66
 	
 	if (strcmp(signalShapeName, "SymDSCB") == 0)
-		frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2), 0.147, 0.58, 0.458, 0.85, 12)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.14, 0.07, 0.48, 0.35 // (HX, 12to20, 0.42to0.70, 60to120): 0.147, 0.70, 0.458, 0.95
+		frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2), 0.14, 0.07, 0.48, 0.35, 12)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.14, 0.07, 0.48, 0.35, 12 // (HX, 12to20, 0.42to0.70, 60to120): 0.147, 0.70, 0.458, 0.95
     else    
         frame->addObject(FitResultText(*wspace.var("yield1S"), 0, *wspace.var("yield2S"), 0));
 
@@ -108,10 +110,10 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	gPad->RedrawAxis();
 
-	// /// add 10^3 to the top left corner of the canvas
-	// TLatex *latex = new TLatex();
-	// latex->SetTextSize(0.052);  // Adjust the text size as needed
-	// latex->DrawLatexNDC(0.0515, 0.955, "10^{3}#times");  // (x, y) coordinates in normalized device coordinates
+	/// add 10^3 to the top left corner of the canvas
+	TLatex *latex = new TLatex();
+	latex->SetTextSize(0.052);  // Adjust the text size as needed
+	latex->DrawLatexNDC(0.0515, 0.955, "10^{3}#times");  // (x, y) coordinates in normalized device coordinates
 
 	// pull distribution
 	massCanvas->cd();
@@ -135,14 +137,20 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	const char* totalFitModelName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	SaveRawSignalYields(signalYields, totalFitModelName);
+	// SaveRawSignalYields(signalYields, totalFitModelName);
 
-	SaveRawFitResults(fitResult, totalFitModelName);
+	// SaveRawFitResults(fitResult, totalFitModelName);
 
-	SaveRawDataFitCanvas(massCanvas, totalFitModelName);
+	// SaveRawDataFitCanvas(massCanvas, totalFitModelName);
+
+	SaveRawSignalYields(signalYields, totalFitModelName, Form("%s_woSigmaConstraints", gMuonAccName));
+
+	SaveRawFitResults(fitResult, totalFitModelName, Form("%s_woSigmaConstraints", gMuonAccName));
+
+	SaveRawDataFitCanvas(massCanvas, totalFitModelName, Form("%s_woSigmaConstraints", gMuonAccName));
 }
 
-void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ChebychevOrder2") { // possible bkgShapeName: ExpTimesErr, ChebychevOrderN, Argus, Exponential
+void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr") { // possible bkgShapeName: ExpTimesErr, ChebychevOrderN, Argus, Exponential
 
 	std::vector<Double_t> cosThetaEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
