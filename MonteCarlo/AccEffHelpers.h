@@ -452,7 +452,7 @@ void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nP
 			}
 			else {
 				latex.SetTextSize(0.05);
-				latex.DrawLatex(x, y, Form("%.2f", effVal)); 
+				latex.DrawLatex(x, y, Form("%.3f", effVal)); 
 			}
 		}
 	}
@@ -525,7 +525,7 @@ void displayYields(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nPhiBins
 
 // Draw 1D efficincy plot
 
-void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t isCosTheta = kTRUE, const char* refFrameName = "CS", Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, const char* extraString = "", Bool_t isPhiFolded = kTRUE) {
+void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t isCosTheta = kTRUE, const char* refFrameName = "CS", const char* extraString = "", Bool_t isPhiFolded = kTRUE) {
 	TCanvas* canvas = new TCanvas(effHist->GetName(), "", 600, 600);
 	canvas->SetRightMargin(0.05);
 
