@@ -64,6 +64,11 @@ const float gPhiMin = 0;
 const float gPhiMax = 180;
 const double gPhiBinning[NPhiBins + 1] = {0, 60, 120, 180};
 
+const int NFullPhiBins = 6;
+const float gFullPhiMin = -180;
+const float gFullPhiMax = 180;
+const double gFullPhiBinning[NFullPhiBins + 1] = {-180, -120, -60, 0, 60, 120, 180};
+
 // select one and comment out the others!!
 /*
 const int gPtMin = 0;
