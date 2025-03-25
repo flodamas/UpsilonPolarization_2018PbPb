@@ -21,7 +21,7 @@
 #include "../ReferenceFrameTransform/Transformations.h"
 
 
-void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
+void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -65,7 +65,7 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	cout << accFileName << " opened" << endl;
 	
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
-	// cout << "Nominal map name: " << nominalMapName << endl;
+	cout << "Nominal map name: " << nominalMapName << endl;
 
 	if (!accMap) {
     	std::cerr << "Error: accMap is null." << std::endl;
@@ -84,7 +84,7 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	TFile* efficiencyFile = openFile(effFileName);
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
-	// cout << "Nominal map name: " << nominalMapName << endl;
+	cout << "Nominal map name: " << nominalMapName << endl;
 
 	if (!effMap) {
     	std::cerr << "Error: effMap is null." << std::endl;
