@@ -12,6 +12,7 @@ void SaveMyCanvas(TCanvas* canv, const char* name) {
 	canv->RedrawAxis();
 	gSystem->mkdir("Figures/", kTRUE);
 	canv->SaveAs(Form("Figures/%s.pdf", name), "RECREATE");
+	canv->SaveAs(Form("Figures/%s.png", name), "RECREATE");
 	//canv->Close();
 }
 
