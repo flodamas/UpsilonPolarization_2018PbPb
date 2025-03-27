@@ -127,7 +127,8 @@ void accEffMaps_3Dto2D_scan(const char* refFrameName = "CS", Bool_t isPhiFolded 
 
 	for (int ipt = 0; ipt < NptBins; ipt++) {
 		// accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 20, -1, 1, 23, -180, 280, 1, isPhiFolded, accName);
-		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 5, -0.7, 0.7, 7, -180, 240, 1, isPhiFolded, accName);
+		// accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 5, -0.7, 0.7, 7, -180, 240, 1, isPhiFolded, accName);
+		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, isPhiFolded, accName);
 	}
 
 }
