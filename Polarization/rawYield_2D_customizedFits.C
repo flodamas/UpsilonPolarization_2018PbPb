@@ -358,9 +358,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 		double chi2 = fitResults->Chi2();
 		double nDOF = nCosThetaBins * nPhiBins - polarFunc2D->GetNpar();
-		double reducedChi2 = chi2 / nDOF;
 
-		double pValue = 1 - TMath::Prob(reducedChi2, nDOF);
+		double pValue = TMath::Prob(chi2, nDOF); // https://root.cern.ch/doc/master/namespaceTMath.html#a3aba6abaf2bc605680c7be8fc5fd98aa
 
 		double normVal = fitResults->Parameter(0);
 		double normErr = fitResults->ParError(0);
@@ -439,7 +438,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 		textChi2.SetTextAlign(22);
 		// textChi2.SetTextAlign(12);
 		textChi2.SetTextSize(0.04);
-		textChi2.DrawLatexNDC(0.68, 0.044, Form("#chi^{2} / n_{dof} = %.2f, p-value = %.5f", chi2 / nDOF, pValue));
+		textChi2.DrawLatexNDC(0.72, 0.044, Form("#chi^{2} / n_{dof} = %.2f, p-value = %.2f", chi2 / nDOF, pValue));
 
 		correctedMapCanvas->SetTopMargin(0.2);
 
@@ -594,8 +593,6 @@ void scanRawYield_2D_customizedFits(const char* refFrameName = "CS") {
             for (Int_t idx = 0; idx < 2; idx++) {
                 if (idx == 0) rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr"); // 2D plot
                 else rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr"); // LEGO plot + fit
-                // if (idx == 0) rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr", chooseYield);
-                // else rawYield_2D_customizedFits_sysUnc(0, 2, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr", chooseYield);
             }
     }
 
