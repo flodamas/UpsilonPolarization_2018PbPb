@@ -21,6 +21,6 @@
         & $12 < \pt < 20$ & $-0.010 \pm 0.122 \pm 0.002$ & $-0.026 \pm 0.079 \pm 0.008$ \\
         \hline
         \end{tabular}
-    \caption{Polarization parameters measured for each pt range for both helicity and Collins-Soper frames. The first uncertainty is statistical while the second is systematic.}
+    \caption{Polarization parameters measured for each \pt range for both helicity and Collins-Soper frames. The first uncertainty is statistical while the second is systematic.}
     \label{tab:pola_results}
 \end{table}
