@@ -86,3 +86,22 @@ void invariantMass(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* refFrameNa
 
 	SaveMyCanvas(canvas, totalFitModelName);
 }
+
+void scanInvariantMass() {
+
+	int NRefFrames = 2;
+
+	/// loop over the pt bins
+	for (Int_t ptIdx = 3; ptIdx < NPtBins; ptIdx++) {
+		/// loop over the cosTheta bins
+		for (Int_t cosThetaIdx = 0; cosThetaIdx < NCosThetaBins; cosThetaIdx++) {
+			/// loop over the phi bins
+			for (Int_t phiIdx = 0; phiIdx < NPhiBins; phiIdx++) {
+				/// loop over the reference frames
+				for (Int_t refFrameIdx = 0; refFrameIdx < NRefFrames; refFrameIdx++) {
+					invariantMass(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameIdx ? "HX":"CS", gCosThetaBinning[cosThetaIdx], gCosThetaBinning[cosThetaIdx + 1], gPhiBinning[phiIdx], gPhiBinning[phiIdx + 1], MassBinMin, MassBinMax);
+				}
+			}
+		}
+	}
+}
