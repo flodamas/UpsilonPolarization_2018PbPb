@@ -32,14 +32,26 @@ void calculateDelLambda(const char* bkgShapeName = "ExpTimesErr", const Int_t nC
         "rootFit_SysFitModels_altSig_nominal",
         "rootFit_SysFitModels_altBkg_nominal",
         "rootFit_SysFitModels_nominal_nominal",
+        // "rootFit_SysFitModels_altSig_nominalEff_nominalAcc",
+        // "rootFit_SysFitModels_altBkg_nominalEff_nominalAcc",
+        // "rootFit_SysFitModels_nominal_nominalEff_nominalAcc",
+        
         // "rootFit_SysFitModels__muIDSysDown",
         // "rootFit_SysFitModels__muIDSysUp",
         // "rootFit_SysFitModels__trigSysDown",
         // "rootFit_SysFitModels__trigSysUp",
         // "rootFit_SysFitModels__trkSysDown",
         // "rootFit_SysFitModels__trkSysUp",
-        "rootFit_SysFitModels__totalSysUp",
-        "rootFit_SysFitModels__totalSysDown",
+        
+        // "rootFit_SysFitModels__totalSysUp",
+        // "rootFit_SysFitModels__totalSysDown",
+        "rootFit_SysFitModels_totalSysUpEff_nominalAcc",
+        "rootFit_SysFitModels_totalSysDownEff_nominalAcc",
+
+        "rootFit_SysFitModels_nominalEff_statUpAcc",
+        "rootFit_SysFitModels_nominalEff_statDownAcc",
+        "rootFit_SysFitModels_statUpEff_nominalAcc",
+        "rootFit_SysFitModels_statDownEff_nominalAcc",
     };
 
     /// arrays to store the systematic uncertainties and calculate the total uncertainty
@@ -49,7 +61,7 @@ void calculateDelLambda(const char* bkgShapeName = "ExpTimesErr", const Int_t nC
     double totalUncLambdaTilde[NPtBins][NRefFrame] = {0};
 
     /// output file for the systematic uncertainty table
-    const char* outFileName = "systematic_errors.txt";
+    const char* outFileName = "systematic_errors_latex_table.txt";
     std::ofstream outFile(outFileName);
 
     /// write table headers for the systematic uncertainty table
@@ -67,7 +79,7 @@ void calculateDelLambda(const char* bkgShapeName = "ExpTimesErr", const Int_t nC
     outFile << "        \\hline" << std::endl;
 
     /// loop over the systematic uncertainty types
-    for (Int_t index = 0 ; index < 5; index++) {
+    for (Int_t index = 0 ; index < 9; index++) {
 
         /// set the first column of the table for the systematic uncertainty source
         if (index == 0) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Alternative \\\\ signal shape\\end{tabular}}" << std::endl;
@@ -75,9 +87,13 @@ void calculateDelLambda(const char* bkgShapeName = "ExpTimesErr", const Int_t nC
         if (index == 2) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Background peak \\\\ under signal peak\\end{tabular}}" << std::endl;
         if (index == 3) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Muon scale factor \\\\ systematic up\\end{tabular}}" << std::endl;
         if (index == 4) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Muon scale factor \\\\ systematic down\\end{tabular}}" << std::endl;
+        if (index == 5) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Acceptance \\\\ statistical up\\end{tabular}}" << std::endl;
+        if (index == 6) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Acceptance \\\\ statistical down\\end{tabular}}" << std::endl;
+        if (index == 7) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Efficiency \\\\ statistical up\\end{tabular}}" << std::endl;
+        if (index == 8) outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Efficiency \\\\ statistical down\\end{tabular}}" << std::endl;
 
         /// loop over the pt bins
-        for (Int_t ibin = 0; ibin < NPtBins; ibin++) {
+        for (Int_t ibin = 1; ibin < NPtBins; ibin++) {
 
             /// set the pt bin range (second column of the table)
             outFile << "            & " << gPtBinning[ibin] << "-" << gPtBinning[ibin + 1];
@@ -172,12 +188,12 @@ void calculateDelLambda(const char* bkgShapeName = "ExpTimesErr", const Int_t nC
         }
 
         /// write the total uncertainty for the systematic variations
-        if (index == 4){
+        if (index == 8){
             
             outFile << "        \\hline" << std::endl;
-            outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Total \\end{tabular}}" << std::endl;
+            outFile << "        \\multirow{4}*{\\begin{tabular}[l]{@{}c@{}}Total systematic \\\\ uncertainty \\end{tabular}}" << std::endl;
 
-            for (Int_t ibin = 0; ibin < NPtBins; ibin++) {
+            for (Int_t ibin = 1; ibin < NPtBins; ibin++) {
                  outFile << "            & " << gPtBinning[ibin] << "-" << gPtBinning[ibin + 1] ;
 
                 for (Int_t iRefFrame = 0; iRefFrame < NRefFrame; iRefFrame++) {
