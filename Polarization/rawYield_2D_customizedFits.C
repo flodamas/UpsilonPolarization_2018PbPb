@@ -248,7 +248,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 			standardCorrectedMap->SetBinContent(iCosTheta + 1, iPhi + 1, yield1SVal * weight);
 
 			/// set the bin error of the corrected yield
-			standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
+			// standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
+			standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, yield1SUnc * weight);
 
 			// fill uncertainty histograms
 			relSystEffCosThetaPhi->SetBinContent(iCosTheta + 1, iPhi + 1, relSystUnc);
