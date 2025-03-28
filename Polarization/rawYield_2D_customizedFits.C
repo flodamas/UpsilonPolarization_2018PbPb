@@ -310,7 +310,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	if (LEGOplot) kinematicsText->Draw("SAME");
 
 	else if (!LEGOplot) {
-		display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE);
+		// display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE);
 		kinematicsText_2D ->Draw("SAME");
 	}
 
@@ -344,7 +344,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	if (LEGOplot) kinematicsText->Draw("SAME");
 
 	else if (!LEGOplot) {
-		display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kTRUE);
+		// display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kTRUE);
 		kinematicsText_2D->Draw("SAME");
 	}
 
