@@ -1,0 +1,68 @@
+\begin{table}[htpb]
+    \centering
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{|c|c|c|c|c|c|c|c|}
+        \hline
+        \multirow{2}{*}{\begin{tabular}{@{}c@{}}Uncertainty \\ source\end{tabular}} & 
+        \multirow{2}{*}{\pt (\GeVc)} & 
+        \multicolumn{3}{c|}{CS frame} & \multicolumn{3}{c|}{HX frame} \\ 
+        \cline{3-8}
+        && $\Delta\lambda_{\theta}$ & $\Delta\lambda_{\varphi}$ & $\Delta\lambda_{\theta\varphi}$ & $\Delta\lambda_{\theta}$ & $\Delta\lambda_{\varphi}$ & $\Delta\lambda_{\theta\varphi}$ \\ 
+        \hline
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Alternative \\ signal shape\end{tabular}}
+            & 2-6 & \num{-0.07842000} & \num{-0.00016900} & \num{0.00170000} & \num{-0.03552800} & \num{0.00526400} & \num{-0.00241500} \\ 
+            & 6-12 & \num{0.02702000} & \num{-0.02587190} & \num{-0.00153000} & \num{-0.04614200} & \num{-0.00319540} & \num{-0.00774230} \\ 
+            & 12-20 & \num{-0.03063540} & \num{-0.00617100} & \num{0.00030836} & \num{-0.00930100} & \num{-0.00351950} & \num{-0.00754270} \\ 
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Alternative \\ background shape\end{tabular}}
+            & 2-6 & \num{0.16449000} & \num{0.02248200} & \num{-0.00183000} & \num{0.16043660} & \num{0.00148100} & \num{-0.00205500} \\ 
+            & 6-12 & \num{0.01029000} & \num{-0.01511840} & \num{-0.02505000} & \num{0.13198370} & \num{-0.05251360} & \num{-0.03057050} \\ 
+            & 12-20 & \num{0.03005750} & \num{-0.02491300} & \num{0.00179426} & \num{0.04041550} & \num{-0.00932730} & \num{-0.00121230} \\ 
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Background peak \\ under signal peak\end{tabular}}
+            & 2-6 & \num{-0.08961000} & \num{-0.00018200} & \num{0.00486000} & \num{-0.02126400} & \num{-0.00039900} & \num{0.00010600} \\ 
+            & 6-12 & \num{0.01771000} & \num{-0.02603350} & \num{0.00249000} & \num{-0.03824000} & \num{-0.00938810} & \num{-0.00724210} \\ 
+            & 12-20 & \num{-0.02943190} & \num{-0.01037300} & \num{0.00762526} & \num{-0.01186200} & \num{-0.00698280} & \num{-0.00514850} \\ 
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Muon scale factor \\ systematic up\end{tabular}}
+            & 2-6 & \num{0.00472000} & \num{0.00014700} & \num{0.00045000} & \num{0.00386490} & \num{0.00021900} & \num{-0.00036800} \\ 
+            & 6-12 & \num{-0.00101000} & \num{0.00092970} & \num{0.00009000} & \num{0.00224900} & \num{0.00004950} & \num{-0.00009580} \\ 
+            & 12-20 & \num{-0.00040410} & \num{0.00053800} & \num{-0.00004354} & \num{0.00112000} & \num{-0.00020100} & \num{0.00005270} \\ 
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Muon scale factor \\ systematic down\end{tabular}}
+            & 2-6 & \num{-0.00482000} & \num{-0.00012000} & \num{-0.00045000} & \num{-0.00368320} & \num{-0.00024200} & \num{0.00041200} \\ 
+            & 6-12 & \num{0.00106000} & \num{-0.00093230} & \num{-0.00007000} & \num{-0.00226300} & \num{-0.00004530} & \num{0.00013810} \\ 
+            & 12-20 & \num{0.00043770} & \num{-0.00055300} & \num{0.00004256} & \num{-0.00111200} & \num{0.00020450} & \num{-0.00005790} \\ 
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Acceptance \\ statistical up\end{tabular}}
+            & 2-6 & \num{0.00778000} & \num{0.00202500} & \num{0.00016000} & \num{0.00539800} & \num{0.00233700} & \num{-0.00006200} \\ 
+            & 6-12 & \num{0.00153000} & \num{0.00670990} & \num{0.00126000} & \num{0.00251700} & \num{0.00405700} & \num{-0.00000320} \\ 
+            & 12-20 & \num{-0.00336660} & \num{0.01236100} & \num{0.00011856} & \num{0.00747700} & \num{0.00493200} & \num{-0.00022100} \\ 
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Acceptance \\ statistical down\end{tabular}}
+            & 2-6 & \num{-0.00776000} & \num{-0.00201500} & \num{-0.00017000} & \num{-0.00522040} & \num{-0.00236600} & \num{0.00011500} \\ 
+            & 6-12 & \num{-0.00149000} & \num{-0.00665050} & \num{-0.00127000} & \num{-0.00236400} & \num{-0.00402980} & \num{0.00003310} \\ 
+            & 12-20 & \num{0.00349220} & \num{-0.01229300} & \num{-0.00010131} & \num{-0.00739500} & \num{-0.00494090} & \num{0.00023680} \\ 
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Efficiency \\ statistical up\end{tabular}}
+            & 2-6 & \num{0.00041000} & \num{0.00007400} & \num{0.00000000} & \num{0.00049570} & \num{0.00006300} & \num{0.00001500} \\ 
+            & 6-12 & \num{0.00002000} & \num{0.00027960} & \num{0.00004000} & \num{0.00031500} & \num{0.00012540} & \num{-0.00000050} \\ 
+            & 12-20 & \num{-0.00027740} & \num{0.00046100} & \num{0.00000038} & \num{0.00055600} & \num{0.00009840} & \num{-0.00002070} \\ 
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Efficiency \\ statistical down\end{tabular}}
+            & 2-6 & \num{-0.00033000} & \num{-0.00006700} & \num{-0.00002000} & \num{-0.00032030} & \num{-0.00009600} & \num{0.00002000} \\ 
+            & 6-12 & \num{-0.00005000} & \num{-0.00026170} & \num{-0.00004000} & \num{-0.00028600} & \num{-0.00011850} & \num{0.00004260} \\ 
+            & 12-20 & \num{0.00036090} & \num{-0.00049300} & \num{-0.00001377} & \num{-0.00052800} & \num{-0.00009650} & \num{0.00002240} \\ 
+        \hline
+        \multirow{4}*{\begin{tabular}[l]{@{}c@{}}Total \end{tabular}}
+            & 0-2 & \num{0} & \num{0} & \num{0} & \num{0} & \num{0} & \num{0} \\
+            & 2-6 & \num{0.18268331} & \num{0.022664415} & \num{0.002588204} & \num{0.16458245} & \num{0.0064095469} & \num{0.0032215077} \\
+            & 6-12 & \num{0.029028815} & \num{0.031449218} & \num{0.025160686} & \num{0.13989662} & \num{0.052920899} & \num{0.031536167} \\
+            & 12-20 & \num{0.043198062} & \num{0.031043547} & \num{0.0018282975} & \num{0.042820458} & \num{0.012174717} & \num{0.0076468274} \\
+        \hline
+        \end{tabular}
+    }
+    \caption{Summary of the systematic uncertainties.}
+    \label{tab:sysUnc}
+\end{table}
