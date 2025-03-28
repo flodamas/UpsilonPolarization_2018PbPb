@@ -22,7 +22,7 @@
 
 void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE, const char* defaultBkgShapeName = "ExpTimesErr") { //Chebychev
 	writeExtraText = true; // if extra text
-	extraText = "       Internal";
+	extraText = "       Preliminary";
 
 	using namespace RooFit;
 	//using namespace RooStats;
@@ -311,7 +311,19 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 	else if (!LEGOplot) {
 		// display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE);
-		kinematicsText_2D ->Draw("SAME");
+		// kinematicsText_2D ->Draw("SAME");
+		TLatex legend;
+		legend.SetTextAlign(22);
+		legend.SetTextSize(0.04);
+		legend.DrawLatexNDC(.48, .86, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+		// if (strcmp(extraString, "_TriggerAcc") == 0)
+		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+		// else if (strcmp(extraString, "_SimpleAcc") == 0)
+		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+		// else if (strcmp(extraString, "_2018PbPbAcc") == 0)
+		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+	
 	}
 
 	yieldCanvas->Modified();
@@ -345,7 +357,19 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 	else if (!LEGOplot) {
 		// display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kTRUE);
-		kinematicsText_2D->Draw("SAME");
+		// kinematicsText_2D->Draw("SAME");
+		TLatex legend;
+		legend.SetTextAlign(22);
+		legend.SetTextSize(0.04);
+		legend.DrawLatexNDC(.48, .86, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+		// if (strcmp(extraString, "_TriggerAcc") == 0)
+		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+		// else if (strcmp(extraString, "_SimpleAcc") == 0)
+		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+		// else if (strcmp(extraString, "_2018PbPbAcc") == 0)
+		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+	
 	}
 
 	/// fit!!!
