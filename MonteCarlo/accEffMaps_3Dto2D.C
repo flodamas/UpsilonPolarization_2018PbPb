@@ -112,9 +112,9 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	// draw acc and eff histograms to check if the rebinning works well
  	// (last five variables: isAcc, displayValues, displayErrors, extraString, isPhiFolded)
-	DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kTRUE, kTRUE, MuonAccName.Data(), isPhiFolded);
+	DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kFALSE, kFALSE, MuonAccName.Data(), isPhiFolded);
 
-	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kTRUE, kTRUE, MuonAccName.Data(), isPhiFolded);
+	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kFALSE, kFALSE, MuonAccName.Data(), isPhiFolded);
  	
 	// (last five variables: isAcc, displayEffValues, displayEffErrors, displayYieldValues, extraString, isPhiFolded)
 	DrawEffxAcc2DHist(accMapCosThetaPhi, effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded);
