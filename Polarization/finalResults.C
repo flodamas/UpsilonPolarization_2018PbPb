@@ -41,6 +41,23 @@ void createSysErrorBox(TGraphAsymmErrors* gSys, const char* lineColor = "#A0B1BA
 	}
 }
 
+void createLegendBox(double x, double y, const char* color = "#A0B1BA") {
+	float dx = 0.5; // x half-width, as set in SetPointError
+	float dy = 0.08; // y half-width, as set in SetPointError
+	
+	TBox *fillbox = new TBox(x - dx, y - dy, x + dx, y + dy);
+	fillbox->SetFillColorAlpha(TColor::GetColor(color), 0.3);                // Outline color
+	fillbox->SetFillStyle(1001);
+	fillbox->Draw("same");
+
+	TBox *linebox = new TBox(x - dx, y - dy, x + dx, y + dy);
+	linebox->SetLineColorAlpha(TColor::GetColor(color), 0.9);  // Outline color
+	linebox->SetLineWidth(1);
+	linebox->Draw("same");
+
+	gPad->Update();
+}
+
 /// read the pp data from the BPH_11_023_SupplementalMaterial.txt file
 std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> readppData(std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> &gppDataTotErr) {
 
@@ -374,8 +391,18 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetTitleOffset(0.85);
 			}
 
-			if (iRefFrame == 0) {pad[iLambParam][iRefFrame]->SetLeftMargin(0.17); pad[iLambParam][iRefFrame]->SetRightMargin(0.0);}
-			else {pad[iLambParam][iRefFrame]->SetLeftMargin(0.0); pad[iLambParam][iRefFrame]->SetRightMargin(0.17);}
+			if (iRefFrame == 0) {
+				pad[iLambParam][iRefFrame]->SetLeftMargin(0.17); 
+				pad[iLambParam][iRefFrame]->SetRightMargin(0.0);
+				ppDataHists[iLambParam][iRefFrame][0]->SetMarkerStyle(33);
+				ppDataHists[iLambParam][iRefFrame][1]->SetMarkerStyle(33);
+			}
+			else {
+				pad[iLambParam][iRefFrame]->SetLeftMargin(0.0); 
+				pad[iLambParam][iRefFrame]->SetRightMargin(0.17);
+				ppDataHists[iLambParam][iRefFrame][0]->SetMarkerStyle(27);
+				ppDataHists[iLambParam][iRefFrame][1]->SetMarkerStyle(27);
+			}
 
 			pad[iLambParam][iRefFrame]->Draw();
 			pad[iLambParam][iRefFrame]->cd();
@@ -386,7 +413,7 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 
 			/// cosmetics
 			lambdaHist[iLambParam][iRefFrame]->SetMarkerStyle(20);
-			lambdaHist[iLambParam][iRefFrame]->SetMarkerSize(1.4);
+			lambdaHist[iLambParam][iRefFrame]->SetMarkerSize(1.1);
 			lambdaHist[iLambParam][iRefFrame]->SetMarkerColor(TColor::GetColor(color[iRefFrame]));
 			
 			lambdaHist[iLambParam][iRefFrame]->SetLineColor(TColor::GetColor(color[iRefFrame]));
@@ -397,14 +424,14 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 			lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-1.2, 1.2);
 			lambdaHist[iLambParam][iRefFrame]->GetYaxis()->CenterTitle();
 
-			ppDataHists[iLambParam][iRefFrame][0]->SetMarkerStyle(33);
-			ppDataHists[iLambParam][iRefFrame][0]->SetMarkerSize(1.8);
+			// ppDataHists[iLambParam][iRefFrame][0]->SetMarkerStyle(33);
+			ppDataHists[iLambParam][iRefFrame][0]->SetMarkerSize(1.6);
 			ppDataHists[iLambParam][iRefFrame][0]->SetMarkerColor(TColor::GetColor(ppDataColor[0]));
 			ppDataHists[iLambParam][iRefFrame][0]->SetLineColor(TColor::GetColor(ppDataColor[0]));
 			ppDataHists[iLambParam][iRefFrame][0]->SetLineWidth(2);
 
-			ppDataHists[iLambParam][iRefFrame][1]->SetMarkerStyle(27);
-			ppDataHists[iLambParam][iRefFrame][1]->SetMarkerSize(1.8);
+			// ppDataHists[iLambParam][iRefFrame][1]->SetMarkerStyle(27);
+			ppDataHists[iLambParam][iRefFrame][1]->SetMarkerSize(1.6);
 			ppDataHists[iLambParam][iRefFrame][1]->SetMarkerColor(TColor::GetColor(ppDataColor[1]));
 			ppDataHists[iLambParam][iRefFrame][1]->SetLineColor(TColor::GetColor(ppDataColor[1]));
 			// ppDataHists[iLambParam][iRefFrame][1]->SetLineStyle(kDashed);
@@ -453,21 +480,26 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 
 				if (iRefFrame == 0){
 					refFrameText.DrawLatexNDC(0.82, 0.8, "Collins-Soper"); 
-					text.DrawLatexNDC(.31, .8, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
+					text.DrawLatexNDC(.33, .8, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
 					CMS_lumi(pad[iLambParam][iRefFrame], "");
 
-					TLegend *legend = new TLegend(0.2, 0.05, 0.7, 0.3);
+					/// legend
+					TLegend *legend = new TLegend(0.25, 0.03, 0.7, 0.3);
 					legend->SetBorderSize(0);
 					legend->SetFillStyle(0);
-					legend->SetTextSize(0.05);
-					legend->AddEntry(lambdaHist[iLambParam][iRefFrame], "CMS, PbPb, #sqrt{S_{NN}} = 5.02TeV, 0 < |y| < 2.4, CS", "lp");
-					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0 < |y| < 0.6", "lp");
-					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0.6 < |y| < 1.2", "lp");
+					legend->SetTextSize(0.053);
+					legend->SetEntrySeparation(0.);
+					legend->AddEntry(lambdaHist[iLambParam][iRefFrame], "CMS, PbPb, #sqrt{S_{NN}} = 5.02TeV, 0 < |y| < 2.4, CS", "lep");
+					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0 < |y| < 0.6, CS", "lep");
+					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0.6 < |y| < 1.2, CS", "lep");
 					legend->Draw("SAME");
+
+					createLegendBox(3.35, -0.51, color[iRefFrame]);
+					createLegendBox(3.35, -0.75, ppDataColor[0]);
+					createLegendBox(3.35, -1, ppDataColor[1]);
 				}
 				else {
 					refFrameText.DrawLatexNDC(0.71, 0.8, "Helicity");
-					// CMS_lumi(pad[iLambParam][iRefFrame], gCMSLumiText, 10);
 					TLatex *tex = new TLatex(0.83,0.916,"PbPb 1.61 nb^{#minus1} (5.02 TeV)");
 					tex->SetNDC();
 					tex->SetTextAlign(31);
@@ -476,13 +508,19 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 					tex->SetLineWidth(2);
 					tex->Draw();
 
-					TLegend *legend = new TLegend(0.1, 0.05, 0.6, 0.2);
+					TLegend *legend = new TLegend(0.09, 0.03, 0.48, 0.3);
 					legend->SetBorderSize(0);
 					legend->SetFillStyle(0);
-					legend->SetTextSize(0.05);
-					legend->AddEntry(lambdaHist[iLambParam][iRefFrame], "CMS, PbPb, #sqrt{S_{NN}} = 5.02TeV, 0 < |y| < 2.4, HX", "lp");
+					legend->SetTextAlign(12);
+					legend->SetTextSize(0.053);
+					legend->AddEntry(lambdaHist[iLambParam][iRefFrame], "CMS, PbPb, #sqrt{S_{NN}} = 5.02TeV, 0 < |y| < 2.4, HX", "lep");
+					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0 < |y| < 0.6, HX", "lep");
+					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0.6 < |y| < 1.2, HX", "lep");
 					legend->Draw("SAME");
 
+					createLegendBox(3.35, -0.51, color[iRefFrame]);
+					createLegendBox(3.35, -0.75, ppDataColor[0]);
+					createLegendBox(3.35, -1, ppDataColor[1]);
 				}
 			}
 
