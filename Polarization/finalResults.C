@@ -84,10 +84,6 @@ std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> readppData(std::vector
 	int nPtBins;
 	std::vector<double> pTBinning;
 
-	// const int nPtBins = 5;
-	// double pTBinning[nPtBins + 1] = {10, 12, 16, 20, 30, 50};
-	// const int nPtBins = 2; // for QM poster
-	// double pTBinning[nPtBins + 1] = {12, 16, 20}; // for QM poster
 	if (QMPoster) {
 		nPtBins = 2;
 		pTBinning = {12, 16, 20};
@@ -149,8 +145,6 @@ std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> readppData(std::vector
 				isY1S = kTRUE;
 				ppDataHists[polarParamIdx][refFrameIdx][0] = new TGraphAsymmErrors(nPtBins);
 				ppDataHists[polarParamIdx][refFrameIdx][1] = new TGraphAsymmErrors(nPtBins);
-				// ppDataHists[polarParamIdx][refFrameIdx][0] = new TH1D(Form("ppData_%s_%s_y0to0.6", polarParamName.Data(), refFrameName.Data()), "", nPtBins, pTBinning);
-				// ppDataHists[polarParamIdx][refFrameIdx][1] = new TH1D(Form("ppData_%s_%s_y0.6to1.2", polarParamName.Data(), refFrameName.Data()), "", nPtBins, pTBinning);
 
 				gppDataTotErr[polarParamIdx][refFrameIdx][0] = new TGraphAsymmErrors(nPtBins);
 				gppDataTotErr[polarParamIdx][refFrameIdx][1] = new TGraphAsymmErrors(nPtBins);
