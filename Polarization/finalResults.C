@@ -41,10 +41,19 @@ void createSysErrorBox(TGraphAsymmErrors* gSys, const char* lineColor = "#A0B1BA
 	}
 }
 
-void createLegendBox(double x, double y, const char* color = "#A0B1BA") {
-	float dx = 0.5; // x half-width, as set in SetPointError
-	float dy = 0.08; // y half-width, as set in SetPointError
+void createLegendBox(double x, double y, const char* color = "#A0B1BA", Bool_t QMPoster = kFALSE) {
+	float dx; // x half-width, as set in SetPointError
+	float dy; // y half-width, as set in SetPointError
 	
+	if (QMPoster) {
+		dx = 0.2;
+		dy = 0.05;
+	}
+	else {
+		dx = 0.5;
+		dy = 0.08;
+	}
+
 	TBox *fillbox = new TBox(x - dx, y - dy, x + dx, y + dy);
 	fillbox->SetFillColorAlpha(TColor::GetColor(color), 0.3);                // Outline color
 	fillbox->SetFillStyle(1001);
@@ -246,7 +255,7 @@ std::vector<std::vector<std::vector<double>>> readSystematicUncertainties() {
 
 void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
-	extraText = "       Internal";
+	extraText = "       Preliminary";
 
 	/// define the variables
 	const int NRefFrame = 2;
@@ -287,19 +296,6 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> gppDataTotErr(4, std::vector<std::vector<TGraphAsymmErrors*>>(2, std::vector<TGraphAsymmErrors*>(2, nullptr))); // place holder for the pp data with total uncertainties
 
 	std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> ppDataHists = readppData(gppDataTotErr, QMPoster); // store the pp data with statistical uncertainties (CL 68.3%)
-
-	/// print the pp data for debugging
-	for (int i = 0; i < ppDataHists[0][0][1]->GetN(); i++) {
-		double x, y;
-		// ppDataHists[0][0][0]->GetPoint(i, x, y);
-		// std::cout << "Point " << i << ": (" << x << ", " << y << ")" << std::endl;
-		ppDataHists[0][0][1]->GetPoint(i, x, y);
-		std::cout << "Point " << i << ": (" << x << ", " << y << ")" << std::endl;
-		// ppDataHists[1][0][0]->GetPoint(i, x, y);
-		// std::cout << "Point " << i << ": (" << x << ", " << y << ")" << std::endl;
-		// ppDataHists[1][0][1]->GetPoint(i, x, y);
-		// std::cout << "Point " << i << ": (" << x << ", " << y << ")" << std::endl;
-	}
 
 	/// Loop over the polarization parameters to fill the histograms
 	for (Int_t iLambParam = 0; iLambParam < NLambParams; iLambParam++) {
@@ -508,25 +504,27 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				refFrameText.SetTextAlign(22);
 				refFrameText.SetTextSize(0.08);
 
+				/// draw the box around the legend symbols
+				if (QMPoster) {
+					createLegendBox(12.83, -0.477, color[iRefFrame], kTRUE);					
+				}
+				else {
+					createLegendBox(2.07, -0.95, color[iRefFrame]);
+				}
+
 				if (iRefFrame == 0){
 					refFrameText.DrawLatexNDC(0.82, 0.8, "Collins-Soper"); 
 					text.DrawLatexNDC(.33, .8, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
 					CMS_lumi(pad[iLambParam][iRefFrame], "");
-
+	
 					/// legend
-					TLegend *legend = new TLegend(0.25, 0.03, 0.7, 0.3);
+					TLegend *legend = new TLegend(0.20, 0.02, 0.65, 0.16);
 					legend->SetBorderSize(0);
 					legend->SetFillStyle(0);
-					legend->SetTextSize(0.053);
+					legend->SetTextSize(0.06);
 					legend->SetEntrySeparation(0.);
-					legend->AddEntry(lambdaHist[iLambParam][iRefFrame], "CMS, PbPb, #sqrt{S_{NN}} = 5.02TeV, 0 < |y| < 2.4, CS", "lep");
-					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0 < |y| < 0.6, CS", "lep");
-					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0.6 < |y| < 1.2, CS", "lep");
+					legend->AddEntry(lambdaHist[iLambParam][iRefFrame], "CMS, PbPb, #sqrt{S_{NN}} = 5.02 TeV, 0 < |y| < 2.4, CS", "lep");
 					legend->Draw("SAME");
-
-					createLegendBox(3.35, -0.51, color[iRefFrame]);
-					createLegendBox(3.35, -0.75, ppDataColor[0]);
-					createLegendBox(3.35, -1, ppDataColor[1]);
 				}
 				else {
 					refFrameText.DrawLatexNDC(0.71, 0.8, "Helicity");
@@ -538,28 +536,47 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					tex->SetLineWidth(2);
 					tex->Draw();
 
-					TLegend *legend = new TLegend(0.09, 0.03, 0.48, 0.3);
+					TLegend *legend = new TLegend(0.03, 0.02, 0.46, 0.16);
 					legend->SetBorderSize(0);
 					legend->SetFillStyle(0);
 					legend->SetTextAlign(12);
-					legend->SetTextSize(0.053);
-					legend->AddEntry(lambdaHist[iLambParam][iRefFrame], "CMS, PbPb, #sqrt{S_{NN}} = 5.02TeV, 0 < |y| < 2.4, HX", "lep");
-					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0 < |y| < 0.6, HX", "lep");
-					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S_{NN}} = 7 TeV, 0.6 < |y| < 1.2, HX", "lep");
+					legend->SetTextSize(0.06);
+					legend->AddEntry(lambdaHist[iLambParam][iRefFrame], "CMS, PbPb, #sqrt{S_{NN}} = 5.02 TeV, 0 < |y| < 2.4, HX", "lep");
 					legend->Draw("SAME");
-
-					createLegendBox(3.35, -0.51, color[iRefFrame]);
-					createLegendBox(3.35, -0.75, ppDataColor[0]);
-					createLegendBox(3.35, -1, ppDataColor[1]);
 				}
 			}
 
 			else if (iLambParam == 1) {
-				TLatex kinematicText;
-				kinematicText.SetTextAlign(13);
-				kinematicText.SetTextSize(0.085);
-				if (iRefFrame == 0) kinematicText.DrawLatexNDC(.29, .85, Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(0, 2.4)));
-				else kinematicText.DrawLatexNDC(.14, .85, Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(0, 2.4)));		
+				if (QMPoster) {
+					createLegendBox(12.83, 0.475, ppDataColor[0], kTRUE);
+					createLegendBox(12.83, 0.3, ppDataColor[1], kTRUE);						
+				}
+				else {
+					createLegendBox(2.07, 0.95, ppDataColor[0]);
+					createLegendBox(2.07, 0.6, ppDataColor[1]);
+				}
+
+				if (iRefFrame == 0) {
+					/// legend
+					TLegend *legend = new TLegend(0.2, 0.68, 0.65, 0.97);
+					legend->SetBorderSize(0);
+					legend->SetFillStyle(0);
+					legend->SetTextSize(0.07);
+					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S} = 7 TeV, 0 < |y| < 0.6, CS", "lep");
+					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S} = 7 TeV, 0.6 < |y| < 1.2, CS", "lep");
+					legend->Draw("SAME");
+				}
+				else {
+					/// legend
+					TLegend *legend = new TLegend(0.03, 0.68, 0.46, 0.97);
+					legend->SetBorderSize(0);
+					legend->SetFillStyle(0);
+					legend->SetTextAlign(12);
+					legend->SetTextSize(0.07);
+					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S} = 7 TeV, 0 < |y| < 0.6, HX", "lep");
+					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S} = 7 TeV, 0.6 < |y| < 1.2, HX", "lep");
+					legend->Draw("SAME");
+				}
 			}
 
 			else if (iLambParam == 2) {
