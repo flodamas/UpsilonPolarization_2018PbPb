@@ -59,7 +59,7 @@ void createLegendBox(double x, double y, const char* color = "#A0B1BA") {
 }
 
 /// read the pp data from the BPH_11_023_SupplementalMaterial.txt file
-std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> readppData(std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> &gppDataTotErr) {
+std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> readppData(std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> &gppDataTotErr, Bool_t QMPoster = kFALSE) {
 
 	/// Define the variables
 	TString label1, polarParamName, refFrameName, label4, label5, label6, label7, label8, label9, label10, label11, label12, label13;
@@ -72,8 +72,22 @@ std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> readppData(std::vector
 	std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> ppDataHists(4, std::vector<std::vector<TGraphAsymmErrors*>>(2, std::vector<TGraphAsymmErrors*>(2, nullptr))); // [polarParamIdx][refFrameIdx][yBinIdx]
 
 	/// pt binning that pp analysis used
-	const int nPtBins = 5;
-	double pTBinning[nPtBins + 1] = {10, 12, 16, 20, 30, 50};
+	int nPtBins;
+	std::vector<double> pTBinning;
+
+	// const int nPtBins = 5;
+	// double pTBinning[nPtBins + 1] = {10, 12, 16, 20, 30, 50};
+	// const int nPtBins = 2; // for QM poster
+	// double pTBinning[nPtBins + 1] = {12, 16, 20}; // for QM poster
+	if (QMPoster) {
+		nPtBins = 2;
+		pTBinning = {12, 16, 20};
+	}
+	else {
+		nPtBins = 5;
+		pTBinning = {10, 12, 16, 20, 30, 50};
+	}
+	
 	int ptBinIdx[2] = {0, 0};
 
 	/// Open the txt file
@@ -159,6 +173,12 @@ std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> readppData(std::vector
 		ss >> pT_min >> pT_max >> y_min >> y_max >> Lambda >> TU_68_3m >> TU_68_3p >> TU_95_5m >> TU_95_5p >> TU_99_7m >> TU_99_7p >> SU_68_3m >> SU_68_3p;
 		cout << "pT_min: " << pT_min << ", pT_max: " << pT_max << ", y_min: " << y_min << ", y_max: " << y_max << ", " << polarParamName.Data() << ": " << Lambda << ", TU_68_3m: " << TU_68_3m << ", TU_68_3p: " << TU_68_3p << ", TU_95_5m: " << TU_95_5m << ", TU_95_5p: " << TU_95_5p << ", TU_99_7m: " << TU_99_7m << ", TU_99_7p: " << TU_99_7p << ", SU_68_3m: " << SU_68_3m << ", SU_68_3p: " << SU_68_3p << endl;
 
+		if (QMPoster) {
+			if (pT_min == 10) continue; // skip the lines that have pT_min = 0 for QM poster
+			else if (pT_min == 20) continue; // skip the lines that have pT_min = 20 for QM poster
+			else if (pT_min == 30) continue; // skip the lines that have pT_min = 30 for QM poster
+		}
+
 		/// obtain the mid-point of the pT bin (this has to be changed using the pT sectrum)
 		Float_t pT = (pT_min + pT_max) / 2;
 
@@ -224,7 +244,7 @@ std::vector<std::vector<std::vector<double>>> readSystematicUncertainties() {
     return sysError;
 }
 
-void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
+void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
@@ -266,7 +286,7 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 	/// read the pp data
 	std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> gppDataTotErr(4, std::vector<std::vector<TGraphAsymmErrors*>>(2, std::vector<TGraphAsymmErrors*>(2, nullptr))); // place holder for the pp data with total uncertainties
 
-	std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> ppDataHists = readppData(gppDataTotErr); // store the pp data with statistical uncertainties (CL 68.3%)
+	std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> ppDataHists = readppData(gppDataTotErr, QMPoster); // store the pp data with statistical uncertainties (CL 68.3%)
 
 	/// print the pp data for debugging
 	for (int i = 0; i < ppDataHists[0][0][1]->GetN(); i++) {
@@ -342,7 +362,11 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 
 	TPad* pad[NLambParams - 1][NRefFrame]; 
 
-	TLine* zeroLine = new TLine(gPtBinning[0], 0, gPtBinning[NPtBins], 0);
+	TLine* zeroLine;
+	
+	if (QMPoster) zeroLine = new TLine(gPtBinning[3], 0, gPtBinning[NPtBins], 0); // for QM poster
+	else zeroLine = new TLine(gPtBinning[0], 0, gPtBinning[NPtBins], 0);
+	
 	zeroLine->SetLineStyle(kDashed);
 
 	TLatex text;
@@ -420,8 +444,14 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 			lambdaHist[iLambParam][iRefFrame]->SetLineWidth(3);
 
 			lambdaHist[iLambParam][iRefFrame]->GetXaxis()->CenterTitle();
+			if (QMPoster) lambdaHist[iLambParam][iRefFrame]->GetXaxis()->SetRangeUser(12, 20); // this range is for QM poster
+			else lambdaHist[iLambParam][iRefFrame]->GetXaxis()->SetRangeUser(0, 20);
 
-			lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-1.2, 1.2);
+			if (QMPoster) {
+				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-0.6, 0.6); // this range is for QM poster
+				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetNdivisions(406); // for QM poster
+			}
+			else lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-1.2, 1.2);
 			lambdaHist[iLambParam][iRefFrame]->GetYaxis()->CenterTitle();
 
 			// ppDataHists[iLambParam][iRefFrame][0]->SetMarkerStyle(33);
@@ -535,21 +565,36 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 			else if (iLambParam == 2) {
 				if (iRefFrame == 0) {
 					
-					/// white background
-					TPaveText *paveText = new TPaveText(0.96, 0.01, 1, 0.24, "brNDC");
-					paveText->SetFillColor(kWhite);  // White background
-					paveText->SetFillStyle(1001);
-					paveText->SetTextFont(42);
-					paveText->SetBorderSize(0);
-					paveText->SetMargin(0);
-					paveText->Draw();
-					
-					TLatex *latex = new TLatex();
-					latex->SetNDC();  // Use normalized coordinates
-					latex->SetTextSize(0.075);
-					latex->DrawLatex(0.987, 0.18, "0"); 
-
-					gPad->Update();
+					if (QMPoster) {
+						/// white background
+						TPaveText *paveText = new TPaveText(0.96, 0.01, 1, 0.24, "brNDC");
+						paveText->SetFillColor(kWhite);  // White background
+						paveText->SetFillStyle(1001);
+						paveText->SetTextFont(42);
+						paveText->SetBorderSize(0);
+						paveText->SetMargin(0);
+						paveText->Draw();
+						
+						TLatex *latex = new TLatex();
+						latex->SetNDC();  // Use normalized coordinates
+						latex->SetTextSize(0.075);
+						latex->DrawLatex(0.975, 0.18, "1"); 
+					}
+					else {/// white background
+						TPaveText *paveText = new TPaveText(0.96, 0.01, 1, 0.24, "brNDC");
+						paveText->SetFillColor(kWhite);  // White background
+						paveText->SetFillStyle(1001);
+						paveText->SetTextFont(42);
+						paveText->SetBorderSize(0);
+						paveText->SetMargin(0);
+						paveText->Draw();
+						
+						TLatex *latex = new TLatex();
+						latex->SetNDC();  // Use normalized coordinates
+						latex->SetTextSize(0.075);
+						latex->DrawLatex(0.987, 0.18, "0"); 
+					}
+						gPad->Update();
 				}
 			}
 			zeroLine->Draw("SAME");
@@ -560,7 +605,8 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 	const char* fitModelName2 = GetFitModelName(signalShapeName, gPtBinning[1], gPtBinning[NPtBins], "CSHX", cosThetaMin, cosThetaMax, phiMin, phiMax);
 	
 	gSystem->mkdir("ParametersResults", kTRUE);
-	polarParamsCanvas->SaveAs(Form("ParametersResults/polarParams_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
+	if (QMPoster) polarParamsCanvas->SaveAs(Form("ParametersResults/polarParams_%s_%s_%s_QMPoster.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
+	else polarParamsCanvas->SaveAs(Form("ParametersResults/polarParams_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
 
 	/// draw lambdaTilde histogram
 	TCanvas* invPolarParamsCanvas = new TCanvas("invPolarParamsCanvas", "invPolarParamsCanvas", 500, 500);
@@ -619,7 +665,7 @@ void finalResults(const char* bkgShapeName = "ExpTimesErr", const Int_t nCosThet
 	invPolarParamsCanvas->SaveAs(Form("ParametersResults/invariantParameter_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
 
     /// output file for the polarization parameter table
-    const char* outFileName = "polarizationParameters.txt";
+    const char* outFileName = "polarizationParameters_table.txt";
     std::ofstream outFile(outFileName);
 
     /// write table headers for the polarization parameter table
