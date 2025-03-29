@@ -321,6 +321,9 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
+	TLorentzVector* gen_QQ_LV = new TLorentzVector();
+	TLorentzVector* gen_mupl_LV = new TLorentzVector();
+	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 	TLorentzVector* recoLorentzVector = new TLorentzVector();
 
 	double eventWeight, dimuonPtWeight, totalWeightCS, totalWeightHX, totalWeightLab;
@@ -354,32 +357,32 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
-			genLorentzVector = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
+			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
 
 			// fiducial region
 			//if (genLorentzVector->Pt() < ptMin || genLorentzVector->Pt() > ptMax) continue; // pt bin of interest
 
-			if (fabs(genLorentzVector->Rapidity()) < gRapidityMin || fabs(genLorentzVector->Rapidity()) > gRapidityMax) continue;
+			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
 
 			// single-muon acceptance
 
 			// positive muon first
-			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
-			if (accName == TString("MuonUpsilonTriggerAcc")) {if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue; MuonAccName = "_TriggerAcc";}
-			else if (accName == TString("MuonSimpleAcc")) {if (!MuonSimpleAcc(*genLorentzVector)) continue; MuonAccName = "_SimpleAcc";}
-			else if (accName == TString("MuonWithin2018PbPbAcc")) {if (!MuonWithin2018PbPbAcc(*genLorentzVector)) continue; MuonAccName = "_2018Acc";}
+			if (accName == TString("MuonUpsilonTriggerAcc")) {if (!MuonUpsilonTriggerAcc(*gen_mupl_LV)) continue; MuonAccName = "_TriggerAcc";}
+			else if (accName == TString("MuonSimpleAcc")) {if (!MuonSimpleAcc(*gen_mupl_LV)) continue; MuonAccName = "_SimpleAcc";}
+			else if (accName == TString("MuonWithin2018PbPbAcc")) {if (!MuonWithin2018PbPbAcc(*gen_mupl_LV)) continue; MuonAccName = "_2018Acc";}
 			else {
 				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
 				return;
 			}
 
 			// then negative muon
-			genLorentzVector = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
+			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
-			if (accName == TString("MuonUpsilonTriggerAcc")) {if (!MuonUpsilonTriggerAcc(*genLorentzVector)) continue;}
-			else if (accName == TString("MuonSimpleAcc")) {if (!MuonSimpleAcc(*genLorentzVector)) continue;}
-			else if (accName == TString("MuonWithin2018PbPbAcc")) {if (!MuonWithin2018PbPbAcc(*genLorentzVector)) continue;}
+			if (accName == TString("MuonUpsilonTriggerAcc")) {if (!MuonUpsilonTriggerAcc(*gen_mumi_LV)) continue;}
+			else if (accName == TString("MuonSimpleAcc")) {if (!MuonSimpleAcc(*gen_mumi_LV)) continue;}
+			else if (accName == TString("MuonWithin2018PbPbAcc")) {if (!MuonWithin2018PbPbAcc(*gen_mumi_LV)) continue;}
 			else {
 				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
 				return;
@@ -426,7 +429,6 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				allGood = firesTrigger && isRecoMatched && dimuonMatching && goodVertexProba && passHLTFilterMuons && trackerAndGlobalMuons && hybridSoftMuons;
 
 				// get muon coordinates
-
 				TLorentzVector* Reco_mupl_LV = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 				double Reco_mupl_eta = Reco_mupl_LV->Eta();
 				double Reco_mupl_pt = Reco_mupl_LV->Pt();
@@ -435,25 +437,54 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				double Reco_mumi_eta = Reco_mumi_LV->Eta();
 				double Reco_mumi_pt = Reco_mumi_LV->Pt();
 
+				// double cosThetaLab_gen = gen_mupl_LV->CosTheta();
 				double cosThetaLab = Reco_mupl_LV->CosTheta();
+
+				// double phiLab_gen = 0;
 				double phiLab = 0;
 				
-				if (isPhiFolded == kTRUE) phiLab = fabs(Reco_mupl_LV->Phi() * 180 / TMath::Pi());
-				else phiLab = Reco_mupl_LV->Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) {
+					// phiLab_gen = fabs(gen_mupl_LV->Phi() * 180 / TMath::Pi());
+					phiLab = fabs(Reco_mupl_LV->Phi() * 180 / TMath::Pi());
+				}
+				else {
+					// phiLab_gen = gen_mupl_LV->Phi() * 180 / TMath::Pi();
+					phiLab = Reco_mupl_LV->Phi() * 180 / TMath::Pi();
+				}
 
+				TVector3 muPlus_CS_gen = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
 				TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
+
+				// double cosThetaCS_gen = muPlus_CS_gen.CosTheta();
 				double cosThetaCS = muPlus_CS.CosTheta();
+				// double phiCS_gen = 0;
 				double phiCS = 0;
 
-				if (isPhiFolded == kTRUE) phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
-				else phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) {
+					// phiCS_gen = fabs(muPlus_CS_gen.Phi() * 180 / TMath::Pi());
+					phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
+				}
+				else {
+					// phiCS_gen = muPlus_CS_gen.Phi() * 180 / TMath::Pi();
+					phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
+				}
 
+				TVector3 muPlus_HX_gen = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 				TVector3 muPlus_HX = MuPlusVector_Helicity(*recoLorentzVector, *Reco_mupl_LV);
+
+				// double cosThetaHX_gen = muPlus_HX_gen.CosTheta();
 				double cosThetaHX = muPlus_HX.CosTheta();
+				// double phiHX_gen = 0;
 				double phiHX = 0;
 				
-				if (isPhiFolded == kTRUE) phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
-				else phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) {
+					// phiHX_gen = fabs(muPlus_HX_gen.Phi() * 180 / TMath::Pi());
+					phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
+				}
+				else {
+					phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
+					// phiHX_gen = muPlus_HX_gen.Phi() * 180 / TMath::Pi();
+				}
 
 				/// muon scale factors
 
@@ -505,13 +536,13 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
 				if (isPhiFolded == kTRUE) {
-					weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * fabs(muPlus_CS.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(fabs(muPlus_CS.Phi()));
-					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
+					weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS_gen.Theta()), 2) * std::cos(2 * fabs(muPlus_CS_gen.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS_gen.Theta()) * std::cos(fabs(muPlus_CS_gen.Phi()));
+					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX_gen.Theta()), 2) * std::cos(2 * fabs(muPlus_HX_gen.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX_gen.Theta()) * std::cos(fabs(muPlus_HX_gen.Phi()));
 				}
 
 				else {
-					weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
-					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+					weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS_gen.Theta()), 2) * std::cos(2 * muPlus_CS_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS_gen.Theta()) * std::cos(muPlus_CS_gen.Phi());
+					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX_gen.Theta()), 2) * std::cos(2 * muPlus_HX_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX_gen.Theta()) * std::cos(muPlus_HX_gen.Phi());
 				}
 
 				// total weight
@@ -825,7 +856,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	hNominalEffLab->Write();
 	hNominalEffCS->Write();
 	hNominalEffHX->Write();
-	
+
 	hSystCS3D->Write();
 	hSystHX3D->Write();
 
