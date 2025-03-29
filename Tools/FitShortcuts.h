@@ -11,7 +11,7 @@
 using namespace RooFit;
 
 // for data
-RooFitResult* RawInvariantMassFit(RooWorkspace& wspace, RooDataSet data, RooArgSet varsForMinos = RooArgSet(), float massMin = MassBinMin, float massMax = MassBinMax) {
+RooFitResult* RawInvariantMassFit(RooWorkspace& wspace, RooDataSet data, RooArgSet varsForMinos = RooArgSet()) {
 	auto model = wspace.pdf("invMassModel");
 
 	RooRealVar* invMass = wspace.var("mass");
