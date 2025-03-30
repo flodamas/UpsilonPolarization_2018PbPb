@@ -97,7 +97,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 	RooRealVar ptVar("pt", gDimuonPtVarTitle, 0, 100, gPtUnit);
 
-	char* refFrameName = "Lab";
+	const char* refFrameName = "Lab";
 	RooRealVar cosThetaLabVar(CosThetaVarName(refFrameName), CosThetaVarTitle(refFrameName), -1, 1);
 	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
@@ -173,6 +173,8 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 		// loop over reconstructed dimuon candidates
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
 
+			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
+
 			Int_t iGen = Reco_QQ_whichGen[iQQ];
 
 			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
@@ -198,8 +200,6 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
 				return;
 			}
-
-			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
 
 			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
 
