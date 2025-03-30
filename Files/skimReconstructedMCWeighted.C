@@ -12,7 +12,7 @@
 
 // the reconstructed dimuons are fully weighted, including potential reweighting for polarization
 
-void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
+void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, TString accName = "MuonUpsilonTriggerAcc") {
 	const char* inputFileName = Form("OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 
 	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
@@ -132,6 +132,9 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
+	TLorentzVector* gen_QQ_LV = new TLorentzVector();
+	TLorentzVector* gen_mupl_LV = new TLorentzVector();
+	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 
 	Float_t nColl, weight = 0, totalWeightCS = 0, totalWeightHX = 0, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0, errorWeightDown = 0, errorWeightUp = 0;
 
@@ -169,6 +172,33 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 		// loop over reconstructed dimuon candidates
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
+
+			Int_t iGen = Reco_QQ_whichGen[iQQ];
+
+			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
+			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
+
+			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
+			
+			// single-muon acceptance
+			if (accName == TString("MuonUpsilonTriggerAcc")) {
+				if (!MuonUpsilonTriggerAcc(*gen_mupl_LV)) continue;
+				if (!MuonUpsilonTriggerAcc(*gen_mumi_LV)) continue;
+			}
+			else if (accName == TString("MuonSimpleAcc")) {
+				if (!MuonSimpleAcc(*gen_mupl_LV)) continue;
+				if (!MuonUpsilonTriggerAcc(*gen_mumi_LV)) continue;
+			}
+			else if (accName == TString("MuonWithin2018PbPbAcc")) {
+				if (!MuonEffStepAcc(*gen_mupl_LV)) continue;
+				if (!MuonEffStepAcc(*gen_mumi_LV)) continue;
+			}
+			else {
+				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
+				return;
+			}
+
 			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
 
 			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
@@ -181,7 +211,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
-			if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue;
+			// if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue; // applied cut in the GEN level instead
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
@@ -207,8 +237,10 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			dimuonPtWeight = Get_RecoPtWeight(Reco_QQ_4mom->Rapidity(), Reco_QQ_4mom->Pt());
 
 			// get positive muon's coordinates in the studied reference frames
+			TVector3 muPlus_CS_gen = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
+			TVector3 muPlus_HX_gen = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
 			// HLT filters
@@ -343,8 +375,8 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 			centVar = Centrality;
 
-			polarWeightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
-			polarWeightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+			polarWeightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS_gen.Theta()), 2) * std::cos(2 * muPlus_CS_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS_gen.Theta()) * std::cos(muPlus_CS_gen.Phi());
+			polarWeightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX_gen.Theta()), 2) * std::cos(2 * muPlus_HX_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX_gen.Theta()) * std::cos(muPlus_HX_gen.Phi());
 
 			totalWeightCS = weight * polarWeightCS;
 			totalWeightHX = weight * polarWeightHX;
