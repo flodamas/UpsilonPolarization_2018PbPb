@@ -154,7 +154,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	TString MuonAccName = "";
 
 	Long64_t totEntries = OniaTree->GetEntries();
-
+    double counter = 0;
 	// Loop over the events
 	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
 		if (iEvent % 10000 == 0) {
@@ -162,6 +162,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 		}
 
 		OniaTree->GetEntry(iEvent);
+		// if (iEvent < 50) continue;
+		// if (iEvent == 10000) break;
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
@@ -191,6 +193,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 				return;
 			}
 
+			// cout << "iEvent: " << iEvent << endl;
+			// cout << "iGen: " << iGen << endl;
 			// cout << "withinAcceptance: " << withinAcceptance << endl;
 			// cout << "gen_QQ_LV->Pt(): " << gen_QQ_LV->Pt() << endl;
 			// cout << "accName: " << accName << endl;
@@ -258,16 +262,21 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 				hAccHX1D->FillWeighted(withinAcceptance, weightHX, cosThetaHX);
 
 				// cout << "withinAcceptance: " << withinAcceptance << endl;
-				// cout << "weightHX: " << weightHX << endl;
+				
 				// cout << "cosThetaHX: " << cosThetaHX << endl;
 
+				
 				// TH1* passedHist = (TH1*)hAccHX1D->GetPassedHistogram();
 				// cout << passedHist->FindBin(cosThetaHX) << endl;
 				// cout << passedHist->GetBinContent(passedHist->FindBin(cosThetaHX)) << endl;
+				
 			}
+			// cout << "weightHX: " << weightHX << endl;
+			if (withinAcceptance && (gen_QQ_LV->Pt()>2) && (gen_QQ_LV->Pt()<6) && (cosThetaHX >-0.7)&&(cosThetaHX<-0.42)&& (phiHX >60) && (phiHX<120)) counter ++;
+			// cout << "" << endl;
 		}
 	}
-
+	cout << "counter: " << counter << endl;
 	// Set the plot styles
 	gStyle->SetPadLeftMargin(.15);
 	//gStyle->SetTitleYOffset(.9);
@@ -291,31 +300,31 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	// cout << "Phi axis range: " << accMatrixCS->GetTotalHistogram()->GetYaxis()->GetXmin()
 	//  << " to " << accMatrixCS->GetTotalHistogram()->GetYaxis()->GetXmax() << endl;
 
-	/// save the results in a file for later usage
-	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	const char* outputFileName = "";
-	if (isPhiFolded == kTRUE)
-		outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, MuonAccName.Data());
-	else
-		outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s_fullPhi.root", iState, MuonAccName.Data());
+	// /// save the results in a file for later usage
+	// gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
+	// const char* outputFileName = "";
+	// if (isPhiFolded == kTRUE)
+	// 	outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, MuonAccName.Data());
+	// else
+	// 	outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s_fullPhi.root", iState, MuonAccName.Data());
 
-	TFile outputFile(outputFileName, "UPDATE");
+	// TFile outputFile(outputFileName, "UPDATE");
 
-	accMatrixLab->Write();
-	accMatrixCS->Write();
-	accMatrixHX->Write();
+	// accMatrixLab->Write();
+	// accMatrixCS->Write();
+	// accMatrixHX->Write();
 
-	hGranularLab->Write();
-	hAnalysisLab->Write();
-	hGranularCS->Write();
-	hAnalysisCS->Write();
-	hGranularHX->Write();
-	hAnalysisHX->Write();
+	// hGranularLab->Write();
+	// hAnalysisLab->Write();
+	// hGranularCS->Write();
+	// hAnalysisCS->Write();
+	// hGranularHX->Write();
+	// hAnalysisHX->Write();
 
-	hAccCS1D->Write();
-	hAccHX1D->Write();
+	// hAccCS1D->Write();
+	// hAccHX1D->Write();
 
-	outputFile.Close();
+	// outputFile.Close();
 
-	if (BeVerbose) cout << "\nAcceptance maps saved in " << outputFileName << endl;
+	// if (BeVerbose) cout << "\nAcceptance maps saved in " << outputFileName << endl;
 }
