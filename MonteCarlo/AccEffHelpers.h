@@ -135,18 +135,19 @@ TEfficiency* TEfficiency3D(const char* name, const char* refFrameName = "CS", in
 	// Int_t nCosThetaUltraFineBinning = 4; // cosTheta bin width: 0.01
 	// Int_t nPhiUltraFineBinning = 2;      // phi bin width: 1 degree
 	float phiMin, phiMax;
+	float cosThetaMin = -1, cosThetaMax = 1;
 
 	if (isPhiFolded) {
-		phiMax = gPhiMax;
-		phiMin = gPhiMin;
+		phiMax = 180;
+		phiMin = 0;
 		nPhiUltraFineBinning = 180; // phi bin width: 2 degree
 	} else {
-		phiMax = gPhiMax;
+		phiMax = 180;
 		phiMin = -180;
 		nPhiUltraFineBinning = 360; // phi bin width: 1 degree
 	}
 
-	std::vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaUltraFineBinning, gCosThetaMin, gCosThetaMax);
+	std::vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaUltraFineBinning, cosThetaMin, cosThetaMax);
 	std::vector<Double_t> phiBinEdges = setPhiBinEdges(nPhiUltraFineBinning, phiMin, phiMax);
 
 	// std::vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(5, -0.7, 0.7);
@@ -603,7 +604,7 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	}
 }
 
-void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t displayValues = kFALSE, Bool_t displayErrors = kFALSE, const char* extraString = "", Bool_t isPhiFolded = kTRUE) {
+TCanvas* DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t displayValues = kFALSE, Bool_t displayErrors = kFALSE, const char* extraString = "", Bool_t isPhiFolded = kTRUE, Bool_t lambdaLegend = kFALSE, float lambdaTheta = 0, float lambdaPhi = 0, float lambdaThetaPhi = 0) {
 	TCanvas* canvas;
 	if (isAcc)
 		canvas = new TCanvas("accCosThetaPhi", "", 680, 600);
@@ -630,14 +631,18 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.04);
-	legend.DrawLatexNDC(.48, .86, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.48, .89, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 
 	if (strcmp(extraString, "_TriggerAcc") == 0)
-		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+		legend.DrawLatexNDC(.48, .83, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
 	else if (strcmp(extraString, "_SimpleAcc") == 0)
-		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+		legend.DrawLatexNDC(.48, .83, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
 	else if (strcmp(extraString, "_2018PbPbAcc") == 0)
-		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+		legend.DrawLatexNDC(.48, .83, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+
+	if (lambdaLegend == kTRUE) {
+		legend.DrawLatexNDC(.48, .77, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	}
 
 	if (strstr(effHist->GetName(), "CS")) {
 		frameHist2D->SetXTitle(CosThetaVarTitle("CS"));
@@ -685,7 +690,7 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	frameHist2D->GetXaxis()->SetLabelSize(0.045);
 	frameHist2D->GetYaxis()->SetLabelSize(0.045);
 
-	// // save the plot
+	// // save the plot 
 	// gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
 	// if (isAcc) {
 	// 	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/2Dacc_%s_pt%dto%d%s.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
@@ -697,7 +702,7 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 
 	// }
 
-	// save the plot
+	// save the plot when using the analysis binning
 	gSystem->mkdir(Form("EfficiencyMaps/%dS/analysisBin", iState), kTRUE);
 	if (isAcc) {
 		if (isPhiFolded == kTRUE)
@@ -710,6 +715,8 @@ void DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 		else
 			canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/2Deff_%s_pt%dto%d%s_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
 	}
+
+	return canvas;
 }
 
 TEfficiency* MultiplyTEfficiencies1D(const TEfficiency* eff1, const TEfficiency* eff2) {
