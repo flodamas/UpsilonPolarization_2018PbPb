@@ -23,7 +23,7 @@
 
 void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	writeExtraText = true; // if extra text
-	extraText = "      Preliminary";
+	extraText = "      Simulation Preliminary";
 
 	using namespace std;
 	using namespace RooFit;
@@ -42,7 +42,7 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
 
-	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
+	TString nominalMapName = NominalTEfficiency3DName(refFrameName);
 
 	// get acceptance maps
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
@@ -64,8 +64,8 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	TFile* acceptanceFile = openFile(accFileName);
 	cout << accFileName << " opened" << endl;
 	
-	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
-	cout << "Nominal map name: " << nominalMapName << endl;
+	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName.Data());
+	cout << "Nominal map name: " << nominalMapName.Data() << endl;
 
 	if (!accMap) {
     	std::cerr << "Error: accMap is null." << std::endl;
@@ -74,7 +74,8 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	// rebin acceptance maps based on costheta, phi, and pT selection
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
-
+	cout << "acc x max after rebin" << (accMapCosThetaPhi->GetTotalHistogram())->GetXaxis()->GetXmax() << endl;
+	cout << "acc x min after rebin" << (accMapCosThetaPhi->GetTotalHistogram())->GetXaxis()->GetXmin() << endl;
 	// get efficiency maps
 	// TFile* efficiencyFile = openFile(Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", gMuonAccName));
 	TString effFileName = "";
@@ -83,8 +84,8 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	else effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s_fullPhi.root", MuonAccName.Data());
 
 	TFile* efficiencyFile = openFile(effFileName);
-	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
-	cout << "Nominal map name: " << nominalMapName << endl;
+	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName.Data());
+	cout << "Nominal map name: " << nominalMapName.Data() << endl;
 
 	if (!effMap) {
     	std::cerr << "Error: effMap is null." << std::endl;
@@ -93,7 +94,8 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	// rebin efficiency maps based on costheta, phi, and pT selection
 	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
-
+	cout << "eff x max after rebin" << (effMapCosThetaPhi->GetTotalHistogram())->GetXaxis()->GetXmax() << endl;
+	cout << "eff x min after rebin" << (effMapCosThetaPhi->GetTotalHistogram())->GetXaxis()->GetXmin() << endl;
 	// get relative systematic uncertainty of efficiency
 	auto* systEff = (TH3D*)efficiencyFile->Get(SystTEfficiency3DName(refFrameName));
 
@@ -126,9 +128,9 @@ void accEffMaps_3Dto2D_scan(const char* refFrameName = "CS", Bool_t isPhiFolded 
 	int ptBinEdges[NptBins + 1] = {0, 2, 6, 12, 20};
 
 	for (int ipt = 0; ipt < NptBins; ipt++) {
-		// accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 20, -1, 1, 23, -180, 280, 1, isPhiFolded, accName);
+		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 20, -1, 1, 23, -180, 280, 1, isPhiFolded, accName);
 		// accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 5, -0.7, 0.7, 7, -180, 240, 1, isPhiFolded, accName);
-		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, isPhiFolded, accName);
+		// accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, isPhiFolded, accName);
 	}
 
 }
