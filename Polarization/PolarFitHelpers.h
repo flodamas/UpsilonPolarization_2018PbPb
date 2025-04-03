@@ -252,17 +252,10 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->SetZTitle(Form("#varUpsilon(%dS) yields", iState));
 
 		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-<<<<<<< HEAD
-		// mapCosThetaPhi->GetXaxis()->SetNdivisions(-200 - (nCosThetaBins / 2.));
-		if (isPhiFolded) mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
-		else mapCosThetaPhi->GetYaxis()->SetNdivisions(-300 - (nPhiBins - 1));
-		// else mapCosThetaPhi->GetYaxis()->SetNdivisions(-300 - (nPhiBins / 3.));
-=======
 		if (isPhiFolded)
 			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
 		else
 			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - 1));
->>>>>>> 77808c621f1a2e82512abef4a44861c1a820f6a8
 
 		mapCosThetaPhi->GetXaxis()->CenterTitle();
 		mapCosThetaPhi->GetYaxis()->CenterTitle();
@@ -272,16 +265,10 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->GetYaxis()->SetTitleOffset(1.5);
 		mapCosThetaPhi->GetZaxis()->SetTitleOffset(1.8);
 
-<<<<<<< HEAD
-		if (isPhiFolded) mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins]);
-		// else mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins]);
-		else mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins - 1]);
-=======
 		if (isPhiFolded)
 			mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins]);
 		else
 			mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins - 1]);
->>>>>>> 77808c621f1a2e82512abef4a44861c1a820f6a8
 
 		mapCosThetaPhi->SetStats(0);
 	}
