@@ -245,13 +245,17 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->Draw("LEGO E");
 
 		mapCosThetaPhi->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-		if (isPhiFolded) mapCosThetaPhi->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
-		else mapCosThetaPhi->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
+		if (isPhiFolded)
+			mapCosThetaPhi->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
+		else
+			mapCosThetaPhi->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 		mapCosThetaPhi->SetZTitle(Form("#varUpsilon(%dS) yields", iState));
 
 		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-		if (isPhiFolded) mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
-		else mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - 1));
+		if (isPhiFolded)
+			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
+		else
+			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - 1));
 
 		mapCosThetaPhi->GetXaxis()->CenterTitle();
 		mapCosThetaPhi->GetYaxis()->CenterTitle();
@@ -261,8 +265,10 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->GetYaxis()->SetTitleOffset(1.5);
 		mapCosThetaPhi->GetZaxis()->SetTitleOffset(1.8);
 
-		if (isPhiFolded) mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins]);
-		else mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins - 1]);
+		if (isPhiFolded)
+			mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins]);
+		else
+			mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins - 1]);
 
 		mapCosThetaPhi->SetStats(0);
 	}
@@ -280,8 +286,10 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->Draw("SAME COLZ");
 
 		frameHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-		if (isPhiFolded) frameHist->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
-		else frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
+		if (isPhiFolded)
+			frameHist->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
+		else
+			frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 
 		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
 		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));

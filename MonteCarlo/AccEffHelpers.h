@@ -451,7 +451,7 @@ void displayEfficiencies(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nP
 				latex.DrawLatex(x, y, Form(" ^{+%.4f}_{-%.4f}", effUncUp, effUncDown));
 			} else {
 				latex.SetTextSize(0.05);
-				latex.DrawLatex(x, y, Form("%.3f", effVal)); 
+				latex.DrawLatex(x, y, Form("%.3f", effVal));
 			}
 		}
 	}
@@ -585,6 +585,7 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 
 	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
 
+	gPad->RedrawAxis();
 	// // save the plot
 	// if (isAcc) {
 	// 	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
@@ -690,7 +691,7 @@ TCanvas* DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, In
 	frameHist2D->GetXaxis()->SetLabelSize(0.045);
 	frameHist2D->GetYaxis()->SetLabelSize(0.045);
 
-	// // save the plot 
+	// // save the plot
 	// gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
 	// if (isAcc) {
 	// 	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/2Dacc_%s_pt%dto%d%s.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
@@ -701,6 +702,7 @@ TCanvas* DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, In
 	//     else canvas->SaveAs(Form("EfficiencyMaps/%dS/2Deff_%s_pt%dto%d%s_fullPhi.png", iState, effHist->GetName(), ptMin, ptMax, extraString), "RECREATE");
 
 	// }
+	gPad->RedrawAxis();
 
 	// save the plot when using the analysis binning
 	gSystem->mkdir(Form("EfficiencyMaps/%dS/analysisBin", iState), kTRUE);
@@ -880,6 +882,8 @@ TEfficiency* DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t
 	frameHist1D->GetXaxis()->SetRangeUser(BinEdges[0], BinEdges[nBins]);
 	frameHist1D->GetYaxis()->SetRangeUser(0, 1);
 
+	gPad->RedrawAxis();
+
 	// // save the plot
 	// gSystem->mkdir(Form("AccxEffMaps/%dS", iState), kTRUE);
 
@@ -991,6 +995,8 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	std::string postfix = Form("%s%s%s", refFrameName, gMuonAccName, extraString);
 
 	if (displayYieldValues) displayYields(EffxAccHist, nCosThetaBins, nPhiBins, prefix, postfix);
+
+	gPad->RedrawAxis();
 
 	// // save the plot
 	// gSystem->mkdir(Form("AccxEffMaps/%dS", iState), kTRUE);
