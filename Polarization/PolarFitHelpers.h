@@ -228,7 +228,7 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 	return contourCanvas;
 }
 
-TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1) {
+TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1, Bool_t isPhiFolded = kTRUE) {
 	TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 680, 600);
 
 	// SetColorPalette(gPreferredColorPaletteName);
@@ -245,11 +245,13 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->Draw("LEGO E");
 
 		mapCosThetaPhi->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-		mapCosThetaPhi->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
+		if (isPhiFolded) mapCosThetaPhi->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
+		else mapCosThetaPhi->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 		mapCosThetaPhi->SetZTitle(Form("#varUpsilon(%dS) yields", iState));
 
 		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-		mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
+		if (isPhiFolded) mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
+		else mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - 1));
 
 		mapCosThetaPhi->GetXaxis()->CenterTitle();
 		mapCosThetaPhi->GetYaxis()->CenterTitle();
@@ -257,7 +259,12 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		// Set title offsets
 		mapCosThetaPhi->GetXaxis()->SetTitleOffset(1.3);
 		mapCosThetaPhi->GetYaxis()->SetTitleOffset(1.5);
-		mapCosThetaPhi->GetZaxis()->SetTitleOffset(1.3);
+		mapCosThetaPhi->GetZaxis()->SetTitleOffset(1.8);
+
+		if (isPhiFolded) mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins]);
+		else mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins - 1]);
+
+		mapCosThetaPhi->SetStats(0);
 	}
 
 	else {
@@ -273,7 +280,8 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->Draw("SAME COLZ");
 
 		frameHist->SetXTitle(Form("cos #theta_{%s}", refFrameName));
-		frameHist->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
+		if (isPhiFolded) frameHist->SetYTitle(Form("|#varphi_{%s}| (#circ)", refFrameName));
+		else frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 
 		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
 		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
@@ -281,6 +289,8 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		frameHist->GetXaxis()->CenterTitle();
 		frameHist->GetYaxis()->CenterTitle();
 		frameHist->GetZaxis()->CenterTitle();
+
+		mapCosThetaPhi->GetZaxis()->SetMaxDigits(3);
 
 		frameHist->SetStats(0);
 
@@ -290,7 +300,8 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 			frameHist->GetZaxis()->SetRangeUser(0, 1);
 	}
 
-	CMS_lumi(map2DCanvas, gCMSLumiText);
+	// CMS_lumi(map2DCanvas, gCMSLumiText);
+	CMS_lumi(map2DCanvas, "#varUpsilon(1S) Pythia 8 (5.02 TeV)");
 
 	map2DCanvas->Modified();
 	map2DCanvas->Update();
