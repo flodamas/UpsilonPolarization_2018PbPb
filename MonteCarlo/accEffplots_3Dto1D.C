@@ -263,7 +263,7 @@ TPad* drawPulls(TH1D* positiveHist, TH1D* negativeHist, const char* xTitle, bool
 
 std::vector<std::vector<TEfficiency*>> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 5, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	writeExtraText = true; // if extra text
-	extraText = "      Internal";
+	extraText = "      Simulation Preliminary";
 
 	using namespace std;
 	using namespace RooFit;
@@ -358,7 +358,7 @@ std::vector<std::vector<TEfficiency*>> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t
 
 void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 1, Int_t phiMin = 0, Int_t phiMax = 60, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, Bool_t isCosTheta = kTRUE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	writeExtraText = true; // if extra text
-	extraText = "      Internal";
+	extraText = "      Simulation Preliminary";
 
 	/// Bin edges and width
 	// Set the bin edges along the cosTheta/phi axis depending on the number of bins, min and max values
@@ -567,7 +567,7 @@ void scan_accEffplots_3Dto1D_comparison(){
 /// to see the denominator plots 
 void accEffDenplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 1, Int_t phiMin = 0, Int_t phiMax = 60, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, Bool_t isCosTheta = kTRUE, TString accName = "MuonUpsilonTriggerAcc", Bool_t isDen = kTRUE) { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	writeExtraText = true; // if extra text
-	extraText = "      Internal";
+	extraText = "      Simulation Preliminary";
 
 	/// Bin edges and width
 	// Set the bin edges along the cosTheta/phi axis depending on the number of bins, min and max values
