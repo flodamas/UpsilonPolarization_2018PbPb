@@ -81,6 +81,16 @@ TLine* drawL3pTThreshold(float etaMin = 1.571, float ptMax = 2.5, Color_t lineCo
 	return line1;
 }
 
+TLine* drawPreviousCut() {
+	float etaMin = 0, etaMax = 2.4;
+	float ptMin = 3.5;
+
+	auto* line = MyLine(etaMin, ptMin, etaMax, ptMin, TColor::GetColor("#68349A"), kDashed, 3);
+	line->Draw("l");
+
+	return line;
+}
+
 void singleMuonEfficiency_EtaPtMap() {
 	const char* filename = "../Files/OniaTree_Y1S_pThat2_HydjetDrumMB_miniAOD.root";
 	TFile* file = TFile::Open(filename, "READ");
@@ -94,7 +104,8 @@ void singleMuonEfficiency_EtaPtMap() {
 	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
 
 	writeExtraText = true;
-	extraText = "       Internal";
+	// extraText = "       Internal";
+	extraText = "       Simulation Preliminary";
 
 	/// OniaTree variables
 
@@ -158,6 +169,7 @@ void singleMuonEfficiency_EtaPtMap() {
 
 		OniaTree->GetEntry(iEvent);
 		//genLorentzVector->Clear();
+		// if (iEvent == 100) break;
 
 		// event selection
 
@@ -218,9 +230,19 @@ void singleMuonEfficiency_EtaPtMap() {
 	auto* triggerAcc = drawTrigger2018acc(0, 6);
 	// auto* triggerL3pT = drawL3pTThreshold(1.571, 2.5);
 
+	auto previousAcc = drawPreviousCut();
+
 	auto* legend = new TLegend(.15, .3, .38, .17);
+
+	legend->AddEntry(previousAcc, "acceptance for", "l");
+	// legend->AddEntry(previousAcc, "#splitline{acceptance for}{previous analyses}", "l");
+	legend->AddEntry((TObject*)0, "", "");
+	legend->AddEntry((TObject*)0, "previous analyses", ""); 
+	legend->AddEntry((TObject*)0, "", "");
+	legend->AddEntry((TObject*)0, "", "");
 	legend->AddEntry(triggerAcc, "acceptance for this analysis", "l");
 	// legend->AddEntry(triggerL3pT, "p_{T} threshold for L3 muons", "l");
+	
 	legend->Draw();
 
 	CMS_lumi(canvas, "#varUpsilon(1S) Hydjet-embedded MC");
