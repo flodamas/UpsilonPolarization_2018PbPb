@@ -300,31 +300,31 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	// cout << "Phi axis range: " << accMatrixCS->GetTotalHistogram()->GetYaxis()->GetXmin()
 	//  << " to " << accMatrixCS->GetTotalHistogram()->GetYaxis()->GetXmax() << endl;
 
-	// /// save the results in a file for later usage
-	// gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	// const char* outputFileName = "";
-	// if (isPhiFolded == kTRUE)
-	// 	outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, MuonAccName.Data());
-	// else
-	// 	outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s_fullPhi.root", iState, MuonAccName.Data());
+	/// save the results in a file for later usage
+	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
+	const char* outputFileName = "";
+	if (isPhiFolded == kTRUE)
+		outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, MuonAccName.Data());
+	else
+		outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s_fullPhi.root", iState, MuonAccName.Data());
 
-	// TFile outputFile(outputFileName, "UPDATE");
+	TFile outputFile(outputFileName, "UPDATE");
 
-	// accMatrixLab->Write();
-	// accMatrixCS->Write();
-	// accMatrixHX->Write();
+	accMatrixLab->Write();
+	accMatrixCS->Write();
+	accMatrixHX->Write();
 
-	// hGranularLab->Write();
-	// hAnalysisLab->Write();
-	// hGranularCS->Write();
-	// hAnalysisCS->Write();
-	// hGranularHX->Write();
-	// hAnalysisHX->Write();
+	hGranularLab->Write();
+	hAnalysisLab->Write();
+	hGranularCS->Write();
+	hAnalysisCS->Write();
+	hGranularHX->Write();
+	hAnalysisHX->Write();
 
-	// hAccCS1D->Write();
-	// hAccHX1D->Write();
+	hAccCS1D->Write();
+	hAccHX1D->Write();
 
-	// outputFile.Close();
+	outputFile.Close();
 
-	// if (BeVerbose) cout << "\nAcceptance maps saved in " << outputFileName << endl;
+	if (BeVerbose) cout << "\nAcceptance maps saved in " << outputFileName << endl;
 }
