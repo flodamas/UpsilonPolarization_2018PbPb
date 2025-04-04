@@ -291,8 +291,12 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		else
 			frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 
-		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
+		// frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+		// frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
+
+		/// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 18 bins from -180 to 180)
+		frameHist->GetXaxis()->SetNdivisions(-200 - (nCosThetaBins / 2.));
+		frameHist->GetYaxis()->SetNdivisions(-300 - (nPhiBins / 3.));
 
 		frameHist->GetXaxis()->CenterTitle();
 		frameHist->GetYaxis()->CenterTitle();
