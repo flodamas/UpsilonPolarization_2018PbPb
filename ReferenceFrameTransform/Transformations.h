@@ -1,3 +1,7 @@
+// when the header is included several times, to avoid the redefinition error
+#ifndef TRANSFORMATIONS_H
+#define TRANSFORMATIONS_H
+
 /// Helping functions returning the positive muon's coordinates in a given reference frame based on the TLorentzVectors in the lab frame
 #include "TVector3.h"
 #include "TLorentzVector.h"
@@ -38,8 +42,8 @@ TVector3 MuPlusVector_CollinsSoper(const TLorentzVector QQLV_Lab, const TLorentz
 	// (4. Calculate delta (angle btw ZHX and ZCS))
 
 	// ******** Transform variables of beams from the lab frame to the upsilon's rest frame ******** //
-	TLorentzVector Beam1LV_Boosted(0, 0, beamEnergy, beamEnergy);
-	TLorentzVector Beam2LV_Boosted(0, 0, -beamEnergy, beamEnergy); // mind the sign!!
+	TLorentzVector Beam1LV_Boosted(0., 0., beamEnergy, beamEnergy);
+	TLorentzVector Beam2LV_Boosted(0., 0., -beamEnergy, beamEnergy); // mind the sign!!
 
 	Beam1LV_Boosted.Boost(-QQLV_Lab.BoostVector());
 	Beam2LV_Boosted.Boost(-QQLV_Lab.BoostVector());
@@ -56,7 +60,7 @@ TVector3 MuPlusVector_CollinsSoper(const TLorentzVector QQLV_Lab, const TLorentz
 	Beam2Vector_QQRestFrame.RotateY(-QQVector_Lab.Theta());
 
 	// ******** Calculate the angle between z_HX and z_CS ******** //
-	TVector3 ZHXunitVec(0, 0, 1);                                                  //(define z_HX unit vector)
+	TVector3 ZHXunitVec(0, 0, 1.);                                                  //(define z_HX unit vector)
 	double Angle_B1ZHX = Beam1Vector_QQRestFrame.Angle(ZHXunitVec);                //(angle between beam1 and z_HX)
 	double Angle_B2ZHX = Beam2Vector_QQRestFrame.Angle(-ZHXunitVec);               //(angle between beam2 and -z_HX =(-beam2 and z_HX) )
 	double Angle_B1miB2 = Beam1Vector_QQRestFrame.Angle(-Beam2Vector_QQRestFrame); //(angle between beam1 and -beam2)
@@ -78,3 +82,5 @@ TVector3 MuPlusVector_CollinsSoper(const TLorentzVector QQLV_Lab, const TLorentz
 
 	return MuPlusVec_CS;
 }
+
+#endif

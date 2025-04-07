@@ -1,3 +1,7 @@
+// when the header is included several times, to avoid the redefinition error
+#ifndef PHASESPACE_H
+#define PHASESPACE_H
+
 Bool_t MuonWithin2018PbPbAcc(const TLorentzVector& muonLV) {
 	float eta = fabs(muonLV.Eta());
 	float pt = muonLV.Pt();
@@ -29,3 +33,5 @@ Bool_t MuonEffStepAcc(const TLorentzVector& muonLV) {
 	         (1.3 <= fabs(eta) && fabs(eta) < 1.5 && pt >= 3.5) ||
 	         (1.5 <= fabs(eta) && pt >= 3.0)));
 }
+
+#endif
