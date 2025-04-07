@@ -56,7 +56,7 @@ TLine* drawTrigger2018acc(float etaMin = 1., float ptMax = 3., Color_t lineColor
 	if (pt1 < ptMax && etaMin < eta1) line1->Draw("l");
 
 	auto* line2prime = MyLine(eta1, pt1, eta1, pt1prime, lineColor, lineStyle, lineWidth);
-	if (pt1prime < ptMax) line2prime->Draw("l");	
+	if (pt1prime < ptMax) line2prime->Draw("l");
 
 	auto* line2 = MyLine(eta1, pt1prime, eta2, pt2, lineColor, lineStyle, lineWidth);
 	if (pt2 < ptMax) line2->Draw("l");
@@ -70,7 +70,7 @@ TLine* drawTrigger2018acc(float etaMin = 1., float ptMax = 3., Color_t lineColor
 	return lineVert;
 }
 
-TLine* drawL3pTThreshold(float etaMin = 1.571, float ptMax = 2.5, Color_t lineColor = kCyan+3, int lineStyle = 1, int lineWidth = 3) {
+TLine* drawL3pTThreshold(float etaMin = 1.571, float ptMax = 2.5, Color_t lineColor = kCyan + 3, int lineStyle = 1, int lineWidth = 3) {
 	float eta1 = 2.4;
 
 	float pt1 = 2.5;
@@ -104,8 +104,8 @@ void singleMuonEfficiency_EtaPtMap() {
 	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
 
 	writeExtraText = true;
-	// extraText = "       Internal";
-	extraText = "       Simulation Preliminary";
+	extraText = "       Internal";
+	//extraText = "       Simulation Preliminary";
 
 	/// OniaTree variables
 
@@ -151,7 +151,7 @@ void singleMuonEfficiency_EtaPtMap() {
 
 	// granular binning for acceptance studies
 
-	TEfficiency* hEffMap = new TEfficiency("hEffMap", ";muon |#eta|;muon p_{T} (GeV);(reco + ID + trigger) efficiency", 26, 0, 2.6, 60, 0, 6);
+	TEfficiency* hEffMap = new TEfficiency("hEffMap", ";muon |#eta|;muon #it{p}_{T} (GeV/#it{c});(reco + ID + trigger) efficiency", 2 * 26, 0, 2.6, 60, 0, 6);
 
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
@@ -208,6 +208,7 @@ void singleMuonEfficiency_EtaPtMap() {
 
 			eventWeight *= tnp_weight_trk_pbpb(genEta, 0);
 			eventWeight *= tnp_weight_muid_pbpb(genPt, genEta, 0);
+			eventWeight *= tnp_weight_trg_pbpb(genPt, genEta, 2, 0); // L2 trigger filter efficency scale factor
 
 			hEffMap->FillWeighted(allGood, eventWeight, genEta, genPt);
 
@@ -230,26 +231,26 @@ void singleMuonEfficiency_EtaPtMap() {
 	auto* triggerAcc = drawTrigger2018acc(0, 6);
 	// auto* triggerL3pT = drawL3pTThreshold(1.571, 2.5);
 
-	auto previousAcc = drawPreviousCut();
+	//auto previousAcc = drawPreviousCut();
 
-	auto* legend = new TLegend(.15, .3, .38, .17);
+	auto* legend = new TLegend(.2, .3, .4, .2);
 
-	legend->AddEntry(previousAcc, "acceptance for", "l");
+	//legend->AddEntry(previousAcc, "acceptance for", "l");
 	// legend->AddEntry(previousAcc, "#splitline{acceptance for}{previous analyses}", "l");
-	legend->AddEntry((TObject*)0, "", "");
-	legend->AddEntry((TObject*)0, "previous analyses", ""); 
-	legend->AddEntry((TObject*)0, "", "");
-	legend->AddEntry((TObject*)0, "", "");
-	legend->AddEntry(triggerAcc, "acceptance for this analysis", "l");
+	//legend->AddEntry((TObject*)0, "", "");
+	//legend->AddEntry((TObject*)0, "previous analyses", "");
+	//legend->AddEntry((TObject*)0, "", "");
+	//legend->AddEntry((TObject*)0, "", "");
+	legend->AddEntry(triggerAcc, "chosen kinematic limits", "l");
 	// legend->AddEntry(triggerL3pT, "p_{T} threshold for L3 muons", "l");
-	
+
 	legend->Draw();
 
-	CMS_lumi(canvas, "#varUpsilon(1S) Hydjet-embedded MC");
+	CMS_lumi(canvas, "#varUpsilon(1S) Hydjet-embedded MC (5.02 TeV)");
 
 	gPad->Update();
 
 	hEffMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
-	canvas->SaveAs("EfficiencyMaps/SingleMuonTotalEfficiency.png", "RECREATE");
+	canvas->SaveAs("EfficiencyMaps/SingleMuonTotalEfficiency.pdf", "RECREATE");
 }
