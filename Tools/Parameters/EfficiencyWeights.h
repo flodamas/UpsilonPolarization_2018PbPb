@@ -1,4 +1,8 @@
 // Data / MC factors for the z position of the primary vertex (to account for the distribution shift)
+// when the header is included several times, to avoid the redefinition error
+#ifndef EFFICIENCY_WEIGHTS_H
+#define EFFICIENCY_WEIGHTS_H
+
 #include "TF1.h"
 
 const Int_t nBins_zPV = 2 * 40;
@@ -69,3 +73,5 @@ Float_t Get_RecoPtWeight(Float_t absY, Float_t pT) {
 	else
 		return 0.; // for safety
 }
+
+#endif // EFFICIENCY_WEIGHTS_H

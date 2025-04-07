@@ -251,11 +251,13 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 			mapCosThetaPhi->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 		mapCosThetaPhi->SetZTitle(Form("#varUpsilon(%dS) yields", iState));
 
-		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+		// mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins / 2.)); // when using 10 bins ranging from -1 to 1
+		mapCosThetaPhi->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins)); // when using 5 bins ranging from -0.7 to 0.7
 		if (isPhiFolded)
 			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
 		else
-			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - 1));
+			// mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - 1) / 2.); // when using 12 bins ranging from -180 to 180
+			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - 1)); // when ranging unsing 6 bins from -180 to 180
 
 		mapCosThetaPhi->GetXaxis()->CenterTitle();
 		mapCosThetaPhi->GetYaxis()->CenterTitle();
@@ -291,12 +293,12 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		else
 			frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 
-		// frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-		// frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
+		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
 
-		/// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 18 bins from -180 to 180)
-		frameHist->GetXaxis()->SetNdivisions(-200 - (nCosThetaBins / 2.));
-		frameHist->GetYaxis()->SetNdivisions(-300 - (nPhiBins / 3.));
+		// /// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 18 bins from -180 to 180)
+		// frameHist->GetXaxis()->SetNdivisions(-200 - (nCosThetaBins / 2.));
+		// frameHist->GetYaxis()->SetNdivisions(-300 - (nPhiBins / 3.));
 
 		frameHist->GetXaxis()->CenterTitle();
 		frameHist->GetYaxis()->CenterTitle();

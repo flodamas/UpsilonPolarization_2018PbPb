@@ -1,3 +1,7 @@
+// when the header is included several times, to avoid the redefinition error
+#ifndef ACCEFFHELPERS_H
+#define ACCEFFHELPERS_H
+
 #include "../Tools/BasicHeaders.h"
 
 #include "../AnalysisParameters.h"
@@ -979,13 +983,13 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	frameHist2D->GetZaxis()->SetRangeUser(0, maxEffxAcc);
 	// frameHist2D->GetZaxis()->SetRangeUser(0, 1);
 
-	/// Ndivision setting for the analysis binning (costheta: 5 bins from -0.7 to 0.7, phi: 10 bins from -180 to 280)
-	frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins)-1);
+	// /// Ndivision setting for the analysis binning (costheta: 5 bins from -0.7 to 0.7, phi: 10 bins from -180 to 280)
+	// frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+	// frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins)-1);
 
-	// /// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 23 bins from -180 to 280)
-	// frameHist2D->GetXaxis()->SetNdivisions(-210); //cosTheta
-	// frameHist2D->GetYaxis()->SetNdivisions(-308); //phi
+	/// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 23 bins from -180 to 280)
+	frameHist2D->GetXaxis()->SetNdivisions(-210); //cosTheta
+	frameHist2D->GetYaxis()->SetNdivisions(-308); //phi
 
 	frameHist2D->GetXaxis()->SetLabelSize(0.045);
 	frameHist2D->GetYaxis()->SetLabelSize(0.045);
@@ -1014,3 +1018,5 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 		canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s%s%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, extraString, displayErrors ? "_DisplayUnc" : "_DisplayEff", "_fullPhi"), "RECREATE");
 	// canvas->SaveAs(Form("AccxEffMaps/%dS/analysisBin/2DAccxEff_%s_pt%dto%d%s.png", iState, EffxAccHist->GetName(), ptMin, ptMax, "_diff"), "RECREATE");
 }
+
+#endif
