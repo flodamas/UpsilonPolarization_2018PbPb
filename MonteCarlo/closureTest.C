@@ -52,22 +52,44 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 	}
 
 	// get acceptance maps
-	TFile* acceptanceFile = openFile(fileName.Data());
+	// TFile* acceptanceFile = openFile(fileName.Data());
+    TFile* acceptanceFile = TFile::Open(fileName, "READ");
 
 	if (!acceptanceFile) {
 		std::cerr << "Error: acceptanceFile is null." << std::endl;
+        acceptanceFile->Close();
+        delete acceptanceFile;
 
+        // acceptanceMap_noGenFilter(0, 30, gUpsilonState, lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded, "MuonUpsilonTriggerAcc");
+ 
         return nullptr;
 	}
 
-	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
+    acceptanceFile = openFile(fileName.Data());
+	
+    auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
 
 	if (!accMap) {
 		std::cerr << "Error: accMap is null." << std::endl;
+        acceptanceFile->Close();
+        delete acceptanceFile;
+        delete accMap;
+
+        // create the acceptance map
+        cout << Form("Acceptance map not found. Creating a new one with (lambdaTheta, phi, thetaPhi) = (%.2f, %.2f, %.2f)....", lambdaTheta, lambdaPhi, lambdaThetaPhi) << endl;
 
         acceptanceMap_noGenFilter(0, 30, gUpsilonState, lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded, "MuonUpsilonTriggerAcc");
-        acceptanceFile = openFile(fileName.Data());
-		// return nullptr;
+        TFile* newAcceptanceFile = openFile(fileName.Data());
+
+        auto* newAccMap = (TEfficiency*)newAcceptanceFile->Get(nominalMapName);
+        cout << "Acceptance map is loaded." << endl;
+        if (!newAccMap) {
+            std::cerr << "Error: accMap is still null after creating it." << std::endl;
+            // accMap->ls();
+            return nullptr;
+        }
+
+		return newAccMap;
 	}
 
 	return accMap;
@@ -133,6 +155,14 @@ TH3D* getSysEff3DMap(const char* refFrameName, Double_t lambdaTheta = 0, Double_
 	return systEff;
 }
 
+TLine* drawLine(double x1, double y1, double x2, double y2) {
+    TLine* line = new TLine(x1, y1, x2, y2);
+    line->SetLineStyle(2);
+    line->SetLineColor(kBlack);
+
+    line->Draw("SAME");
+    return line;
+}
 /// fit the corrected histo and extract polarization parameters
 RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS", 
                         Int_t ptMin = 0, Int_t ptMax = 30, 
@@ -217,7 +247,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 
 	// polarFunc2D->Draw("SURFACE SAME");
 
-	TPaveText* kinematicsText = new TPaveText(0.2, 0.86, 0.77, 0.95, "NDCNB");
+	TPaveText* kinematicsText = new TPaveText(0.38, 0.85, 0.95, 0.90, "NDCNB");//0.375,0.8521739,0.9459877,0.9043478
 	kinematicsText->SetFillColor(4000);
 	kinematicsText->SetBorderSize(0);
 	kinematicsText->AddText(Form("%s, %s", DimuonRapidityRangeText(gRapidityMin, gRapidityMax), DimuonPtRangeText(ptMin, ptMax)));
@@ -225,7 +255,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 	kinematicsText->Draw("SAME");
 
     /// add results to the plot
-	TLegend legend2(.2, .77, .3, .86);
+	TLegend legend2(.16, .78, .46, .92);// 0.1574074,0.7817391,0.4583333,0.9191304
 	legend2.SetTextSize(.045);
 	legend2.SetFillColor(0);
 	legend2.SetFillStyle(1001);
@@ -795,6 +825,27 @@ void closureTest(TString refFrameName = "CS",
 	lambdaThetaPhi->setVal(0);
 	lambdaTilde->setVal(0);
 
+    /// place holder of the polarization parameters before and after iterations
+    vector <double> lambdaThetaArr, lambdaPhiArr, lambdaThetaPhiArr, lambdaTildeArr, numItrArr;
+
+    /// set the initial values of the polarization parameters for acceptance and efficiency correction
+    lambdaThetaArr.push_back(lambdaTheta->getVal()); 
+    lambdaPhiArr.push_back(lambdaPhi->getVal());
+    lambdaThetaPhiArr.push_back(lambdaThetaPhi->getVal());
+    lambdaTildeArr.push_back(lambdaTilde->getVal());
+    numItrArr.push_back(-1);
+
+    // cout << "lambdaTheta arr size: " << lambdaThetaArr.size() << endl;
+    // cout << lambdaThetaArr[0] << ", " << lambdaThetaArr[1] << endl;
+    // cout << "lambdaPhi arr size: " << lambdaPhiArr.size() << endl;
+    // cout << lambdaPhiArr[0] << ", " << lambdaPhiArr[1] << endl;
+    // cout << "lambdaThetaPhi arr size: " << lambdaThetaPhiArr.size() << endl;
+    // cout << lambdaThetaPhiArr[0] << ", " << lambdaThetaPhiArr[1] << endl;
+    // cout << "lambdaTilde arr size: " << lambdaTildeArr.size() << endl;
+    // cout << lambdaTildeArr[0] << ", " << lambdaTildeArr[1] << endl;
+    // cout << "numItr arr size: " << numItrArr.size() << endl;
+    // cout << numItrArr[0] << ", " << numItrArr[1] << endl;
+
     /// store fit results
     // RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
     RooArgSet polarParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
@@ -802,25 +853,165 @@ void closureTest(TString refFrameName = "CS",
 	getGENMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, applyAcc, isPhiFolded); /// apply polarization to NoGENFilter sample  
 	// getPolarizedMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges); /// apply polarization to recoMC sample
 
-	/// apply acceptance and efficiency correction
+	/// 1st apply acceptance and efficiency correction
 	TH2D* correctedHist = new TH2D("correctedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	correctMC2DHist(angDistHist2D, correctedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff);
+    TH2D* fittedHist = new TH2D("fittedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+
+    /// loop over the number of iterations
+    int totNItrs = 10; /// number of iterations
+
+    // while (!((lambdaTheta0 == (round(lambdaTheta->getVal() * 100.) / 100.)) && (lambdaPhi0 == (round(lambdaPhi->getVal() * 100.) / 100.)) && (lambdaThetaPhi0 == round(lambdaThetaPhi->getVal() * 100. / 100.)))) {
+    for (int iItr = 0; iItr <= totNItrs; iItr++) {
+        correctMC2DHist(angDistHist2D, correctedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff);
     
-    /// due to drawing issue, separate correctedHist and fittedHist
-	TH2D* fittedHist = new TH2D("fittedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff);
+        /// due to drawing issue, separate correctedHist and fittedHist
+        correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff);
 
-    /// extract parameters from the corrected hist
-	polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
-    cout << "extracted polarization parameters: " << endl;
-    polarParams.Print("v");
+        /// 1st extract parameters from the corrected hist
+        polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
+        cout << "extracted polarization parameters: " << endl;
+        polarParams.Print("v");
 
-    /// 2nd round of acceptance and efficiency correction
-	correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff);
-    polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
-    cout << "extracted polarization parameters: " << endl;
-    polarParams.Print("v");                  
+        lambdaThetaArr.push_back(lambdaTheta->getVal());
+        lambdaPhiArr.push_back(lambdaPhi->getVal());
+        lambdaThetaPhiArr.push_back(lambdaThetaPhi->getVal());
+        lambdaTildeArr.push_back(lambdaTilde->getVal());
 
+        numItrArr.push_back(iItr);
+        
+        // cout << "lambdaTheta arr size: " << lambdaThetaArr.size() << endl;
+        // cout << lambdaThetaArr[0] << ", " << lambdaThetaArr[1] << endl;
+        // cout << "lambdaPhi arr size: " << lambdaPhiArr.size() << endl;
+        // cout << lambdaPhiArr[0] << ", " << lambdaPhiArr[1] << endl;
+        // cout << "lambdaThetaPhi arr size: " << lambdaThetaPhiArr.size() << endl;
+        // cout << lambdaThetaPhiArr[0] << ", " << lambdaThetaPhiArr[1] << endl;
+        // cout << "lambdaTilde arr size: " << lambdaTildeArr.size() << endl;
+        // cout << lambdaTildeArr[0] << ", " << lambdaTildeArr[1] << endl;
+        // cout << "numItr arr size: " << numItrArr.size() << endl;
+        // cout << numItrArr[0] << ", " << numItrArr[1] << endl;
+
+        if ( (fabs(lambdaThetaArr[iItr] - lambdaThetaArr[iItr + 1]) < 0.01) && (fabs(lambdaPhiArr[iItr] - lambdaPhiArr[iItr + 1]) < 0.01) && (fabs(lambdaThetaPhiArr[iItr] - lambdaThetaPhiArr[iItr + 1]) < 0.01) ) {
+            // cout << "converged after " << iItr << " iterations" << endl;
+            // cout << "lambdaTheta diff: " << lambdaThetaArr[iItr] << ", " << lambdaThetaArr[iItr + 1] << ", " << fabs(lambdaThetaArr[iItr + 1] - lambdaThetaArr[iItr]) << endl;
+            // cout << "lambdaPhi diff: " << lambdaPhiArr[iItr] << ", " << fabs(lambdaPhiArr[iItr + 1] - lambdaPhiArr[iItr]) << endl;
+            // cout << "lambdaThetaPhi diff: " << lambdaThetaPhiArr[iItr] << ", " << fabs(lambdaThetaPhiArr[iItr + 1] - lambdaThetaPhiArr[iItr]) << endl;
+
+            break;
+        }
+
+        // iItr++;
+
+    }
+
+    // /// 2nd round of acceptance & efficiency correction and extract parameters
+	// correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff);
+    // polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
+    // cout << "extracted polarization parameters: " << endl;
+    // polarParams.Print("v");               
+    // totNItrs++;   
+
+    // lambdaThetaArr.push_back(lambdaTheta->getVal());
+    // lambdaPhiArr.push_back(lambdaPhi->getVal());
+    // lambdaThetaPhiArr.push_back(lambdaThetaPhi->getVal());
+    // lambdaTildeArr.push_back(lambdaTilde->getVal());
+    // numItrArr.push_back(totNItrs);
+
+    /// draw plots for polarization parameters vs # of Iterations
+    TCanvas* iterCanvas = new TCanvas("iterCanvas", "iterCanvas", 650, 600);
+    iterCanvas->SetRightMargin(0.05);
+    iterCanvas->cd();
+
+    TGraph* lambdaThetaGraph = new TGraph(lambdaThetaArr.size(), numItrArr.data(), lambdaThetaArr.data());
+    lambdaThetaGraph->SetTitle("; Number of Iterations; Polarization Parameter Values");
+    lambdaThetaGraph->GetXaxis()->CenterTitle();
+    lambdaThetaGraph->GetYaxis()->CenterTitle();
+    lambdaThetaGraph->SetMarkerStyle(20);
+    lambdaThetaGraph->SetMarkerColor((TColor::GetColor("#FF1F5B")));
+    lambdaThetaGraph->SetLineColor((TColor::GetColor("#FF1F5B")));
+    lambdaThetaGraph->SetLineWidth(2);
+    lambdaThetaGraph->SetMarkerSize(1.5);
+    lambdaThetaGraph->SetMinimum(-1.2);
+    lambdaThetaGraph->SetMaximum(1.5);
+    
+    gPad->Update(); // ensures the histogram behind the graph is created
+
+    lambdaThetaGraph->GetXaxis()->SetNdivisions(totNItrs + 3);
+    lambdaThetaGraph->Draw("APL");
+
+    TGraph* lambdaPhiGraph = new TGraph(lambdaPhiArr.size(), numItrArr.data(), lambdaPhiArr.data());
+    lambdaPhiGraph->SetMarkerStyle(20);
+    lambdaPhiGraph->SetMarkerColor(TColor::GetColor("#009ADE"));
+    lambdaPhiGraph->SetLineColor(TColor::GetColor("#009ADE"));
+    lambdaPhiGraph->SetLineWidth(2);
+    lambdaPhiGraph->SetMarkerSize(1.5);
+    lambdaPhiGraph->Draw("PL same");
+
+    TGraph* lambdaThetaPhiGraph = new TGraph(lambdaThetaPhiArr.size(), numItrArr.data(), lambdaThetaPhiArr.data());
+    lambdaThetaPhiGraph->SetMarkerStyle(20);
+    lambdaThetaPhiGraph->SetMarkerColor(TColor::GetColor("#bababa"));
+    lambdaThetaPhiGraph->SetLineColor(TColor::GetColor("#bababa"));
+    lambdaThetaPhiGraph->SetLineWidth(2);
+    lambdaThetaPhiGraph->SetMarkerSize(1.5);
+    lambdaThetaPhiGraph->Draw("PL same");
+
+    drawLine(-1.57, 0, totNItrs * 1.12, 0);
+    drawLine(-1.57, lambdaTheta0, totNItrs * 1.12, lambdaTheta0);
+    drawLine(-1.57, lambdaPhi0, totNItrs * 1.12, lambdaPhi0);
+    drawLine(-1.57, lambdaThetaPhi0, totNItrs * 1.12, lambdaThetaPhi0);
+    // 0.1574074,0.7817391,0.4583333,0.9191304
+    TLegend* legend = new TLegend(0.16, 0.78, 0.46, 0.91);
+    legend->SetBorderSize(0);
+    legend->SetFillColor(0);
+    legend->SetTextSize(0.05);
+
+    legend->AddEntry(lambdaThetaGraph, "#lambda_{#theta}", "p");
+    legend->AddEntry(lambdaPhiGraph, "#lambda_{#varphi}", "p");
+    legend->AddEntry(lambdaThetaPhiGraph, "#lambda_{#theta#varphi}", "p");
+    legend->Draw();
+
+    TLatex* legend1 = new TLatex();
+    legend1->SetTextAlign(23);
+    legend1->SetTextSize(0.04);
+    legend1->DrawLatexNDC(.65, .84, Form("Input: (#lambda_{#theta},  #lambda_{#varphi}, #lambda_{#theta#varphi}) = (%.2f, %.2f, %.2f)", lambdaTheta0, lambdaPhi0, lambdaThetaPhi0));
+    // 0.6450617,0.8365217
+    Bool_t isCSframe;
+
+    if (refFrameName == (TString) "CS") isCSframe = true;
+    else isCSframe = false;
+
+    // 0.375,0.8521739,0.9459877,0.9043478
+    TPaveText* text = new TPaveText(0.38, 0.85, 0.95, 0.90, "NDCNB");
+	text->SetFillColor(4000);
+	text->SetBorderSize(0);
+    text->AddText(Form("%s, %s", isCSframe ? "Collins-Soper frame" : "Helicity frame", DimuonPtRangeText(ptMin, ptMax)));
+	// text->AddText(DimuonPtRangeText(ptMin, ptMax));
+	text->SetAllWith("", "align", 32);
+    text->Draw("same");
+
+    // TPaveText* refFrameText = RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, 0.61, 0.34, 0.97, 0.56);
+    // TPaveText* kinematicsText = KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin,  ptMax, 0.57, 0.95, 0.95, 0.65);
+	
+    // TPaveText* refFrameText = new TPaveText( 0.61, 0.34, 0.97, 0.56, "NDCNB");
+	// refFrameText->SetFillColor(4000);
+	// refFrameText->SetBorderSize(0);
+    // refFrameText->AddText(isCSframe ? "Collins-Soper frame" : "Helicity frame");
+
+    // refFrameText->Draw("same");
+
+    // TPaveText* kinematicsText = new TPaveText(0.57, 0.95, 0.95, 0.65, "NDCNB");
+    // kinematicsText->SetFillColor(4000);
+    // kinematicsText->SetBorderSize(0);
+	// // kinematicsText->AddText(CentralityRangeText(gCentralityBinMin, gCentralityBinMax));
+	// // kinematicsText->AddText(gMuonPtCutText);
+	// // kinematicsText->AddText(DimuonRapidityRangeText(gRapidityMin, gRapidityMax));
+	// kinematicsText->AddText(DimuonPtRangeText(ptMin, ptMax));
+
+	// kinematicsText->SetAllWith("", "align", 32);
+    // kinematicsText->Draw("same");
+
+    gPad->RedrawAxis();
+
+    iterCanvas->SaveAs(Form("ClosureTest/Iterations_totItr%d_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_LambdaTheta%.2f_Phi%.2f_ThetaPhi%.2f.png", totNItrs, refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta0, lambdaPhi0, lambdaThetaPhi0), "RECREATE");
 
 	return;
 }
