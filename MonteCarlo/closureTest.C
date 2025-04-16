@@ -111,17 +111,26 @@ TEfficiency* getEfficiency3DMap(const char* refFrameName, Double_t lambdaTheta =
 
 	if (!efficiencyFile) {
 		std::cerr << "Error: efficiencyFile is null." << std::endl;
-		return nullptr;
+		
+        return nullptr;
 	}
 
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	if (!effMap) {
 		std::cerr << "Error: effMap is null." << std::endl;
-        weightedEfficiencyMaps(0, 30, gUpsilonState, lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded, "MuonUpsilonTriggerEff");
+        weightedEfficiencyMaps(0, 30, gUpsilonState, lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded, "MuonUpsilonTriggerAcc");
 		
         efficiencyFile = openFile(fileName.Data());
-        // return nullptr;
+
+        effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
+        cout << "Efficiency map is loaded." << endl;
+
+        if (!effMap) {
+            std::cerr << "Error: effMap is still null after creating it." << std::endl;
+            // effMap->ls();
+            return nullptr;
+        }
 	}
 
 	return effMap;
@@ -171,8 +180,8 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
                         Bool_t isPhiFolded = kFALSE) {
 	
     writeExtraText = true; // if extra text
-	// extraText = "       Internal";
-	extraText = "       Simulation Preliminary";
+	extraText = "       Internal";
+	// extraText = "       Simulation Preliminary";
 
 	TH2D* fitHist = (TH2D*)correctedHist->Clone("fitHist");
 
@@ -223,7 +232,6 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 	lambdaTilde->setError(lambdaTildeErr);
 
     /// store fit results
-    // RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
     RooArgSet fittedParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
 
 	TCanvas* mc2DCanvas = draw2DMap(fitHist, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, kFALSE, 1, isPhiFolded);
@@ -246,8 +254,8 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 	fitHist->GetXaxis()->SetLabelSize(0.044);
 
 	// polarFunc2D->Draw("SURFACE SAME");
-
-	TPaveText* kinematicsText = new TPaveText(0.38, 0.85, 0.95, 0.90, "NDCNB");//0.375,0.8521739,0.9459877,0.9043478
+    // 0.2831858,0.8886957,0.8525074,0.9373913
+	TPaveText* kinematicsText = new TPaveText(0.28, 0.89, 0.85, 0.93, "NDCNB");//0.375,0.8521739,0.9459877,0.9043478
 	kinematicsText->SetFillColor(4000);
 	kinematicsText->SetBorderSize(0);
 	kinematicsText->AddText(Form("%s, %s", DimuonRapidityRangeText(gRapidityMin, gRapidityMax), DimuonPtRangeText(ptMin, ptMax)));
@@ -255,14 +263,14 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 	kinematicsText->Draw("SAME");
 
     /// add results to the plot
-	TLegend legend2(.16, .78, .46, .92);// 0.1574074,0.7817391,0.4583333,0.9191304
+	TLegend legend2(.16, .78, .46, .89);// 0.159292,0.7791304,0.460177,0.8886957
 	legend2.SetTextSize(.045);
 	legend2.SetFillColor(0);
 	legend2.SetFillStyle(1001);
 
 	legend2.AddEntry(fitHist, "#varUpsilon(1S) corrected yield", "lp");
-	legend2.AddEntry(polarFunc2D, Form("fit: #lambda_{#theta}  = %.2f #pm %.2f    #lambda_{#varphi} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr, lambdaPhiVal, lambdaPhiErr), "l");
-	legend2.AddEntry((TObject*)0, Form("     #lambda_{#theta#varphi} = %.2f #pm %.2f  #tilde{#lambda}  = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr, lambdaTildeVal, lambdaTildeErr), "");
+	// legend2.AddEntry(polarFunc2D, Form("fit: #lambda_{#theta}  = %.2f #pm %.2f    #lambda_{#varphi} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr, lambdaPhiVal, lambdaPhiErr), "l");
+	// legend2.AddEntry((TObject*)0, Form("     #lambda_{#theta#varphi} = %.2f #pm %.2f  #tilde{#lambda}  = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr, lambdaTildeVal, lambdaTildeErr), "");
 	legend2.AddEntry(polarFunc2D, "fit: ", "l");
 
 	legend2.DrawClone();
@@ -316,8 +324,8 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
                     Bool_t drawPlot = kFALSE, Bool_t isPhiFolded = kTRUE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE) {
 	
     writeExtraText = true; // if extra text
-	                       // extraText = "       Internal";
-	extraText = "       Simulation Preliminary";
+	extraText = "       Internal";
+	// extraText = "       Simulation Preliminary";
 
 	/// initialize variables used in the loop below
 	Double_t totalRelUncHigh = 0, totalRelUncLow = 0;
@@ -328,10 +336,6 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
     RooRealVar* lambdaThetaVar = (RooRealVar*)polarParams.find("lambdaTheta");
     RooRealVar* lambdaPhiVar = (RooRealVar*)polarParams.find("lambdaPhi");
     RooRealVar* lambdaThetaPhiVar = (RooRealVar*)polarParams.find("lambdaThetaPhi");
-	// /// set zero polarization parameters for acceptance and efficiency MC samples
-	// float lambdaTheta = 0;
-	// float lambdaPhi = 0;
-	// float lambdaThetaPhi = 0;
 
     /// set the polarization parameters for acceptance and efficiency MC samples to the input polarization parameters
 	float lambdaTheta = lambdaThetaVar->getVal();
@@ -340,19 +344,20 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 	/// get acceptance and efficiency 3D map
 	auto* accMap = getAcceptance3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
-	// auto* effMap = getEfficiency3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
-	// auto* systEff = getSysEff3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+	auto* effMap = getEfficiency3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+	auto* systEff = getSysEff3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
 
 	/// rebin acceptance and efficiency, efficiency systematic Uncertainty
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
-	// TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
-	// TH2D* systEffCosThetaPhi = rebinRel3DUncMap(effMap, systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
+	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
+	TH2D* systEffCosThetaPhi = rebinRel3DUncMap(effMap, systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	TH2D* hTotalCosThetaPhi = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
 
 	/// draw acceptance and efficiency graph for check
 	TCanvas* accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-	// TCanvas* effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	TCanvas* effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	TCanvas* dummyCanvas = new TCanvas("dummyCanvas", "dummyCanvas", 600, 600);
 
 	/// apply acc x eff correction weights and errors to each costheta bin
 	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
@@ -367,19 +372,19 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 			// get the corresponding weights
 			double acceptance = accMapCosThetaPhi->GetEfficiency(iGlobalBin);
-			// double efficiency = effMapCosThetaPhi->GetEfficiency(iGlobalBin);
-			double efficiency = 1;
+			double efficiency = effMapCosThetaPhi->GetEfficiency(iGlobalBin);
+			// double efficiency = 1;
 
 			cout << "acceptance: " << acceptance << endl;
 			cout << "efficiency: " << efficiency << endl;
 
 			/// calculate weight
             /// apply both eff and acc
-			if (applyEff) {
-				// if (acceptance == 0 || efficiency == 0)
-				// 	weight = 0.;
-				// else
-				// 	weight = 1. / (acceptance * efficiency);
+			if (applyEff && applyAcc) {
+				if (acceptance == 0 || efficiency == 0)
+					weight = 0.;
+				else
+					weight = 1. / (acceptance * efficiency);
 			}
 
             /// apply only acc
@@ -455,7 +460,7 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 		/// Put texts inside the plot
 		legend1->DrawLatexNDC(.50, .88, "Corrected MC");
-		legend1->DrawLatexNDC(.48, .80, Form("Input: #lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		// legend1->DrawLatexNDC(.48, .80, Form("Input: #lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
 		gPad->RedrawAxis();
 
@@ -473,14 +478,14 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	if (isPhiFolded) {
         /// png
 		accCanvas->SaveAs(Form("closureTest/2Dacc_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
-		// effCanvas->SaveAs(Form("closureTest/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		effCanvas->SaveAs(Form("closureTest/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
 	} else {
         /// pdf
 		accCanvas->SaveAs(Form("closureTest/2Dacc_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
-		// effCanvas->SaveAs(Form("closureTest/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		effCanvas->SaveAs(Form("closureTest/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
         ///png
         accCanvas->SaveAs(Form("closureTest/2Dacc_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
-		// effCanvas->SaveAs(Form("closureTest/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		effCanvas->SaveAs(Form("closureTest/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
 	}
 
 	return;
@@ -495,8 +500,8 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
                         Bool_t isPhiFolded = kFALSE) {
 
 	writeExtraText = true; // if extra text
-	                       // extraText = "       Internal";
-	extraText = "       Simulation Preliminary";
+	extraText = "       Internal";
+	// extraText = "       Simulation Preliminary";
 
 	/// read the input MC file
 	const char* inputFileName = Form("Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
@@ -520,6 +525,7 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 
 	allDataset->Print("V");
 
+    /// apply kinematic cuts on the dataset
 	const char* kinematicCut = Form("(pt > %d) && (pt < %d) && (cosTheta%s > %f) && (cosTheta%s < %f) && (%s > %d) && (%s < %d)", ptMin, ptMax, refFrameName.Data(), cosThetaBinEdges[0], refFrameName.Data(), cosThetaBinEdges[nCosThetaBins], PhiVarName(refFrameName.Data()), (int)phiBinEdges[0], PhiVarName(refFrameName.Data()), (int)phiBinEdges[nPhiBins]);
 	RooDataSet reducedDataset = *(RooDataSet*)allDataset->reduce(kinematicCut);
 
@@ -608,16 +614,16 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 	draw2DMap(angDistHist2D, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
 	// display2DMapContents(angDistHist2D, nCosThetaBins, nPhiBins, kFALSE);
 
-	//draw error histogram
+	/// draw error histogram
 	// draw2DMap(errorHist, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
 	// display2DMapContents(errorHist, nCosThetaBins, nPhiBins, kFALSE);
 
-	// Styles of the texts in the plot
+	/// Styles of the texts in the plot
 	TLatex* legend1 = new TLatex();
 	legend1->SetTextAlign(22);
 	legend1->SetTextSize(0.05);
 
-	// Put texts inside the plot
+	/// Put texts inside the plot
 	legend1->DrawLatexNDC(.50, .88, "Reconstructed MC");
 	legend1->DrawLatexNDC(.50, .80, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
@@ -639,8 +645,8 @@ void getGENMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
                  Bool_t applyAcc = kTRUE, Bool_t isPhiFolded = kFALSE) {
 
 	writeExtraText = true; // if extra text
-	// extraText = "       Internal";
-	extraText = "       Simulation Preliminary";
+	extraText = "       Internal";
+	// extraText = "       Simulation Preliminary";
 
 	/// read the input MC file (choose applying acceptance or not)
 	const char* inputFileName;
@@ -814,12 +820,13 @@ void closureTest(TString refFrameName = "CS",
 	/// create 2D angular distribution histogram
 	TH2D* angDistHist2D = new TH2D("angDistHist2D", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
-    /// define polarization parameters that will be used for correction
+    /// define polarization parameters that will be used for correction (acceptance and efficiency)
 	RooRealVar* lambdaTheta = new RooRealVar("lambdaTheta", "lambdaTheta", -3., 3.);
 	RooRealVar* lambdaPhi = new RooRealVar("lambdaPhi", "lambdaPhi", -3., 3.);
 	RooRealVar* lambdaThetaPhi = new RooRealVar("lambdaThetaPhi", "lambdaThetaPhi", -3., 3.);
 	RooRealVar* lambdaTilde = new RooRealVar("lambdaTilde", "lambdaTilde", -3., 3.);
 
+    /// always start with null polarization assumption in acceptance and efficiency
 	lambdaTheta->setVal(0);
 	lambdaPhi->setVal(0);
 	lambdaThetaPhi->setVal(0);
@@ -846,28 +853,29 @@ void closureTest(TString refFrameName = "CS",
     // cout << "numItr arr size: " << numItrArr.size() << endl;
     // cout << numItrArr[0] << ", " << numItrArr[1] << endl;
 
-    /// store fit results
-    // RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
+    /// store lambda parameters
     RooArgSet polarParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
 
-	getGENMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, applyAcc, isPhiFolded); /// apply polarization to NoGENFilter sample  
-	// getPolarizedMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges); /// apply polarization to recoMC sample
+    /// get MC histo with polarization (genMC without any filters or recoMC)
+	if (!applyEff) getGENMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, applyAcc, isPhiFolded); /// apply polarization to NoGENFilter sample  
+	else getPolarizedMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges); /// apply polarization to recoMC sample
 
-	/// 1st apply acceptance and efficiency correction
+	/// define histograms
 	TH2D* correctedHist = new TH2D("correctedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
     TH2D* fittedHist = new TH2D("fittedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
     /// loop over the number of iterations
-    int totNItrs = 10; /// number of iterations
+    int totNItrs = 2; /// number of iterations
 
     // while (!((lambdaTheta0 == (round(lambdaTheta->getVal() * 100.) / 100.)) && (lambdaPhi0 == (round(lambdaPhi->getVal() * 100.) / 100.)) && (lambdaThetaPhi0 == round(lambdaThetaPhi->getVal() * 100. / 100.)))) {
     for (int iItr = 0; iItr <= totNItrs; iItr++) {
+        /// correct the MC
         correctMC2DHist(angDistHist2D, correctedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff);
     
         /// due to drawing issue, separate correctedHist and fittedHist
         correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff);
 
-        /// 1st extract parameters from the corrected hist
+        /// extract parameters from the corrected hist
         polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
         cout << "extracted polarization parameters: " << endl;
         polarParams.Print("v");
@@ -890,6 +898,7 @@ void closureTest(TString refFrameName = "CS",
         // cout << "numItr arr size: " << numItrArr.size() << endl;
         // cout << numItrArr[0] << ", " << numItrArr[1] << endl;
 
+        /// if the difference between the new paramter and the previous one is less than 0.01, stop the iterative procedure
         if ( (fabs(lambdaThetaArr[iItr] - lambdaThetaArr[iItr + 1]) < 0.01) && (fabs(lambdaPhiArr[iItr] - lambdaPhiArr[iItr + 1]) < 0.01) && (fabs(lambdaThetaPhiArr[iItr] - lambdaThetaPhiArr[iItr + 1]) < 0.01) ) {
             // cout << "converged after " << iItr << " iterations" << endl;
             // cout << "lambdaTheta diff: " << lambdaThetaArr[iItr] << ", " << lambdaThetaArr[iItr + 1] << ", " << fabs(lambdaThetaArr[iItr + 1] - lambdaThetaArr[iItr]) << endl;
@@ -902,19 +911,6 @@ void closureTest(TString refFrameName = "CS",
         // iItr++;
 
     }
-
-    // /// 2nd round of acceptance & efficiency correction and extract parameters
-	// correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff);
-    // polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
-    // cout << "extracted polarization parameters: " << endl;
-    // polarParams.Print("v");               
-    // totNItrs++;   
-
-    // lambdaThetaArr.push_back(lambdaTheta->getVal());
-    // lambdaPhiArr.push_back(lambdaPhi->getVal());
-    // lambdaThetaPhiArr.push_back(lambdaThetaPhi->getVal());
-    // lambdaTildeArr.push_back(lambdaTilde->getVal());
-    // numItrArr.push_back(totNItrs);
 
     /// draw plots for polarization parameters vs # of Iterations
     TCanvas* iterCanvas = new TCanvas("iterCanvas", "iterCanvas", 650, 600);
@@ -958,7 +954,7 @@ void closureTest(TString refFrameName = "CS",
     drawLine(-1.57, lambdaTheta0, totNItrs * 1.12, lambdaTheta0);
     drawLine(-1.57, lambdaPhi0, totNItrs * 1.12, lambdaPhi0);
     drawLine(-1.57, lambdaThetaPhi0, totNItrs * 1.12, lambdaThetaPhi0);
-    // 0.1574074,0.7817391,0.4583333,0.9191304
+
     TLegend* legend = new TLegend(0.16, 0.78, 0.46, 0.91);
     legend->SetBorderSize(0);
     legend->SetFillColor(0);
@@ -973,13 +969,12 @@ void closureTest(TString refFrameName = "CS",
     legend1->SetTextAlign(23);
     legend1->SetTextSize(0.04);
     legend1->DrawLatexNDC(.65, .84, Form("Input: (#lambda_{#theta},  #lambda_{#varphi}, #lambda_{#theta#varphi}) = (%.2f, %.2f, %.2f)", lambdaTheta0, lambdaPhi0, lambdaThetaPhi0));
-    // 0.6450617,0.8365217
+
     Bool_t isCSframe;
 
     if (refFrameName == (TString) "CS") isCSframe = true;
     else isCSframe = false;
 
-    // 0.375,0.8521739,0.9459877,0.9043478
     TPaveText* text = new TPaveText(0.38, 0.85, 0.95, 0.90, "NDCNB");
 	text->SetFillColor(4000);
 	text->SetBorderSize(0);
