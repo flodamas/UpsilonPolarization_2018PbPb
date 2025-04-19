@@ -1,5 +1,0 @@
-sigmaSymDSCB =  0.080380 +/- 0.0051634 L(0.03 - 0.15) 
-alphaInfSymDSCB =  1.2360 +/- 0.22084 L(0.1 - 10) 
-orderInfSymDSCB =  3.5921 +/- 1.5570 L(0.01 - 10) 
-alphaSupSymDSCB =  1.2890 +/- 0.13912 L(0.1 - 10) 
-orderSupSymDSCB =  17.937 +/- 17.493 L(0.1 - 200) 

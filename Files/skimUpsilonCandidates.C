@@ -8,7 +8,7 @@
 
 // (https://twiki.cern.ch/twiki/bin/viewauth/CMS/UpsilonPolarizationInPbPb5TeV)
 
-void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root") {
+void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPrompt_112X_DATA_ep.root", TString muonAccName = "UpsilonTriggerThresholds") {
 	/// Open OniaTree
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
@@ -56,7 +56,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
 
 	// Float_t lowMassCut = 7, highMassCut = 14;
-	Float_t lowMassCut = MassBinMin, highMassCut = MassBinMax;
+	Float_t lowMassCut = 7, highMassCut = 12;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
 
@@ -68,7 +68,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 	RooRealVar phiLabVar(PhiVarName(refFrameName), PhiVarTitle(refFrameName), -180, 180, gPhiUnit);
 	RooRealVar etaLabMuplVar("etaLabMupl", "eta of positive muon in the lab frame", -2.4, 2.4);
 	RooRealVar etaLabMumiVar("etaLabMumi", "eta of negative muon in the lab frame", -2.4, 2.4);
-	
+
 	RooRealVar ptLabMuplVar("ptLabMupl", "pt of positive muon in the lab frame", 0, 100, gPtUnit);
 	RooRealVar ptLabMumiVar("ptLabMumi", "pt of negative muon in the lab frame", 0, 100, gPtUnit);
 
@@ -139,13 +139,11 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 
-			// if (!MuonSimpleAcc(*Reco_mupl_4mom)) continue;
-			if (!MuonUpsilonTriggerAcc(*Reco_mupl_4mom)) continue;
+			if (!MuonKinematicsWithinLimits(*Reco_mupl_4mom, muonAccName)) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
-			// if (!MuonSimpleAcc(*Reco_mumi_4mom)) continue;
-			if (!MuonUpsilonTriggerAcc(*Reco_mumi_4mom)) continue;
+			if (!MuonKinematicsWithinLimits(*Reco_mumi_4mom, muonAccName)) continue;
 
 			// get positive muon's coordinates in the studied reference frames
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);
@@ -174,7 +172,6 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 			// Collins-Soper
 			cosThetaCSVar = muPlus_CS.CosTheta();
 			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
-
 
 			if (cosThetaCSVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
@@ -221,7 +218,7 @@ void skimUpsilonCandidates(const char* inputFileName = "OniaTree_miniAOD_PbPbPro
 		} // end of reco QQ loop
 	}   // enf of event loop
 
-	const char* outputFileName = Form("UpsilonSkimmedDataset%s_pTmu.root", gMuonAccName);
+	const char* outputFileName = Form("UpsilonSkimmedDataset_%s.root", muonAccName.Data());
 
 	TFile file(outputFileName, "RECREATE");
 

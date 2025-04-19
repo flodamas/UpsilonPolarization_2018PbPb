@@ -21,7 +21,7 @@
 #include "../ReferenceFrameTransform/Transformations.h"
 
 void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE, const char* defaultBkgShapeName = "ExpTimesErr") { //Chebychev
-	writeExtraText = true; // if extra text
+	writeExtraText = true;                                                                                                                                                                                                                                                                                                                                             // if extra text
 	extraText = "       Preliminary";
 
 	using namespace RooFit;
@@ -115,24 +115,30 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	TH2D* yieldMap = new TH2D("yieldMap", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
 
 	/// define a TH2D for the yield map after correction
-    /// "Standard" procedure means extract the yields per bin
+	/// "Standard" procedure means extract the yields per bin
 	TH2D* standardCorrectedMap = new TH2D("standardCorrectedMap", " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
 
-	/// Read accepatance and efficiecy files for correction
+	/// Read acceptance and efficiency files for correction
 	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
 
 	/// polarization weight of the acceptance and efficiency maps (for now all 0)
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
 
+	Bool_t isPhiFolded = kTRUE;
+
 	/// get acceptance maps
-	TFile* acceptanceFile = openFile(Form("../MonteCarlo/AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, gMuonAccName));
+	const char* accMapPath = AcceptanceResultsPath(gMuonAccName);
+
+	TFile* acceptanceFile = openFile(Form("%s/AcceptanceResults%s.root", accMapPath, isPhiFolded ? "" : "_fullPhi"));
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
 
 	/// rebin acceptance maps based on costheta, phi, and pT selection
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	/// get efficiency maps
-	TFile* efficiencyFile = openFile(Form("../MonteCarlo/EfficiencyMaps/%dS/EfficiencyResults%s.root", iState, gMuonAccName));
+	const char* effMapPath = EfficiencyResultsPath(gMuonAccName);
+
+	TFile* efficiencyFile = openFile(Form("%s/EfficiencyResults%s.root", effMapPath, isPhiFolded ? "" : "_fullPhi"));
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	/// rebin efficiency maps based on costheta, phi, and pT selection
@@ -225,7 +231,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("%s", bkgShapeName[iCosTheta][absiPhi].c_str()), fitModelName, Form("%s", gMuonAccName));
 
 			cout << "signalYields: " << signalYields << endl;
-			
+
 			/// get the yield value
 			double yield1SVal = (yield1S->getVal());
 
@@ -302,12 +308,15 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	// yieldCanvas->SetLogz(); // useful when the one of the bins has an exceptionally high value :')
 
 	TPaveText* kinematicsText_2D = new TPaveText(0.17, 0.83, 0.79, 0.93, "NDCNB");
-	kinematicsText_2D ->SetFillColor(4000);
-	kinematicsText_2D ->SetBorderSize(0);
-	kinematicsText_2D ->AddText(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonPtRangeText(ptMin, ptMax)));
-	kinematicsText_2D ->SetAllWith("", "align", 12);
+	kinematicsText_2D->SetFillColor(4000);
+	kinematicsText_2D->SetBorderSize(0);
+	kinematicsText_2D->AddText(Form("%s, %s", CentralityRangeText(gCentralityBinMin, gCentralityBinMax), DimuonRapidityRangeText(gRapidityMin, gRapidityMax)));
+	kinematicsText_2D->AddText(Form("%s, %s frame", DimuonPtRangeText(ptMin, ptMax), (strstr(refFrameName, "CS")) ? "Collins-Soper" : "Helicity"));
 
-	if (LEGOplot) kinematicsText->Draw("SAME");
+	kinematicsText_2D->SetAllWith("", "align", 12);
+
+	if (LEGOplot)
+		kinematicsText->Draw("SAME");
 
 	else if (!LEGOplot) {
 		// display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE);
@@ -323,7 +332,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
 		// else if (strcmp(extraString, "_2018PbPbAcc") == 0)
 		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
-	
 	}
 
 	yieldCanvas->Modified();
@@ -333,17 +341,17 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 	TCanvas* correctedMapCanvas = draw2DMap(standardCorrectedMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, LEGOplot);
 
-	standardCorrectedMap->GetZaxis()->SetTitle("Corrected #varUpsilon(1S) yields");
+	standardCorrectedMap->GetZaxis()->SetTitle("#varUpsilon(1S) corrected yield");
 	standardCorrectedMap->GetZaxis()->SetTitleSize(0.055);
 	standardCorrectedMap->GetZaxis()->SetTitleOffset(1.4);
 	standardCorrectedMap->GetZaxis()->SetLabelSize(0.044);
-	
+
 	standardCorrectedMap->GetYaxis()->SetTitleSize(0.055);
 	standardCorrectedMap->GetYaxis()->SetTitleOffset(1.3);
 	standardCorrectedMap->GetYaxis()->SetLabelSize(0.044);
 	standardCorrectedMap->GetYaxis()->SetLabelOffset(0);
 
-	standardCorrectedMap->GetXaxis()->SetTitleSize(0.055);	
+	standardCorrectedMap->GetXaxis()->SetTitleSize(0.055);
 	standardCorrectedMap->GetXaxis()->SetTitleOffset(1.2);
 	standardCorrectedMap->GetXaxis()->SetLabelSize(0.044);
 
@@ -353,7 +361,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 	// standardCorrectedMap->SetMinimum(0);
 
-	if (LEGOplot) kinematicsText->Draw("SAME");
+	if (LEGOplot)
+		kinematicsText->Draw("SAME");
 
 	else if (!LEGOplot) {
 		// display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kTRUE);
@@ -369,7 +378,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
 		// else if (strcmp(extraString, "_2018PbPbAcc") == 0)
 		// 	legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
-	
 	}
 
 	/// fit!!!
@@ -377,7 +385,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	TF2* polarFunc2D = getGeneralPolarFunc(maxYield);
 
 	if (LEGOplot) {
-		TFitResultPtr fitResults = standardCorrectedMap->Fit("generalPolarFunc", "ESVIMR"/*, "ESVIR"*/);
+		TFitResultPtr fitResults = standardCorrectedMap->Fit("generalPolarFunc", "ESVIMR" /*, "ESVIR"*/);
 
 		// Fit results
 
@@ -425,39 +433,39 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 		SavePolarizationFitParameters(savedParams, "rootFit", fitModelName, defaultBkgShapeName);
 
 		// TLegend legend2(.17, .7, .23, .87);
-		TLegend legend2(.17, .76, .23, .87);
+		TLegend legend2(.18, .75, .25, .8);
 		legend2.SetTextSize(.045);
 		legend2.SetFillColor(0);
 		legend2.SetFillStyle(1001);
 
-		legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
+		//legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
 		// legend2.AddEntry(polarFunc2D, Form("fit: #lambda_{#theta}  = %.2f #pm %.2f    #lambda_{#varphi} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr, lambdaPhiVal, lambdaPhiErr), "l");
 		// legend2.AddEntry((TObject*)0, Form("     #lambda_{#theta#varphi} = %.2f #pm %.2f  #tilde{#lambda}  = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr, lambdaTildeVal, lambdaTildeErr), "");
 		legend2.AddEntry(polarFunc2D, "fit: ", "l");
 
 		legend2.DrawClone();
 
-		TPaveText *resultTextRight = new TPaveText(0.23, 0.70, 0.60, 0.81, "NDC"); // Adjust coordinates
-		resultTextRight->SetFillColor(0);   // White background
-		resultTextRight->SetFillStyle(1001); // Solid fill
-		resultTextRight->SetBorderSize(0);  // Optional: Thin border
+		TPaveText* resultTextRight = new TPaveText(0.25, 0.70, 0.60, 0.81, "NDC"); // Adjust coordinates
+		resultTextRight->SetFillColor(0);                                          // White background
+		resultTextRight->SetFillStyle(1001);                                       // Solid fill
+		resultTextRight->SetBorderSize(0);                                         // Optional: Thin border
 		resultTextRight->SetTextSize(0.045);
-		resultTextRight->SetTextAlign(12);  // Align text left
+		resultTextRight->SetTextAlign(12); // Align text left
 		resultTextRight->SetMargin(0.03);
-		resultTextRight->AddText(Form("#lambda_{#theta}  = %.2f #pm %.2f ", lambdaThetaVal, lambdaThetaErr));
-		resultTextRight->AddText(Form("#lambda_{#theta#varphi} = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr));
+		resultTextRight->AddText(Form("#lambda_{#theta}  = %.2f #pm %.2f   #lambda_{#varphi} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr, lambdaPhiVal, lambdaPhiErr));
+		resultTextRight->AddText(Form("#lambda_{#theta#varphi} = %.2f #pm %.2f   #tilde{#lambda}  = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr, lambdaTildeVal, lambdaTildeErr));
 		resultTextRight->Draw();
 
-		TPaveText *resultTextLeft = new TPaveText(0.52, 0.72, 0.90, 0.805, "NDC"); // Adjust coordinates
-		resultTextLeft->SetFillColor(0);   // White background
-		resultTextLeft->SetFillStyle(1001); // Solid fill
-		resultTextLeft->SetBorderSize(0);  // Optional: Thin border
+		TPaveText* resultTextLeft = new TPaveText(0.52, 0.72, 0.90, 0.805, "NDC"); // Adjust coordinates
+		resultTextLeft->SetFillColor(0);                                           // White background
+		resultTextLeft->SetFillStyle(1001);                                        // Solid fill
+		resultTextLeft->SetBorderSize(0);                                          // Optional: Thin border
 		resultTextLeft->SetTextSize(0.045);
-		resultTextLeft->SetTextAlign(12);  // Align text left
+		resultTextLeft->SetTextAlign(12); // Align text left
 		resultTextLeft->SetMargin(0.03);
 		resultTextLeft->AddText(Form("#lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr));
 		resultTextLeft->AddText(Form("#tilde{#lambda}  = %.2f #pm %.2f", lambdaTildeVal, lambdaTildeErr));
-		resultTextLeft->Draw();
+		//		resultTextLeft->Draw();
 
 		TLatex textChi2;
 		textChi2.SetTextAlign(22);
@@ -568,39 +576,50 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	totalUncCanvas->Update();
 
 	/// save canvas
-	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	weightCanvas->SaveAs(Form("EfficiencyMaps/%dS/WeightsMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
 
-	gSystem->mkdir("YieldMap/2D", kTRUE);
-	if (!LEGOplot) yieldCanvas->SaveAs(Form("YieldMap/2D/YieldMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, defaultBkgShapeName), "RECREATE");
-	else yieldCanvas->SaveAs(Form("YieldMap/2D/YieldMapCosTheta%s_3D_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, defaultBkgShapeName), "RECREATE");
-	
-	if (!LEGOplot) correctedMapCanvas->SaveAs(Form("YieldMap/2D/CorrectedMapCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, defaultBkgShapeName), "RECREATE");
-	else correctedMapCanvas->SaveAs(Form("YieldMap/2D/CorrectedMapCosTheta%s_fit_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s_%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName, defaultBkgShapeName), "RECREATE");
+	const char* commonOutputName = Form("cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaMin, cosThetaMax);
 
-	gSystem->mkdir("UncertaintyPlots/2D", kTRUE);
-	statHighAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	statLowAccCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowAcc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	statHighEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statHighEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	statLowEffCanvas->SaveAs(Form("UncertaintyPlots/2D/statLowEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	systEffCanvas->SaveAs(Form("UncertaintyPlots/2D/sysEff%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	yieldUncCanvas->SaveAs(Form("UncertaintyPlots/2D/yieldUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
-	totalUncCanvas->SaveAs(Form("UncertaintyPlots/2D/totalUnc%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	gSystem->mkdir(Form("EfficiencyMaps/%s", gMuonAccName), kTRUE);
+	weightCanvas->SaveAs(Form("EfficiencyMaps/%s/WeightsMapCosTheta%s_%s", gMuonAccName, refFrameName, commonOutputName), "RECREATE");
+
+	const char* yieldMapsPath = Form("YieldMaps/%s", gMuonAccName);
+	gSystem->mkdir(yieldMapsPath, kTRUE);
+	if (!LEGOplot)
+		yieldCanvas->SaveAs(Form("%s/YieldMapCosTheta%s_%s_%s", yieldMapsPath, refFrameName, defaultBkgShapeName, commonOutputName), "RECREATE");
+	else
+		yieldCanvas->SaveAs(Form("%s/YieldMapCosTheta%s_3D_%s_%s", yieldMapsPath, refFrameName, defaultBkgShapeName, commonOutputName), "RECREATE");
+
+	if (!LEGOplot)
+		correctedMapCanvas->SaveAs(Form("%s/CorrectedMapCosTheta%s_%s_%s", yieldMapsPath, refFrameName, defaultBkgShapeName, commonOutputName), "RECREATE");
+	else
+		correctedMapCanvas->SaveAs(Form("%s/CorrectedMapCosTheta%s_fit_%s_%s", yieldMapsPath, refFrameName, defaultBkgShapeName, commonOutputName), "RECREATE");
+
+	/// Uncertainty plots
+	const char* uncertaintyPath = Form("UncertaintyPlots/%s", gMuonAccName);
+
+	gSystem->mkdir(uncertaintyPath, kTRUE);
+	statHighAccCanvas->SaveAs(Form("%s/statHighAcc%s_%s", uncertaintyPath, refFrameName, commonOutputName), "RECREATE");
+	statLowAccCanvas->SaveAs(Form("%s/statLowAcc%s_%s", uncertaintyPath, refFrameName, commonOutputName), "RECREATE");
+	statHighEffCanvas->SaveAs(Form("%s/statHighEff%s_%s", uncertaintyPath, refFrameName, commonOutputName), "RECREATE");
+	statLowEffCanvas->SaveAs(Form("%s/statLowEff%s_%s", uncertaintyPath, refFrameName, commonOutputName), "RECREATE");
+	systEffCanvas->SaveAs(Form("%s/sysEff%s_%s", uncertaintyPath, refFrameName, commonOutputName), "RECREATE");
+	yieldUncCanvas->SaveAs(Form("%s/yieldUnc%s_%s", uncertaintyPath, refFrameName, commonOutputName), "RECREATE");
+	totalUncCanvas->SaveAs(Form("%s/totalUnc%s_%s", uncertaintyPath, refFrameName, commonOutputName), "RECREATE");
 
 	// save the histograms to the root files to see them with the root viewer
-	TFile* EfficiencyOutFile = new TFile(Form("EfficiencyMaps/%dS/efficiencyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", iState, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	TFile* EfficiencyOutFile = new TFile(Form("EfficiencyMaps/%s/efficiencyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.root", gMuonAccName, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 	accMapCosThetaPhi->Write();
 	effMapCosThetaPhi->Write();
 	systEffCosThetaPhi->Write();
 	weightMap->Write();
 	EfficiencyOutFile->Close();
 
-	TFile* ResultOutFile = new TFile(Form("YieldMap/2D/resultsHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	TFile* ResultOutFile = new TFile(Form("%s/resultsHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.root", yieldMapsPath, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 	yieldMap->Write();
 	standardCorrectedMap->Write();
 	ResultOutFile->Close();
 
-	TFile* uncOutFile = new TFile(Form("UncertaintyPlots/2D/uncertaintyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f%s.root", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], gMuonAccName), "RECREATE");
+	TFile* uncOutFile = new TFile(Form("%s/uncertaintyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.root", uncertaintyPath, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 	statLowAccCosThetaPhi->Write();
 	statLowEffCosThetaPhi->Write();
 	statHighAccCosThetaPhi->Write();
@@ -612,13 +631,13 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 }
 
 void scanRawYield_2D_customizedFits(const char* refFrameName = "CS") {
-	
-	/// loop over 
+	/// loop over
 	for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
-            for (Int_t idx = 0; idx < 2; idx++) {
-                if (idx == 0) rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr"); // 2D plot
-                else rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr"); // LEGO plot + fit
-            }
-    }
-
+		for (Int_t idx = 0; idx < 2; idx++) {
+			if (idx == 0)
+				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr"); // 2D plot
+			else
+				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr"); // LEGO plot + fit
+		}
+	}
 }

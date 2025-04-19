@@ -9,7 +9,7 @@
 #include "../Tools/RooFitPDFs/ErrorFuncTimesExp.h"
 #include "../Tools/Style/FitDistributions.h"
 
-void nominalFit(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* bkgShapeName = "ExpTimesErr", Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* refFrameName = "HX", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180) {
+void nominalFit(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* bkgShapeName = "ExpTimesErr", Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* refFrameName = "HX", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, const char* muonAccName = "UpsilonTriggerThresholds") {
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
 
@@ -17,7 +17,7 @@ void nominalFit(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* bkgShapeName 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* filename = Form("../Files/UpsilonSkimmedDataset%s.root", gMuonAccName);
+	const char* filename = Form("../Files/UpsilonSkimmedDataset_%s.root", muonAccName);
 
 	RooWorkspace wspace = SetUpWorkspace(filename);
 
@@ -37,9 +37,9 @@ void nominalFit(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* bkgShapeName 
 
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true);
+	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true, muonAccName);
 
-	auto* fitResult = RawInvariantMassFit(wspace, data, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")), massMin, massMax);
+	auto* fitResult = RawInvariantMassFit(wspace, data, RooArgSet(*wspace.var("yield1S"), *wspace.var("yield2S")));
 
 	TCanvas* massCanvas = DrawMassFitDistributions(wspace, data, fitResult->floatParsFinal().getSize(), ptMin, ptMax);
 
@@ -49,7 +49,7 @@ void nominalFit(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* bkgShapeName 
 
 	const char* totalFitModelName = GetTotalFitModelName(bkgShapeName, signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	SaveRawSignalYields(signalYields, totalFitModelName);
+	SaveRawSignalYields(signalYields, totalFitModelName, muonAccName);
 
-	SaveRawDataFitCanvas(massCanvas, totalFitModelName);
+	SaveRawDataFitCanvas(massCanvas, totalFitModelName, muonAccName);
 }
