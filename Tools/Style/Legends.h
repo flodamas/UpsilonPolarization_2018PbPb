@@ -35,7 +35,7 @@ TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float
 	return text;
 }
 
-TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, float x1 = 0.14, float y1 = 0.70, float x2 = 0.50, float y2 = 0.95, int alignment = 12) {
+TPaveText* RefFrameTextPhiFolded(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, float x1 = 0.15, float y1 = 0.70, float x2 = 0.50, float y2 = 0.95, int alignment = 12) {
 	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB"); // on the left side
 	// TPaveText* text = new TPaveText(0.61, 0.34, 0.97, 0.56, "NDCNB"); // on the right side
 	text->SetFillColor(4000);
@@ -90,7 +90,7 @@ TPaveText* AsymDoubleCBParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar 
 }
 
 TPaveText* SymCoreDoubleCBParamsText(RooRealVar mean, RooRealVar sigma, RooRealVar alpha, RooRealVar order, RooRealVar alphaR, RooRealVar orderR) {
-	auto* text = new TPaveText(0.16, 0.8, 0.52, 0.4, "NDCNB");
+	auto* text = new TPaveText(0.16, 0.65, 0.52, 0.25, "NDCNB");
 	text->SetBorderSize(0);
 
 	text->AddText("Symmetric double-sided CB");

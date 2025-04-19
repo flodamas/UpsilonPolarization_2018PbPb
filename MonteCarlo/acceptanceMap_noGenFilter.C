@@ -11,7 +11,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
+void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, TString muonAccName, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Int_t iState = 1) {
 	TCanvas* canvas = new TCanvas(accMap->GetName(), "", 750, 600);
 	accMap->Draw("COLZ");
 
@@ -20,24 +20,28 @@ void DrawAcceptanceMap(TEfficiency* accMap, Int_t ptMin, Int_t ptMax, Int_t iSta
 	TLatex legend;
 	legend.SetTextAlign(22);
 	legend.SetTextSize(0.05);
-	legend.DrawLatexNDC(.5, .89, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
-	legend.DrawLatexNDC(.5, .83, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-	legend.DrawLatexNDC(.5, .75, Form("inputs: #lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	legend.DrawLatexNDC(.5, .88, Form("%s, %s", DimuonRapidityRangeText(), DimuonPtRangeText(ptMin, ptMax)));
+	legend.DrawLatexNDC(.5, .81, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	legend.DrawLatexNDC(.5, .74, Form("inputs: #lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
 
 	gPad->Update();
 
 	accMap->GetPaintedHistogram()->GetXaxis()->CenterTitle();
 	accMap->GetPaintedHistogram()->GetYaxis()->CenterTitle();
 
-	accMap->GetPaintedHistogram()->GetYaxis()->SetRangeUser(0, 220);
+	//accMap->GetPaintedHistogram()->GetYaxis()->SetRangeUser(0, 220);
 	accMap->GetPaintedHistogram()->GetZaxis()->SetRangeUser(0, 1);
 
-	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accMap->GetName()), "RECREATE");
+	gPad->RedrawAxis();
+
+	const char* path = AcceptanceResultsPath(muonAccName.Data());
+
+	gSystem->mkdir(path, kTRUE);
+	canvas->SaveAs(Form("%s/%s.png", path, accMap->GetName()), "RECREATE");
 	// canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_fullPhi.png", iState, accMap->GetName()), "RECREATE");
 }
 
-void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
+void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, TString muonAccName, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Int_t iState = 1) {
 	TCanvas* canvas = new TCanvas(accHist->GetName(), "", 600, 600);
 	canvas->SetRightMargin(0.05);
 
@@ -73,8 +77,10 @@ void DrawAcceptance1DHist(TEfficiency* accHist, Int_t ptMin, Int_t ptMax, Int_t 
 
 	frameHist->GetXaxis()->SetNdivisions(510, kTRUE);
 
-	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	canvas->SaveAs(Form("AcceptanceMaps/%dS/%s.png", iState, accHist->GetName()), "RECREATE");
+	const char* path = AcceptanceResultsPath(muonAccName.Data());
+
+	gSystem->mkdir(path, kTRUE);
+	canvas->SaveAs(Form("%s/%s.png", path, accHist->GetName()), "RECREATE");
 	// canvas->SaveAs(Form("AcceptanceMaps/%dS/%s_fullPhi.png", iState, accHist->GetName()), "RECREATE");
 }
 
@@ -85,10 +91,7 @@ const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
 // (cos theta, phi) acceptance maps based on Y events generated without any decay kinematic cut
 // MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/ (This file was deleted:/)
 
-void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState = 1, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
-	// // Read GenOnly Nofilter file
-	// const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-
+void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFolded = kTRUE, TString muonAccName = gMuonAccName, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Int_t iState = 1) {
 	// Read GenOnly Nofilter file with polarization weights
 	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
 
@@ -151,10 +154,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 
 	Float_t weightCS = 0, weightHX = 0;
 
-	TString MuonAccName = "";
-
 	Long64_t totEntries = OniaTree->GetEntries();
-    double counter = 0;
+	double counter = 0;
 	// Loop over the events
 	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
 		if (iEvent % 10000 == 0) {
@@ -175,23 +176,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
-			//withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV);
-			if (accName == TString("MuonUpsilonTriggerAcc")) {
-				withinAcceptance = MuonUpsilonTriggerAcc(*gen_mupl_LV) && MuonUpsilonTriggerAcc(*gen_mumi_LV);
-				MuonAccName = "_TriggerAcc";
-			} else if (accName == TString("MuonWithin2018PbPbAcc")) {
-				withinAcceptance = MuonWithin2018PbPbAcc(*gen_mupl_LV) && MuonWithin2018PbPbAcc(*gen_mumi_LV);
-				MuonAccName = "_2018Acc";
-			} else if (accName == TString("MuonSimpleAcc")) {
-				withinAcceptance = MuonSimpleAcc(*gen_mupl_LV) && MuonSimpleAcc(*gen_mumi_LV);
-				MuonAccName = "_SimpleAcc";
-			} else if (accName == TString("test")) {
-				withinAcceptance = fabs(gen_mumi_LV->Eta()) < 2.4 && fabs(gen_mupl_LV->Eta()) < 2.4; 
-				MuonAccName = "_test";
-			} else {
-				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
-				return;
-			}
+			withinAcceptance = MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName) && MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName);
 
 			// cout << "iEvent: " << iEvent << endl;
 			// cout << "iGen: " << iGen << endl;
@@ -202,8 +187,10 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			TVector3 muPlus_Lab = gen_mupl_LV->Vect();
 
 			cosThetaLab = muPlus_Lab.CosTheta();
-			if (isPhiFolded == kTRUE) phiLab = fabs(muPlus_Lab.Phi() * 180 / TMath::Pi());
-			else phiLab = muPlus_Lab.Phi() * 180 / TMath::Pi();
+			phiLab = muPlus_Lab.Phi() * 180 / TMath::Pi();
+
+			if (isPhiFolded == kTRUE)
+				phiLab = fabs(phiLab);
 
 			accMatrixLab->FillWeighted(withinAcceptance, 1, cosThetaLab, phiLab, gen_QQ_LV->Pt());
 
@@ -231,10 +218,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 
 			cosThetaHX = muPlus_HX.CosTheta();
+			phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
 			if (isPhiFolded == kTRUE)
-				phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
-			else
-				phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
+				phiHX = fabs(phiHX);
 
 			if (isPhiFolded == kTRUE)
 				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
@@ -255,28 +241,26 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 				hGranularHX->FillWeighted(withinAcceptance, weightCS, cosThetaHX, phiHX);
 				hAnalysisHX->FillWeighted(withinAcceptance, weightHX, cosThetaHX, phiHX);
 
-				hGranularLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
-				hAnalysisLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
+				//	hGranularLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
+				//	hAnalysisLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
 
 				hAccCS1D->FillWeighted(withinAcceptance, weightCS, cosThetaCS);
 				hAccHX1D->FillWeighted(withinAcceptance, weightHX, cosThetaHX);
 
 				// cout << "withinAcceptance: " << withinAcceptance << endl;
-				
+
 				// cout << "cosThetaHX: " << cosThetaHX << endl;
 
-				
 				// TH1* passedHist = (TH1*)hAccHX1D->GetPassedHistogram();
 				// cout << passedHist->FindBin(cosThetaHX) << endl;
 				// cout << passedHist->GetBinContent(passedHist->FindBin(cosThetaHX)) << endl;
-				
 			}
 			// cout << "weightHX: " << weightHX << endl;
-			if (withinAcceptance && (gen_QQ_LV->Pt()>2) && (gen_QQ_LV->Pt()<6) && (cosThetaHX >-0.7)&&(cosThetaHX<-0.42)&& (phiHX >60) && (phiHX<120)) counter ++;
+			if (withinAcceptance && (gen_QQ_LV->Pt() > 2) && (gen_QQ_LV->Pt() < 6) && (cosThetaHX > -0.7) && (cosThetaHX < -0.42) && (phiHX > 60) && (phiHX < 120)) counter++;
 			// cout << "" << endl;
 		}
 	}
-	cout << "counter: " << counter << endl;
+	cout << "\ncounter: " << counter << endl;
 	// Set the plot styles
 	gStyle->SetPadLeftMargin(.15);
 	//gStyle->SetTitleYOffset(.9);
@@ -284,38 +268,38 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Int_t iState =
 	SetColorPalette(gAcceptanceColorPaletteName);
 
 	// Draw and save the acceptance map for Lab frame
-	DrawAcceptanceMap(hGranularLab, ptMin, ptMax, iState);
-	DrawAcceptanceMap(hAnalysisLab, ptMin, ptMax, iState);
+
+	//DrawAcceptanceMap(hGranularLab, ptMin, ptMax, path, lambdaTheta, lambdaPhi, lambdaThetaPhi, iState);
+	//DrawAcceptanceMap(hAnalysisLab, ptMin, ptMax, path, lambdaTheta, lambdaPhi, lambdaThetaPhi, iState);
 
 	// Draw and save the acceptance map for CS frame
-	DrawAcceptanceMap(hGranularCS, ptMin, ptMax, iState);
-	DrawAcceptanceMap(hAnalysisCS, ptMin, ptMax, iState);
-	DrawAcceptance1DHist(hAccCS1D, ptMin, ptMax, iState);
+	DrawAcceptanceMap(hGranularCS, ptMin, ptMax, muonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi, iState);
+
+	DrawAcceptanceMap(hAnalysisCS, ptMin, ptMax, muonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi, iState);
+	DrawAcceptance1DHist(hAccCS1D, ptMin, ptMax, muonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi, iState);
 
 	// Draw and save the acceptance map for HX frame
-	DrawAcceptanceMap(hGranularHX, ptMin, ptMax, iState);
-	DrawAcceptanceMap(hAnalysisHX, ptMin, ptMax, iState);
-	DrawAcceptance1DHist(hAccHX1D, ptMin, ptMax, iState);
+	DrawAcceptanceMap(hGranularHX, ptMin, ptMax, muonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi, iState);
+	DrawAcceptanceMap(hAnalysisHX, ptMin, ptMax, muonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi, iState);
+	DrawAcceptance1DHist(hAccHX1D, ptMin, ptMax, muonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi, iState);
 
 	// cout << "Phi axis range: " << accMatrixCS->GetTotalHistogram()->GetYaxis()->GetXmin()
 	//  << " to " << accMatrixCS->GetTotalHistogram()->GetYaxis()->GetXmax() << endl;
 
 	/// save the results in a file for later usage
-	gSystem->mkdir(Form("AcceptanceMaps/%dS", iState), kTRUE);
-	const char* outputFileName = "";
-	if (isPhiFolded == kTRUE)
-		outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s.root", iState, MuonAccName.Data());
-	else
-		outputFileName = Form("AcceptanceMaps/%dS/AcceptanceResults%s_fullPhi.root", iState, MuonAccName.Data());
+	const char* path = AcceptanceResultsPath(muonAccName.Data());
+
+	gSystem->mkdir(path, kTRUE);
+	const char* outputFileName = Form("%s/AcceptanceResults%s.root", path, isPhiFolded ? "" : "_fullPhi");
 
 	TFile outputFile(outputFileName, "UPDATE");
 
-	accMatrixLab->Write();
+	//accMatrixLab->Write();
 	accMatrixCS->Write();
 	accMatrixHX->Write();
 
-	hGranularLab->Write();
-	hAnalysisLab->Write();
+	//hGranularLab->Write();
+	//hAnalysisLab->Write();
 	hGranularCS->Write();
 	hAnalysisCS->Write();
 	hGranularHX->Write();

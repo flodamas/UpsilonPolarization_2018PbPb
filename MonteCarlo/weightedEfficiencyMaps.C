@@ -62,7 +62,7 @@ TH2D* SystEffHist(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency* 
 			// hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, nominalEff + finalSystEff);
 			// hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, finalSystEff / nominalEff);
 			hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, finalSystEff);
-			
+
 			//cout << "Efficiency in global bin " << globalBin << " = " << nominalEff << " +/- " << finalSystEff << endl;
 		}
 	}
@@ -118,7 +118,7 @@ TH3D* SystEffHist3D(TEfficiency* hNominal, TEfficiency* hTrk_systUp, TEfficiency
 				// hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, iPtBin, finalSystEff / nominalEff);
 				hTotalSyst->SetBinContent(iCosThetaBin, iPhiBin, iPtBin, finalSystEff);
 
-				// cout << "iCosTheta " << iCosThetaBin << ", iPhi " << iPhiBin << ", iPt " << iPtBin << endl; 
+				// cout << "iCosTheta " << iCosThetaBin << ", iPhi " << iPhiBin << ", iPt " << iPtBin << endl;
 				// cout << "systEffSquared = " << systEffSquared << ", statEffSquared = " << statEffSquared << endl;
 				// cout << "Efficiency in global bin " << globalBin << " = " << nominalEff << " +/- " << finalSystEff << endl;
 
@@ -138,7 +138,7 @@ const char* EfficiencyLegendText(int ptMin, int ptMax) {
 	return Form("cent. %d-%d%%, %s < 2.4, %s", gCentralityBinMin, gCentralityBinMax, gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax));
 }
 
-void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, int iState = gUpsilonState, Bool_t isPhiFolded = kFALSE) {
+void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, TString muonAccName, int iState = gUpsilonState, Bool_t isPhiFolded = kFALSE) {
 	TCanvas* canvas = new TCanvas(effMap->GetName(), "", 700, 600);
 	effMap->Draw("COLZ");
 
@@ -157,14 +157,16 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, int iState
 	effMap->GetPaintedHistogram()->GetXaxis()->CenterTitle();
 	effMap->GetPaintedHistogram()->GetYaxis()->CenterTitle();
 
-	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	if (isPhiFolded == kTRUE) canvas->SaveAs(Form("EfficiencyMaps/%dS/%s.png", iState, effMap->GetName()), "RECREATE");
-	else canvas->SaveAs(Form("EfficiencyMaps/%dS/%s_fullPhi.png", iState, effMap->GetName()), "RECREATE");
+	const char* path = EfficiencyResultsPath(muonAccName.Data());
+
+	gSystem->mkdir(path, kTRUE);
+
+	canvas->SaveAs(Form("%s/%s%s.png", path, effMap->GetName(), isPhiFolded ? "" : "_fullPhi"), "RECREATE");
 }
 
 // create the (cos theta, phi) map of the total efficiency (fully reweighted) for a given pT range
 
-void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUpsilonState, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
+void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccName = "UpsilonTriggerThresholds", Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kTRUE, Int_t iState = gUpsilonState) {
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -327,13 +329,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	TLorentzVector* recoLorentzVector = new TLorentzVector();
 
 	double eventWeight, dimuonPtWeight, totalWeightCS, totalWeightHX, totalWeightLab;
-	double dimuTrigWeight_nominal = -1, 
-		   dimuTrigWeight_systUp = -1, dimuTrigWeight_systDown = -1, 
-		   dimuTrigWeight_statUp = -1, dimuTrigWeight_statDown = -1;
+	double dimuTrigWeight_nominal = -1,
+	       dimuTrigWeight_systUp = -1, dimuTrigWeight_systDown = -1,
+	       dimuTrigWeight_statUp = -1, dimuTrigWeight_statDown = -1;
 
 	Float_t weightCS = 0, weightHX = 0;
-
-	TString MuonAccName = "";
 
 	Bool_t allGood, firesTrigger, isRecoMatched, dimuonMatching, goodVertexProba, passHLTFilterMuons, trackerAndGlobalMuons, hybridSoftMuons;
 
@@ -369,24 +369,12 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 			// positive muon first
 			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
-			if (accName == TString("MuonUpsilonTriggerAcc")) {if (!MuonUpsilonTriggerAcc(*gen_mupl_LV)) continue; MuonAccName = "_TriggerAcc";}
-			else if (accName == TString("MuonSimpleAcc")) {if (!MuonSimpleAcc(*gen_mupl_LV)) continue; MuonAccName = "_SimpleAcc";}
-			else if (accName == TString("MuonWithin2018PbPbAcc")) {if (!MuonWithin2018PbPbAcc(*gen_mupl_LV)) continue; MuonAccName = "_2018Acc";}
-			else {
-				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
-				return;
-			}
+			if (!MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName)) continue;
 
 			// then negative muon
 			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
-			if (accName == TString("MuonUpsilonTriggerAcc")) {if (!MuonUpsilonTriggerAcc(*gen_mumi_LV)) continue;}
-			else if (accName == TString("MuonSimpleAcc")) {if (!MuonSimpleAcc(*gen_mumi_LV)) continue;}
-			else if (accName == TString("MuonWithin2018PbPbAcc")) {if (!MuonWithin2018PbPbAcc(*gen_mumi_LV)) continue;}
-			else {
-				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
-				return;
-			}
+			if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
 
 			// go to reco level
 			Int_t iReco = Gen_QQ_whichRec[iGen];
@@ -442,12 +430,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 				// double phiLab_gen = 0;
 				double phiLab = 0;
-				
+
 				if (isPhiFolded == kTRUE) {
 					// phiLab_gen = fabs(gen_mupl_LV->Phi() * 180 / TMath::Pi());
 					phiLab = fabs(Reco_mupl_LV->Phi() * 180 / TMath::Pi());
-				}
-				else {
+				} else {
 					// phiLab_gen = gen_mupl_LV->Phi() * 180 / TMath::Pi();
 					phiLab = Reco_mupl_LV->Phi() * 180 / TMath::Pi();
 				}
@@ -463,8 +450,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				if (isPhiFolded == kTRUE) {
 					// phiCS_gen = fabs(muPlus_CS_gen.Phi() * 180 / TMath::Pi());
 					phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
-				}
-				else {
+				} else {
 					// phiCS_gen = muPlus_CS_gen.Phi() * 180 / TMath::Pi();
 					phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
 				}
@@ -476,12 +462,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				double cosThetaHX = muPlus_HX.CosTheta();
 				// double phiHX_gen = 0;
 				double phiHX = 0;
-				
+
 				if (isPhiFolded == kTRUE) {
 					// phiHX_gen = fabs(muPlus_HX_gen.Phi() * 180 / TMath::Pi());
 					phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
-				}
-				else {
+				} else {
 					phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
 					// phiHX_gen = muPlus_HX_gen.Phi() * 180 / TMath::Pi();
 				}
@@ -550,7 +535,6 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
 
-
 				// cout << "eventWeight: " << eventWeight << endl;
 				// cout << "dimuonPtWeight: " << dimuonPtWeight << endl;
 				// cout << "dimuWeight_nominal: " << dimuWeight_nominal << endl;
@@ -577,11 +561,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trk_systUp * weightHX;
 				hCS_trk_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
 				hHX_trk_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
-				
+
 				// cout << "Event " << iEvent << endl;
 				// cout << "systUp trk weight CS: " << totalWeightCS << endl;
 				// cout << "systUp trk weight HX: " << totalWeightHX << endl;
-				
+
 				// tracking, syst down
 				dimuWeight_trk_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexSystDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexSystDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
@@ -593,7 +577,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				// cout << "Event " << iEvent << endl;
 				// cout << "systDown trk weight CS: " << totalWeightCS << endl;
 				// cout << "systDown trk weight HX: " << totalWeightHX << endl;
-			
+
 				// tracking, stat up
 				dimuWeight_trk_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
@@ -619,11 +603,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_muId_systUp * weightHX;
 				hCS_muId_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
 				hHX_muId_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
-				
+
 				// cout << "Event " << iEvent << endl;
 				// cout << "systUp muID weight CS: " << totalWeightCS << endl;
 				// cout << "systUp muID weight HX: " << totalWeightHX << endl;
-				
+
 				// Id, syst down
 				dimuWeight_muId_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexSystDown) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexSystDown) * dimuTrigWeight_nominal;
 
@@ -661,11 +645,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trig_systUp * weightHX;
 				hCS_trig_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
 				hHX_trig_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
-				
+
 				// cout << "Event " << iEvent << endl;
 				// cout << "systUp trigger weight CS: " << totalWeightCS << endl;
 				// cout << "systUp trigger weight HX: " << totalWeightHX << endl;
-				
+
 				// trigger, syst down
 				dimuWeight_trig_systDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_systDown;
 
@@ -689,7 +673,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				// cout << "Event " << iEvent << endl;
 				// cout << "systUp trigger weight CS: " << totalWeightCS << endl;
 				// cout << "systUp trigger weight HX: " << totalWeightHX << endl;
-				
+
 				// trigger, stat down
 				dimuWeight_trig_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_statDown;
 
@@ -697,11 +681,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trig_statDown * weightHX;
 				hCS_trig_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
 				hHX_trig_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
-				
+
 				// cout << "Event " << iEvent << endl;
 				// cout << "systDown trigger weight CS: " << totalWeightCS << endl;
 				// cout << "systDown trigger weight HX: " << totalWeightHX << endl;
-			
+
 				// track + muID + trigger, syst up
 				dimuWeight_total_systUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexSystUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexSystUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexSystUp) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexSystUp) * dimuTrigWeight_systUp;
 
@@ -725,7 +709,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				// cout << "Event " << iEvent << endl;
 				// cout << "systDown total weight CS: " << totalWeightCS << endl;
 				// cout << "systDown total weight HX: " << totalWeightHX << endl;
-				
+
 				// track + muID + trigger, stat up
 				dimuWeight_total_statUp = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatUp) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexStatUp) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexStatUp) * dimuTrigWeight_statUp;
 
@@ -742,7 +726,6 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				hCS_total_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
 				hHX_total_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
 
-
 				TH3D* hPassed = (TH3D*)hNominalEffCS->GetPassedHistogram();
 
 				Int_t iCosThetaBin = hPassed->GetXaxis()->FindBin(cosThetaCS);
@@ -757,17 +740,17 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 				// cout << "weightCS: " << totalWeightCS << endl;
 
 				// cout << "Nominal efficiency: " << hNominalEffCS->GetEfficiency(globalBin) << endl;
-				
+
 				// cout << "Trk Syst up efficiency: " << hCS_trk_systUp->GetEfficiency(globalBin) << endl;
 				// cout << "Trk Syst down efficiency: " << hCS_trk_systDown->GetEfficiency(globalBin) << endl;
 				// cout << "Trk Stat up efficiency: " << hCS_trk_statUp->GetEfficiency(globalBin) << endl;
 				// cout << "Trk Stat down efficiency: " << hCS_trk_statDown->GetEfficiency(globalBin) << endl;
-				
+
 				// cout << "Trigger Syst up efficiency: " << hCS_trig_statDown->GetEfficiency(globalBin) << endl;
 				// cout << "Trigger Syst down efficiency: " << hCS_trig_statDown->GetEfficiency(globalBin) << endl;
 				// cout << "Trigger Stat up efficiency: " << hCS_trig_statUp->GetEfficiency(globalBin) << endl;
 				// cout << "Trigger Stat down efficiency: " << hCS_trig_statDown->GetEfficiency(globalBin) << endl;
-				
+
 				// cout << "MuId Syst up efficiency: " << hCS_muId_systUp->GetEfficiency(globalBin) << endl;
 				// cout << "MuId Syst down efficiency: " << hCS_muId_systDown->GetEfficiency(globalBin) << endl;
 				// cout << "MuId Stat up efficiency: " << hCS_muId_statUp->GetEfficiency(globalBin) << endl;
@@ -786,16 +769,19 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	/// display the nominal results
 
-	DrawEfficiencyMap(hEffCS2D, ptMin, ptMax, iState, isPhiFolded);
-	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, iState, false, true, "CS", MuonAccName.Data(), isPhiFolded);
+	DrawEfficiencyMap(hEffCS2D, ptMin, ptMax, muonAccName, iState, isPhiFolded);
+	DrawEfficiency1DHist(hEffCS1D, ptMin, ptMax, muonAccName, iState, false, true, "CS", isPhiFolded);
 
-	DrawEfficiencyMap(hEffHX2D, ptMin, ptMax, iState, isPhiFolded);
-	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, iState, false, true, "HX", MuonAccName.Data(), isPhiFolded);
+	DrawEfficiencyMap(hEffHX2D, ptMin, ptMax, muonAccName, iState, isPhiFolded);
+	DrawEfficiency1DHist(hEffHX1D, ptMin, ptMax, muonAccName, iState, false, true, "HX", isPhiFolded);
 
 	/// compute the systematics in this macro since we have all the ingredients for that
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
 
 	// store the RELATIVE SYSTEMATIC UNCERTAINTIES (not in % though) with respect to the nominal efficiency, more useful at the end
+	const char* path = EfficiencyResultsPath(muonAccName.Data());
+
+	gSystem->mkdir(path, kTRUE);
 
 	gStyle->SetPadRightMargin(0.19);
 	gStyle->SetTitleOffset(1.3, "Z");
@@ -820,8 +806,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	hSystCS3D->GetYaxis()->SetRangeUser(-190, 240);
 
-	if (isPhiFolded == kTRUE) canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS.png", gUpsilonState), "RECREATE");
-	else canvasCSsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_CS_fullPhi.png", gUpsilonState), "RECREATE");
+	canvasCSsyst->SaveAs(Form("%s/RelatSystEff_CS%s.png", path, isPhiFolded ? "" : "_fullPhi"), "RECREATE");
 
 	// HelicityTEfficiency
 	auto* hSystHX2D = SystEffHist(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown);
@@ -842,15 +827,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 
 	hSystHX3D->GetYaxis()->SetRangeUser(-190, 240);
 
-	if (isPhiFolded == kTRUE) canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX.png", gUpsilonState), "RECREATE");
-	else canvasHXsyst->SaveAs(Form("EfficiencyMaps/%dS/RelatSystEff_HX_fullPhi.png", gUpsilonState), "RECREATE");
+	canvasHXsyst->SaveAs(Form("%s/RelatSystEff_HX%s.png", path, isPhiFolded ? "" : "_fullPhi"), "RECREATE");
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
-	gSystem->mkdir(Form("EfficiencyMaps/%dS", iState), kTRUE);
-	const char* outputFileName = "";
-	if (isPhiFolded == kTRUE) outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults%s.root", iState, MuonAccName.Data());
-	else outputFileName = Form("EfficiencyMaps/%dS/EfficiencyResults%s_fullPhi.root", iState, MuonAccName.Data());
-	
+	const char* outputFileName = Form("%s/EfficiencyResults%s.root", path, isPhiFolded ? "" : "_fullPhi");
+
 	TFile outputFile(outputFileName, "UPDATE");
 
 	hNominalEffLab->Write();
@@ -877,7 +858,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUp
 	hCS_trig_statDown->Write();
 	hCS_total_statUp->Write();
 	hCS_total_statDown->Write();
-	
+
 	hHX_trk_systUp->Write();
 	hHX_trk_systDown->Write();
 	hHX_muId_systUp->Write();

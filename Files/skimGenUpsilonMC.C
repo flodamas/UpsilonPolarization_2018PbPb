@@ -8,7 +8,7 @@
 
 #include "../Tools/Parameters/PhaseSpace.h"
 
-void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter.root", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Bool_t isAccCut = kFALSE, TString accName = "MuonUpsilonTriggerAcc") {
+void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter.root", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Bool_t isAccCut = kFALSE, TString accName = gMuonAccName) {
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
@@ -96,9 +96,19 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
 			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
 
+			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue; // upsilon within fiducial region
+
 			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
 
 			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
+
+			if (isAccCut) {
+				// single-muon acceptance
+
+				if (!MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName)) continue;
+
+				if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
+			}
 
 			// get positive muon's coordinates in the studied reference frames
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
@@ -107,28 +117,6 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 
 			weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
 			weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
-
-			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue; // upsilon within fiducial region
-
-			if (isAccCut) {
-				// single-muon acceptance
-				if (accName == TString("MuonUpsilonTriggerAcc")) {
-					if (!MuonUpsilonTriggerAcc(*gen_mupl_LV)) continue;
-					if (!MuonUpsilonTriggerAcc(*gen_mumi_LV)) continue;
-				}
-				else if (accName == TString("MuonSimpleAcc")) {
-					if (!MuonSimpleAcc(*gen_mupl_LV)) continue;
-					if (!MuonUpsilonTriggerAcc(*gen_mumi_LV)) continue;
-				}
-				else if (accName == TString("MuonWithin2018PbPbAcc")) {
-					if (!MuonEffStepAcc(*gen_mupl_LV)) continue;
-					if (!MuonEffStepAcc(*gen_mumi_LV)) continue;
-				}
-				else {
-					cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
-					return;
-				}
-			}
 
 			// fill the dataset
 
@@ -149,32 +137,40 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 
 			cosThetaCSVar = muPlus_CS.CosTheta();
 			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
-			
+
 			if (cosThetaCSVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiCSVar.getVal() - 135) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
-				else phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
+				if ((phiCSVar.getVal() - 135) < -180)
+					phiTildeCSVar.setVal(phiCSVar.getVal() + 225);
+				else
+					phiTildeCSVar.setVal(phiCSVar.getVal() - 135);
 			}
 
 			else if (cosThetaCSVar.getVal() > 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiCSVar.getVal() - 45) < -180) phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
-				else phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
+				if ((phiCSVar.getVal() - 45) < -180)
+					phiTildeCSVar.setVal(phiCSVar.getVal() + 315);
+				else
+					phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
 			}
 
 			cosThetaHXVar = muPlus_HX.CosTheta();
 			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
-			
+
 			if (cosThetaHXVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiHXVar.getVal() - 135) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
-				else phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
+				if ((phiHXVar.getVal() - 135) < -180)
+					phiTildeHXVar.setVal(phiHXVar.getVal() + 225);
+				else
+					phiTildeHXVar.setVal(phiHXVar.getVal() - 135);
 			}
 
 			else if (cosThetaHXVar.getVal() > 0) {
 				// if phi value is smaller than -pi, add 2pi
-				if ((phiHXVar.getVal() - 45) < -180) phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
-				else phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
+				if ((phiHXVar.getVal() - 45) < -180)
+					phiTildeHXVar.setVal(phiHXVar.getVal() + 315);
+				else
+					phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
 			// cout << "iEvent: " << iEvent << endl;
@@ -191,22 +187,12 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 		}
 	}
 
-	// cout << "counter: " << counter << endl;
-
-	TString MuonAccName;
-
-	if (accName == TString("MuonUpsilonTriggerAcc")) MuonAccName = "_TriggerAcc";
-	else if (accName == TString("MuonWithin2018PbPbAcc")) MuonAccName = "_2018PbPbAcc";
-	else if (accName == TString("MuonSimpleAcc")) MuonAccName = "_SimpleAcc";
-	else {
-		cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
-		return;
-	}
-
 	const char* outputFileName;
-	
-	if (isAccCut) outputFileName = Form("Y1SGenNoFilterMCDataset%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", MuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
-	else outputFileName = Form("Y1SGenNoFilterMCDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
+
+	if (isAccCut)
+		outputFileName = Form("Y1SGenNoFilterMCDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	else
+		outputFileName = Form("Y1SGenNoFilterMCDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile file(outputFileName, "RECREATE");
 
@@ -218,8 +204,7 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 
 // check the dataset distributions
 
-void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0){
-
+void draw2DHist(const char* refFrameName = "CS", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	const char* FileName = Form("Y1SGenNoFilterMCDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* file = openFile(FileName);
@@ -239,5 +224,5 @@ void draw2DHist(const char* refFrameName = "CS" , Double_t lambdaTheta = 0, Doub
 	allDataset->plotOn(xframe);
 
 	TCanvas* c = new TCanvas("c", "Canvas", 800, 600);
-    xframe->Draw();
+	xframe->Draw();
 }

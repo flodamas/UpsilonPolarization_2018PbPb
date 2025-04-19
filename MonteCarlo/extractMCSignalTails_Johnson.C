@@ -7,10 +7,14 @@
 #include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
+#include "../MonteCarlo/AccEffHelpers.h"
+
 // crystal ball shape with symmetric Gaussian core and asymmetric tails (just like RooDSCBShape)
 
-void extractMCSignalTails_Johnson(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* filename = "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Float_t phiMin = -180, Float_t phiMax = 180, bool saveParams = true) {
+void extractMCSignalTails_Johnson(Int_t centMin = 0, Int_t centMax = 90, Int_t ptMin = 0, Int_t ptMax = 30, const char* muonAccName = "UpsilonTriggerThresholds", Bool_t isCSframe = kFALSE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Float_t phiMin = -180, Float_t phiMax = 180, bool saveParams = true, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	/// open the MC skimmed file
+
+	const char* filename = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", muonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -84,35 +88,36 @@ void extractMCSignalTails_Johnson(Int_t centMin = 0, Int_t centMax = 90, Int_t p
 	pad1->Draw();
 	pad2->Draw();
 
+	const char* path = Form("SignalShapeFits/%s/", muonAccName);
+	gSystem->mkdir(path, kTRUE);
+
 	// const char* outputName = GetSignalFitName(signalShapeName, ptMin, ptMax);
 	const char* outputName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 	//cout << outputName << endl;
-	gSystem->mkdir("SignalShapeFits/absPhi", kTRUE);
-	canvas->SaveAs(Form("SignalShapeFits/absPhi/%s.png", outputName), "RECREATE");
+	canvas->SaveAs(Form("%s/%s.png", path, outputName), "RECREATE");
 
 	if (saveParams) {
 		// save signal shape parameters in a txt file to be read for data fit
 		RooArgSet* Params = new RooArgSet(lambda, gamma, delta);
 
-		SaveMCSignalParameters(Params, outputName); // so that we don't have to refit later
+		const char* fullPath = Form("SignalParameters/%s/%s.txt", muonAccName, outputName);
+
+		gSystem->mkdir(Form("SignalParameters/%s/", muonAccName), kTRUE);
+
+		SaveMCSignalParameters(Params, fullPath); // so that we don't have to refit later
 	}
 
 	// file->Close();
 }
 
-void scanExtractMCSignalTails_Johnson(Bool_t isCSframe = kFALSE) {
-	Float_t cosThetaEdges[6] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
-	// Float_t phiEdges[7] = {-180, -120, -60, 0, 60, 120, 180};
-	Float_t phiEdges[4] = {0, 60, 120, 180};
+void scanExtractMCSignalTails_Johnson(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
+	std::vector<Double_t> cosThetaEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
-	Int_t NumCosThetaEle = sizeof(cosThetaEdges) / sizeof(Float_t);
-	Int_t NumPhiEle = sizeof(phiEdges) / sizeof(Float_t);
+	std::vector<Double_t> phiEdges = setPhiBinEdges(nPhiBins, phiMin, phiMax);
 
-	for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
-		for (Int_t cosThetaIdx = 0; cosThetaIdx < NumCosThetaEle - 1; cosThetaIdx++) {
-			for (Int_t phiIdx = 0; phiIdx < NumPhiEle - 1; phiIdx++) {
-				extractMCSignalTails_Johnson(gCentralityBinMin, gCentralityBinMax, gPtBinning[ptIdx], gPtBinning[ptIdx + 1], "../Files/Y1SReconstructedMCWeightedDataset_TriggerAcc_Lambda_Theta0.00_Phi0.00_ThetaPhi0.00.root", isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1], true);
-			}
+	for (Int_t cosThetaIdx = 0; cosThetaIdx < nCosThetaBins; cosThetaIdx++) {
+		for (Int_t phiIdx = 0; phiIdx < nPhiBins; phiIdx++) {
+			extractMCSignalTails_Johnson(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, gMuonAccName, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1], true);
 		}
 	}
 }
