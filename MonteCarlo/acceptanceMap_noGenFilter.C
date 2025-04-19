@@ -308,6 +308,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 	hAccCS1D->Write();
 	hAccHX1D->Write();
 
+	outputFile.Write();
 	outputFile.Close();
 
 	if (BeVerbose) cout << "\nAcceptance maps saved in " << outputFileName << endl;
