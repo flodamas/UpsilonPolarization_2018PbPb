@@ -46,7 +46,7 @@ std::vector<Double_t> setPhiBinEdges(Int_t nPhiBins, Int_t phiMin, Int_t phiMax)
 
 // common naming convention
 const char* TEfficiencyEndName(const char* refFrameName = "CS", Int_t ptMin = 0, Int_t ptMax = 30, Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
-	return Form("%s%s_pt%dto%d_%s", refFrameName, gMuonAccName, ptMin, ptMax, PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	return Form("%s_%s_pt%dto%d_%s", refFrameName, gMuonAccName, ptMin, ptMax, PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
 }
 
 const char* TEfficiencyMainTitle(int iState = gUpsilonState, const char* title = "total efficiency") {
@@ -106,7 +106,7 @@ TEfficiency* CosThetaPhiAcceptance2D(const char* refFrameName = "CS", Int_t ptMi
 
 	const char* title = Form(";%s;%s;acceptance", CosThetaVarTitle(refFrameName), PhiAxisTitle(refFrameName));
 
-	TEfficiency* tEff = new TEfficiency(name, title, NCosThetaBins, gCosThetaMin, gCosThetaMax, NPhiBins, gPhiMin, gPhiMax);
+	TEfficiency* tEff = new TEfficiency(name, title, NCosThetaFineBins, gCosThetaFineBinning, NPhiFineBins, gPhiFineBinning);
 
 	tEff->SetStatisticOption(gTEffStatOption);
 
@@ -130,6 +130,15 @@ const char* TEfficiency3DAxisTitle(const char* refFrameName = "CS") {
 
 const char* TEfficiency3DTitle(const char* refFrameName = "CS", int iState = gUpsilonState) {
 	return Form("%s;%s", TEfficiencyMainTitle(iState), TEfficiency3DAxisTitle(refFrameName));
+}
+
+// needed for the ROOT file where in we store the TEfficiency objects AND the plots
+const char* AcceptanceResultsPath(const char* muonAccName = gMuonAccName) {
+	return Form("../MonteCarlo/AcceptanceMaps/%s", muonAccName);
+}
+
+const char* EfficiencyResultsPath(const char* muonAccName = gMuonAccName) {
+	return Form("../MonteCarlo/EfficiencyMaps/%s", muonAccName);
 }
 
 TEfficiency* TEfficiency3D(const char* name, const char* refFrameName = "CS", int iState = gUpsilonState, Bool_t isPhiFolded = kFALSE) {
@@ -528,7 +537,7 @@ void displayYields(TEfficiency* effMap, Int_t nCosThetaBins = 10, Int_t nPhiBins
 
 // Draw 1D efficincy plot
 
-void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t isCosTheta = kTRUE, const char* refFrameName = "CS", const char* extraString = "", Bool_t isPhiFolded = kTRUE) {
+void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, TString muonAccName, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t isCosTheta = kTRUE, const char* refFrameName = "CS", Bool_t isPhiFolded = kTRUE) {
 	TCanvas* canvas = new TCanvas(effHist->GetName(), "", 600, 600);
 	canvas->SetRightMargin(0.05);
 
@@ -555,11 +564,11 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 	legend.SetTextSize(0.05);
 	legend.DrawLatexNDC(.55, .87, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 
-	if (strcmp(extraString, "_TriggerAcc") == 0)
+	if (muonAccName == "UpsilonTriggerThresholds")
 		legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-	else if (strcmp(extraString, "_SimpleAcc") == 0)
+	else if (muonAccName == "FlatMuonPt3p5Cut")
 		legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
-	else if (strcmp(extraString, "_2018PbPbAcc") == 0)
+	else if (muonAccName == "PbPb2018MuonLimits")
 		legend.DrawLatexNDC(.55, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
 
 	// legend.DrawLatexNDC(.55, .72, Form("#lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
@@ -601,11 +610,13 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t 
 
 	// save the plot
 	if (isAcc) {
-		gSystem->mkdir(Form("AcceptanceMaps/%dS/analysisBin", iState), kTRUE);
-		canvas->SaveAs(Form("AcceptanceMaps/%dS/analysisBin/1Dacc_%s%s_pt%dto%d%s.png", iState, effHist->GetName(), refFrameName, ptMin, ptMax, extraString), "RECREATE");
+		const char* path = Form("%s/analysisBin", AcceptanceResultsPath(muonAccName));
+		gSystem->mkdir(path, kTRUE);
+		canvas->SaveAs(Form("%s/1Dacc_%s%s_pt%dto%d.png", path, effHist->GetName(), refFrameName, ptMin, ptMax), "RECREATE");
 	} else {
-		gSystem->mkdir(Form("EfficiencyMaps/%dS/analysisBin", iState), kTRUE);
-		canvas->SaveAs(Form("EfficiencyMaps/%dS/analysisBin/1Deff_%s%s_pt%dto%d%s.png", iState, effHist->GetName(), refFrameName, ptMin, ptMax, extraString), "RECREATE");
+		const char* path = Form("%s/analysisBin", EfficiencyResultsPath(muonAccName));
+		gSystem->mkdir(path, kTRUE);
+		canvas->SaveAs(Form("%s/1Deff_%s%s_pt%dto%d.png", path, effHist->GetName(), refFrameName, ptMin, ptMax), "RECREATE");
 	}
 }
 

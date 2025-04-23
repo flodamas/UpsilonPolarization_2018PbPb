@@ -10,12 +10,12 @@
 #include "../Tools/RooFitPDFs/ErrorFuncTimesExp.h"
 #include "../Tools/Style/FitDistributions.h"
 
-void invariantMass(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* refFrameName = "HX", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax) {
+void invariantMass(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* refFrameName = "HX", Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* muonAccName = "UpsilonTriggerThresholds") {
 	/// Set up the data
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
-	const char* filename = Form("../Files/UpsilonSkimmedDataset%s.root", gMuonAccName);
+	const char* filename = Form("../Files/UpsilonSkimmedDataset_%s.root", muonAccName);
 
 	RooWorkspace wspace = SetUpWorkspace(filename);
 
@@ -35,7 +35,7 @@ void invariantMass(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* refFrameNa
 
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, false);
+	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, false, muonAccName);
 
 	auto* fitResult = RawInvariantMassFit(wspace, data);
 
@@ -88,7 +88,6 @@ void invariantMass(Int_t ptMin = 0, Int_t ptMax = gPtMax, const char* refFrameNa
 }
 
 void scanInvariantMass() {
-
 	int NRefFrames = 2;
 
 	/// loop over the pt bins
@@ -99,7 +98,7 @@ void scanInvariantMass() {
 			for (Int_t phiIdx = 0; phiIdx < NPhiBins; phiIdx++) {
 				/// loop over the reference frames
 				for (Int_t refFrameIdx = 0; refFrameIdx < NRefFrames; refFrameIdx++) {
-					invariantMass(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameIdx ? "HX":"CS", gCosThetaBinning[cosThetaIdx], gCosThetaBinning[cosThetaIdx + 1], gPhiBinning[phiIdx], gPhiBinning[phiIdx + 1], MassBinMin, MassBinMax);
+					invariantMass(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameIdx ? "HX" : "CS", gCosThetaBinning[cosThetaIdx], gCosThetaBinning[cosThetaIdx + 1], gPhiBinning[phiIdx], gPhiBinning[phiIdx + 1], MassBinMin, MassBinMax);
 				}
 			}
 		}

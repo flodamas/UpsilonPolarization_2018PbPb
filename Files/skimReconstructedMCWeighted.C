@@ -12,10 +12,8 @@
 
 // the reconstructed dimuons are fully weighted, including potential reweighting for polarization
 
-void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, TString accName = "MuonUpsilonTriggerAcc") {
+void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Int_t iState = 1) {
 	const char* inputFileName = Form("OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
-
-	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
@@ -84,7 +82,6 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
 	// /// RooDataSet output: one entry = one dimuon candidate!
-	// TFile file(outputFileName, "RECREATE");
 
 	// weighting by event directly on the fly
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
@@ -135,14 +132,14 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 	// RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
 	// RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
-	datasetCS.Print();
+	//datasetCS.Print();
+
 	// loop variables
-	TLorentzVector* genLorentzVector = new TLorentzVector();
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
 	TLorentzVector* gen_mupl_LV = new TLorentzVector();
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 
-	Float_t nColl, weight = 0/*, totalWeightCS = 0, totalWeightHX = 0*/, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0, errorWeightDown = 0, errorWeightUp = 0;
+	Float_t nColl, weight = 0 /*, totalWeightCS = 0, totalWeightHX = 0*/, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0, errorWeightDown = 0, errorWeightUp = 0;
 
 	// for muon scale factors
 	int indexNominal = 0;
@@ -166,8 +163,6 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
 		}
 
-		if (iEvent == 100) break;
-
 		OniaTree->GetEntry(iEvent);
 
 		// event selection
@@ -180,34 +175,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 		// loop over reconstructed dimuon candidates
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
-
 			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
-
-			Int_t iGen = Reco_QQ_whichGen[iQQ];
-
-			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
-			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
-			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
-
-			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
-			
-			// single-muon acceptance
-			if (accName == TString("MuonUpsilonTriggerAcc")) {
-				if (!MuonUpsilonTriggerAcc(*gen_mupl_LV)) continue;
-				if (!MuonUpsilonTriggerAcc(*gen_mumi_LV)) continue;
-			}
-			else if (accName == TString("MuonSimpleAcc")) {
-				if (!MuonSimpleAcc(*gen_mupl_LV)) continue;
-				if (!MuonUpsilonTriggerAcc(*gen_mumi_LV)) continue;
-			}
-			else if (accName == TString("MuonWithin2018PbPbAcc")) {
-				if (!MuonEffStepAcc(*gen_mupl_LV)) continue;
-				if (!MuonEffStepAcc(*gen_mumi_LV)) continue;
-			}
-			else {
-				cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
-				return;
-			}
 
 			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
 
@@ -232,6 +200,24 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			// passing hybrid-soft Id
 			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
 			if (!((Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.))) continue;
+
+			// cut on the muon kinematics at gen level
+
+			Int_t iGen = Reco_QQ_whichGen[iQQ];
+
+			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
+			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
+
+			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
+
+			// single-muon acceptance
+
+			if (!MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName)) continue;
+
+			if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
+
+			/// all selections applied, moving to weight computations
 
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 			double Reco_mupl_eta = Reco_mupl_4mom->Eta();
@@ -265,14 +251,6 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 			passHLTFilterMuons = (mupl_L2Filter && mumi_L3Filter) || (mupl_L3Filter && mumi_L2Filter) || (mupl_L3Filter && mumi_L3Filter);
 
 			// allGood = firesTrigger && dimuonMatching && goodVertexProba && passHLTFilterMuons && trackerAndGlobalMuons && hybridSoftMuons;
-
-			// global AND tracker muons
-			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
-			if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
-
-			// passing hybrid-soft Id
-			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
-			if (!((Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.))) continue;
 
 			/// muon scale factors
 
@@ -450,7 +428,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 
 			datasetCS.add(RooArgSet(centVar, totalWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), weight * polarWeightCS, errorWeightDown, errorWeightUp);
 			datasetHX.add(RooArgSet(centVar, totalWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), weight * polarWeightHX, errorWeightDown, errorWeightUp);
-			datasetCS.Print();
+			//	datasetCS.Print();
 
 			// datasetCS.add(RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);
 			// datasetHX.add(RooArgSet(centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightHX, errorWeightDown, errorWeightUp);
@@ -458,12 +436,16 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 		}
 	}
 
-	// datasetCS.Write();
-	// datasetHX.Write();
+	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	// file.Close();
+	TFile file(outputFileName, "RECREATE");
 
-	// infile->Close();
+	datasetCS.Write();
+	datasetHX.Write();
+
+	file.Close();
+
+	infile->Close();
 
 	cout << endl
 	     << datasetCS.GetName() << " written in " << outputFileName << endl
@@ -475,7 +457,7 @@ void skimReconstructedMCWeighted(Int_t iState = 1, Double_t lambdaTheta = 0, Dou
 // check the dataset distributions
 
 void draw2DHist(const char* refFrameName = "CS", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
-	const char* FileName = Form("Y1SReconstructedMCWeightedDataset%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	const char* FileName = Form("Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* file = openFile(FileName);
 

@@ -24,8 +24,8 @@ RooFitResult* RawInvariantMassFit(RooWorkspace& wspace, RooDataSet data, RooArgS
 
 	if (BeVerbose) cout << "\nFitting the raw invariant mass distribution...\n";
 
-	//model.Print("v");
-	cout << "varsForMinos: " << varsForMinos.getSize() << endl;
+	//model->Print("v");
+	//cout << "varsForMinos: " << varsForMinos.getSize() << endl;
 
 	auto* fitResult = model->fitTo(data, Save(), PrintLevel(-1), NumCPU(NCPUs), Range("MassFitRange"), Minos(varsForMinos), Extended(true));
 	// only run Minos over the parsed variables
@@ -257,13 +257,13 @@ const char** GetFitModelNames(const char* signalShapeName = "SymDSCB", Int_t ptM
 }
 
 // small dummy function to avoid repetiting the same piece of code everywhere...
-const char* GetMCFileName(const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12") {
-	return Form("../MonteCarlo/SignalParameters/absPhi/%s.txt", fitModelName);
+const char* GetMCFileName(const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12", const char* muonAccName = "UpsilonTriggerThresholds") {
+	return Form("../MonteCarlo/SignalParameters/%s/%s.txt", muonAccName, fitModelName);
 }
 
 // Define and read the signal parameters from MC extracted values, define Gaussian constraints on the parameters that are set to constants
 
-RooArgList* ListOfSignalContraints(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12", bool fixSigmaToMC = false) {
+RooArgList* ListOfSignalContraints(RooWorkspace& wspace, const char* signalShapeName = "SymDSCB", const char* fitModelName = "SymDSCB_cent0to90_absy0p0to2p4_pt6to12", bool fixSigmaToMC = false, const char* muonAccName = "UpsilonTriggerThresholds") {
 	RooArgList* constraintsList = new RooArgList();
 
 	if (strcmp(signalShapeName, "SymDSCB") == 0) {
@@ -278,7 +278,7 @@ RooArgList* ListOfSignalContraints(RooWorkspace& wspace, const char* signalShape
 
 		// if the .txt file for this specific fit model exists, just read the tail parameters from it
 
-		const char* mcFileName = GetMCFileName(fitModelName);
+		const char* mcFileName = GetMCFileName(fitModelName, muonAccName);
 
 		if (fopen(mcFileName, "r")) {
 			if (BeVerbose) cout << "\nFound " << mcFileName << " file, will read the signal parameters from it\n";
@@ -471,23 +471,27 @@ void SaveSignalYields(RooArgSet* signalYields, const char* bkgShapeName, const c
 	signalYields->writeToFile(Form("../SignalExtraction/SignalYields/%s_%s%s.txt", bkgShapeName, fitModelName, extraString));
 }
 
-void SaveRawSignalYields(RooArgSet* signalYields, const char* fitModelName, const char* extraString = gMuonAccName) {
-	gSystem->mkdir("../SignalExtraction/RawYields/", kTRUE);
-	signalYields->writeToFile(Form("../SignalExtraction/RawYields/%s%s.txt", fitModelName, extraString));
+void SaveRawSignalYields(RooArgSet* signalYields, const char* fitModelName, const char* muonAccName = gMuonAccName) {
+	const char* path = Form("../SignalExtraction/RawYields/%s", muonAccName);
+	gSystem->mkdir(path, kTRUE);
+	signalYields->writeToFile(Form("%s/%s.txt", path, fitModelName));
 }
 
-void SaveRawFitResults(RooFitResult* fitResult, const char* fitModelName, const char* extraString = gMuonAccName) {
-	gSystem->mkdir("../SignalExtraction/RawFitResults", kTRUE);
-	TFile fitResultsFile(Form("RawFitResults/%s%s.root", fitModelName, extraString), "RECREATE");
-	
+void SaveRawFitResults(RooFitResult* fitResult, const char* fitModelName, const char* muonAccName = gMuonAccName) {
+	const char* path = Form("../SignalExtraction/RawFitResults/%s", muonAccName);
+	gSystem->mkdir(path, kTRUE);
+
+	TFile fitResultsFile(Form("%s/%s.root", path, fitModelName), "RECREATE");
+
 	fitResult->Write();
 	fitResultsFile.Close();
 }
 
-void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName, const char* modelName, const char* extraString = "") {
-	gSystem->mkdir("../Polarization/ParametersResults/", kTRUE);
+void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName, const char* modelName, const char* muonAccName = gMuonAccName) {
+	const char* path = Form("../Polarization/ParametersResults/%s", muonAccName);
+	gSystem->mkdir(path, kTRUE);
 
-	const char* fileName = Form("../Polarization/ParametersResults/%s_%s_%s.txt", methodName, modelName, extraString);
+	const char* fileName = Form("%s/%s_%s.txt", path, methodName, modelName);
 	parameters->writeToFile(fileName);
 
 	auto list = parameters->contentsString();
@@ -495,11 +499,11 @@ void SavePolarizationFitParameters(RooArgSet* parameters, const char* methodName
 	cout << "\n[Polarization] fit results for parameters (" << list << ") saved in " << fileName << endl;
 }
 
-RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName, const char* extraString = "") {
+RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* yield3S, const char* bkgShapeName, const char* fitModelName, const char* muonAccName = gMuonAccName) {
 	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
 	char yieldsFileName[512];
-	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/RawYields/%s_%s%s.txt", bkgShapeName, fitModelName, extraString);
+	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/RawYields/%s/%s_%s.txt", muonAccName, bkgShapeName, fitModelName);
 
 	cout << yieldsFileName << endl;
 	if (fopen(yieldsFileName, "r")) {
@@ -540,11 +544,13 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	return signalYields;
 }
 
-RooFitResult* GetFitResults(const char* totalFitModelName, const char* extraString = "") {
-	TFile* fitResultsFile = TFile::Open(Form("../SignalExtraction/RawFitResults/%s%s.root", totalFitModelName, extraString), "READ");
+RooFitResult* GetFitResults(const char* totalFitModelName, const char* muonAccName = gMuonAccName) {
+	const char* fileName = Form("../SignalExtraction/RawFitResults/%s/%s.root", muonAccName, totalFitModelName);
+
+	TFile* fitResultsFile = TFile::Open(fileName, "READ");
 
 	char fitResultsFileName[512];
-	snprintf(fitResultsFileName, sizeof(fitResultsFileName), "../SignalExtraction/RawFitResults/%s%s.root", totalFitModelName, extraString);
+	snprintf(fitResultsFileName, sizeof(fitResultsFileName), fileName);
 
 	cout << fitResultsFileName << endl;
 	if (!fitResultsFile) {
@@ -567,11 +573,11 @@ RooFitResult* GetFitResults(const char* totalFitModelName, const char* extraStri
 	return fitResults;
 }
 
-RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooRealVar* lambdaThetaPhi, RooRealVar* lambdaTilde, const char* methodName, const char* modelName, const char* extraString = "", bool verbose = true) {
+RooArgSet GetPolarParams(RooRealVar* lambdaTheta, RooRealVar* lambdaPhi, RooRealVar* lambdaThetaPhi, RooRealVar* lambdaTilde, const char* methodName, const char* modelName, const char* muonAccName = gMuonAccName, bool verbose = true) {
 	RooArgSet polarParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
 
 	char paramsFileName[512];
-	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s_%s_%s.txt", methodName, modelName, extraString);
+	snprintf(paramsFileName, sizeof(paramsFileName), "../Polarization/ParametersResults/%s/%s_%s.txt", muonAccName, methodName, modelName);
 
 	if (verbose == true) { cout << paramsFileName << endl; }
 	if (fopen(paramsFileName, "r")) {
@@ -600,9 +606,10 @@ void SaveCanvas(TCanvas* canvasName, const char* fitModelName) {
 	canvasName->SaveAs(Form("InvMassFits/CorrectedData/%s.png", fitModelName), "RECREATE");
 }
 
-void SaveRawDataFitCanvas(TCanvas* canvasName, const char* totalFitModelName, const char* extraString = gMuonAccName) {
-	gSystem->mkdir("InvMassFits/RawData/", kTRUE);
-	canvasName->SaveAs(Form("InvMassFits/RawData/%s%s.png", totalFitModelName, extraString), "RECREATE");
+void SaveRawDataFitCanvas(TCanvas* canvasName, const char* totalFitModelName, const char* muonAccName = gMuonAccName) {
+	const char* path = Form("InvMassFits/%s", muonAccName);
+	gSystem->mkdir(path, kTRUE);
+	canvasName->SaveAs(Form("%s/%s.png", path, totalFitModelName), "RECREATE");
 }
 
 void calculateChi2(TH1D* standardCorrectedHist, TF1* PolarFunc, Int_t nCosThetaBins = 10) {
