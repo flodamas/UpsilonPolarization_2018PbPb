@@ -91,7 +91,7 @@ const double PhiBinningHX[NPhiBinsHX + 1] = {-180, -120, -60, 0, 60, 120, 180};
 */
 
 const int gPtMin = 0;
-const int gPtMax = 50;
+const int gPtMax = 40;
 
 // 16 < pt < 30 GeV, Lab
 const int NCosThetaBinsLab = 10;
