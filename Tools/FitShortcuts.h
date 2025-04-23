@@ -550,7 +550,7 @@ RooFitResult* GetFitResults(const char* totalFitModelName, const char* muonAccNa
 	TFile* fitResultsFile = TFile::Open(fileName, "READ");
 
 	char fitResultsFileName[512];
-	snprintf(fitResultsFileName, sizeof(fitResultsFileName), fileName);
+	snprintf(fitResultsFileName, sizeof(fitResultsFileName), "%s", fileName);
 
 	cout << fitResultsFileName << endl;
 	if (!fitResultsFile) {
