@@ -41,7 +41,7 @@ using namespace RooFit;
 
 TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE) {
 	/// get acceptance and efficiency in 1D
-	const char* nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	TString nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TString fileName = Form("%s/AcceptanceResults%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 
@@ -61,7 +61,7 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 
 	acceptanceFile = openFile(fileName.Data());
 
-	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
+	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName.Data());
 
 	if (!accMap) {
 		std::cerr << "Error: accMap is null." << std::endl;
@@ -73,9 +73,21 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 		cout << Form("Acceptance map not found. Creating a new one with (lambdaTheta, phi, thetaPhi) = (%.2f, %.2f, %.2f)....", lambdaTheta, lambdaPhi, lambdaThetaPhi) << endl;
 
 		acceptanceMap_noGenFilter(0, 30, isPhiFolded, "UpsilonTriggerThresholds", lambdaTheta, lambdaPhi, lambdaThetaPhi, gUpsilonState);
-		TFile* newAcceptanceFile = openFile(fileName.Data());
 
-		auto* newAccMap = (TEfficiency*)newAcceptanceFile->Get(nominalMapName);
+        // // Force TFile closure before reopening — if that function didn't already do it
+        // gSystem->ProcessEvents();  // Sometimes helps
+        // gSystem->Sleep(300);       // Give ROOT some time if on network drive
+
+        // force ROOT to forget cached file
+        gROOT->GetListOfFiles()->Remove(gROOT->GetFile(fileName.Data()));
+        delete TFile::Open(fileName.Data());  // flush disk buffers once
+
+		TFile* newAcceptanceFile = openFile(fileName.Data());
+        // newAcceptanceFile->cd();
+        // newAcceptanceFile->ls();  // now you should see your object
+
+        cout << "nominal map name: " << nominalMapName << endl;
+		auto* newAccMap = (TEfficiency*)newAcceptanceFile->Get(nominalMapName.Data());
 		cout << "Acceptance map is loaded." << endl;
 		if (!newAccMap) {
 			std::cerr << "Error: accMap is still null after creating it." << std::endl;
@@ -91,7 +103,7 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 
 TEfficiency* getEfficiency3DMap(const char* refFrameName, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE) {
 	/// get acceptance and efficiency in 1D
-	const char* nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	TString nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TString fileName = Form("%s/EfficiencyResults%s.root", EfficiencyResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 
@@ -104,15 +116,26 @@ TEfficiency* getEfficiency3DMap(const char* refFrameName, Double_t lambdaTheta =
 		return nullptr;
 	}
 
-	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
+	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName.Data());
 
 	if (!effMap) {
 		std::cerr << "Error: effMap is null." << std::endl;
 		weightedEfficiencyMaps(0, 30, "UpsilonTriggerThresholds", lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded, gUpsilonState);
 
-		efficiencyFile = openFile(fileName.Data());
+        // // Force TFile closure before reopening — if that function didn't already do it
+        // gSystem->ProcessEvents();  // Sometimes helps
+        // gSystem->Sleep(300);       // Give ROOT some time if on network drive
 
-		effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
+        // force ROOT to forget cached file
+        gROOT->GetListOfFiles()->Remove(gROOT->GetFile(fileName.Data()));
+        delete TFile::Open(fileName.Data());  // flush disk buffers once
+
+		efficiencyFile = openFile(fileName.Data());
+        efficiencyFile->cd();
+        efficiencyFile->ls();  // now you should see your object
+
+        cout << "nominal map name: " << nominalMapName.Data() << endl;
+		effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName.Data());
 		cout << "Efficiency map is loaded." << endl;
 
 		if (!effMap) {
@@ -326,9 +349,21 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	float lambdaThetaPhi = lambdaThetaPhiVar->getVal();
 
 	/// get acceptance and efficiency 3D map
-	auto* accMap = getAcceptance3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
-	auto* effMap = getEfficiency3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
-	auto* systEff = getSysEff3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
+	TEfficiency* accMap;
+	TEfficiency* effMap;
+	TH3D* systEff;
+	
+	if (!applyEff) {
+		accMap = getAcceptance3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+    	effMap = getEfficiency3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
+		systEff = getSysEff3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
+	}
+	
+	else {
+		accMap = getAcceptance3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
+		effMap = getEfficiency3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+    	systEff = getSysEff3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+	}
 
 	/// rebin acceptance and efficiency, efficiency systematic Uncertainty
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
@@ -338,8 +373,19 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	TH2D* hTotalCosThetaPhi = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
 
 	/// draw acceptance and efficiency graph for check
-	TCanvas* accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-	TCanvas* effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, 0, 0, 0);
+	TCanvas* accCanvas = nullptr;
+	TCanvas* effCanvas = nullptr;
+
+	if (!applyEff) {
+		accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+		effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, 0, 0, 0);
+	}
+
+	else {
+		accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, 0, 0, 0);
+		effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	}
+	
 	TCanvas* dummyCanvas = new TCanvas("dummyCanvas", "dummyCanvas", 600, 600);
 
 	/// apply acc x eff correction weights and errors to each costheta bin
@@ -487,7 +533,7 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 
 	/// read the input MC file
 
-	const char* filename = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* infile = TFile::Open(Form("../Files/%s", inputFileName), "READ");
 
@@ -788,7 +834,7 @@ void closureTest(TString refFrameName = "CS",
                  Int_t ptMin = 2, Int_t ptMax = 6,
                  const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7,
                  const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180,
-                 Bool_t isPhiFolded = kFALSE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE) {
+                 Bool_t isPhiFolded = kFALSE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE, int totNItrs = 0) {
 	/// set bin edges and width
 	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
@@ -849,7 +895,7 @@ void closureTest(TString refFrameName = "CS",
 	TH2D* fittedHist = new TH2D("fittedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
 	/// loop over the number of iterations
-	int totNItrs = 2; /// number of iterations
+	// int totNItrs = 0; /// number of iterations
 
 	// while (!((lambdaTheta0 == (round(lambdaTheta->getVal() * 100.) / 100.)) && (lambdaPhi0 == (round(lambdaPhi->getVal() * 100.) / 100.)) && (lambdaThetaPhi0 == round(lambdaThetaPhi->getVal() * 100. / 100.)))) {
 	for (int iItr = 0; iItr <= totNItrs; iItr++) {
