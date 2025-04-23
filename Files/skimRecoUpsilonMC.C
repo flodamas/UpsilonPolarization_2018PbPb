@@ -12,10 +12,10 @@
 
 // Reconstructed Y events with minimal weighting (e.g. no polarization) in order to estimate the reweighting of the dimuon pT spectrum
 
-void skimRecoUpsilonMC(Int_t iState = 1) {
+void skimRecoUpsilonMC(Int_t iState = 1, TString muonAccName = "UpsilonTriggerThresholds") {
 	const char* inputFileName = Form("OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 
-	const char* outputFileName = Form("Y%dSReconstructedMCDataset%s.root", iState, gMuonAccName);
+	const char* outputFileName = Form("Y%dSReconstructedMCDataset_%s.root", iState, muonAccName);
 
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
@@ -29,6 +29,7 @@ void skimRecoUpsilonMC(Int_t iState = 1) {
 	ULong64_t HLTriggers;
 	ULong64_t Reco_QQ_trig[1000];
 	Int_t Centrality;
+	Float_t HFmean;
 	TClonesArray* CloneArr_QQ = nullptr;
 	TClonesArray* CloneArr_mu = nullptr;
 	Short_t Reco_QQ_size;
@@ -51,6 +52,7 @@ void skimRecoUpsilonMC(Int_t iState = 1) {
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 	OniaTree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
+	OniaTree->SetBranchAddress("SumET_HF", &HFmean);
 	OniaTree->SetBranchAddress("Reco_QQ_4mom", &CloneArr_QQ);
 	OniaTree->SetBranchAddress("Reco_mu_4mom", &CloneArr_mu);
 	OniaTree->SetBranchAddress("Reco_QQ_size", &Reco_QQ_size);
@@ -118,6 +120,7 @@ void skimRecoUpsilonMC(Int_t iState = 1) {
 
 	// loop variables
 	Float_t nColl, weight = 0, errorWeightDown = 0, errorWeightUp = 0, totalWeight = 0;
+	Int_t hiBin;
 
 	// for muon scale factors
 	int indexNominal = 0;
@@ -148,7 +151,9 @@ void skimRecoUpsilonMC(Int_t iState = 1) {
 
 		if (!((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
 
-		nColl = FindNcoll(Centrality);
+		hiBin = GetHiBinFromhiHF(HFmean);
+
+		nColl = FindNcoll(hiBin);
 
 		// loop over reconstructed dimuon candidates
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
