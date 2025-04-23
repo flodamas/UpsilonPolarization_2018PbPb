@@ -192,6 +192,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 	ULong64_t HLTriggers;
 	ULong64_t Reco_QQ_trig[1000];
 	Int_t Centrality;
+	Float_t HFmean;
+
 	TClonesArray* CloneArr_QQ = nullptr;
 	TClonesArray* CloneArr_mu = nullptr;
 	Short_t Reco_QQ_size;
@@ -217,6 +219,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 	// event variables
 	OniaTree->SetBranchAddress("Gen_weight", &Gen_weight);
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
+	OniaTree->SetBranchAddress("SumET_HF", &HFmean);
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 	OniaTree->SetBranchAddress("zVtx", &zVtx);
 
@@ -337,6 +340,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 	Bool_t allGood, firesTrigger, isRecoMatched, dimuonMatching, goodVertexProba, passHLTFilterMuons, trackerAndGlobalMuons, hybridSoftMuons;
 
+	Int_t hiBin;
+
 	Long64_t totEntries = OniaTree->GetEntries();
 
 	for (Long64_t iEvent = 0; iEvent < totEntries; iEvent++) {
@@ -353,7 +358,9 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 		firesTrigger = ((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)));
 
-		eventWeight = Gen_weight * FindNcoll(Centrality); // * Get_zPV_weight(zVtx);
+		hiBin = GetHiBinFromhiHF(HFmean);
+
+		eventWeight = Gen_weight * FindNcoll(hiBin); // * Get_zPV_weight(zVtx);
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
@@ -363,6 +370,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 			//if (genLorentzVector->Pt() < ptMin || genLorentzVector->Pt() > ptMax) continue; // pt bin of interest
 
 			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
+
+			if (gen_QQ_LV->Pt() > gPtMax) continue;
 
 			// single-muon acceptance
 
