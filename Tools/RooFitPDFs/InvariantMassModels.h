@@ -184,11 +184,11 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName, const c
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7, 2, 15);
+		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7, 4, 14);
 		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7);
 		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1.5, 0.1, 5);
 		// RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9);
-		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1.46, 0, 10000);
+		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1.46, 0, 100);
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 
@@ -233,7 +233,7 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName, const c
 
 // build the main PDF based on all PDFs above
 
-void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, const char* fitModelName, Long64_t nEntries = 1e6, bool fixSigmaToMC = false) {
+void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, const char* bkgShapeName, const char* fitModelName, Long64_t nEntries = 1e6, bool fixSigmaToMC = false, const char* muonAccName = "UpsilonTriggerThresholds") {
 	RooRealVar* invMass = wspace.var("mass");
 	invMass->setRange("MassFitRange", MassBinMin, MassBinMax);
 
@@ -241,7 +241,7 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 
 	// 1. tail parameters fixed to MC extracted values, and identical for the three resonances
 
-	RooArgList* constraintsList = ListOfSignalContraints(wspace, signalShapeName, fitModelName, fixSigmaToMC);
+	RooArgList* constraintsList = ListOfSignalContraints(wspace, signalShapeName, fitModelName, fixSigmaToMC, muonAccName);
 
 	// 2. signal model: one double-sided Crystal Ball PDF (symmetric Gaussian core) per Y resonance
 

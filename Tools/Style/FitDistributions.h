@@ -223,9 +223,9 @@ void enableBinIntegrator2D(RooAbsReal& func, int numBinsX, int numBinsY) {
 	func.forceNumInt(true);
 }
 
-void SaveMCSignalParameters(RooArgSet* params, const char* outputName) {
-	gSystem->mkdir("SignalParameters/absPhi", kTRUE);
-	const char* name = Form("SignalParameters/absPhi/%s.txt", outputName);
+void SaveMCSignalParameters(RooArgSet* params, const char* name) {
+	//gSystem->mkdir("SignalParameters/absPhi", kTRUE);
+	//const char* name = Form("SignalParameters/absPhi/%s.txt", outputName);
 
 	params->writeToFile(name);
 

@@ -12,7 +12,7 @@ bool BeVerbose = true;
 
 const char* gCMSLumiText = "PbPb 1.61 nb^{#minus1} (5.02 TeV)";
 
-const char* gMuonAccName = "_TriggerAcc";
+const char* gMuonAccName = "UpsilonTriggerThresholds"; // possible names listed in PhaseSpace.h
 // const char* gMuonAccName = "_2018Acc";
 // const char* gMuonAccName = "";
 
@@ -48,8 +48,8 @@ const double gPtFineBinning[NPtFineBins + 1] = {0, 1, 2, 3, 4, 6, 8, 10, 12, 16,
 const int NCosThetaFineBins = 20;
 const double gCosThetaFineBinning[NCosThetaFineBins + 1] = {-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1};
 
-const int NPhiFineBins = 18; // i.e. 20 degrees wide bins
-const double gPhiFineBinning[NCosThetaFineBins + 1] = {-180, -160, -140, -120, -100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100, 120, 140, 160, 180};
+const int NPhiFineBins = 19;
+const double gPhiFineBinning[NPhiFineBins + 1] = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 240}; // last extra bin for legends
 
 /// cos theta and phi binning, specific to each pt interval
 
@@ -122,7 +122,7 @@ const int NCPUs = 3;
 
 const float MassBinMin = 7;
 // const float MassBinMax = 13;
-const float MassBinMax = 11.5;
+const float MassBinMax = 12;
 const int NMassBins = 100;
 
 // error estimate
@@ -162,7 +162,7 @@ const char* DimuonPtRangeText(int ptMin, int ptMax) {
 }
 
 const char* gDimuonRapidityVarTitle = "|#it{y}|";
-const char* DimuonRapidityRangeText(float rapidityMin, float rapidityMax) {
+const char* DimuonRapidityRangeText(float rapidityMin = gRapidityMin, float rapidityMax = gRapidityMax) {
 	return Form("%1.1f < %s < %1.1f", rapidityMin, gDimuonRapidityVarTitle, rapidityMax);
 }
 
