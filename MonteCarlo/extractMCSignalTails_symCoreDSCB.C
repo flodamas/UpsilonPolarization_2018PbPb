@@ -113,14 +113,14 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 	// file->Close();
 }
 
-void scanExtractMCSignalTails_symCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180) {
+void scanExtractMCSignalTails_symCoreDSCB(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, const char* muonAccName = "UpsilonTriggerThresholds") {
 	std::vector<Double_t> cosThetaEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
 	std::vector<Double_t> phiEdges = setPhiBinEdges(nPhiBins, phiMin, phiMax);
 
 	for (Int_t cosThetaIdx = 0; cosThetaIdx < nCosThetaBins; cosThetaIdx++) {
 		for (Int_t phiIdx = 0; phiIdx < nPhiBins; phiIdx++) {
-			extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, gMuonAccName, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1], true);
+			extractMCSignalTails_symCoreDSCB(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, muonAccName, isCSframe, cosThetaEdges[cosThetaIdx], cosThetaEdges[cosThetaIdx + 1], phiEdges[phiIdx], phiEdges[phiIdx + 1], true);
 		}
 	}
 }
