@@ -33,6 +33,8 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	ULong64_t HLTriggers;
 	ULong64_t Reco_QQ_trig[1000];
 	Int_t Centrality;
+	Float_t HFmean;
+
 	TClonesArray* CloneArr_QQ = nullptr;
 	TClonesArray* CloneArr_mu = nullptr;
 	Short_t Reco_QQ_size;
@@ -53,6 +55,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	// event variables
 	OniaTree->SetBranchAddress("Gen_weight", &Gen_weight);
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
+	OniaTree->SetBranchAddress("SumET_HF", &HFmean);
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 
 	// gen-level variables
@@ -140,6 +143,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 
 	Float_t nColl, weight = 0 /*, totalWeightCS = 0, totalWeightHX = 0*/, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0, errorWeightDown = 0, errorWeightUp = 0;
+	Int_t hiBin;
 
 	// for muon scale factors
 	int indexNominal = 0;
@@ -171,7 +175,9 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 
 		if (!((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
 
-		nColl = FindNcoll(Centrality);
+		hiBin = GetHiBinFromhiHF(HFmean);
+
+		nColl = FindNcoll(hiBin);
 
 		// loop over reconstructed dimuon candidates
 		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
