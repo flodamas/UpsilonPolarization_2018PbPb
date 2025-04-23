@@ -344,8 +344,8 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 	/// get acceptance and efficiency 3D map
 	auto* accMap = getAcceptance3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
-	auto* effMap = getEfficiency3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
-	auto* systEff = getSysEff3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+	auto* effMap = getEfficiency3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
+	auto* systEff = getSysEff3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
 
 	/// rebin acceptance and efficiency, efficiency systematic Uncertainty
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
@@ -356,7 +356,7 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 	/// draw acceptance and efficiency graph for check
 	TCanvas* accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-	TCanvas* effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	TCanvas* effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, 0, 0, 0);
 	TCanvas* dummyCanvas = new TCanvas("dummyCanvas", "dummyCanvas", 600, 600);
 
 	/// apply acc x eff correction weights and errors to each costheta bin
