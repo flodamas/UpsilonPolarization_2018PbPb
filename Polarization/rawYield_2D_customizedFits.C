@@ -20,8 +20,8 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE, const char* defaultBkgShapeName = "ExpTimesErr") { //Chebychev
-	writeExtraText = true;                                                                                                                                                                                                                                                                                                                                             // if extra text
+void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* muonAccName = "UpsilonTriggerThresholds", const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE, const char* defaultBkgShapeName = "ExpTimesErr") { //Chebychev
+	writeExtraText = true;                                                                                                                                                                                                                                                                                                                                                                                                   // if extra text
 	extraText = "       Preliminary";
 
 	using namespace RooFit;
@@ -127,7 +127,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	Bool_t isPhiFolded = kTRUE;
 
 	/// get acceptance maps
-	const char* accMapPath = AcceptanceResultsPath(gMuonAccName);
+	const char* accMapPath = AcceptanceResultsPath(muonAccName);
 
 	TFile* acceptanceFile = openFile(Form("%s/AcceptanceResults%s.root", accMapPath, isPhiFolded ? "" : "_fullPhi"));
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
@@ -136,7 +136,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
 
 	/// get efficiency maps
-	const char* effMapPath = EfficiencyResultsPath(gMuonAccName);
+	const char* effMapPath = EfficiencyResultsPath(muonAccName);
 
 	TFile* efficiencyFile = openFile(Form("%s/EfficiencyResults%s.root", effMapPath, isPhiFolded ? "" : "_fullPhi"));
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
@@ -228,7 +228,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 			const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1], (Int_t)phiBinEdges[absiPhi], (Int_t)phiBinEdges[absiPhi + 1]);
 
-			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("%s", bkgShapeName[iCosTheta][absiPhi].c_str()), fitModelName, Form("%s", gMuonAccName));
+			RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("%s", bkgShapeName[iCosTheta][absiPhi].c_str()), fitModelName, Form("%s", muonAccName));
 
 			cout << "signalYields: " << signalYields << endl;
 
@@ -579,10 +579,10 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 
 	const char* commonOutputName = Form("cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.png", gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax, cosThetaMin, cosThetaMax);
 
-	gSystem->mkdir(Form("EfficiencyMaps/%s", gMuonAccName), kTRUE);
-	weightCanvas->SaveAs(Form("EfficiencyMaps/%s/WeightsMapCosTheta%s_%s", gMuonAccName, refFrameName, commonOutputName), "RECREATE");
+	gSystem->mkdir(Form("EfficiencyMaps/%s", muonAccName), kTRUE);
+	weightCanvas->SaveAs(Form("EfficiencyMaps/%s/WeightsMapCosTheta%s_%s", muonAccName, refFrameName, commonOutputName), "RECREATE");
 
-	const char* yieldMapsPath = Form("YieldMaps/%s", gMuonAccName);
+	const char* yieldMapsPath = Form("YieldMaps/%s", muonAccName);
 	gSystem->mkdir(yieldMapsPath, kTRUE);
 	if (!LEGOplot)
 		yieldCanvas->SaveAs(Form("%s/YieldMapCosTheta%s_%s_%s", yieldMapsPath, refFrameName, defaultBkgShapeName, commonOutputName), "RECREATE");
@@ -595,7 +595,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 		correctedMapCanvas->SaveAs(Form("%s/CorrectedMapCosTheta%s_fit_%s_%s", yieldMapsPath, refFrameName, defaultBkgShapeName, commonOutputName), "RECREATE");
 
 	/// Uncertainty plots
-	const char* uncertaintyPath = Form("UncertaintyPlots/%s", gMuonAccName);
+	const char* uncertaintyPath = Form("UncertaintyPlots/%s", muonAccName);
 
 	gSystem->mkdir(uncertaintyPath, kTRUE);
 	statHighAccCanvas->SaveAs(Form("%s/statHighAcc%s_%s", uncertaintyPath, refFrameName, commonOutputName), "RECREATE");
@@ -607,7 +607,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* re
 	totalUncCanvas->SaveAs(Form("%s/totalUnc%s_%s", uncertaintyPath, refFrameName, commonOutputName), "RECREATE");
 
 	// save the histograms to the root files to see them with the root viewer
-	TFile* EfficiencyOutFile = new TFile(Form("EfficiencyMaps/%s/efficiencyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.root", gMuonAccName, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
+	TFile* EfficiencyOutFile = new TFile(Form("EfficiencyMaps/%s/efficiencyHistos%s_cent%dto%d_pt%dto%dGeV_phi%dto%d_costheta%.1fto%.1f.root", muonAccName, refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins], cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]), "RECREATE");
 	accMapCosThetaPhi->Write();
 	effMapCosThetaPhi->Write();
 	systEffCosThetaPhi->Write();
@@ -635,9 +635,9 @@ void scanRawYield_2D_customizedFits(const char* refFrameName = "CS") {
 	for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
 		for (Int_t idx = 0; idx < 2; idx++) {
 			if (idx == 0)
-				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr"); // 2D plot
+				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], gMuonAccName, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr"); // 2D plot
 			else
-				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr"); // LEGO plot + fit
+				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], gMuonAccName, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr"); // LEGO plot + fit
 		}
 	}
 }
