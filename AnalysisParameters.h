@@ -153,8 +153,8 @@ const char* gPtVarName = "#it{p}_{T}";
 const char* gPtUnit = "GeV/#it{c}";
 const char* gPtAxisTitle = Form("%s (%s)", gPtVarName, gPtUnit);
 
-const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > 4 and 3 GeV/#it{c}";
-//const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > thresholds(#eta^{ #mu})"; // "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
+// const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > 4 and 3 GeV/#it{c}";
+const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > thresholds(#eta^{ #mu})"; // "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
 // const char* gMuonPtCutText = "#it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}"; // weird text other wise, don't know why...
 
 const char* gDimuonPtVarTitle = "#it{p}_{T}";
