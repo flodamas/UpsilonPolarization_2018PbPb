@@ -5,6 +5,7 @@
 #include "../Tools/Parameters/PhaseSpace.h"
 
 #include "AccEffHelpers.h"
+#include "../Polarization/PolarFitHelpers.h"
 
 #include "../Tools/Style/Legends.h"
 
@@ -14,7 +15,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void GenRecoResolution(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUpsilonState, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE, TString muonAccName = "UpsilonTriggerThresholds") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
+void GenRecoResolution(Int_t iState = gUpsilonState, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE, TString muonAccName = "UpsilonTriggerThresholds") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
@@ -124,20 +125,30 @@ void GenRecoResolution(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUpsilon
 
 	Float_t weightCS = 0, weightHX = 0;
 
-	// TString MuonAccName = "";
-
 	Bool_t allGood, firesTrigger, isRecoMatched, dimuonMatching, goodVertexProba, passHLTFilterMuons, trackerAndGlobalMuons, hybridSoftMuons;
 
 	Int_t hiBin;
 
-	TH2D* genCosThetaPhiHistCS = new TH2D("genCosThetaPhiHistCS", "genCosThetaPhiHistCS", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
-	TH2D* genCosThetaPhiHistHX = new TH2D("genCosThetaPhiHistHX", "genCosThetaPhiHistHX", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
-	
-	TH2D* recoCosThetaPhiHistCS = new TH2D("recoCosThetaPhiHistCS", "recoCosThetaPhiHistCS", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
-	TH2D* recoCosThetaPhiHistHX = new TH2D("recoCosThetaPhiHistHX", "recoCosThetaPhiHistHX", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
+	Int_t ptBinIdx = 0;
 
-	TH2D* ratioCosThetaPhiHistCS = new TH2D("ratioCosThetaPhiHistCS", "ratioCosThetaPhiHistCS", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
-	TH2D* ratioCosThetaPhiHistHX = new TH2D("ratioCosThetaPhiHistHX", "ratioCosThetaPhiHistHX", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
+	/// define the 2D histograms
+	TH2D* genCosThetaPhiHistCS[NPtBins];
+	TH2D* genCosThetaPhiHistHX[NPtBins];
+	
+	TH2D* recoCosThetaPhiHistCS[NPtBins];
+	TH2D* recoCosThetaPhiHistHX[NPtBins];
+
+	TH2D* ratioCosThetaPhiHistCS[NPtBins];
+	TH2D* ratioCosThetaPhiHistHX[NPtBins];
+
+	for (int iPtBin = 0; iPtBin < NPtBins; iPtBin++) {
+		genCosThetaPhiHistCS[iPtBin] = new TH2D(Form("genCosThetaPhiHistCS%d", iPtBin), "", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
+		genCosThetaPhiHistHX[iPtBin] = new TH2D(Form("genCosThetaPhiHistHX%d", iPtBin), "", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
+		recoCosThetaPhiHistCS[iPtBin] = new TH2D(Form("recoCosThetaPhiHistCS%d", iPtBin), "", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
+		recoCosThetaPhiHistHX[iPtBin] = new TH2D(Form("recoCosThetaPhiHistHX%d", iPtBin), "", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
+		ratioCosThetaPhiHistCS[iPtBin] = new TH2D(Form("ratioCosThetaPhiHistCS%d", iPtBin), "", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
+		ratioCosThetaPhiHistHX[iPtBin] = new TH2D(Form("ratioCosThetaPhiHistHX%d", iPtBin), "", NCosThetaBins, gCosThetaBinning, NFullPhiBins, gFullPhiBinning);
+	}
 
 	Long64_t totEntries = OniaTree->GetEntries();
 
@@ -324,7 +335,7 @@ void GenRecoResolution(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUpsilon
 					dimuTrigWeight_statDown = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexStatDown);
 				}
 
-				// dimuon efficiency weight = product of the total scale factors
+				/// dimuon efficiency weight = product of the total scale factors
 				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
 				if (isPhiFolded == kTRUE) {
@@ -337,35 +348,124 @@ void GenRecoResolution(Int_t ptMin = 0, Int_t ptMax = 2, Int_t iState = gUpsilon
 					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX_gen.Theta()), 2) * std::cos(2 * muPlus_HX_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX_gen.Theta()) * std::cos(muPlus_HX_gen.Phi());
 				}
 
-				// total weight
+				/// total weight
 				totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
 
-				// fill histograms
-				if (reco_QQ_pt > 2 && reco_QQ_pt < 6) {
-					genCosThetaPhiHistCS->Fill(muPlus_CS_gen.CosTheta(), muPlus_CS_gen.Phi() * 180 / TMath::Pi());
-					genCosThetaPhiHistHX->Fill(muPlus_HX_gen.CosTheta(), muPlus_HX_gen.Phi() * 180 / TMath::Pi());
-					recoCosThetaPhiHistCS->Fill(cosThetaCS, phiCS);
-					recoCosThetaPhiHistHX->Fill(cosThetaHX, phiHX);
+				/// set the pt bin index
+				if (reco_QQ_pt > gPtBinning[0] && reco_QQ_pt <= gPtBinning[1]) ptBinIdx = 0;
+				else if (reco_QQ_pt > gPtBinning[1] && reco_QQ_pt <= gPtBinning[2]) ptBinIdx = 1;
+				else if (reco_QQ_pt > gPtBinning[2] && reco_QQ_pt <= gPtBinning[3]) ptBinIdx = 2;
+				else if (reco_QQ_pt > gPtBinning[3] && reco_QQ_pt <= gPtBinning[4]) ptBinIdx = 3;
+				else continue;
 
-					// cout << "gen CS CosTheta: " << muPlus_CS_gen.CosTheta() << ", gen CS Phi: " << muPlus_CS_gen.Phi() * 180 / TMath::Pi() << endl;
-					// cout << "gen HX CosTheta: " << muPlus_HX_gen.CosTheta() << ", gen HX Phi: " << muPlus_HX_gen.Phi() * 180 / TMath::Pi() << endl;
-					// cout << cosThetaCS << " " << phiCS << " " << cosThetaHX << " " << phiHX << endl;
-				}
+				/// fill histograms
+				genCosThetaPhiHistCS[ptBinIdx]->Fill(muPlus_CS_gen.CosTheta(), muPlus_CS_gen.Phi() * 180 / TMath::Pi());
+				genCosThetaPhiHistHX[ptBinIdx]->Fill(muPlus_HX_gen.CosTheta(), muPlus_HX_gen.Phi() * 180 / TMath::Pi());
 				
+				recoCosThetaPhiHistCS[ptBinIdx]->Fill(cosThetaCS, phiCS);
+				recoCosThetaPhiHistHX[ptBinIdx]->Fill(cosThetaHX, phiHX);
 			}
 		}
 	}
 
-	// draw histograms
+	/// save the histograms
+	gSystem->mkdir("GenRecoResolution", kTRUE);
+	TFile *outputFile = new TFile("GenRecoResolution/GenRecoResolution.root", "RECREATE");
+	outputFile->cd();
+	
+	/// write histograms to file
+	for (int iPtBin = 0; iPtBin < NPtBins; iPtBin++) {
+		ratioCosThetaPhiHistCS[iPtBin]->Divide(recoCosThetaPhiHistCS[iPtBin], genCosThetaPhiHistCS[iPtBin]);
+		ratioCosThetaPhiHistHX[iPtBin]->Divide(recoCosThetaPhiHistHX[iPtBin], genCosThetaPhiHistHX[iPtBin]);
+
+		genCosThetaPhiHistCS[iPtBin]->Write();
+		genCosThetaPhiHistHX[iPtBin]->Write();
+		recoCosThetaPhiHistCS[iPtBin]->Write();
+		recoCosThetaPhiHistHX[iPtBin]->Write();
+		ratioCosThetaPhiHistCS[iPtBin]->Write();
+		ratioCosThetaPhiHistHX[iPtBin]->Write();
+	}
+
+	outputFile->Close();
+
+	// draw an example histograms in HX frame (2 < pt < 6 GeV/c)
 	TCanvas* genCanvasHX = new TCanvas("genCanvasHX", "genCanvasHX", 800, 600);
-	genCosThetaPhiHistHX->Draw("COLZ");
+	genCosThetaPhiHistHX[1]->Draw("COLZ");
 
 	TCanvas* recoCanvasHX = new TCanvas("recoCanvasHX", "recoCanvasHX", 800, 600);
-	recoCosThetaPhiHistHX->Draw("COLZ");
+	recoCosThetaPhiHistHX[1]->Draw("COLZ");
 
 	TCanvas* ratioCanvasHX = new TCanvas("ratioCanvasHX", "ratioCanvasHX", 800, 600);
-	ratioCosThetaPhiHistHX->Divide(recoCosThetaPhiHistHX, genCosThetaPhiHistHX);
-	ratioCosThetaPhiHistHX->Draw("COLZ");
+	ratioCosThetaPhiHistHX[1]->Divide(recoCosThetaPhiHistHX[1], genCosThetaPhiHistHX[1]);
+	ratioCosThetaPhiHistHX[1]->Draw("COLZ");
+
+	return;
+}
+
+void draw2DGenRecoResolution() {
+
+	std::vector<Double_t> cosThetaEdges = setCosThetaBinEdges(NCosThetaBins, gCosThetaMin, gCosThetaMax);
+
+	std::vector<Double_t> phiEdges = setPhiBinEdges(NFullPhiBins, gFullPhiMin, gFullPhiMax);
+
+	TFile* file = TFile::Open("./GenRecoResolution/GenRecoResolution.root", "READ");
+	if (!file) {
+		cout << "File GenRecoResolution.root not found. Check the directory of the file." << endl;
+		return;
+	}
+
+	cout << "File GenRecoResolution.root opened" << endl;
+	
+	// define the 2D histograms
+	TH2D* genCosThetaPhiHistCS[NPtBins];
+	TH2D* genCosThetaPhiHistHX[NPtBins];
+	TH2D* recoCosThetaPhiHistCS[NPtBins];
+	TH2D* recoCosThetaPhiHistHX[NPtBins];
+	TH2D* ratioCosThetaPhiHistCS[NPtBins];
+	TH2D* ratioCosThetaPhiHistHX[NPtBins];
+
+	TCanvas* ratioCosThetaPhiCanvasCS[NPtBins];
+	TCanvas* ratioCosThetaPhiCanvasHX[NPtBins];
+	
+	for (int iPtBin = 0; iPtBin < NPtBins; iPtBin++) {
+		/// get the histograms
+		genCosThetaPhiHistCS[iPtBin] = (TH2D*)file->Get(Form("genCosThetaPhiHistCS%d", iPtBin));
+		genCosThetaPhiHistHX[iPtBin] = (TH2D*)file->Get(Form("genCosThetaPhiHistHX%d", iPtBin));
+		recoCosThetaPhiHistCS[iPtBin] = (TH2D*)file->Get(Form("recoCosThetaPhiHistCS%d", iPtBin));
+		recoCosThetaPhiHistHX[iPtBin] = (TH2D*)file->Get(Form("recoCosThetaPhiHistHX%d", iPtBin));
+		ratioCosThetaPhiHistCS[iPtBin] = (TH2D*)file->Get(Form("ratioCosThetaPhiHistCS%d", iPtBin));
+		ratioCosThetaPhiHistHX[iPtBin] = (TH2D*)file->Get(Form("ratioCosThetaPhiHistHX%d", iPtBin));
+
+		/// draw ratio histograms CS
+		ratioCosThetaPhiCanvasCS[iPtBin] = draw2DMap(ratioCosThetaPhiHistCS[iPtBin], "CS", NCosThetaBins, cosThetaEdges, NFullPhiBins, phiEdges, kFALSE, kFALSE, 1, kFALSE);
+		display2DMapContents(ratioCosThetaPhiHistCS[iPtBin], NCosThetaBins, NFullPhiBins, kFALSE);
+
+		ratioCosThetaPhiHistCS[iPtBin]->GetZaxis()->SetTitleOffset(1.2);
+		ratioCosThetaPhiHistCS[iPtBin]->GetZaxis()->SetTitleSize(0.05);
+		ratioCosThetaPhiHistCS[iPtBin]->GetZaxis()->SetTitle("#varUpsilon(1S) N_{RECO} / N_{GEN}");
+
+		TPaveText* kinematicsTextCS = KinematicsText_v2(gCentralityBinMin, gCentralityBinMax, (int)gPtBinning[iPtBin], (int)gPtBinning[iPtBin + 1]);  // (HX, 2to6, -0.42to-0.14,
+		kinematicsTextCS->Draw();
+
+		/// save the histograms
+		ratioCosThetaPhiCanvasCS[iPtBin]->SaveAs(Form("./GenRecoResolution/ratioCosThetaPhiCS_pt%dto%d.png", (int)gPtBinning[iPtBin], (int)gPtBinning[iPtBin + 1]));
+
+		/// draw ratio histograms HX
+		ratioCosThetaPhiCanvasHX[iPtBin] = draw2DMap(ratioCosThetaPhiHistHX[iPtBin], "HX", NCosThetaBins, cosThetaEdges, NFullPhiBins, phiEdges, kFALSE, kFALSE, 1, kFALSE);
+		display2DMapContents(ratioCosThetaPhiHistHX[iPtBin], NCosThetaBins, NFullPhiBins, kFALSE);
+		
+		ratioCosThetaPhiHistHX[iPtBin]->GetZaxis()->SetTitleOffset(1.2);
+		ratioCosThetaPhiHistHX[iPtBin]->GetZaxis()->SetTitleSize(0.05);
+		ratioCosThetaPhiHistHX[iPtBin]->GetZaxis()->SetTitle("#varUpsilon(1S) N_{RECO} / N_{GEN}");
+		
+		TPaveText* kinematicsTextHX = KinematicsText_v2(gCentralityBinMin, gCentralityBinMax, (int)gPtBinning[iPtBin], (int)gPtBinning[iPtBin + 1]);  // (HX, 2to6, -0.42to-0.14,
+		kinematicsTextHX->Draw();
+
+		/// save the histograms
+		ratioCosThetaPhiCanvasHX[iPtBin]->SaveAs(Form("./GenRecoResolution/ratioCosThetaPhiHX_pt%dto%d.png", (int)gPtBinning[iPtBin], (int)gPtBinning[iPtBin + 1]));
+	}
+
+	return;
 }
