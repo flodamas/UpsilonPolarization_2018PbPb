@@ -344,7 +344,7 @@ void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t 
 
 			// Create a TLatex object to write the signal extraction yield uncertainties on each bin
 			TLatex latex;
-			latex.SetTextSize(0.05); // Adjust text size as needed
+			latex.SetTextSize(0.04); // Adjust text size as needed
 			latex.SetTextAlign(22);  // Center alignment
 			latex.SetTextColor(kWhite);
 
