@@ -349,6 +349,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
 		}
 
+		// if (iEvent > 100) break; // for testing
+
 		OniaTree->GetEntry(iEvent);
 		//genLorentzVector->Clear();
 
@@ -526,6 +528,14 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 					dimuTrigWeight_statDown = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexStatDown);
 				}
 
+				else {
+					dimuTrigWeight_nominal = 1;
+					dimuTrigWeight_systUp = 1;
+					dimuTrigWeight_systDown = 1;
+					dimuTrigWeight_statUp = 1;
+					dimuTrigWeight_statDown = 1;
+				}
+
 				// dimuon efficiency weight = product of the total scale factors
 				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
@@ -552,6 +562,39 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				hNominalEffLab->FillWeighted(allGood, totalWeightLab, cosThetaLab, phiLab, reco_QQ_pt);
 				hNominalEffCS->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
 				hNominalEffHX->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+
+				// cout << "Event " << iEvent << endl;
+				// cout << "total weight HX: " << totalWeightHX << endl;
+				// cout << "cosThetaHX: " << cosThetaHX << endl;
+				// cout << "phiHX: " << phiHX << endl;
+				// cout << "reco_QQ_pt: " << reco_QQ_pt << endl;
+
+				// cout << "eventWeight: " << eventWeight << endl;
+				// cout << "dimuonPtWeight: " << dimuonPtWeight << endl;
+				// cout << "dimuWeight_nominal: " << dimuWeight_nominal << endl;
+				// cout << "weightHX: " << weightHX << endl;				
+
+				// cout << "Reco_mupl_pt: " << Reco_mupl_pt << endl;
+				// cout << "Reco_mupl_eta: " << Reco_mupl_eta << endl;
+				// cout << "Reco_mumi_pt: " << Reco_mumi_pt << endl;
+				// cout << "Reco_mumi_eta: " << Reco_mumi_eta << endl;
+
+				// cout << "tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal): " << tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) << endl;
+				// cout << "tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal): " << tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) << endl;
+				// cout << "tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal): " << tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) << endl;
+				// cout << "tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal): " << tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) << endl;
+				// cout << "dimuTrigWeight_nominal: " << dimuTrigWeight_nominal << endl;
+
+				// cout << "mupl_isL2: " << mupl_isL2 << endl;
+				// cout << "mupl_isL3: " << mupl_isL3 << endl;
+				// cout << "mumi_isL2: " << mumi_isL2 << endl;
+				// cout << "mumi_isL3: " << mumi_isL3 << endl;
+				// cout << "mupl_L2Filter: " << mupl_L2Filter << endl;
+				// cout << "mupl_L3Filter: " << mupl_L3Filter << endl;
+				// cout << "mumi_L2Filter: " << mumi_L2Filter << endl;
+				// cout << "mumi_L3Filter: " << mumi_L3Filter << endl;
+
+				// cout << "" << endl;
 
 				if (reco_QQ_pt > ptMin && reco_QQ_pt < ptMax) { // pT range of interest
 					hEffCS2D->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS);
@@ -888,11 +931,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 	hSystHX2D->Write();
 
-	hEffCS2D->Write();
-	hEffHX2D->Write();
+	// hEffCS2D->Write();
+	// hEffHX2D->Write();
 
-	hEffCS1D->Write();
-	hEffHX1D->Write();
+	// hEffCS1D->Write();
+	// hEffHX1D->Write();
 
 	outputFile.Close();
 
