@@ -11,9 +11,13 @@
 //#include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
 
+#include "../Tools/Parameters/CentralityValues.h"
+#include "../Tools/Parameters/EfficiencyWeights.h"
+#include "../Tools/Parameters/MuonScaleFactors.h"
+
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void acceptanceMap_HydjetGen(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFolded = kTRUE, TString muonAccName = gMuonAccName, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Int_t iState = 1) {
+void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = gMuonAccName, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Int_t iState = 1) {
     // Read HydjetGen file with polarization weights
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	
@@ -56,7 +60,8 @@ void acceptanceMap_HydjetGen(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFold
 
 	ULong64_t Reco_mu_trig[1000];
 	Int_t Reco_mu_SelectionType[1000];
-	//(parameters for quality cuts)
+	
+    //(parameters for quality cuts)
 	Float_t Reco_QQ_VtxProb[1000];
 	Int_t Reco_mu_nPixWMea[1000];
 	Int_t Reco_mu_nTrkWMea[1000];
@@ -99,6 +104,26 @@ void acceptanceMap_HydjetGen(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFold
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
+	// (cos theta, phi, pT) 3D maps for final acceptance correction, variable size binning for the stats
+	TEfficiency* accMatrixLab = TEfficiency3D(NominalTEfficiency3DName("Lab", lambdaTheta, lambdaPhi, lambdaThetaPhi), "Lab", iState, isPhiFolded);
+	TEfficiency* accMatrixCS = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState, isPhiFolded);
+	TEfficiency* accMatrixHX = TEfficiency3D(NominalTEfficiency3DName("HX", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState, isPhiFolded);
+
+	// we want to estimate the uncertainties from scale factors at the same time
+	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
+
+	// for a given type of muon scale factor (i.e., tracking, muId, trigger) we need to compute the efficiency with up and down variations, for stat and syst uncertainties
+
+	int indexNominal = 0;
+	int indexSystUp = -1, indexSystDown = -2;
+	int indexStatUp = +1, indexStatDown = +2;
+
+	double dimuWeight_nominal = 0;
+	double dimuWeight_trk_systUp, dimuWeight_trk_systDown, dimuWeight_trk_statUp, dimuWeight_trk_statDown;
+	double dimuWeight_muId_systUp, dimuWeight_muId_systDown, dimuWeight_muId_statUp, dimuWeight_muId_statDown;
+	double dimuWeight_trig_systUp, dimuWeight_trig_systDown, dimuWeight_trig_statUp, dimuWeight_trig_statDown;
+	double dimuWeight_total_systUp, dimuWeight_total_systDown, dimuWeight_total_statUp, dimuWeight_total_statDown;
+
 	// loop variables
 	TLorentzVector* genLorentzVector = new TLorentzVector();
 	TLorentzVector* gen_QQ_LV = new TLorentzVector();
@@ -106,19 +131,25 @@ void acceptanceMap_HydjetGen(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFold
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 	TLorentzVector* recoLorentzVector = new TLorentzVector();
 
-	// (cos theta, phi, pT) 3D maps for final acceptance correction, variable size binning for the stats
-	TEfficiency* accMatrixLab = TEfficiency3D(NominalTEfficiency3DName("Lab", lambdaTheta, lambdaPhi, lambdaThetaPhi), "Lab", iState, isPhiFolded);
-	TEfficiency* accMatrixCS = TEfficiency3D(NominalTEfficiency3DName("CS", lambdaTheta, lambdaPhi, lambdaThetaPhi), "CS", iState, isPhiFolded);
-	TEfficiency* accMatrixHX = TEfficiency3D(NominalTEfficiency3DName("HX", lambdaTheta, lambdaPhi, lambdaThetaPhi), "HX", iState, isPhiFolded);
-
     Bool_t withinAcceptance;
 
-	Double_t cosThetaCS, phiCS, cosThetaHX, phiHX, cosThetaLab, phiLab;
+	Double_t cosThetaCS_gen, phiCS_gen, cosThetaHX_gen, phiHX_gen, cosThetaLab_gen, phiLab_gen;
+	Double_t cosThetaCS_reco, phiCS_reco, cosThetaHX_reco, phiHX_reco, cosThetaLab_reco, phiLab_reco;
+
+    double eventWeight, dimuonPtWeight, totalWeightCS, totalWeightHX, totalWeightLab;
+	double dimuTrigWeight_nominal = -1,
+	       dimuTrigWeight_systUp = -1, dimuTrigWeight_systDown = -1,
+	       dimuTrigWeight_statUp = -1, dimuTrigWeight_statDown = -1;
 
 	Float_t weightCS = 0, weightHX = 0;
 
+	Bool_t allGood, firesTrigger, isRecoMatched, dimuonMatching, goodVertexProba, passHLTFilterMuons, trackerAndGlobalMuons, hybridSoftMuons;
+
+	Int_t hiBin;
+
 	Long64_t totEntries = OniaTree->GetEntries();
-	double counter = 0;
+	
+    double counter = 0;
 
 	// Loop over the events
 	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
@@ -126,13 +157,17 @@ void acceptanceMap_HydjetGen(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFold
 			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
 		}
 
+		// if (iEvent > 100) break; // for testing purposes
+
         OniaTree->GetEntry(iEvent);
 
 		if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality >= 90% in 2018 data
 
 		// firesTrigger = ((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)));
 
-		// hiBin = GetHiBinFromhiHF(HFmean);
+		hiBin = GetHiBinFromhiHF(HFmean);
+
+		eventWeight = Gen_weight * FindNcoll(hiBin); // * Get_zPV_weight(zVtx);
 
         // loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
@@ -141,59 +176,228 @@ void acceptanceMap_HydjetGen(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFold
    
             if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue; // upsilon within fiducial region
 
-           	// single-muon acceptance cuts
-            gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
-            gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
+            if (gen_QQ_LV->Pt() > gPtMax) continue;
 
-			withinAcceptance = MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName) && MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName);
+			// go to reco level (apply reco level weights to Hydjet GEN acceptance)
+			Int_t iReco = Gen_QQ_whichRec[iGen];
 
-            TVector3 muPlus_Lab = gen_mupl_LV->Vect();
+			if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
 
-			cosThetaLab = muPlus_Lab.CosTheta();
-			phiLab = muPlus_Lab.Phi() * 180 / TMath::Pi();
+            isRecoMatched = iReco > -1;
+            
+            if (isRecoMatched) {
 
-			if (isPhiFolded == kTRUE) phiLab = fabs(phiLab);
+                recoLorentzVector = (TLorentzVector*)CloneArr_QQ->At(iReco);
+				double reco_QQ_pt = recoLorentzVector->Pt();
 
-			accMatrixLab->FillWeighted(withinAcceptance, 1, cosThetaLab, phiLab, gen_QQ_LV->Pt());
+				dimuonPtWeight = Get_RecoPtWeight(recoLorentzVector->Rapidity(), reco_QQ_pt);
 
-			// Reference frame transformations
-			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
+				// dimuonMatching = (Reco_QQ_trig[iReco] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1));
 
-			cosThetaCS = muPlus_CS.CosTheta();
+				// goodVertexProba = Reco_QQ_VtxProb[iReco] > 0.01;
 
-			phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
-			if (isPhiFolded == kTRUE) phiCS = fabs(phiCS);
-			// cout << "cosThetaCS: " << cosThetaCS << endl;
-			// cout << "phiCS: " << phiCS << endl;
+				/// single-muon selection criteria
+				int iMuPlus = Reco_QQ_mupl_idx[iReco];
+				int iMuMinus = Reco_QQ_mumi_idx[iReco];
 
-			if (isPhiFolded == kTRUE)
-				weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * fabs(muPlus_CS.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(fabs(muPlus_CS.Phi()));
-			else
-				weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
+				// HLT filters
+				bool mupl_L2Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, gL2FilterBit))) == ((ULong64_t)pow(2, gL2FilterBit)));
+				bool mupl_L3Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, gL3FilterBit))) == ((ULong64_t)pow(2, gL3FilterBit)));
+				bool mumi_L2Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, gL2FilterBit))) == ((ULong64_t)pow(2, gL2FilterBit)));
+				bool mumi_L3Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, gL3FilterBit))) == ((ULong64_t)pow(2, gL3FilterBit)));
 
-			// cout << "weightCS: " << weightCS << endl;
-			// cout << "cosThetaCS: " << cosThetaCS << endl;
-			// cout << "phiCS: " << phiCS << endl;
+				// passHLTFilterMuons = (mupl_L2Filter && mumi_L3Filter) || (mupl_L3Filter && mumi_L2Filter) || (mupl_L3Filter && mumi_L3Filter);
 
-			accMatrixCS->FillWeighted(withinAcceptance, weightCS, cosThetaCS, phiCS, gen_QQ_LV->Pt());
+				// // global AND tracker muons
+				// trackerAndGlobalMuons = (Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8) && (Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8);
 
-			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
+				// // passing hybrid-soft Id
+				// hybridSoftMuons = (Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.) && (Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.);
 
-			cosThetaHX = muPlus_HX.CosTheta();
-			phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
-			if (isPhiFolded == kTRUE)
-				phiHX = fabs(phiHX);
+				// /// numerator for the efficiency
+				// allGood = firesTrigger && isRecoMatched && dimuonMatching && goodVertexProba && passHLTFilterMuons && trackerAndGlobalMuons && hybridSoftMuons;
+				
+                // get reco muon coordinates
+				TLorentzVector* Reco_mupl_LV = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
+				double Reco_mupl_eta = Reco_mupl_LV->Eta();
+				double Reco_mupl_pt = Reco_mupl_LV->Pt();
 
-			if (isPhiFolded == kTRUE)
-				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * fabs(muPlus_HX.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(fabs(muPlus_HX.Phi()));
-			else
-				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
+				TLorentzVector* Reco_mumi_LV = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
+				double Reco_mumi_eta = Reco_mumi_LV->Eta();
+				double Reco_mumi_pt = Reco_mumi_LV->Pt();
+                
+				TVector3 Reco_mupl_vecLab = Reco_mupl_LV->Vect();
+				TVector3 Reco_mupl_vecCS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
+				TVector3 Reco_mupl_vecHX = MuPlusVector_Helicity(*recoLorentzVector, *Reco_mupl_LV);
 
-			// cout << "weightHX: " << weightHX << endl;
-			// cout << "cosThetaHX: " << cosThetaHX << endl;
-			// cout << "phiHX: " << phiHX << endl;
+				/// cosTheta and phi
+				/// lab
+				cosThetaLab_reco = Reco_mupl_vecLab.CosTheta();
+				phiLab_reco = Reco_mupl_vecLab.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiLab_reco = fabs(phiLab_reco);
+				
+				/// CS
+				cosThetaCS_reco = Reco_mupl_vecCS.CosTheta();
+				phiCS_reco = Reco_mupl_vecCS.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiCS_reco = fabs(phiCS_reco);
+				
+				/// HX
+				cosThetaHX_reco = Reco_mupl_vecHX.CosTheta();
+				phiHX_reco = Reco_mupl_vecHX.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiHX_reco = fabs(phiHX_reco);
 
-			accMatrixHX->FillWeighted(withinAcceptance, weightHX, cosThetaHX, phiHX, gen_QQ_LV->Pt());
+				/// get gen muon coordinates
+				/// LV
+				gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+				gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
+
+				/// vector
+                TVector3 Gen_mupl_vecLab = gen_mupl_LV->Vect();
+				TVector3 Gen_mupl_vecCS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
+				TVector3 Gen_mupl_vecHX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
+
+				/// cosTheta and phi
+				/// lab
+                cosThetaLab_gen = Gen_mupl_vecLab.CosTheta();
+                phiLab_gen = Gen_mupl_vecLab.Phi() * 180 / TMath::Pi();
+                if (isPhiFolded == kTRUE) phiLab_gen = fabs(phiLab_gen);
+				
+				/// CS
+                cosThetaCS_gen = Gen_mupl_vecCS.CosTheta();
+                phiCS_gen = Gen_mupl_vecCS.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiCS_gen = fabs(phiCS_gen);
+                // cout << "cosThetaCS_gen: " << cosThetaCS_gen << endl;
+                // cout << "phiCS_gen: " << phiCS_gen << endl;
+				
+				/// HX
+                cosThetaHX_gen = Gen_mupl_vecHX.CosTheta();
+                phiHX_gen = Gen_mupl_vecHX.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiHX_gen = fabs(phiHX_gen);
+
+                /// muon scale factors
+				// muon trigger SF is tricky, need to know which muon passed which trigger filter
+				bool mupl_isL2 = (mupl_L2Filter && !mupl_L3Filter);
+				bool mupl_isL3 = (mupl_L2Filter && mupl_L3Filter);
+				bool mumi_isL2 = (mumi_L2Filter && !mumi_L3Filter);
+				bool mumi_isL3 = (mumi_L2Filter && mumi_L3Filter);
+
+				if (mupl_isL2 && mumi_isL3) {
+					dimuTrigWeight_nominal = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexNominal) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexNominal);
+
+					dimuTrigWeight_systUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexSystUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexSystUp);
+
+					dimuTrigWeight_systDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexSystDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexSystDown);
+
+					dimuTrigWeight_statUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexStatUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexStatUp);
+
+					dimuTrigWeight_statDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexStatDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexStatDown);
+
+				}
+
+				else if (mupl_isL3 && mumi_isL2) {
+					dimuTrigWeight_nominal = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexNominal) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexNominal);
+
+					dimuTrigWeight_systUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexSystUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexSystUp);
+
+					dimuTrigWeight_systDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexSystDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexSystDown);
+
+					dimuTrigWeight_statUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexStatUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexStatUp);
+
+					dimuTrigWeight_statDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexStatDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexStatDown);
+
+				}
+
+				else if (mupl_isL3 && mumi_isL3) {
+					dimuTrigWeight_nominal = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexNominal);
+
+					dimuTrigWeight_systUp = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexSystUp);
+
+					dimuTrigWeight_systDown = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexSystDown);
+
+					dimuTrigWeight_statUp = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexStatUp);
+
+					dimuTrigWeight_statDown = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexStatDown);
+				}
+
+				else {
+					dimuTrigWeight_nominal = 1;
+					dimuTrigWeight_systUp = 1;
+					dimuTrigWeight_systDown = 1;
+					dimuTrigWeight_statUp = 1;
+					dimuTrigWeight_statDown = 1;
+				}
+				// dimuon efficiency weight = product of the total scale factors
+				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
+
+				// single-muon acceptance
+                withinAcceptance = MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName) && MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName);
+    
+                totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+                accMatrixLab->FillWeighted(withinAcceptance, totalWeightLab, cosThetaLab_reco, phiLab_reco, reco_QQ_pt);
+
+                // Reference frame transformations
+
+                if (isPhiFolded == kTRUE)
+                    weightCS = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecCS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecCS.Theta()), 2) * std::cos(2 * fabs(Gen_mupl_vecCS.Phi())) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecCS.Theta()) * std::cos(fabs(Gen_mupl_vecCS.Phi()));
+                else
+                    weightCS = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecCS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecCS.Theta()), 2) * std::cos(2 * Gen_mupl_vecCS.Phi()) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecCS.Theta()) * std::cos(Gen_mupl_vecCS.Phi());
+
+                // total weight
+				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
+				
+                // cout << "weightCS: " << weightCS << endl;
+                // cout << "cosThetaCS_gen: " << cosThetaCS_gen << endl;
+                // cout << "phiCS_gen: " << phiCS_gen << endl;
+
+                accMatrixCS->FillWeighted(withinAcceptance, totalWeightCS, cosThetaCS_reco, phiCS_reco, reco_QQ_pt);
+
+                if (isPhiFolded == kTRUE)
+                    weightHX = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecHX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecHX.Theta()), 2) * std::cos(2 * fabs(Gen_mupl_vecHX.Phi())) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecHX.Theta()) * std::cos(fabs(Gen_mupl_vecHX.Phi()));
+                else
+                    weightHX = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecHX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecHX.Theta()), 2) * std::cos(2 * Gen_mupl_vecHX.Phi()) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecHX.Theta()) * std::cos(Gen_mupl_vecHX.Phi());
+                
+                totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
+                // cout << "weightHX: " << weightHX << endl;
+                // cout << "cosThetaHX_gen: " << cosThetaHX_gen << endl;
+                // cout << "phiHX_gen: " << phiHX_gen << endl;
+
+                accMatrixHX->FillWeighted(withinAcceptance, totalWeightHX, cosThetaHX_reco, phiHX_reco, reco_QQ_pt);
+				
+				// cout << "Event: " << iEvent << endl;
+				// cout << "withinAcceptance: " << withinAcceptance << endl;
+				// cout << "weightHX: " << totalWeightHX << endl;
+				// cout << "cosThetaHX: " << cosThetaHX_reco << endl;
+				// cout << "phiHX: " << phiHX_reco << endl;
+				// cout << "reco_QQ_pt: " << reco_QQ_pt << endl;
+
+				// cout << "eventWeight: " << eventWeight << endl;
+				// cout << "dimuonPtWeight: " << dimuonPtWeight << endl;
+				// cout << "dimuWeight_nominal: " << dimuWeight_nominal << endl;
+				// cout << "weightHX: " << weightHX << endl;
+
+				// cout << "Reco_mupl_pt: " << Reco_mupl_pt << endl;
+				// cout << "Reco_mupl_eta: " << Reco_mupl_eta << endl;
+				// cout << "Reco_mumi_pt: " << Reco_mumi_pt << endl;
+				// cout << "Reco_mumi_eta: " << Reco_mumi_eta << endl;
+
+				// cout << "tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal): " << tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) << endl;
+				// cout << "tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal): " << tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) << endl;
+				// cout << "tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal): " << tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) << endl;
+				// cout << "tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal): " << tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) << endl;
+				// cout << "dimuTrigWeight_nominal: " << dimuTrigWeight_nominal << endl;
+
+				// cout << "mupl_isL2: " << mupl_isL2 << endl;
+				// cout << "mupl_isL3: " << mupl_isL3 << endl;
+				// cout << "mumi_isL2: " << mumi_isL2 << endl;
+				// cout << "mumi_isL3: " << mumi_isL3 << endl;
+				// cout << "mupl_L2Filter: " << mupl_L2Filter << endl;
+				// cout << "mupl_L3Filter: " << mupl_L3Filter << endl;
+				// cout << "mumi_L2Filter: " << mumi_L2Filter << endl;
+				// cout << "mumi_L3Filter: " << mumi_L3Filter << endl;
+
+				// cout << "" << endl;
+
+			}
         }
     }
 	// Set the plot styles
@@ -253,7 +457,7 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 		// create the acceptance map
 		cout << Form("Acceptance map not found. Creating a new one with (lambdaTheta, phi, thetaPhi) = (%.2f, %.2f, %.2f)....", lambdaTheta, lambdaPhi, lambdaThetaPhi) << endl;
 
-		acceptanceMap_HydjetGen(0, 30, isPhiFolded, "UpsilonTriggerThresholds", lambdaTheta, lambdaPhi, lambdaThetaPhi, gUpsilonState);
+		acceptanceMap_HydjetGen(isPhiFolded, "UpsilonTriggerThresholds", lambdaTheta, lambdaPhi, lambdaThetaPhi, gUpsilonState);
 
         // // Force TFile closure before reopening — if that function didn't already do it
         // gSystem->ProcessEvents();  // Sometimes helps

@@ -460,6 +460,14 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 				dimuTrigWeight_statDown = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexStatDown);
 			}
 
+			else {
+				dimuTrigWeight_nominal = 1;
+				dimuTrigWeight_systUp = 1;
+				dimuTrigWeight_systDown = 1;
+				dimuTrigWeight_statUp = 1;
+				dimuTrigWeight_statDown = 1;
+			}
+			
 			// dimuon weight = product of the total scale factors
 			dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
