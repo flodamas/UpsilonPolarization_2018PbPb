@@ -71,7 +71,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 	const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 	// BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true);
-	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true, muonAccName); // not fix sigma to MC
+	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true, muonAccName); // fix sigma to MC
 
 	RooAddPdf invMassModel = *((RooAddPdf*)wspace.pdf("invMassModel"));
 	invMassModel.setNormRange("MassFitRange");

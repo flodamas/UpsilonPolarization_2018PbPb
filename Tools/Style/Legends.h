@@ -22,6 +22,20 @@ TPaveText* KinematicsText(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax
 	return text;
 }
 
+/// kinematics text for 2D angluar distributions plots
+TPaveText* KinematicsText_v2(Int_t centMin, Int_t centMax, Int_t ptMin, Int_t ptMax, float x1 = 0.22, float y1 = 0.81, float x2 = 0.76, float y2 = 0.93) {
+	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB");
+	// TPaveText* text = new TPaveText(0.65, 0.90, 0.95, 0.60, "NDCNB");
+
+	text->SetFillColor(4000);
+	text->SetBorderSize(0);
+	text->AddText(Form("%s, %s", CentralityRangeText(centMin, centMax), gMuonPtCutText));
+	text->AddText(Form("%s, %s", DimuonRapidityRangeText(gRapidityMin, gRapidityMax), DimuonPtRangeText(ptMin, ptMax)));
+
+	text->SetAllWith("", "align", 22);
+	return text;
+}
+
 TPaveText* RefFrameText(Bool_t isCSframe = true, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, float x1 = 0.61, float y1 = 0.34, float x2 = 0.97, float y2 = 0.56) {
 	TPaveText* text = new TPaveText(x1, y1, x2, y2, "NDCNB");
 	text->SetFillColor(4000);
