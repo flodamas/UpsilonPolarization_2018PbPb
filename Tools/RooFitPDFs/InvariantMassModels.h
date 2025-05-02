@@ -184,11 +184,11 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName, const c
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7, 4, 14);
+		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7, 1, 14);
 		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7);
 		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1.5, 0.1, 5);
 		// RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9);
-		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1.46, 0, 100);
+		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1., 0, 10);
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 
@@ -267,8 +267,8 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 	Long64_t initYield = nEntries / 100;
 
 	RooRealVar* yield1S = new RooRealVar("yield1S", "Number of Y(1S) signal candidates", initYield, 0, nEntries);
-	RooRealVar* yield2S = new RooRealVar("yield2S", "Number of Y(2S) signal candidates", initYield / 4, 0, nEntries);
-	RooRealVar* yield3S = new RooRealVar("yield3S", "Number of Y(3S) signal candidates", initYield / 12, 0, nEntries);
+	RooRealVar* yield2S = new RooRealVar("yield2S", "Number of Y(2S) signal candidates", initYield / 4, 0, nEntries / 4);
+	RooRealVar* yield3S = new RooRealVar("yield3S", "Number of Y(3S) signal candidates", initYield / 12, 0, nEntries / 10);
 
 	RooRealVar* yieldBkg = new RooRealVar("yieldBkg", "Background yield", 0, nEntries);
 

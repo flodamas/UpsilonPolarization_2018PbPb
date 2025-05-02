@@ -12,6 +12,8 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 	/// OniaTree variables
 	Int_t Centrality;
+	Float_t HFmean;
+
 	ULong64_t HLTriggers;
 	Float_t zVtx;
 
@@ -33,6 +35,8 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 	Float_t Reco_mu_dz[1000];
 
 	OniaTree->SetBranchAddress("Centrality", &Centrality);
+	OniaTree->SetBranchAddress("SumET_HF", &HFmean);
+
 	OniaTree->SetBranchAddress("HLTriggers", &HLTriggers);
 	OniaTree->SetBranchAddress("zVtx", &zVtx);
 
@@ -63,6 +67,8 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 	bool skipEvent = false;
 
+	Int_t hiBin;
+
 	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
 		if (iEvent % 10000 == 0) {
 			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
@@ -76,8 +82,10 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 		float weight = 1;
 
+		hiBin = GetHiBinFromhiHF(HFmean);
+
 		if (isMC) {
-			if (doNcollWeighting) weight *= FindNcoll(Centrality);
+			if (doNcollWeighting) weight *= FindNcoll(hiBin);
 
 			for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
 				weight *= Gen_weight; // one gen upsilon per event in principle
@@ -112,11 +120,11 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 			TLorentzVector* Reco_mupl_4mom = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 
-			if (!MuonUpsilonTriggerAcc(*Reco_mupl_4mom)) continue;
+			if (!MuonKinematicsWithinLimits(*Reco_mupl_4mom)) continue;
 
 			TLorentzVector* Reco_mumi_4mom = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
 
-			if (!MuonUpsilonTriggerAcc(*Reco_mumi_4mom)) continue;
+			if (!MuonKinematicsWithinLimits(*Reco_mumi_4mom)) continue;
 
 			// if we arrive, it means that the reco'ed dimuon is a good upsilon candidate
 			skipEvent = false;
@@ -125,7 +133,7 @@ TH1D* CentDistribution(const char* inputFileName = "OniaTree_Y1S_pThat2_HydjetDr
 
 		if (skipEvent) continue;
 
-		histo->Fill(Centrality / 2., weight);
+		histo->Fill(hiBin / 2., weight);
 	}
 
 	infile->Close();
