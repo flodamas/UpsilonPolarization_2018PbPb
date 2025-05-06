@@ -352,7 +352,7 @@ void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t 
 				latex.DrawLatex(x, y, Form("%.1f%%", binUnc / binVal * 100));
 
 			else
-				latex.DrawLatex(x, y, Form("%.2f", binVal));
+				latex.DrawLatex(x, y, Form("%.0f", binVal));
 		}
 	}
 }
