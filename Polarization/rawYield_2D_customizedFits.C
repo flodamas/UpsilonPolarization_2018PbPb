@@ -430,8 +430,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 
 		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-		SavePolarizationFitParameters(savedParams, "rootFit", fitModelName, defaultBkgShapeName);
-
+		SavePolarizationFitParameters(savedParams, "rootFit", fitModelName, muonAccName);
 		// TLegend legend2(.17, .7, .23, .87);
 		TLegend legend2(.18, .75, .25, .8);
 		legend2.SetTextSize(.045);
