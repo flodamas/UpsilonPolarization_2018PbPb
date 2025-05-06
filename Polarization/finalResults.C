@@ -211,6 +211,101 @@ std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> readppData(std::vector
 	return ppDataHists;
 }
 
+/// read the pp data from the BPH_11_023_SupplementalMaterial.txt file
+std::vector<std::vector<TGraphAsymmErrors*>> readICEMData() {
+
+	/// Define the variables
+	TString polarParamName, refFrameName, fileName;
+
+	// Int_t polarParamIdx, refFrameIdx, ;
+
+	/// Define the vector to hold the histograms
+	std::vector<std::vector<TGraphAsymmErrors*>> ICEMHists(4, std::vector<TGraphAsymmErrors*>(2, nullptr)); // [polarParamIdx][refFrameIdx]
+
+	/// pt binning that ICEM used
+	const int nPtBins = 7;
+	std::vector<double> pTBinning = {2, 4, 6, 8, 10, 12, 16, 20};
+
+	/// Read the txt data line by line 
+	std::string line;
+	for (int polarParamIdx = 0; polarParamIdx < 4; polarParamIdx++) {
+		if (polarParamIdx == 0) polarParamName = "theta";
+		else if (polarParamIdx == 1) polarParamName = "phi";
+		else if (polarParamIdx == 2) polarParamName = "thetaphi";
+		else if (polarParamIdx == 3) polarParamName = "tilde";
+
+		for (int refFrameIdx = 0; refFrameIdx < 2; refFrameIdx++) {
+			if (refFrameIdx == 0) refFrameName = "CS";
+			else if (refFrameIdx == 1) refFrameName = "HX";
+
+			/// create the histograms as a function of pT
+			ICEMHists[polarParamIdx][refFrameIdx] = new TGraphAsymmErrors(nPtBins);
+			Float_t lambdaArr[nPtBins] = {0};
+			Float_t upperUncArr[nPtBins] = {0};
+
+			/// Open the txt file
+			for (int fileIdx = 0; fileIdx < 3; fileIdx++) {
+				if (fileIdx == 0) fileName = "central";
+				else if (fileIdx == 1) fileName = "upper";
+				else if (fileIdx == 2) fileName = "lower";
+
+				TString filePath;
+
+				if (polarParamIdx != 3) {
+					filePath = Form("./ICEM/lambda_%s_%s/l_%s_%s_%s.txt", polarParamName.Data(), refFrameName.Data(), polarParamName.Data(), fileName.Data(), refFrameName.Data());
+
+				}
+				else {
+					filePath = Form("./ICEM/lambda_%s/l_%s_%s.txt", polarParamName.Data(), polarParamName.Data(), fileName.Data());
+				}
+
+				int ptBinIdx = 0; // just count nth pt bin for the first "SetPoint" argument
+
+				std::ifstream file(filePath);
+
+				if (!file) {
+					cout << Form("%s file not found....", filePath.Data()) << endl;
+					return {};
+				}
+
+				cout << Form("%s file opened...", filePath.Data()) << endl;
+
+				while (std::getline(file, line)) {
+
+					/// Define variables to hold data from the txt
+					Float_t pT; // kinematics
+					// Float_t Lambda; // polarization paramters
+					// Float_t upper, lower; // upper and lower uncertainties
+					Float_t lower; // upper and lower uncertainties
+
+					std::stringstream ss(line); // convert the line to stringstream
+			
+					/// Read the data from the stringstream
+					if (fileIdx == 0) {
+						ss >> pT >> lambdaArr[ptBinIdx];
+						cout << refFrameName.Data() << ", pT " << pT << ", " << polarParamName.Data() << ": " << lambdaArr[ptBinIdx] << endl;
+						ICEMHists[polarParamIdx][refFrameIdx]->SetPoint(ptBinIdx, pT, lambdaArr[ptBinIdx]);
+					}
+					else if (fileIdx == 1) {
+						ss >> pT >> upperUncArr[ptBinIdx];
+						cout << refFrameName.Data() << ", pT " << pT << ", " << polarParamName.Data() << " upper : " << upperUncArr[ptBinIdx] << endl;
+					}
+					else if (fileIdx == 2) {
+						ss >> pT >> lower;
+						cout << refFrameName.Data() << ", pT " << pT << ", " << polarParamName.Data() << " lower : " << lower << endl;
+						ICEMHists[polarParamIdx][refFrameIdx]->SetPointError(ptBinIdx, 0, 0, lower - lambdaArr[ptBinIdx], lambdaArr[ptBinIdx] - upperUncArr[ptBinIdx]);
+					}
+
+					ptBinIdx++;
+				}
+				cout << endl;
+			}
+		}
+	}
+
+	return ICEMHists;
+}
+
 std::vector<std::vector<std::vector<double>>> readSystematicUncertainties() {
     std::ifstream inFile("../SystematicUncertainties/systematic_errors_total.txt");
     std::vector<std::vector<std::vector<double>>> sysError(2);
@@ -267,6 +362,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 
 	const char* color[NRefFrame] = {CSColor, HXColor};
 	const char* ppDataColor[2] = {ppDataRap1Color, ppDataRap2Color};
+	const char* ICEMColor = "#9CCEA7"; // light blue
 
 	/// define the variables as a place holder of the polarization parameters
 	RooRealVar* lambdaTheta = new RooRealVar("lambdaTheta", "lambdaTheta", 0);
@@ -291,6 +387,11 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 
 	std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> ppDataHists = readppData(gppDataTotErr, QMPoster); // store the pp data with statistical uncertainties (CL 68.3%)
 
+	/// read theoretical prediction (ICEM)
+	std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> gICEMTotErr(4, std::vector<std::vector<TGraphAsymmErrors*>>(2, std::vector<TGraphAsymmErrors*>(2, nullptr))); // place holder for the theoretical model (ICEM) with total uncertainties
+
+	std::vector<std::vector<TGraphAsymmErrors*>> ICEMHists = readICEMData(); // store the theoretical model (ICEM) with uncertainties 
+
 	/// Loop over the polarization parameters to fill the histograms
 	for (Int_t iLambParam = 0; iLambParam < NLambParams; iLambParam++) {
 
@@ -309,7 +410,9 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				/// get polarization parameters
 				const char* fitModelName = GetFitModelName(signalShapeName, gPtBinning[ibin - 1], gPtBinning[ibin], refFrameName[iRefFrame], cosThetaMin, cosThetaMax, phiMin, phiMax);
 
-				RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName);
+				// RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName);
+				// RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, gMuonAccName); // you mean this instead of bkgShapeName, Florian? :)
+				RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, "."); // want to use the file outside of the new directory
 
 				double lambdaVal, lambdaUnc; 
 
@@ -385,6 +488,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetTitleOffset(0.75);
 			}
 
+			/// middle pad for lambdaPhi
 			else if (iLambParam == 1) {
 				pad[iLambParam][iRefFrame] = new TPad(Form("pad2%s", refFrameName[iRefFrame]), "pad2", xPadMin, 0.384, xPadMax, 0.672);
 				pad[iLambParam][iRefFrame]->SetTopMargin(0.0);
@@ -393,6 +497,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetTitleOffset(0.65);
 			}
 
+			/// bottom pad for lambdaThetaPhi
 			else {
 				pad[iLambParam][iRefFrame] = new TPad(Form("pad3%s", refFrameName[iRefFrame]), "pad3", xPadMin, 0.00, xPadMax, 0.384);
 				pad[iLambParam][iRefFrame]->SetTopMargin(0.0);
@@ -424,6 +529,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			lambdaHist[iLambParam][iRefFrame]->Draw("PL");
 			ppDataHists[iLambParam][iRefFrame][0]->Draw("SAME PZ");
 			ppDataHists[iLambParam][iRefFrame][1]->Draw("SAME PZ");
+			ICEMHists[iLambParam][iRefFrame]->Draw("SAME 3LP");
 
 			/// cosmetics
 			lambdaHist[iLambParam][iRefFrame]->SetMarkerStyle(20);
@@ -441,7 +547,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-0.6, 0.6); // this range is for QM poster
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetNdivisions(406); // for QM poster
 			}
-			else lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-1.2, 1.2);
+			else lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-1., 1.);
 			lambdaHist[iLambParam][iRefFrame]->GetYaxis()->CenterTitle();
 
 			// ppDataHists[iLambParam][iRefFrame][0]->SetMarkerStyle(33);
@@ -456,6 +562,14 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			ppDataHists[iLambParam][iRefFrame][1]->SetLineColor(TColor::GetColor(ppDataColor[1]));
 			// ppDataHists[iLambParam][iRefFrame][1]->SetLineStyle(kDashed);
 			ppDataHists[iLambParam][iRefFrame][1]->SetLineWidth(2);
+
+			ICEMHists[iLambParam][iRefFrame]->SetFillColorAlpha(TColor::GetColor(ICEMColor), 1);
+			ICEMHists[iLambParam][iRefFrame]->SetFillStyle(1001);
+			// ICEMHists[iLambParam][iRefFrame]->SetMarkerColor(TColor::GetColor(ICEMColor));
+			ICEMHists[iLambParam][iRefFrame]->SetMarkerStyle(1);
+			ICEMHists[iLambParam][iRefFrame]->SetMarkerSize(0);
+			ICEMHists[iLambParam][iRefFrame]->SetLineColor(TColor::GetColor(ICEMColor));
+			ICEMHists[iLambParam][iRefFrame]->SetLineWidth(3);
 
 			if (iRefFrame == 0) {
 				if (iLambParam == 0) {
@@ -643,7 +757,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	// cosmetics
 	lambdaHist[3][0]->GetXaxis()->CenterTitle();
 
-	lambdaHist[3][0]->GetYaxis()->SetRangeUser(-1.4, 1.4);
+	lambdaHist[3][0]->GetYaxis()->SetRangeUser(-1., 1.);
 	lambdaHist[3][0]->GetYaxis()->CenterTitle();
 
 	gSysLamb[3][0]->SetFillColorAlpha(TColor::GetColor(CSColor), 0.3);
@@ -655,6 +769,21 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	gSysLamb[3][1]->SetFillColorAlpha(TColor::GetColor(HXColor), 0.3);
 
 	gSysLamb[3][1]->Draw("E2 SAME");
+
+	// gStyle->SetHatchesSpacing(0.005);
+	// gStyle->SetHatchesLineWidth(2);
+	
+	ICEMHists[3][0]->SetFillColorAlpha(TColor::GetColor(ICEMColor), 0.5);
+	// ICEMHists[3][0]->SetFillColor(TColor::GetColor(ICEMColor));
+	ICEMHists[3][0]->SetFillStyle(1001);
+	// ICEMHists[3][0]->SetFillStyle(3013);
+	ICEMHists[3][0]->SetMarkerStyle(1);
+	ICEMHists[3][0]->SetMarkerSize(0);
+	ICEMHists[3][0]->SetLineColor(TColor::GetColor(ICEMColor));
+	ICEMHists[3][0]->SetLineWidth(3);
+
+	ICEMHists[3][0]->Draw("SAME 3P");
+
 
 	createSysErrorBox(gSysLamb[3][1], HXColor);
 
