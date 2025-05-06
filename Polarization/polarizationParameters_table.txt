@@ -6,19 +6,19 @@
         \hline
         \hline
 	\multirow{3}*{\begin{tabular}[l]{@{}c@{}} $\lambda_\theta$ \end{tabular}}
-        & $2 < \pt < 6$ & $0.330 \pm 0.186 \pm 0.183$ & $-0.046 \pm 0.152 \pm 0.165$ \\
-        & $6 < \pt < 12$ & $0.405 \pm 0.177 \pm 0.029$ & $0.052 \pm 0.177 \pm 0.140$ \\
-        & $12 < \pt < 20$ & $-0.072 \pm 0.230 \pm 0.043$ & $0.045 \pm 0.222 \pm 0.043$ \\
+        & $2 < \pt < 6$ & $-0.329 \pm 0.215 \pm 0.183$ & $-0.351 \pm 0.154 \pm 0.165$ \\
+        & $6 < \pt < 12$ & $0.274 \pm 0.208 \pm 0.029$ & $-0.101 \pm 0.176 \pm 0.140$ \\
+        & $12 < \pt < 20$ & $0.052 \pm 0.545 \pm 0.043$ & $0.094 \pm 0.220 \pm 0.043$ \\
         \hline
 	\multirow{3}*{\begin{tabular}[l]{@{}c@{}} $\lambda_\varphi$ \end{tabular}}
-        & $2 < \pt < 6$ & $0.047 \pm 0.026 \pm 0.023$ & $0.038 \pm 0.028 \pm 0.006$ \\
-        & $6 < \pt < 12$ & $-0.059 \pm 0.047 \pm 0.031$ & $-0.027 \pm 0.046 \pm 0.053$ \\
-        & $12 < \pt < 20$ & $0.053 \pm 0.064 \pm 0.031$ & $-0.026 \pm 0.051 \pm 0.012$ \\
+        & $2 < \pt < 6$ & $0.015 \pm 0.032 \pm 0.023$ & $-0.087 \pm 0.036 \pm 0.006$ \\
+        & $6 < \pt < 12$ & $0.035 \pm 0.058 \pm 0.031$ & $-0.019 \pm 0.052 \pm 0.053$ \\
+        & $12 < \pt < 20$ & $-0.052 \pm 0.123 \pm 0.031$ & $-0.022 \pm 0.048 \pm 0.012$ \\
         \hline
 	\multirow{3}*{\begin{tabular}[l]{@{}c@{}} $\lambda_{\theta\varphi}$ \end{tabular}}
-        & $2 < \pt < 6$ & $0.106 \pm 0.061 \pm 0.003$ & $0.045 \pm 0.062 \pm 0.003$ \\
-        & $6 < \pt < 12$ & $0.105 \pm 0.114 \pm 0.025$ & $-0.044 \pm 0.103 \pm 0.032$ \\
-        & $12 < \pt < 20$ & $-0.010 \pm 0.121 \pm 0.002$ & $-0.026 \pm 0.079 \pm 0.008$ \\
+        & $2 < \pt < 6$ & $0.152 \pm 0.082 \pm 0.003$ & $0.025 \pm 0.069 \pm 0.003$ \\
+        & $6 < \pt < 12$ & $0.041 \pm 0.136 \pm 0.025$ & $0.153 \pm 0.100 \pm 0.032$ \\
+        & $12 < \pt < 20$ & $-0.074 \pm 0.185 \pm 0.002$ & $0.008 \pm 0.080 \pm 0.008$ \\
         \hline
         \end{tabular}
     \caption{Polarization parameters measured for each \pt range for both helicity and Collins-Soper frames. The first uncertainty is statistical while the second is systematic.}
