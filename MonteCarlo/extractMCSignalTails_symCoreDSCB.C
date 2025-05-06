@@ -30,7 +30,7 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 	Float_t massMin = 8.8, massMax = 10.2;
 	// Float_t massMin = 8.65, massMax = 10.5;
-	Int_t nBins = 80;
+	Int_t nBins = 40;
 
 	using namespace RooFit;
 	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);

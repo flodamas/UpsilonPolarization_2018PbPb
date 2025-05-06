@@ -212,7 +212,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	// RooRealVar wCS("wCS", "total event weight for CS", 0, 100000); // just a helper variable
 	// RooRealVar wHX("wHX", "total event weight for HX", 0, 100000); // just a helper variable
 
-	Float_t lowMassCut = 8.5, highMassCut = 10.5;
+	Float_t lowMassCut = 8.8, highMassCut = 10.2;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
 
@@ -467,7 +467,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 				dimuTrigWeight_statUp = 1;
 				dimuTrigWeight_statDown = 1;
 			}
-			
+
 			// dimuon weight = product of the total scale factors
 			dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
@@ -648,7 +648,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 		}
 	}
 
-	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_2.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	// const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_HydjetWeight.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile file(outputFileName, "RECREATE");
