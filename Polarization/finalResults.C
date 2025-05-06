@@ -412,7 +412,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 
 				// RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName);
 				// RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, gMuonAccName); // you mean this instead of bkgShapeName, Florian? :)
-				RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, "."); // want to use the file outside of the new directory
+				RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, Form("%s_%s", fitModelName, "ExpTimesErr"), "."); // want to use the file outside of the new directory
 
 				double lambdaVal, lambdaUnc; 
 
@@ -617,7 +617,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					createLegendBox(12.83, -0.477, color[iRefFrame], kTRUE);					
 				}
 				else {
-					createLegendBox(2.07, -0.95, color[iRefFrame]);
+					createLegendBox(2.07, -0.8, color[iRefFrame]);
 				}
 
 				if (iRefFrame == 0){
@@ -660,8 +660,8 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					createLegendBox(12.83, 0.3, ppDataColor[1], kTRUE);						
 				}
 				else {
-					createLegendBox(2.07, 0.95, ppDataColor[0]);
-					createLegendBox(2.07, 0.6, ppDataColor[1]);
+					createLegendBox(2.07, 0.795, ppDataColor[0]);
+					createLegendBox(2.07, 0.5, ppDataColor[1]);
 				}
 
 				if (iRefFrame == 0) {
@@ -673,6 +673,14 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S} = 7 TeV, 0 < |y| < 0.6, CS", "lep");
 					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S} = 7 TeV, 0.6 < |y| < 1.2, CS", "lep");
 					legend->Draw("SAME");
+
+					TLegend *legend2 = new TLegend(0.21, 0.08, 0.58, 0.2);
+					legend2->SetBorderSize(0);
+					legend2->SetFillStyle(0);
+					legend2->SetTextAlign(12);
+					legend2->SetTextSize(0.07);
+					legend2->AddEntry(ICEMHists[iLambParam][iRefFrame], "ICEM, PbPb, #sqrt{S} = 5.02 TeV, 0 < |y| < 2.4, CS", "f");
+					legend2->Draw("SAME");
 				}
 				else {
 					/// legend
@@ -684,6 +692,14 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S} = 7 TeV, 0 < |y| < 0.6, HX", "lep");
 					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S} = 7 TeV, 0.6 < |y| < 1.2, HX", "lep");
 					legend->Draw("SAME");
+
+					TLegend *legend2 = new TLegend(0.05, 0.08, 0.4, 0.2);
+					legend2->SetBorderSize(0);
+					legend2->SetFillStyle(0);
+					legend2->SetTextAlign(12);
+					legend2->SetTextSize(0.07);
+					legend2->AddEntry(ICEMHists[iLambParam][iRefFrame], "ICEM, PbPb, #sqrt{S} = 5.02 TeV, 0 < |y| < 2.4, HX", "f");
+					legend2->Draw("SAME");
 				}
 			}
 
@@ -794,12 +810,13 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	text.SetTextSize(0.058);
 	text.DrawLatexNDC(.32, .85, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
 
-	TLegend* legend = new TLegend(0.6, 0.77, 0.9, 0.9);
+	TLegend* legend = new TLegend(0.6, 0.7, 0.9, 0.9);
 	legend->SetBorderSize(0);
 	legend->SetFillStyle(0);
 	legend->SetTextSize(0.05);
 	legend->AddEntry(lambdaHist[3][0], "Collins-Soper", "lp");
 	legend->AddEntry(lambdaHist[3][1], "Helicity", "lp");
+	legend->AddEntry(ICEMHists[3][0], "ICEM", "f");
 	legend->Draw("SAME");
 
 	invPolarParamsCanvas->SaveAs(Form("ParametersResults/invariantParameter_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
