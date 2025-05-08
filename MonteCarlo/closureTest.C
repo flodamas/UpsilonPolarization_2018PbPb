@@ -187,9 +187,9 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
                             Int_t ptMin = 0, Int_t ptMax = 30,
                             Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {},
                             Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {},
-                            Bool_t isPhiFolded = kFALSE) {
+                            Bool_t isPhiFolded = kFALSE, Bool_t applyEff = kTRUE) {
 	
-								writeExtraText = true; // if extra text
+	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 	// extraText = "       Simulation Preliminary";
 
@@ -316,11 +316,11 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 
 	gPad->Update();
 
-	gSystem->mkdir("closureTest", kTRUE);
+	gSystem->mkdir(Form("closureTest/%s", applyEff ? "HydjetAccEff": "PythiaAcc"), kTRUE);
 	if (isPhiFolded)
-		mc2DCanvas->SaveAs(Form("closureTest/2Dfit_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_Phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaThetaVal, lambdaPhiVal, lambdaThetaPhiVal), "RECREATE");
+		mc2DCanvas->SaveAs(Form("closureTest/%s/2Dfit_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_Phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaThetaVal, lambdaPhiVal, lambdaThetaPhiVal));
 	else
-		mc2DCanvas->SaveAs(Form("closureTest/2Dfit_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_Phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaThetaVal, lambdaPhiVal, lambdaThetaPhiVal), "RECREATE");
+		mc2DCanvas->SaveAs(Form("closureTest/%s/2Dfit_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_Phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaThetaVal, lambdaPhiVal, lambdaThetaPhiVal));
 
 	return fittedParams;
 }
@@ -331,7 +331,8 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
                      Int_t ptMin = 0, Int_t ptMax = 30,
                      Int_t nCosThetaBins = 20, const vector<Double_t>& cosThetaBinEdges = {},
                      Int_t nPhiBins = 18, const vector<Double_t>& phiBinEdges = {},
-                     Bool_t drawPlot = kFALSE, Bool_t isPhiFolded = kTRUE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE) {
+                     Bool_t drawPlot = kFALSE, Bool_t isPhiFolded = kTRUE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE,
+					 float lambdaTheta0 = 0, float lambdaPhi0 = 0, float lambdaThetaPhi0 = 0) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 	// extraText = "       Simulation Preliminary";
@@ -547,32 +548,32 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 		/// Put texts inside the plot
 		legend1->DrawLatexNDC(.50, .88, "Corrected MC");
-		// legend1->DrawLatexNDC(.48, .80, Form("Input: #lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		legend1->DrawLatexNDC(.48, .80, Form("Input: #lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta0, lambdaPhi0, lambdaThetaPhi0));
 
 		gPad->RedrawAxis();
 
 		gPad->Update();
 
-		gSystem->mkdir("closureTest", kTRUE);
-		correctedCanvas->SaveAs(Form("closureTest/2Dcorrected_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
-		correctedCanvas->SaveAs(Form("closureTest/2Dcorrected_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		gSystem->mkdir(Form("closureTest/%s", applyEff ? "HydjetAccEff": "PythiaAcc"), kTRUE);
+		correctedCanvas->SaveAs(Form("closureTest/%s/2Dcorrected_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		correctedCanvas->SaveAs(Form("closureTest/%s/2Dcorrected_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
 	}
 
 	gPad->RedrawAxis();
 
 	/// save plots
-	gSystem->mkdir("closureTest", kTRUE);
+	gSystem->mkdir(Form("closureTest/%s", applyEff ? "HydjetAccEff": "PythiaAcc"), kTRUE);
 	if (isPhiFolded) {
 		/// png
-		accCanvas->SaveAs(Form("closureTest/2Dacc_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
-		effCanvas->SaveAs(Form("closureTest/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		accCanvas->SaveAs(Form("closureTest/%s/2Dacc_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		effCanvas->SaveAs(Form("closureTest/%s/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
 	} else {
 		/// pdf
-		accCanvas->SaveAs(Form("closureTest/2Dacc_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
-		effCanvas->SaveAs(Form("closureTest/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		accCanvas->SaveAs(Form("closureTest/%s/2Dacc_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		effCanvas->SaveAs(Form("closureTest/%s/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
 		///png
-		accCanvas->SaveAs(Form("closureTest/2Dacc_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
-		effCanvas->SaveAs(Form("closureTest/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		accCanvas->SaveAs(Form("closureTest/%s/2Dacc_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
+		effCanvas->SaveAs(Form("closureTest/%s/2Deff_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
 	}
 
 	return;
@@ -732,6 +733,7 @@ void getGENMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
                   Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {},
                   Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {},
                   Bool_t applyAcc = kTRUE, Bool_t isPhiFolded = kFALSE) {
+
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 	// extraText = "       Simulation Preliminary";
@@ -739,7 +741,7 @@ void getGENMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 	/// read the input MC file (choose applying acceptance or not)
 	const char* inputFileName;
 	if (applyAcc)
-		inputFileName = Form("Y1SGenNoFilterMCDataset%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi); // Gen + Acc
+		inputFileName = Form("Y1SGenNoFilterMCDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi); // Gen + Acc
 	else
 		inputFileName = Form("Y1SGenNoFilterMCDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi); // Pure Gen
 
@@ -851,7 +853,7 @@ void getGENMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 
 	/// draw polarized MC histogram
 	TCanvas* mc2DCanvas = draw2DMap(angDistHist2D, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-	// display2DMapContents(angDistHist2D, nCosThetaBins, nPhiBins, kFALSE);
+	display2DMapContents(angDistHist2D, nCosThetaBins, nPhiBins, kFALSE);
 
 	/// draw error histogram
 	// draw2DMap(errorHist, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
@@ -875,14 +877,14 @@ void getGENMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 	gPad->Update();
 
 	/// save the plot
-	gSystem->mkdir("ClosureTest", kTRUE);
+	gSystem->mkdir("closureTest/PythiaAcc", kTRUE);
 	if (isPhiFolded)
-		mc2DCanvas->SaveAs(Form("ClosureTest/GenMC_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_Theta%.2f_Phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
+		mc2DCanvas->SaveAs(Form("ClosureTest/PythiaAcc/GenMC_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_Theta%.2f_Phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
 	else {
 		/// pdf
-		mc2DCanvas->SaveAs(Form("ClosureTest/GenMC_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_Theta%.2f_Phi%.2f_ThetaPhi%.2f.pdf", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
+		mc2DCanvas->SaveAs(Form("ClosureTest/PythiaAcc/GenMC_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_Theta%.2f_Phi%.2f_ThetaPhi%.2f.pdf", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
 		/// png
-		mc2DCanvas->SaveAs(Form("ClosureTest/GenMC_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_Theta%.2f_Phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
+		mc2DCanvas->SaveAs(Form("ClosureTest/PythiaAcc/GenMC_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_Theta%.2f_Phi%.2f_ThetaPhi%.2f.png", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi), "RECREATE");
 	}
 
 	return;
@@ -894,6 +896,11 @@ void closureTest(TString refFrameName = "CS",
                  const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7,
                  const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180,
                  Bool_t isPhiFolded = kFALSE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE, int totNItrs = 0) {
+	
+	writeExtraText = true; // if extra text
+	extraText = "       Internal";
+	// extraText = "       Simulation Preliminary";
+	
 	/// set bin edges and width
 	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 
@@ -959,13 +966,13 @@ void closureTest(TString refFrameName = "CS",
 	// while (!((lambdaTheta0 == (round(lambdaTheta->getVal() * 100.) / 100.)) && (lambdaPhi0 == (round(lambdaPhi->getVal() * 100.) / 100.)) && (lambdaThetaPhi0 == round(lambdaThetaPhi->getVal() * 100. / 100.)))) {
 	for (int iItr = 0; iItr <= totNItrs; iItr++) {
 		/// correct the MC
-		correctMC2DHist(angDistHist2D, correctedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff);
+		correctMC2DHist(angDistHist2D, correctedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0);
 
 		/// due to drawing issue, separate correctedHist and fittedHist
-		correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff);
+		correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0);
 
 		/// extract parameters from the corrected hist
-		polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
+		polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, applyEff);
 		cout << "extracted polarization parameters: " << endl;
 		polarParams.Print("v");
 
@@ -1084,6 +1091,32 @@ void closureTest(TString refFrameName = "CS",
 	text->SetAllWith("", "align", 32);
 	text->Draw("same");
 
+	gPad->Update();   // important to get pad and axis ranges
+
+	// Get y-axis range (used for placing the box slightly below the axis)
+	double yMin = gPad->GetUymin();
+	double yMax = gPad->GetUymax();
+	double yRange = yMax - yMin;
+	
+	// Define box size and position around x = -1
+	double box_x1 = -1.2;
+	double box_x2 = -0.8;
+	double box_y1 = yMin - 0.06 * yRange;  // slightly below visible axis
+	double box_y2 = yMin + 0.02 * yRange;  // near the bottom of plot
+	
+	// Draw box to cover the default label
+	TBox* cover = new TBox(box_x1, box_y1, box_x2, box_y2);
+	cover->SetFillColor(kWhite);
+	cover->SetLineColor(kWhite);
+	cover->SetFillStyle(1001);   // solid fill
+	cover->Draw("same");
+
+	// Add custom label at x = -1
+	TLatex* t = new TLatex(-1, -1.37, "Initial");
+	t->SetTextAlign(21);  // center align
+	t->SetTextSize(0.047);
+	t->Draw("same");
+
 	// TPaveText* refFrameText = RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, 0.61, 0.34, 0.97, 0.56);
 	// TPaveText* kinematicsText = KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin,  ptMax, 0.57, 0.95, 0.95, 0.65);
 
@@ -1107,7 +1140,7 @@ void closureTest(TString refFrameName = "CS",
 
 	gPad->RedrawAxis();
 
-	iterCanvas->SaveAs(Form("ClosureTest/Iterations_totItr%d_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_LambdaTheta%.2f_Phi%.2f_ThetaPhi%.2f.png", totNItrs, refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta0, lambdaPhi0, lambdaThetaPhi0), "RECREATE");
+	iterCanvas->SaveAs(Form("ClosureTest/%s/Iterations_totItr%d_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_LambdaTheta%.2f_Phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", totNItrs, refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta0, lambdaPhi0, lambdaThetaPhi0), "RECREATE");
 
 	return;
 }
