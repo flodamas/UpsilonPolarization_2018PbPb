@@ -339,7 +339,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 
 			if (Reco_QQ_VtxProb[iReco] < 0.01) continue; // good common vertex proba
 
-			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
+			// if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iReco];
@@ -621,7 +621,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 		}
 	}
 
-	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_noMassCut.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	// const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_HydjetWeight.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile file(outputFileName, "RECREATE");
