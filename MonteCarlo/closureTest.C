@@ -954,7 +954,7 @@ void closureTest(TString refFrameName = "CS",
 	TH2D* fittedHist = new TH2D("fittedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
 	/// loop over the number of iterations
-	// int totNItrs = 0; /// number of iterations
+	int nItrs = 0; /// number of iterations
 
 	// while (!((lambdaTheta0 == (round(lambdaTheta->getVal() * 100.) / 100.)) && (lambdaPhi0 == (round(lambdaPhi->getVal() * 100.) / 100.)) && (lambdaThetaPhi0 == round(lambdaThetaPhi->getVal() * 100. / 100.)))) {
 	for (int iItr = 0; iItr <= totNItrs; iItr++) {
@@ -986,7 +986,8 @@ void closureTest(TString refFrameName = "CS",
 		// cout << lambdaTildeArr[0] << ", " << lambdaTildeArr[1] << endl;
 		// cout << "numItr arr size: " << numItrArr.size() << endl;
 		// cout << numItrArr[0] << ", " << numItrArr[1] << endl;
-
+	
+		
 		/// if the difference between the new paramter and the previous one is less than 0.01, stop the iterative procedure
 		if ((fabs(lambdaThetaArr[iItr] - lambdaThetaArr[iItr + 1]) < 0.01) && (fabs(lambdaPhiArr[iItr] - lambdaPhiArr[iItr + 1]) < 0.01) && (fabs(lambdaThetaPhiArr[iItr] - lambdaThetaPhiArr[iItr + 1]) < 0.01)) {
 			// cout << "converged after " << iItr << " iterations" << endl;
@@ -997,7 +998,8 @@ void closureTest(TString refFrameName = "CS",
 			break;
 		}
 
-		// iItr++;
+		nItrs++;
+
 	}
 
 	/// draw plots for polarization parameters vs # of Iterations
@@ -1019,7 +1021,7 @@ void closureTest(TString refFrameName = "CS",
 
 	gPad->Update(); // ensures the histogram behind the graph is created
 
-	lambdaThetaGraph->GetXaxis()->SetNdivisions(totNItrs + 3);
+	lambdaThetaGraph->GetXaxis()->SetNdivisions(nItrs + 2);
 	lambdaThetaGraph->Draw("APL");
 
 	TGraph* lambdaPhiGraph = new TGraph(lambdaPhiArr.size(), numItrArr.data(), lambdaPhiArr.data());
@@ -1038,10 +1040,19 @@ void closureTest(TString refFrameName = "CS",
 	lambdaThetaPhiGraph->SetMarkerSize(1.5);
 	lambdaThetaPhiGraph->Draw("PL same");
 
-	drawLine(-1.57, 0, totNItrs * 1.12, 0);
-	drawLine(-1.57, lambdaTheta0, totNItrs * 1.12, lambdaTheta0);
-	drawLine(-1.57, lambdaPhi0, totNItrs * 1.12, lambdaPhi0);
-	drawLine(-1.57, lambdaThetaPhi0, totNItrs * 1.12, lambdaThetaPhi0);
+	if (nItrs == 0) {
+		drawLine(-1.1, 0, 0, 0);
+		drawLine(-1.1, lambdaTheta0, 0, lambdaTheta0);
+		drawLine(-1.1, lambdaPhi0, 0, lambdaPhi0);
+		drawLine(-1.1, lambdaThetaPhi0, 0, lambdaThetaPhi0);
+	}
+
+	else {
+		drawLine(-1.57, 0, nItrs * 1.12, 0);
+		drawLine(-1.57, lambdaTheta0, nItrs * 1.12, lambdaTheta0);
+		drawLine(-1.57, lambdaPhi0, nItrs * 1.12, lambdaPhi0);
+		drawLine(-1.57, lambdaThetaPhi0, nItrs * 1.12, lambdaThetaPhi0);
+	}
 
 	TLegend* legend = new TLegend(0.16, 0.78, 0.46, 0.91);
 	legend->SetBorderSize(0);
