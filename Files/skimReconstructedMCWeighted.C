@@ -209,9 +209,6 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	RooRealVar eventWeightCSVar("eventWeightCS", "event-by-event weight (Ncoll x MC gen weight x reco pT reweighting x muon scale factors x polarization in CS)", 0, 100000);
 	RooRealVar eventWeightHXVar("eventWeightHX", "event-by-event weight (Ncoll x MC gen weight x reco pT reweighting x muon scale factors x polarization in HX)", 0, 100000);
 
-	// RooRealVar wCS("wCS", "total event weight for CS", 0, 100000); // just a helper variable
-	// RooRealVar wHX("wHX", "total event weight for HX", 0, 100000); // just a helper variable
-
 	Float_t lowMassCut = 8.8, highMassCut = 10.2;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
@@ -279,6 +276,9 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 
 	Float_t nColl, weightCS = 0, weightHX = 0, HydjetGenWeightCS = 0, HydjetGenWeightHX = 0, polarWeightCS = 0, polarWeightHX = 0, dimuonPtWeight = 0, errorWeightDownCS = 0, errorWeightUpCS = 0, errorWeightDownHX = 0, errorWeightUpHX = 0;
+	
+	Bool_t isRecoMatched, passHLTFilterMuons;
+
 	Int_t hiBin;
 
 	// for muon scale factors
@@ -304,10 +304,6 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 
 		// if (iEvent > 40) break; // for testing
 
-		// event selection
-		// cout << "Event " << iEvent << endl;
-		// cout << "Centrality: " << Centrality << endl;
-
 		if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality > 90% in 2018 data
 
 		if (!((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // must fire the upsilon HLT path
@@ -316,71 +312,48 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 
 		nColl = FindNcoll(hiBin);
 
-		// loop over reconstructed dimuon candidates
-		for (int iQQ = 0; iQQ < Reco_QQ_size; iQQ++) {
-			// cout << "QQ " << iQQ << endl;
-			// cout << "Gen matching: " << Reco_QQ_whichGen[iQQ] << endl;
-			if (Reco_QQ_whichGen[iQQ] < 0) continue; // gen matching
-
-			// cout << "Dimuon matching: " << Reco_QQ_trig[iQQ] << endl;
-			// std::bitset<64> trigBits(Reco_QQ_trig[iQQ]);
-			// std::cout << "Trigger bits = " << trigBits << std::endl;
-
-			// cout << "HLT bit: " << (ULong64_t)(1 << (gUpsilonHLTBit - 1)) << endl;
-			if (!((Reco_QQ_trig[iQQ] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
-
-			// cout << "Sign: " << Reco_QQ_sign[iQQ] << endl;
-			if (Reco_QQ_sign[iQQ] != 0) continue; // only opposite-sign muon pairs
-
-			// cout << "Vtx prob: " << Reco_QQ_VtxProb[iQQ] << endl;
-			if (Reco_QQ_VtxProb[iQQ] < 0.01) continue; // good common vertex proba
-
-			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iQQ);
-
-			// cout << "Mass: " << Reco_QQ_4mom->M() << endl;
-			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
-
-			// if (fabs(Reco_QQ_4mom->Rapidity()) > 2.4) continue; // applied cut in the GEN level instead
-
-			/// single-muon selection criteria
-			int iMuPlus = Reco_QQ_mupl_idx[iQQ];
-			int iMuMinus = Reco_QQ_mumi_idx[iQQ];
-
-			// global AND tracker muons
-			// cout << "Selection type: " << Reco_mu_SelectionType[iMuPlus] << endl;
-			// cout << "Selection type: " << Reco_mu_SelectionType[iMuMinus] << endl;
-			// cout << "Selection type: " << (Reco_mu_SelectionType[iMuPlus] & 2) << endl;
-			// cout << "Selection type: " << (Reco_mu_SelectionType[iMuPlus] & 8) << endl;
-			// cout << "Selection type: " << (Reco_mu_SelectionType[iMuMinus] & 2) << endl;
-			// cout << "Selection type: " << (Reco_mu_SelectionType[iMuMinus] & 8) << endl;
-			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
-			if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
-
-			// passing hybrid-soft Id
-			// cout << "nTrkWMea: " << Reco_mu_nTrkWMea[iMuPlus] << endl;
-			// cout << "nPixWMea: " << Reco_mu_nPixWMea[iMuPlus] << endl;
-			// cout << "dxy: " << Reco_mu_dxy[iMuPlus] << endl;
-			// cout << "dz: " << Reco_mu_dz[iMuPlus] << endl;
-			// cout << "nTrkWMea: " << Reco_mu_nTrkWMea[iMuMinus] << endl;
-			// cout << "nPixWMea: " << Reco_mu_nPixWMea[iMuMinus] << endl;
-			// cout << "dxy: " << Reco_mu_dxy[iMuMinus] << endl;
-			// cout << "dz: " << Reco_mu_dz[iMuMinus] << endl;
-
-			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
-			if (!((Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.))) continue;
-
+		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
+			
 			// cut on the muon kinematics at gen level
-
-			Int_t iGen = Reco_QQ_whichGen[iQQ];
-
 			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
+
 			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
 			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
 
-			// single-muon acceptance
+			if (gen_QQ_LV->Pt() > gPtMax) continue;
 
+			// go to reco level
+			Int_t iReco = Gen_QQ_whichRec[iGen];	
+
+			if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
+
+			isRecoMatched = iReco > -1;
+
+			if (!isRecoMatched) continue; // dimuon matching
+
+			TLorentzVector* Reco_QQ_4mom = (TLorentzVector*)CloneArr_QQ->At(iReco);
+			
+			if (!((Reco_QQ_trig[iReco] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)))) continue; // dimuon matching
+
+			if (Reco_QQ_VtxProb[iReco] < 0.01) continue; // good common vertex proba
+
+			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
+
+			/// single-muon selection criteria
+			int iMuPlus = Reco_QQ_mupl_idx[iReco];
+			int iMuMinus = Reco_QQ_mumi_idx[iReco];
+
+			// global AND tracker muons
+			if (!((Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8))) continue;
+			if (!((Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8))) continue;
+
+			// passing hybrid-soft Id
+			if (!((Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.))) continue;
+			if (!((Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.))) continue;
+
+			// single-muon acceptance
 			if (!MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName)) continue;
 
 			if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
@@ -416,12 +389,13 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 			bool mumi_isL2 = (mumi_L2Filter && !mumi_L3Filter);
 			bool mumi_isL3 = (mumi_L2Filter && mumi_L3Filter);
 
-			// passHLTFilterMuons = (mupl_L2Filter && mumi_L3Filter) || (mupl_L3Filter && mumi_L2Filter) || (mupl_L3Filter && mumi_L3Filter);
+			passHLTFilterMuons = (mupl_L2Filter && mumi_L3Filter) || (mupl_L3Filter && mumi_L2Filter) || (mupl_L3Filter && mumi_L3Filter);
+
+			if (!passHLTFilterMuons) continue; 
 
 			/// muon scale factors
 
 			// muon trigger SF is tricky, need to know which muon passed which trigger filter
-
 			if (mupl_isL2 && mumi_isL3) {
 				dimuTrigWeight_nominal = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexNominal) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexNominal);
 
@@ -518,17 +492,13 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 			// uncertainty on the muon scale factors = quadratic sum of the uncertainties from the variation of all the sources
 			double dimuWeightDownError_squared = pow(dimuWeight_trk_statDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_muId_statDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_trig_statDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_trk_systDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_muId_systDown - dimuWeight_nominal, 2.0) + pow(dimuWeight_trig_systDown - dimuWeight_nominal, 2.0);
 
-			// cout << "errorWeightDown: " << errorWeightDown << endl;
-
-			//cout << "Weight from muon scale factors = " << dimuWeight_nominal << " - " << sqrt(dimuWeightDownError_squared) << " (" << 100. * sqrt(dimuWeightDownError_squared) / dimuWeight_nominal << "% relative)" << endl;
-
 			double dimuWeightUpError_squared = pow(dimuWeight_trk_statUp - dimuWeight_nominal, 2.0) + pow(dimuWeight_muId_statUp - dimuWeight_nominal, 2.0) + pow(dimuWeight_trig_statUp - dimuWeight_nominal, 2.0) + pow(dimuWeight_trk_systUp - dimuWeight_nominal, 2.0) + pow(dimuWeight_muId_systUp - dimuWeight_nominal, 2.0) + pow(dimuWeight_trig_systUp - dimuWeight_nominal, 2.0);
 
 			// errorWeightUp = weight * sqrt(dimuWeightUpError_squared);
 
 			// cout << "errorWeightUp: " << errorWeightUp << endl;
+			
 			// fill the dataset
-
 			centVar = Centrality;
 
 			// int idx = 0;
@@ -565,6 +535,9 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 			/// now the overall event weight
 			weightCS = nColl * Gen_weight * dimuonPtWeight * dimuWeight_nominal * polarWeightCS;
 			weightHX = nColl * Gen_weight * dimuonPtWeight * dimuWeight_nominal * polarWeightHX;
+			
+			// weightCS = 1;
+			// weightHX = 1;
 
 			errorWeightDownCS = weightCS * sqrt(dimuWeightDownError_squared);
 			errorWeightUpCS = weightCS * sqrt(dimuWeightUpError_squared);
