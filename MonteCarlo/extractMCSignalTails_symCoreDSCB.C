@@ -73,8 +73,8 @@ void extractMCSignalTails_symCoreDSCB(Int_t centMin = 0, Int_t centMax = 90, Int
 
 	wspace.pdf(signalShapeName)->plotOn(frame, LineColor(kBlue));
 
-	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax));
-	frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
+	frame->addObject(KinematicsText(centMin, centMax, ptMin, ptMax, 0.64, 0.90, 0.94, 0.62));
+	frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, 0.16, 0.68, 0.5, 0.9, 12));
 	frame->addObject(SymCoreDoubleCBParamsText(mean, sigma, alphaInf, orderInf, alphaSup, orderSup));
 	frame->GetYaxis()->SetMaxDigits(3);
 
