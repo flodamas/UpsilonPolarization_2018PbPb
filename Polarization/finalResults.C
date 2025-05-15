@@ -5,7 +5,10 @@
 #include "../Tools/FitShortcuts.h"
 #include "../Tools/Style/Legends.h"
 
+<<<<<<< HEAD
 /// create a box to show the systematic error for TGraphErrors
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 void createSysErrorBox(TGraphErrors* gSys, const char* lineColor = "#A0B1BA") {
 	int nPoints = gSys->GetN();
 
@@ -13,18 +16,30 @@ void createSysErrorBox(TGraphErrors* gSys, const char* lineColor = "#A0B1BA") {
 		double x, y;
 		gSys->GetPoint(i, x, y);
 
+<<<<<<< HEAD
 		double ex = 0.5; // x half-width, as set in SetPointError
 		double eyHigh = gSys->GetErrorYhigh(i); // upper y error
 		double eyLow  = gSys->GetErrorYlow(i); // lower y error
 
 		TBox *box = new TBox(x - ex, y - eyLow, x + ex, y + eyHigh);
 		box->SetLineColorAlpha(TColor::GetColor(lineColor), 0.9); // Outline color
+=======
+		double ex = 0.5;                         // x half-width, as set in SetPointError
+		double eyHigh = gSys->GetErrorYhigh(i);    // upper y error
+		double eyLow  = gSys->GetErrorYlow(i);     // lower y error
+
+		TBox *box = new TBox(x - ex, y - eyLow, x + ex, y + eyHigh);
+		box->SetLineColorAlpha(TColor::GetColor(lineColor), 0.9);                // Outline color
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 		box->SetLineWidth(1);
 		box->Draw("same");
 	}
 }
 
+<<<<<<< HEAD
 /// create a box to show the systematic error for TGraphAsymmErrors
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 void createSysErrorBox(TGraphAsymmErrors* gSys, const char* lineColor = "#A0B1BA") {
 	int nPoints = gSys->GetN();
 
@@ -32,29 +47,54 @@ void createSysErrorBox(TGraphAsymmErrors* gSys, const char* lineColor = "#A0B1BA
 		double x, y;
 		gSys->GetPoint(i, x, y);
 
+<<<<<<< HEAD
 		double ex = 0.5; // x half-width, as set in SetPointError
 		double eyHigh = gSys->GetErrorYhigh(i); // upper y error
 		double eyLow  = gSys->GetErrorYlow(i); // lower y error
 
 		TBox *box = new TBox(x - ex, y - eyLow, x + ex, y + eyHigh);
 		box->SetLineColorAlpha(TColor::GetColor(lineColor), 0.9); // Outline color
+=======
+		double ex = 0.5;                         // x half-width, as set in SetPointError
+		double eyHigh = gSys->GetErrorYhigh(i);    // upper y error
+		double eyLow  = gSys->GetErrorYlow(i);     // lower y error
+
+		TBox *box = new TBox(x - ex, y - eyLow, x + ex, y + eyHigh);
+		box->SetLineColorAlpha(TColor::GetColor(lineColor), 0.9);                // Outline color
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 		box->SetLineWidth(1);
 		box->Draw("same");
 	}
 }
 
+<<<<<<< HEAD
 /// create a systematic box around the legend symbol
 void createLegendBox(double x, double y, const char* color = "#A0B1BA", Bool_t QMPoster = kFALSE, float dx = 0.5, float dy = 0.08) {
 	// float dx; // x half-width, as set in SetPointError
 	// float dy; // y half-width, as set in SetPointError
+=======
+void createLegendBox(double x, double y, const char* color = "#A0B1BA", Bool_t QMPoster = kFALSE) {
+	float dx; // x half-width, as set in SetPointError
+	float dy; // y half-width, as set in SetPointError
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 	
 	if (QMPoster) {
 		dx = 0.2;
 		dy = 0.05;
 	}
+<<<<<<< HEAD
 
 	TBox *fillbox = new TBox(x - dx, y - dy, x + dx, y + dy);
 	fillbox->SetFillColorAlpha(TColor::GetColor(color), 0.3); // Outline color
+=======
+	else {
+		dx = 0.5;
+		dy = 0.08;
+	}
+
+	TBox *fillbox = new TBox(x - dx, y - dy, x + dx, y + dy);
+	fillbox->SetFillColorAlpha(TColor::GetColor(color), 0.3);                // Outline color
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 	fillbox->SetFillStyle(1001);
 	fillbox->Draw("same");
 
@@ -210,6 +250,7 @@ std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> readppData(std::vector
 	return ppDataHists;
 }
 
+<<<<<<< HEAD
 /// read ICEM predictions in PbPb from ./ICEM/lambda_xx_CS(HX)/lambda_xx_CS(HX).txt file
 std::vector<std::vector<TGraphAsymmErrors*>> readICEMData() {
 
@@ -310,6 +351,8 @@ std::vector<std::vector<TGraphAsymmErrors*>> readICEMData() {
 }
 
 /// read the systematic uncertainties from the systematic_errors_total.txt file
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 std::vector<std::vector<std::vector<double>>> readSystematicUncertainties() {
     std::ifstream inFile("../SystematicUncertainties/systematic_errors_total.txt");
     std::vector<std::vector<std::vector<double>>> sysError(2);
@@ -366,7 +409,10 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 
 	const char* color[NRefFrame] = {CSColor, HXColor};
 	const char* ppDataColor[2] = {ppDataRap1Color, ppDataRap2Color};
+<<<<<<< HEAD
 	const char* ICEMColor = "#9CCEA7"; // light blue
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 
 	/// define the variables as a place holder of the polarization parameters
 	RooRealVar* lambdaTheta = new RooRealVar("lambdaTheta", "lambdaTheta", 0);
@@ -391,9 +437,12 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 
 	std::vector<std::vector<std::vector<TGraphAsymmErrors*>>> ppDataHists = readppData(gppDataTotErr, QMPoster); // store the pp data with statistical uncertainties (CL 68.3%)
 
+<<<<<<< HEAD
 	/// read theoretical prediction (ICEM)
 	std::vector<std::vector<TGraphAsymmErrors*>> ICEMHists = readICEMData(); // store the theoretical model (ICEM) with uncertainties 
 
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 	/// Loop over the polarization parameters to fill the histograms
 	for (Int_t iLambParam = 0; iLambParam < NLambParams; iLambParam++) {
 
@@ -412,9 +461,13 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				/// get polarization parameters
 				const char* fitModelName = GetFitModelName(signalShapeName, gPtBinning[ibin - 1], gPtBinning[ibin], refFrameName[iRefFrame], cosThetaMin, cosThetaMax, phiMin, phiMax);
 
+<<<<<<< HEAD
 				// RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName);
 				// RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, gMuonAccName); // you mean this instead of bkgShapeName, Florian? :)
 				RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, Form("%s_%s", fitModelName, "ExpTimesErr"), "."); // want to use the file outside of the new directory
+=======
+				RooArgSet polarParams = GetPolarParams(lambdaTheta, lambdaPhi, lambdaThetaPhi, lambdaTilde, methodName, fitModelName, bkgShapeName);
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 
 				double lambdaVal, lambdaUnc; 
 
@@ -456,8 +509,12 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	TCanvas* polarParamsCanvas = new TCanvas("polarParamsCanvas", "polarParamsCanvas", 900, 800);
 
 	TPad* pad[NLambParams - 1][NRefFrame]; 
+<<<<<<< HEAD
  
 	/// draw dashed lines at y = 0
+=======
+
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 	TLine* zeroLine;
 	
 	if (QMPoster) zeroLine = new TLine(gPtBinning[3], 0, gPtBinning[NPtBins], 0); // for QM poster
@@ -480,7 +537,11 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			/// Draw lambdaTheta pad
 			polarParamsCanvas->cd();
 
+<<<<<<< HEAD
 			/// top pad margin, label, and title for lambdaTheta
+=======
+			/// top pad for lambdaTheta
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			if (iLambParam == 0) {
 				pad[iLambParam][iRefFrame] = new TPad(Form("pad1%s", refFrameName[iRefFrame]), "pad1", xPadMin, 0.672, xPadMax, 1.0);
 				pad[iLambParam][iRefFrame]->SetTopMargin(0.12);
@@ -491,7 +552,10 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetTitleOffset(0.75);
 			}
 
+<<<<<<< HEAD
 			/// middle pad margin, label, and title for lambdaPhi
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			else if (iLambParam == 1) {
 				pad[iLambParam][iRefFrame] = new TPad(Form("pad2%s", refFrameName[iRefFrame]), "pad2", xPadMin, 0.384, xPadMax, 0.672);
 				pad[iLambParam][iRefFrame]->SetTopMargin(0.0);
@@ -500,7 +564,10 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetTitleOffset(0.65);
 			}
 
+<<<<<<< HEAD
 			/// bottom pad margin, label, and title for lambdaThetaPhi
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			else {
 				pad[iLambParam][iRefFrame] = new TPad(Form("pad3%s", refFrameName[iRefFrame]), "pad3", xPadMin, 0.00, xPadMax, 0.384);
 				pad[iLambParam][iRefFrame]->SetTopMargin(0.0);
@@ -513,14 +580,20 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetTitleOffset(0.85);
 			}
 
+<<<<<<< HEAD
 			/// pad for CS frame
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			if (iRefFrame == 0) {
 				pad[iLambParam][iRefFrame]->SetLeftMargin(0.17); 
 				pad[iLambParam][iRefFrame]->SetRightMargin(0.0);
 				ppDataHists[iLambParam][iRefFrame][0]->SetMarkerStyle(33);
 				ppDataHists[iLambParam][iRefFrame][1]->SetMarkerStyle(33);
 			}
+<<<<<<< HEAD
 			/// pad for HX frame
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			else {
 				pad[iLambParam][iRefFrame]->SetLeftMargin(0.0); 
 				pad[iLambParam][iRefFrame]->SetRightMargin(0.17);
@@ -531,6 +604,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			pad[iLambParam][iRefFrame]->Draw();
 			pad[iLambParam][iRefFrame]->cd();
 
+<<<<<<< HEAD
 			/// draw histograms
 			lambdaHist[iLambParam][iRefFrame]->Draw("PL");
 			ppDataHists[iLambParam][iRefFrame][0]->Draw("SAME PZ");
@@ -538,6 +612,13 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			ICEMHists[iLambParam][iRefFrame]->Draw("SAME 3LP");
 
 			/// cosmetics (marker, line, and axis)
+=======
+			lambdaHist[iLambParam][iRefFrame]->Draw("PL");
+			ppDataHists[iLambParam][iRefFrame][0]->Draw("SAME PZ");
+			ppDataHists[iLambParam][iRefFrame][1]->Draw("SAME PZ");
+
+			/// cosmetics
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			lambdaHist[iLambParam][iRefFrame]->SetMarkerStyle(20);
 			lambdaHist[iLambParam][iRefFrame]->SetMarkerSize(1.1);
 			lambdaHist[iLambParam][iRefFrame]->SetMarkerColor(TColor::GetColor(color[iRefFrame]));
@@ -553,7 +634,11 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-0.6, 0.6); // this range is for QM poster
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetNdivisions(406); // for QM poster
 			}
+<<<<<<< HEAD
 			else lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-1., 1.);
+=======
+			else lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetRangeUser(-1.2, 1.2);
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			lambdaHist[iLambParam][iRefFrame]->GetYaxis()->CenterTitle();
 
 			// ppDataHists[iLambParam][iRefFrame][0]->SetMarkerStyle(33);
@@ -569,6 +654,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			// ppDataHists[iLambParam][iRefFrame][1]->SetLineStyle(kDashed);
 			ppDataHists[iLambParam][iRefFrame][1]->SetLineWidth(2);
 
+<<<<<<< HEAD
 			ICEMHists[iLambParam][iRefFrame]->SetFillColorAlpha(TColor::GetColor(ICEMColor), 0.5);
 			ICEMHists[iLambParam][iRefFrame]->SetFillStyle(1001);
 			// ICEMHists[iLambParam][iRefFrame]->SetMarkerColor(TColor::GetColor(ICEMColor));
@@ -577,6 +663,8 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			ICEMHists[iLambParam][iRefFrame]->SetLineColor(TColor::GetColor(ICEMColor));
 			ICEMHists[iLambParam][iRefFrame]->SetLineWidth(3);
 
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			if (iRefFrame == 0) {
 				if (iLambParam == 0) {
 				lambdaHist[iLambParam][iRefFrame]->GetYaxis()->SetTitleSize(0.105);
@@ -597,6 +685,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			}
 
 			/// Draw systematic error band
+<<<<<<< HEAD
 			/// data points
 			gSysLamb[iLambParam][iRefFrame]->SetFillColorAlpha(TColor::GetColor(color[iRefFrame]), 0.3);
 			gSysLamb[iLambParam][iRefFrame]->Draw("E2 SAME");
@@ -606,6 +695,14 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			gppDataTotErr[iLambParam][iRefFrame][0]->Draw("E2 SAME");
 
 			/// pp data 0.6 < |y| < 1.2
+=======
+			gSysLamb[iLambParam][iRefFrame]->SetFillColorAlpha(TColor::GetColor(color[iRefFrame]), 0.3);
+			gSysLamb[iLambParam][iRefFrame]->Draw("E2 SAME");
+		
+			gppDataTotErr[iLambParam][iRefFrame][0]->SetFillColorAlpha(TColor::GetColor(ppDataColor[0]), 0.3);
+			gppDataTotErr[iLambParam][iRefFrame][0]->Draw("E2 SAME");
+
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			gppDataTotErr[iLambParam][iRefFrame][1]->SetFillColorAlpha(TColor::GetColor(ppDataColor[1]), 0.3);
 			gppDataTotErr[iLambParam][iRefFrame][1]->Draw("E2 SAME");
 
@@ -616,8 +713,11 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			gPad->Modified();
 			gPad->Update();
 
+<<<<<<< HEAD
 			/// legend and text
 			/// top pad
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			if (iLambParam == 0) {
 				TLatex refFrameText;
 				refFrameText.SetTextAlign(22);
@@ -628,10 +728,16 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					createLegendBox(12.83, -0.477, color[iRefFrame], kTRUE);					
 				}
 				else {
+<<<<<<< HEAD
 					createLegendBox(2.07, -0.795, color[iRefFrame]);
 				}
 
 				/// CS pad
+=======
+					createLegendBox(2.07, -0.95, color[iRefFrame]);
+				}
+
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 				if (iRefFrame == 0){
 					refFrameText.DrawLatexNDC(0.82, 0.8, "Collins-Soper"); 
 					text.DrawLatexNDC(.33, .8, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
@@ -646,7 +752,10 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					legend->AddEntry(lambdaHist[iLambParam][iRefFrame], "CMS, PbPb, #sqrt{S_{NN}} = 5.02 TeV, 0 < |y| < 2.4, CS", "lep");
 					legend->Draw("SAME");
 				}
+<<<<<<< HEAD
 				/// HX pad
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 				else {
 					refFrameText.DrawLatexNDC(0.71, 0.8, "Helicity");
 					TLatex *tex = new TLatex(0.83,0.916,"PbPb 1.61 nb^{#minus1} (5.02 TeV)");
@@ -667,18 +776,28 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 				}
 			}
 
+<<<<<<< HEAD
 			/// middle pad
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 			else if (iLambParam == 1) {
 				if (QMPoster) {
 					createLegendBox(12.83, 0.475, ppDataColor[0], kTRUE);
 					createLegendBox(12.83, 0.3, ppDataColor[1], kTRUE);						
 				}
 				else {
+<<<<<<< HEAD
 					createLegendBox(2.07, 0.795, ppDataColor[0]);
 					createLegendBox(2.07, 0.5, ppDataColor[1]);
 				}
 
 				/// CS pad
+=======
+					createLegendBox(2.07, 0.95, ppDataColor[0]);
+					createLegendBox(2.07, 0.6, ppDataColor[1]);
+				}
+
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 				if (iRefFrame == 0) {
 					/// legend
 					TLegend *legend = new TLegend(0.2, 0.68, 0.65, 0.97);
@@ -688,6 +807,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S} = 7 TeV, 0 < |y| < 0.6, CS", "lep");
 					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S} = 7 TeV, 0.6 < |y| < 1.2, CS", "lep");
 					legend->Draw("SAME");
+<<<<<<< HEAD
 
 					TLegend *legend2 = new TLegend(0.21, 0.08, 0.58, 0.2);
 					legend2->SetBorderSize(0);
@@ -698,6 +818,9 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					legend2->Draw("SAME");
 				}
 				/// HX pad
+=======
+				}
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 				else {
 					/// legend
 					TLegend *legend = new TLegend(0.03, 0.68, 0.46, 0.97);
@@ -708,6 +831,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][0], "CMS, pp, #sqrt{S} = 7 TeV, 0 < |y| < 0.6, HX", "lep");
 					legend->AddEntry(ppDataHists[iLambParam][iRefFrame][1], "CMS, pp, #sqrt{S} = 7 TeV, 0.6 < |y| < 1.2, HX", "lep");
 					legend->Draw("SAME");
+<<<<<<< HEAD
 
 					TLegend *legend2 = new TLegend(0.045, 0.08, 0.4, 0.2);
 					legend2->SetBorderSize(0);
@@ -723,6 +847,14 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 			else if (iLambParam == 2) {
 				/// CS pad
 				if (iRefFrame == 0) {
+=======
+				}
+			}
+
+			else if (iLambParam == 2) {
+				if (iRefFrame == 0) {
+					
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 					if (QMPoster) {
 						/// white background
 						TPaveText *paveText = new TPaveText(0.96, 0.01, 1, 0.24, "brNDC");
@@ -769,6 +901,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	/// draw lambdaTilde histogram
 	TCanvas* invPolarParamsCanvas = new TCanvas("invPolarParamsCanvas", "invPolarParamsCanvas", 500, 500);
 
+<<<<<<< HEAD
 	/// draw CS histogram
 	lambdaHist[3][0]->Draw();
 
@@ -777,6 +910,10 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 
 	/// cosmetics
 	/// CS
+=======
+	lambdaHist[3][0]->Draw();
+	
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 	lambdaHist[3][0]->SetMarkerStyle(20);
 	lambdaHist[3][0]->SetMarkerSize(1.4);
 	lambdaHist[3][0]->SetMarkerColor(TColor::GetColor(CSColor));
@@ -784,12 +921,17 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	lambdaHist[3][0]->SetLineColor(TColor::GetColor(CSColor));
 	lambdaHist[3][0]->SetLineWidth(3);
 
+<<<<<<< HEAD
 	lambdaHist[3][0]->GetXaxis()->CenterTitle();
 
 	lambdaHist[3][0]->GetYaxis()->SetRangeUser(-1., 1.);
 	lambdaHist[3][0]->GetYaxis()->CenterTitle();
 
 	/// HX
+=======
+	lambdaHist[3][1]->Draw("same");
+
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 	lambdaHist[3][1]->SetMarkerStyle(20);
 	lambdaHist[3][1]->SetMarkerSize(1.4);
 	lambdaHist[3][1]->SetMarkerColor(TColor::GetColor(HXColor));
@@ -797,7 +939,16 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	lambdaHist[3][1]->SetLineColor(TColor::GetColor(HXColor));
 	lambdaHist[3][1]->SetLineWidth(3);
 
+<<<<<<< HEAD
 	/// systematic error band
+=======
+	// cosmetics
+	lambdaHist[3][0]->GetXaxis()->CenterTitle();
+
+	lambdaHist[3][0]->GetYaxis()->SetRangeUser(-1.4, 1.4);
+	lambdaHist[3][0]->GetYaxis()->CenterTitle();
+
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 	gSysLamb[3][0]->SetFillColorAlpha(TColor::GetColor(CSColor), 0.3);
 
 	gSysLamb[3][0]->Draw("E2 SAME");
@@ -810,6 +961,7 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 
 	createSysErrorBox(gSysLamb[3][1], HXColor);
 
+<<<<<<< HEAD
 	// gStyle->SetHatchesSpacing(0.005);
 	// gStyle->SetHatchesLineWidth(2);
 	
@@ -826,10 +978,13 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	ICEMHists[3][0]->Draw("SAME 3P");
 
 	/// draw a line at y = 0
+=======
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 	zeroLine->Draw("SAME");
 
 	CMS_lumi(invPolarParamsCanvas, gCMSLumiText);
 
+<<<<<<< HEAD
 	/// text and legend
 	text.SetTextSize(0.058);
 	text.DrawLatexNDC(.32, .85, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
@@ -850,6 +1005,21 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	invPolarParamsCanvas->SaveAs(Form("ParametersResults/invariantParameter_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
 
 	/***********************************************************************/
+=======
+	text.SetTextSize(0.058);
+	text.DrawLatexNDC(.32, .85, "#varUpsilon(1S) #rightarrow #mu^{+}#mu^{-}");
+
+	TLegend* legend = new TLegend(0.6, 0.77, 0.9, 0.9);
+	legend->SetBorderSize(0);
+	legend->SetFillStyle(0);
+	legend->SetTextSize(0.05);
+	legend->AddEntry(lambdaHist[3][0], "Collins-Soper", "lp");
+	legend->AddEntry(lambdaHist[3][1], "Helicity", "lp");
+	legend->Draw("SAME");
+
+	invPolarParamsCanvas->SaveAs(Form("ParametersResults/invariantParameter_%s_%s_%s.png", methodName, fitModelName2, bkgShapeName), "RECREATE");
+
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
     /// output file for the polarization parameter table
     const char* outFileName = "polarizationParameters_table.txt";
     std::ofstream outFile(outFileName);

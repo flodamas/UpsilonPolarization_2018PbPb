@@ -1,0 +1,30 @@
+{
+    "files.associations": {
+        "rawYield_2D_customizedFits.C": "cpp",
+        "nominalFit_RawDataset.C": "cpp",
+        "ostream": "c",
+        "rawYield_2D_discontinuousFits.C": "cpp",
+        "stdexcept": "cpp",
+        "string": "cpp",
+        "skimWeightedUpsilonCandidates.C": "cpp",
+        "skimUpsilonCandidates.C": "cpp",
+        "acceptanceMap_noGenFilter.C": "cpp",
+        "acceptanceMap_GenWeights.C": "cpp",
+        "singleMuonEfficiency_EtaPtMap.C": "cpp",
+        "weightedEfficiencyMaps.C": "cpp",
+        "canvas.C": "cpp",
+        "drawCosThetaPhiMap.C": "cpp",
+        "recoDistribution.C": "cpp",
+        "drawCosThetaPhiMapWeightedDataset.C": "cpp",
+        "accEffMap_3Dto2D.C": "cpp"
+    }
+
+    "terminal.integrated.profiles.osx": {
+        "x86 bash": {
+            "path": "/usr/bin/arch",
+            "args": ["-arch", "x86_64", "/bin/zsh"]
+        }
+    },
+    "terminal.integrated.defaultProfile.osx": "x86 bash"
+
+}

@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 lambdaTheta =  0.34081 +/- 0.23591 L(-2 - 2) 
 lambdaPhi = -0.00690204 +/- 0.10199 L(-2 - 2) 
 lambdaThetaPhi =  0.059714 +/- 0.11094 L(-2 - 2) 
 lambdaTilde =  0.31791 +/- 0.28994 L(-2 - 2) 
+=======
+lambdaTheta =  0.34527 +/- 0.23815 L(-2 - 2) 
+lambdaPhi = -0.0205833 +/- 0.10387 L(-2 - 2) 
+lambdaThetaPhi =  0.059934 +/- 0.11164 L(-2 - 2) 
+lambdaTilde =  0.27780 +/- 0.29517 L(-2 - 2) 
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740

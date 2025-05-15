@@ -503,8 +503,12 @@ RooArgSet GetSignalYields(RooRealVar* yield1S, RooRealVar* yield2S, RooRealVar* 
 	RooArgSet signalYields(*yield1S, *yield2S, *yield3S);
 
 	char yieldsFileName[512];
+<<<<<<< HEAD
 	// snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/RawYields/%s/%s_%s.txt", muonAccName, bkgShapeName, fitModelName);
 	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/RawYields/%s_%s_%s.txt", bkgShapeName, fitModelName, "TriggerAcc"); // temporary signal yields file name to use the values obtained for the pre-approval talk
+=======
+	snprintf(yieldsFileName, sizeof(yieldsFileName), "../SignalExtraction/RawYields/%s/%s_%s.txt", muonAccName, bkgShapeName, fitModelName);
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 
 	cout << yieldsFileName << endl;
 	if (fopen(yieldsFileName, "r")) {

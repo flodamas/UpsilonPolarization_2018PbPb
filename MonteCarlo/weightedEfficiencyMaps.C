@@ -369,7 +369,11 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
 
 			// fiducial region
+<<<<<<< HEAD
 			// if (genLorentzVector->Pt() < ptMin || genLorentzVector->Pt() > ptMax) continue; // pt bin of interest
+=======
+			//if (genLorentzVector->Pt() < ptMin || genLorentzVector->Pt() > ptMax) continue; // pt bin of interest
+>>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 
 			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
 
