@@ -155,7 +155,16 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 
 	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kTRUE);
 
-	TH2D* hTotalCosThetaPhi = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
+	TH2D* hTotalCosThetaPhiAcc = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
+
+	TH2D* hPassedCosThetaPhiAcc = (TH2D*)accMapCosThetaPhi->GetPassedHistogram();
+
+	TH2D* hTotalCosThetaPhiEff = (TH2D*)effMapCosThetaPhi->GetTotalHistogram();
+
+	TH2D* hRatioCosThetaPhi = (TH2D*)hTotalCosThetaPhiAcc->Clone("hRatioCosThetaPhi");
+
+	hRatioCosThetaPhi->Divide(hPassedCosThetaPhiAcc, hTotalCosThetaPhiEff, 1, 1, "B");
+
 
 	// define a histogram to draw weight map
 	TH2D* weightMap = new TH2D("weightMap", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
@@ -183,14 +192,15 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 			Double_t weight = 1;
 
 			/// get the global bin number of Efficiency
-			Double_t binCenterCosTheta = hTotalCosThetaPhi->GetXaxis()->GetBinCenter(iCosTheta + 1);
-			Double_t binCenterPhi = hTotalCosThetaPhi->GetYaxis()->GetBinCenter(iPhi + 1);
+			Double_t binCenterCosTheta = hTotalCosThetaPhiAcc->GetXaxis()->GetBinCenter(iCosTheta + 1);
+			Double_t binCenterPhi = hTotalCosThetaPhiAcc->GetYaxis()->GetBinCenter(iPhi + 1);
 
-			Int_t iGlobalBin = hTotalCosThetaPhi->FindFixBin(binCenterCosTheta, binCenterPhi);
+			Int_t iGlobalBin = hTotalCosThetaPhiAcc->FindFixBin(binCenterCosTheta, binCenterPhi);
 
 			/// get the corresponding weights
 			double acceptance = accMapCosThetaPhi->GetEfficiency(iGlobalBin);
 			double efficiency = effMapCosThetaPhi->GetEfficiency(iGlobalBin);
+			double residual = hRatioCosThetaPhi->GetBinContent(iCosTheta + 1, iPhi + 1);
 
 			/// calculate weight
 			if (acceptance == 0 || efficiency == 0)
@@ -198,6 +208,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 				weight = 0.;
 			else
 				weight = 1. / (acceptance * efficiency);
+				// weight = 1. / (acceptance * efficiency) * residual;
 
 			/// fill the weight map
 			weightMap->SetBinContent(iCosTheta + 1, iPhi + 1, weight);
