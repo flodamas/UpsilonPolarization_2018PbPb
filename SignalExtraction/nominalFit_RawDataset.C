@@ -149,8 +149,8 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	// SaveRawDataFitCanvas(massCanvas, totalFitModelName, Form("%s_woSigmaConstraints", gMuonAccName));
 
-	delete massCanvas;
-	delete fitResult;
+	// delete massCanvas;
+	// delete fitResult;
 }
 
 void scanNominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 2, Bool_t isCSframe = kFALSE, Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr", const char* muonAccName = "UpsilonTriggerThresholds") { // possible bkgShapeName: ExpTimesErr, ChebychevOrderN, Argus, Exponential
