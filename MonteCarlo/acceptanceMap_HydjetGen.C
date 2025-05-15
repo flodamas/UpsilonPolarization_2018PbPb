@@ -161,7 +161,7 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
 
         OniaTree->GetEntry(iEvent);
 
-		if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality >= 90% in 2018 data
+		// if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality >= 90% in 2018 data
 
 		// firesTrigger = ((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)));
 
@@ -176,12 +176,12 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
    
             if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue; // upsilon within fiducial region
 
-            if (gen_QQ_LV->Pt() > gPtMax) continue;
+            // if (gen_QQ_LV->Pt() > gPtMax) continue;
 
 			// go to reco level (apply reco level weights to Hydjet GEN acceptance)
 			Int_t iReco = Gen_QQ_whichRec[iGen];
 
-			if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
+			// if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
 
             isRecoMatched = iReco > -1;
             
@@ -332,7 +332,8 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
 				// single-muon acceptance
                 withinAcceptance = MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName) && MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName);
     
-                totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+                // totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				totalWeightLab = 1;
                 accMatrixLab->FillWeighted(withinAcceptance, totalWeightLab, cosThetaLab_reco, phiLab_reco, reco_QQ_pt);
 
                 // Reference frame transformations
@@ -343,8 +344,9 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
                     weightCS = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecCS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecCS.Theta()), 2) * std::cos(2 * Gen_mupl_vecCS.Phi()) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecCS.Theta()) * std::cos(Gen_mupl_vecCS.Phi());
 
                 // total weight
-				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
-				
+				// totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
+				totalWeightCS = 1;
+
                 // cout << "weightCS: " << weightCS << endl;
                 // cout << "cosThetaCS_gen: " << cosThetaCS_gen << endl;
                 // cout << "phiCS_gen: " << phiCS_gen << endl;
@@ -356,7 +358,9 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
                 else
                     weightHX = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecHX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecHX.Theta()), 2) * std::cos(2 * Gen_mupl_vecHX.Phi()) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecHX.Theta()) * std::cos(Gen_mupl_vecHX.Phi());
                 
-                totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
+                // totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
+				totalWeightHX = 1;
+
                 // cout << "weightHX: " << weightHX << endl;
                 // cout << "cosThetaHX_gen: " << cosThetaHX_gen << endl;
                 // cout << "phiHX_gen: " << phiHX_gen << endl;
@@ -410,7 +414,8 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
     const char* path = AcceptanceResultsPath(muonAccName.Data());
 
     gSystem->mkdir(path, kTRUE);
-    const char* outputFileName = Form("%s/AcceptanceResults_Hydjet%s.root", path, isPhiFolded ? "" : "_fullPhi");
+    // const char* outputFileName = Form("%s/AcceptanceResults_Hydjet%s.root", path, isPhiFolded ? "" : "_fullPhi");
+	const char* outputFileName = Form("%s/AcceptanceResults_noWeights_Hydjet%s.root", path, isPhiFolded ? "" : "_fullPhi");
  
     TFile outputFile(outputFileName, "UPDATE");
  
@@ -424,11 +429,11 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
     if (BeVerbose) cout << "\nAcceptance maps saved in " << outputFileName << endl;     
 }
 
-TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE) {
+TEfficiency* getAcceptance3DMap(TString fileName = "", const char* refFrameName = "HX", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE) {
 	/// get acceptance and efficiency in 1D
 	TString nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TString fileName = Form("%s/AcceptanceResults_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
+	// TString fileName = Form("%s/AcceptanceResults_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 
 	// get acceptance maps
 	// TFile* acceptanceFile = openFile(fileName.Data());
@@ -509,20 +514,34 @@ void drawAcceptanceMap(TString refFrameName = "HX",
 
 	/// get acceptance 3D map
 	TEfficiency* accMap;
+	TEfficiency* accMap_flat;
 
-    accMap = getAcceptance3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+	TString fileName = Form("%s/AcceptanceResults_noWeights_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
+	// TString fileName = Form("%s/AcceptanceResults_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
+	TString fileName_flat = Form("%s/AcceptanceResults%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 
+    accMap = getAcceptance3DMap(fileName, refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+	accMap_flat = getAcceptance3DMap(fileName_flat, refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+	
     TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
-
+	TEfficiency* accMapCosThetaPhi_flat = rebinTEff3DMap(accMap_flat, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
+	
     TH2D* hTotalCosThetaPhi = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
     // hTotalCosThetaPhi->Scale(1. / hTotalCosThetaPhi->Integral(0, nCosThetaBins + 1, 0, nPhiBins + 1));
     
 	TH2D* hPassedCosThetaPhi = (TH2D*)accMapCosThetaPhi->GetPassedHistogram();
-    
+
+	TH2D* hTotalCosThetaPhi_flat = (TH2D*)accMapCosThetaPhi_flat->GetTotalHistogram();
+	TH2D* hPassedCosThetaPhi_flat = (TH2D*)accMapCosThetaPhi_flat->GetPassedHistogram();
+
+	TH2D* hRatioCosThetaPhi = (TH2D*)hTotalCosThetaPhi->Clone("hRatioCosThetaPhi");
+	hRatioCosThetaPhi->Divide(hPassedCosThetaPhi_flat, hPassedCosThetaPhi, 1, 1, "B");
+
     /// draw acceptance graph for check
 	TCanvas* accCanvas = nullptr;
 	TCanvas* accTotalCanvas = nullptr;
     TCanvas* accPassedCanvas = nullptr;
+	TCanvas* accRatioCanvas = nullptr;
 
     accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
    
@@ -531,4 +550,9 @@ void drawAcceptanceMap(TString refFrameName = "HX",
 
     accPassedCanvas = draw2DMap(hPassedCosThetaPhi, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
     display2DMapContents(hPassedCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+
+	accRatioCanvas = draw2DMap(hRatioCosThetaPhi, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+	display2DMapContents(hRatioCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
+
+	return;
 }
