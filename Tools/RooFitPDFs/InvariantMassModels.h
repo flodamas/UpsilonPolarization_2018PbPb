@@ -45,13 +45,8 @@ std::vector<std::string> BuildSignalPdfs(RooWorkspace& wspace, const char* signa
 		RooRealVar orderSup = *wspace.var("orderSupSymDSCB");
 
 		// Y(1S) signal shape
-<<<<<<< HEAD
 		RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
 		// RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.60);
-=======
-		// RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.55);
-		RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S, 9.35, 9.60);
->>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 		// RooRealVar mean_1S("mean_1S", "mean 1S", PDGmass_1S);
 		// RooRealVar sigma_1S("sigma_1S", "", sigma.getVal(), .03, .15);
 
@@ -189,19 +184,11 @@ RooAbsPdf* BackgroundPDF(RooWorkspace& wspace, const char* bkgShapeName, const c
 
 	// exponential x err function
 	else if (strcmp(bkgShapeName, "ExpTimesErr") == 0) {
-<<<<<<< HEAD
 		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 1, 12);
 		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7);
 		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 2, 0.1, 10);
 		// RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9);
 		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 800., 0, 5000);
-=======
-		RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7, 1, 14);
-		// RooRealVar* err_mu = new RooRealVar("err_mu", " ", 7);
-		RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 1.5, 0.1, 5);
-		// RooRealVar* err_sigma = new RooRealVar("err_sigma", " ", 0.9);
-		RooRealVar* exp_lambda = new RooRealVar("exp_lambda", " ", 1., 0, 10);
->>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 
 		ErrorFuncTimesExp* bkgPDF = new ErrorFuncTimesExp("bkgPDF", "Product of an error function with an exponential", *invMass, *err_mu, *err_sigma, *exp_lambda);
 
