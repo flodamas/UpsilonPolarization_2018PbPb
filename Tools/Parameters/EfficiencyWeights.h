@@ -63,12 +63,31 @@ Double_t PtWeight_absy1p2to2p4(Float_t pT) {
 	return PtWeightFunc_absy1p2to2p4->Eval(pT);
 }
 */
+
+Double_t PtGenWeight_absy0to2p4(Float_t pT) {
+	TF1* PtWeightFunc_absy0to2p4 = new TF1("PtGenWeightFunc_absy0to2p4", "[0]/([1] + x)", gPtBinning[0], gPtBinning[NPtBins]);
+	PtWeightFunc_absy0to2p4->SetParameter(0, 3.7);
+	PtWeightFunc_absy0to2p4->SetParError(0, 0.1);
+	PtWeightFunc_absy0to2p4->SetParameter(1, 0.4);
+	PtWeightFunc_absy0to2p4->SetParError(1, 0.2);
+
+	return PtWeightFunc_absy0to2p4->Eval(pT);
+}
+
 Float_t Get_RecoPtWeight(Float_t absY, Float_t pT) {
 	if (fabs(absY) < 1.2)
 		return PtWeight_absy0to1p2(pT);
 
 	else if (fabs(absY) > 1.2 && fabs(absY) < 2.4)
 		return PtWeight_absy1p2to2p4(pT);
+
+	else
+		return 0.; // for safety
+}
+
+Float_t Get_GenPtWeight(Float_t absY, Float_t pT) {
+	if (fabs(absY) < 2.4)
+		return PtGenWeight_absy0to2p4(pT);
 
 	else
 		return 0.; // for safety

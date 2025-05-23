@@ -369,11 +369,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 			gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
 
 			// fiducial region
-<<<<<<< HEAD
 			// if (genLorentzVector->Pt() < ptMin || genLorentzVector->Pt() > ptMax) continue; // pt bin of interest
-=======
-			//if (genLorentzVector->Pt() < ptMin || genLorentzVector->Pt() > ptMax) continue; // pt bin of interest
->>>>>>> f995c21d2e4f812c87266fc329aba4b379ff6740
 
 			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
 
@@ -396,6 +392,45 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 			if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
 
+			// pt Weight at gen level
+			double gen_QQ_pt = gen_QQ_LV->Pt();
+			dimuonPtWeight = Get_GenPtWeight(gen_QQ_LV->Rapidity(), gen_QQ_pt);
+
+			// reference frame transformation at gen level
+			double cosThetaLab_gen = gen_mupl_LV->CosTheta();
+			
+			double phiLab_gen = 0;
+
+			if (isPhiFolded == kTRUE) {
+				phiLab_gen = fabs(gen_mupl_LV->Phi() * 180 / TMath::Pi());
+			} else {
+				phiLab_gen = gen_mupl_LV->Phi() * 180 / TMath::Pi();
+			}
+
+			TVector3 muPlus_CS_gen = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
+
+			double cosThetaCS_gen = muPlus_CS_gen.CosTheta();
+			
+			double phiCS_gen = 0;
+
+			if (isPhiFolded == kTRUE) {
+				phiCS_gen = fabs(muPlus_CS_gen.Phi() * 180 / TMath::Pi());
+			} else {
+				phiCS_gen = muPlus_CS_gen.Phi() * 180 / TMath::Pi();
+			}
+
+			TVector3 muPlus_HX_gen = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
+
+			double cosThetaHX_gen = muPlus_HX_gen.CosTheta();
+			
+			double phiHX_gen = 0;
+
+			if (isPhiFolded == kTRUE) {
+				phiHX_gen = fabs(muPlus_HX_gen.Phi() * 180 / TMath::Pi());
+			} else {
+				phiHX_gen = muPlus_HX_gen.Phi() * 180 / TMath::Pi();
+			}			
+			
 			/// all the reconstructed upsilons must pass the conditions below!
 
 			isRecoMatched = iReco > -1;
@@ -404,7 +439,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				recoLorentzVector = (TLorentzVector*)CloneArr_QQ->At(iReco);
 				double reco_QQ_pt = recoLorentzVector->Pt();
 
-				dimuonPtWeight = Get_RecoPtWeight(recoLorentzVector->Rapidity(), reco_QQ_pt);
+				// dimuonPtWeight = Get_RecoPtWeight(recoLorentzVector->Rapidity(), reco_QQ_pt);
 
 				dimuonMatching = (Reco_QQ_trig[iReco] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1));
 
@@ -440,51 +475,49 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				double Reco_mumi_eta = Reco_mumi_LV->Eta();
 				double Reco_mumi_pt = Reco_mumi_LV->Pt();
 
-				// double cosThetaLab_gen = gen_mupl_LV->CosTheta();
-				double cosThetaLab = Reco_mupl_LV->CosTheta();
+				// double cosThetaLab = Reco_mupl_LV->CosTheta();
 
-				// double phiLab_gen = 0;
-				double phiLab = 0;
+				// double phiLab = 0;
 
-				if (isPhiFolded == kTRUE) {
-					// phiLab_gen = fabs(gen_mupl_LV->Phi() * 180 / TMath::Pi());
-					phiLab = fabs(Reco_mupl_LV->Phi() * 180 / TMath::Pi());
-				} else {
-					// phiLab_gen = gen_mupl_LV->Phi() * 180 / TMath::Pi();
-					phiLab = Reco_mupl_LV->Phi() * 180 / TMath::Pi();
-				}
+				// if (isPhiFolded == kTRUE) {
+				// 	// phiLab_gen = fabs(gen_mupl_LV->Phi() * 180 / TMath::Pi());
+				// 	phiLab = fabs(Reco_mupl_LV->Phi() * 180 / TMath::Pi());
+				// } else {
+				// 	// phiLab_gen = gen_mupl_LV->Phi() * 180 / TMath::Pi();
+				// 	phiLab = Reco_mupl_LV->Phi() * 180 / TMath::Pi();
+				// }
 
-				TVector3 muPlus_CS_gen = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
-				TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
+				// // TVector3 muPlus_CS_gen = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
+				// TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
 
-				// double cosThetaCS_gen = muPlus_CS_gen.CosTheta();
-				double cosThetaCS = muPlus_CS.CosTheta();
-				// double phiCS_gen = 0;
-				double phiCS = 0;
+				// // double cosThetaCS_gen = muPlus_CS_gen.CosTheta();
+				// double cosThetaCS = muPlus_CS.CosTheta();
+				// // double phiCS_gen = 0;
+				// double phiCS = 0;
 
-				if (isPhiFolded == kTRUE) {
-					// phiCS_gen = fabs(muPlus_CS_gen.Phi() * 180 / TMath::Pi());
-					phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
-				} else {
-					// phiCS_gen = muPlus_CS_gen.Phi() * 180 / TMath::Pi();
-					phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
-				}
+				// if (isPhiFolded == kTRUE) {
+				// 	// phiCS_gen = fabs(muPlus_CS_gen.Phi() * 180 / TMath::Pi());
+				// 	phiCS = fabs(muPlus_CS.Phi() * 180 / TMath::Pi());
+				// } else {
+				// 	// phiCS_gen = muPlus_CS_gen.Phi() * 180 / TMath::Pi();
+				// 	phiCS = muPlus_CS.Phi() * 180 / TMath::Pi();
+				// }
 
-				TVector3 muPlus_HX_gen = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
-				TVector3 muPlus_HX = MuPlusVector_Helicity(*recoLorentzVector, *Reco_mupl_LV);
+				// // TVector3 muPlus_HX_gen = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
+				// TVector3 muPlus_HX = MuPlusVector_Helicity(*recoLorentzVector, *Reco_mupl_LV);
 
-				// double cosThetaHX_gen = muPlus_HX_gen.CosTheta();
-				double cosThetaHX = muPlus_HX.CosTheta();
-				// double phiHX_gen = 0;
-				double phiHX = 0;
+				// // double cosThetaHX_gen = muPlus_HX_gen.CosTheta();
+				// double cosThetaHX = muPlus_HX.CosTheta();
+				// // double phiHX_gen = 0;
+				// double phiHX = 0;
 
-				if (isPhiFolded == kTRUE) {
-					// phiHX_gen = fabs(muPlus_HX_gen.Phi() * 180 / TMath::Pi());
-					phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
-				} else {
-					phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
-					// phiHX_gen = muPlus_HX_gen.Phi() * 180 / TMath::Pi();
-				}
+				// if (isPhiFolded == kTRUE) {
+				// 	// phiHX_gen = fabs(muPlus_HX_gen.Phi() * 180 / TMath::Pi());
+				// 	phiHX = fabs(muPlus_HX.Phi() * 180 / TMath::Pi());
+				// } else {
+				// 	phiHX = muPlus_HX.Phi() * 180 / TMath::Pi();
+				// 	// phiHX_gen = muPlus_HX_gen.Phi() * 180 / TMath::Pi();
+				// }
 
 				/// muon scale factors
 
@@ -563,9 +596,9 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				// cout << "dimuWeight_nominal: " << dimuWeight_nominal << endl;
 				// cout << "weightCS: " << weightCS << endl;
 				// cout << "totalWeightCS: " << totalWeightCS << endl;
-				hNominalEffLab->FillWeighted(allGood, totalWeightLab, cosThetaLab, phiLab, reco_QQ_pt);
-				hNominalEffCS->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hNominalEffHX->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hNominalEffLab->FillWeighted(allGood, totalWeightLab, cosThetaLab_gen, phiLab_gen, gen_QQ_pt);
+				hNominalEffCS->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hNominalEffHX->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "total weight HX: " << totalWeightHX << endl;
@@ -600,12 +633,12 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				// cout << "" << endl;
 
-				if (reco_QQ_pt > ptMin && reco_QQ_pt < ptMax) { // pT range of interest
-					hEffCS2D->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS);
-					hEffHX2D->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX);
+				if (gen_QQ_pt > ptMin && gen_QQ_pt < ptMax) { // pT range of interest
+					hEffCS2D->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen);
+					hEffHX2D->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen);
 
-					hEffCS1D->FillWeighted(allGood, totalWeightCS, cosThetaCS);
-					hEffHX1D->FillWeighted(allGood, totalWeightHX, cosThetaHX);
+					hEffCS1D->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen);
+					hEffHX1D->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen);
 				}
 
 				/// variations for muon tracking SF (keeping the nominal efficiency for muon Id and trigger)
@@ -615,8 +648,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_trk_systUp * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trk_systUp * weightHX;
-				hCS_trk_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_trk_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_trk_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_trk_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systUp trk weight CS: " << totalWeightCS << endl;
@@ -627,8 +660,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_trk_systDown * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trk_systDown * weightHX;
-				hCS_trk_systDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_trk_systDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_trk_systDown->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_trk_systDown->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systDown trk weight CS: " << totalWeightCS << endl;
@@ -639,16 +672,16 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_trk_statUp * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trk_statUp * weightHX;
-				hCS_trk_statUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_trk_statUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_trk_statUp->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_trk_statUp->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// tracking, stat down
 				dimuWeight_trk_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_trk_statDown * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trk_statDown * weightHX;
-				hCS_trk_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_trk_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_trk_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_trk_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				/// variations for muon Id SF (keeping the nominal efficiency for tracking and trigger)
 
@@ -657,8 +690,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_muId_systUp * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_muId_systUp * weightHX;
-				hCS_muId_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_muId_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_muId_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_muId_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systUp muID weight CS: " << totalWeightCS << endl;
@@ -669,8 +702,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_muId_systDown * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_muId_systDown * weightHX;
-				hCS_muId_systDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_muId_systDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_muId_systDown->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_muId_systDown->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systDown muID weight CS: " << totalWeightCS << endl;
@@ -681,16 +714,16 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_muId_statUp * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_muId_statUp * weightHX;
-				hCS_muId_statUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_muId_statUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_muId_statUp->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_muId_statUp->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// Id, stat down
 				dimuWeight_muId_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexStatDown) * dimuTrigWeight_nominal;
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_muId_statDown * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_muId_statDown * weightHX;
-				hCS_muId_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_muId_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_muId_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_muId_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				/// variations for trigger SF (keeping the nominal efficiency for tracking and muon Id)
 
@@ -699,8 +732,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_trig_systUp * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trig_systUp * weightHX;
-				hCS_trig_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_trig_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_trig_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_trig_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systUp trigger weight CS: " << totalWeightCS << endl;
@@ -711,8 +744,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_trig_systDown * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trig_systDown * weightHX;
-				hCS_trig_systDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_trig_systDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_trig_systDown->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_trig_systDown->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systDown trigger weight CS: " << totalWeightCS << endl;
@@ -723,8 +756,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_trig_statUp * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trig_statUp * weightHX;
-				hCS_trig_statUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_trig_statUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_trig_statUp->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_trig_statUp->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systUp trigger weight CS: " << totalWeightCS << endl;
@@ -735,8 +768,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_trig_statDown * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_trig_statDown * weightHX;
-				hCS_trig_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_trig_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_trig_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_trig_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systDown trigger weight CS: " << totalWeightCS << endl;
@@ -747,8 +780,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_total_systUp * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_total_systUp * weightHX;
-				hCS_total_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_total_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_total_systUp->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_total_systUp->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systUp total weight CS: " << totalWeightCS << endl;
@@ -759,8 +792,8 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_total_systDown * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_total_systDown * weightHX;
-				hCS_total_systDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_total_systDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_total_systDown->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_total_systDown->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
 				// cout << "systDown total weight CS: " << totalWeightCS << endl;
@@ -771,22 +804,22 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_total_statUp * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_total_statUp * weightHX;
-				hCS_total_statUp->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_total_statUp->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_total_statUp->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_total_statUp->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// track + muID + trigger, stat down
 				dimuWeight_total_statDown = tnp_weight_trk_pbpb(Reco_mupl_eta, indexStatDown) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexStatDown) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexStatDown) * dimuTrigWeight_statDown;
 
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_total_statDown * weightCS;
 				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_total_statDown * weightHX;
-				hCS_total_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS, phiCS, reco_QQ_pt);
-				hHX_total_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX, phiHX, reco_QQ_pt);
+				hCS_total_statDown->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hHX_total_statDown->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				TH3D* hPassed = (TH3D*)hNominalEffCS->GetPassedHistogram();
 
-				Int_t iCosThetaBin = hPassed->GetXaxis()->FindBin(cosThetaCS);
-				Int_t iPhiBin = hPassed->GetYaxis()->FindBin(phiCS);
-				Int_t iPtBin = hPassed->GetZaxis()->FindBin(reco_QQ_pt);
+				Int_t iCosThetaBin = hPassed->GetXaxis()->FindBin(cosThetaCS_gen);
+				Int_t iPhiBin = hPassed->GetYaxis()->FindBin(phiCS_gen);
+				Int_t iPtBin = hPassed->GetZaxis()->FindBin(gen_QQ_pt);
 
 				int globalBin = hNominalEffCS->GetGlobalBin(iCosThetaBin, iPhiBin, iPtBin);
 
@@ -813,6 +846,17 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				// cout << "MuId Stat down efficiency: " << hCS_muId_statDown->GetEfficiency(globalBin) << endl;
 
 				// cout << endl;
+			}
+			else {
+				totalWeightLab = eventWeight * dimuonPtWeight * 1.;
+				totalWeightCS = eventWeight * dimuonPtWeight * 1. * weightCS;
+				totalWeightHX = eventWeight * dimuonPtWeight * 1. * weightHX;
+
+				allGood = 0;
+
+				hNominalEffLab->FillWeighted(allGood, totalWeightLab, cosThetaLab_gen, phiLab_gen, gen_QQ_pt);
+				hNominalEffCS->FillWeighted(allGood, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				hNominalEffHX->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 			}
 		} // end of gen upsilon loop
 	}
