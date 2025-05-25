@@ -4,125 +4,13 @@
 
 #include "../Tools/Parameters/PhaseSpace.h"
 
-// #include "../MonteCarlo/AccEffHelpers.h"
-
-// #include "../Polarization/PolarFitHelpers.h"
-
-// #include "../Tools/FitShortcuts.h"
-// #include "../Tools/Style/Legends.h"
-
-// #include "../Tools/Style/FitDistributions.h"
-
 #include "../Tools/Parameters/CentralityValues.h"
 #include "../Tools/Parameters/EfficiencyWeights.h"
 #include "../Tools/Parameters/MuonScaleFactors.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-// #include "../Tools/RooFitPDFs/PolarFunc.h"
-
-// #include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
-// #include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.cxx"
-
-// #include "../Tools/RooFitPDFs/PhiPolarizationPDF.h"
-// #include "../Tools/RooFitPDFs/PhiPolarizationPDF.cxx"
-
-// #include "../Tools/RooFitPDFs/GeneralPolarizationPDF.h"
-// #include "../Tools/RooFitPDFs/GeneralPolarizationPDF.cxx"
-
-// #include "../MonteCarlo/acceptanceMap_noGenFilter.C"
-// #include "../MonteCarlo/weightedEfficiencyMaps.C"
-
 // using namespace RooFit;
-
-// TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE) {
-// 	/// get acceptance and efficiency in 1D
-// 	TString nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-
-// 	TString fileName = Form("%s/AcceptanceResults_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
-
-// 	// get acceptance maps
-// 	// TFile* acceptanceFile = openFile(fileName.Data());
-// 	TFile* acceptanceFile = TFile::Open(fileName, "READ");
-
-// 	if (!acceptanceFile) {
-// 		std::cerr << "Error: acceptanceFile is null." << std::endl;
-// 		acceptanceFile->Close();
-// 		delete acceptanceFile;
-
-// 		// acceptanceMap_noGenFilter(0, 30, gUpsilonState, lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded, "MuonUpsilonTriggerAcc");
-
-// 		return nullptr;
-// 	}
-
-// 	acceptanceFile = openFile(fileName.Data());
-
-// 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName.Data());
-
-// 	if (!accMap) {
-// 		std::cerr << "Error: accMap is null." << std::endl;
-
-// 		return nullptr;
-// 	}
-
-// 	return accMap;
-// }
-
-// TFitResultPtr getHydjetGenWeight(TString refFrameName = "HX",
-// 								Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0,
-// 								Int_t ptMin = 0, Int_t ptMax = 30,
-// 								const Int_t nCosThetaBins = 20, Double_t cosThetaMin = -1, Double_t cosThetaMax = 1,
-// 								const Int_t nPhiBins = 18, Int_t phiMin = -180, Int_t phiMax = 180,
-// 								Bool_t isPhiFolded = kFALSE) {
-
-// 	writeExtraText = true; // if extra text
-// 	extraText = "       Internal";
-// 	// extraText = "       Simulation Preliminary";
-
-// 	/// set bin edges and width
-// 	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
-
-// 	vector<Double_t> phiBinEdges = setPhiBinEdges(nPhiBins, phiMin, phiMax);
-
-// 	/// bin width
-// 	Double_t cosThetaStep = (cosThetaBinEdges[nCosThetaBins] - cosThetaBinEdges[0]) / nCosThetaBins;
-
-// 	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
-
-// 	/// get acceptance 3D map
-// 	TEfficiency* accMap;
-
-// 	accMap = getAcceptance3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
-
-// 	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
-
-// 	TH2D* hTotalCosThetaPhi = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
-// 	hTotalCosThetaPhi->Scale(1. / hTotalCosThetaPhi->Integral(0, nCosThetaBins + 1, 0, nPhiBins + 1));
-
-// 	TH2D* hPassedCosThetaPhi = (TH2D*)accMapCosThetaPhi->GetPassedHistogram();
-
-// 	/// draw acceptance graph for check
-// 	TCanvas* accCanvas = nullptr;
-// 	TCanvas* accTotalCanvas = nullptr;
-// 	TCanvas* accPassedCanvas = nullptr;
-
-// 	accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-
-// 	accTotalCanvas = draw2DMap(hTotalCosThetaPhi, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-// 	display2DMapContents(hTotalCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
-
-// 	accPassedCanvas = draw2DMap(hPassedCosThetaPhi, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-// 	display2DMapContents(hPassedCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
-
-// 	Float_t maxYield = hTotalCosThetaPhi->GetMaximum();
-
-// 	TF2* polarFunc2D = getGeneralPolarFunc(maxYield);
-
-// 	TFitResultPtr fitResults = hTotalCosThetaPhi->Fit("generalPolarFunc", "ESVIR");
-
-// 	return fitResults;
-
-// }
 
 // the reconstructed dimuons are fully weighted, including potential reweighting for polarization
 
@@ -202,7 +90,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	OniaTree->SetBranchAddress("Reco_mu_dxy", &Reco_mu_dxy);
 	OniaTree->SetBranchAddress("Reco_mu_dz", &Reco_mu_dz);
 
-	// /// RooDataSet output: one entry = one dimuon candidate!
+	/// RooDataSet output: one entry = one dimuon candidate!
 
 	// weighting by event directly on the fly
 	RooRealVar centVar("centrality", "event centrality", 0, 200);
@@ -324,6 +212,45 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 
 			if (gen_QQ_LV->Pt() > gPtMax) continue;
 
+			// pt Weight at gen level
+			double gen_QQ_pt = gen_QQ_LV->Pt();
+			dimuonPtWeight = Get_GenPtWeight(gen_QQ_LV->Rapidity(), gen_QQ_pt);
+
+			// reference frame transformation at gen level
+			double cosThetaLab_gen = gen_mupl_LV->CosTheta();
+			
+			double phiLab_gen = 0;
+
+			// if (isPhiFolded == kTRUE) {
+			// 	phiLab_gen = fabs(gen_mupl_LV->Phi() * 180 / TMath::Pi());
+			// } else {
+				phiLab_gen = gen_mupl_LV->Phi() * 180 / TMath::Pi();
+			// }
+
+			TVector3 muPlus_CS_gen = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
+
+			double cosThetaCS_gen = muPlus_CS_gen.CosTheta();
+			
+			double phiCS_gen = 0;
+
+			// if (isPhiFolded == kTRUE) {
+			// 	phiCS_gen = fabs(muPlus_CS_gen.Phi() * 180 / TMath::Pi());
+			// } else {
+				phiCS_gen = muPlus_CS_gen.Phi() * 180 / TMath::Pi();
+			// }
+
+			TVector3 muPlus_HX_gen = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
+
+			double cosThetaHX_gen = muPlus_HX_gen.CosTheta();
+			
+			double phiHX_gen = 0;
+
+			// if (isPhiFolded == kTRUE) {
+			// 	phiHX_gen = fabs(muPlus_HX_gen.Phi() * 180 / TMath::Pi());
+			// } else {
+				phiHX_gen = muPlus_HX_gen.Phi() * 180 / TMath::Pi();
+			// }	
+
 			// go to reco level
 			Int_t iReco = Gen_QQ_whichRec[iGen];	
 
@@ -339,7 +266,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 
 			if (Reco_QQ_VtxProb[iReco] < 0.01) continue; // good common vertex proba
 
-			if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
+			// if (Reco_QQ_4mom->M() < lowMassCut || Reco_QQ_4mom->M() > highMassCut) continue; // speedup!
 
 			/// single-muon selection criteria
 			int iMuPlus = Reco_QQ_mupl_idx[iReco];
@@ -369,13 +296,13 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 			double Reco_mumi_pt = Reco_mumi_4mom->Pt();
 
 			/// reweight for the data/MC reco pT spectrum discrepancies
-			dimuonPtWeight = Get_RecoPtWeight(Reco_QQ_4mom->Rapidity(), Reco_QQ_4mom->Pt());
+			// dimuonPtWeight = Get_RecoPtWeight(Reco_QQ_4mom->Rapidity(), Reco_QQ_4mom->Pt());
 
 			// get positive muon's coordinates in the studied reference frames
-			TVector3 muPlus_CS_gen = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
+			// TVector3 muPlus_CS_gen = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
-			TVector3 muPlus_HX_gen = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
+			// TVector3 muPlus_HX_gen = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*Reco_QQ_4mom, *Reco_mupl_4mom);
 
 			// HLT filters
@@ -553,14 +480,23 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 			yVar = fabs(Reco_QQ_4mom->Rapidity());
 			ptVar = Reco_QQ_4mom->Pt();
 
-			cosThetaLabVar = Reco_mupl_4mom->CosTheta();
-			phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
+			// cosThetaLabVar = Reco_mupl_4mom->CosTheta();
+			// phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
+			// etaLabMuplVar = Reco_mupl_4mom->PseudoRapidity();
+			// etaLabMumiVar = Reco_mumi_4mom->PseudoRapidity();
+
+			cosThetaLabVar = cosThetaLab_gen;
+			phiLabVar = phiLab_gen;
 			etaLabMuplVar = Reco_mupl_4mom->PseudoRapidity();
 			etaLabMumiVar = Reco_mumi_4mom->PseudoRapidity();
 
-			cosThetaCSVar = muPlus_CS.CosTheta();
-			phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
+			// cosThetaCSVar = muPlus_CS.CosTheta();
+			// phiCSVar = muPlus_CS.Phi() * 180 / TMath::Pi();
 
+			cosThetaCSVar = cosThetaCS_gen;
+			phiCSVar = phiCS_gen;
+
+			/// calculate phi tilde
 			if (cosThetaCSVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
 				if ((phiCSVar.getVal() - 135) < -180)
@@ -577,8 +513,10 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 					phiTildeCSVar.setVal(phiCSVar.getVal() - 45);
 			}
 
-			cosThetaHXVar = muPlus_HX.CosTheta();
-			phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
+			// cosThetaHXVar = muPlus_HX.CosTheta();
+			// phiHXVar = muPlus_HX.Phi() * 180 / TMath::Pi();
+			cosThetaHXVar = cosThetaHX_gen;
+			phiHXVar = phiHX_gen;
 
 			if (cosThetaHXVar.getVal() < 0) {
 				// if phi value is smaller than -pi, add 2pi
@@ -621,7 +559,8 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	}
 
 	// const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_noMassCut.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
-	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	// const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_gen.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	// const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_HydjetWeight.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile file(outputFileName, "RECREATE");
