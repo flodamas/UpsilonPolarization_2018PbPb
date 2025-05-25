@@ -40,6 +40,13 @@ void nRecoSpectra() {
         return;
     }
 
+	TGraphErrors* hppXSecGraph = (TGraphErrors*)dir->Get("Graph1D_y1");
+	if (!hppXSecGraph) {
+		std::cerr << "Error: Could not find graph 'Graph1D_y1'!" << std::endl;
+		HEPDataFile->Close();
+		return;
+	}
+
 	for (int i = 0; i < NPtFineBins; i++) {
 		hRawData_absy0to1p2->SetBinContent(i + 1, nSignal1S_absy0to1p2[i]);
 		hRawData_absy0to1p2->SetBinError(i + 1, statSignal1S_absy0to1p2[i]);
@@ -53,7 +60,8 @@ void nRecoSpectra() {
 	hRawData_absy1p2to2p4->Scale(1. / hRawData_absy1p2to2p4->Integral(), "width");
 
 	// MC reco distribution
-	TFile* fileMC = TFile::Open(Form("../Files/Y1SReconstructedMCDataset%s.root", gMuonAccName), "READ");
+	// TFile* fileMC = TFile::Open(Form("../Files/Y1SReconstructedMCDataset%s.root", gMuonAccName), "READ");
+	TFile* fileMC = TFile::Open(Form("../Files/Y1SReconstructedMCDataset%s.root", "_TriggerAcc"), "READ");
 
 	auto* hRecoMC_absy0to1p2 = (TH1D*)fileMC->Get("hReco1S_absy0to1p2");
 
@@ -89,12 +97,13 @@ void nRecoSpectra() {
 	hRawData_absy1p2to2p4->GetYaxis()->SetTitleOffset(1);
 	hRawData_absy1p2to2p4->GetYaxis()->SetTitleSize(0.085);
 	hRawData_absy1p2to2p4->GetYaxis()->SetLabelSize(0.075);
-	// hRawData_absy0to1p2->GetYaxis()->SetRangeUser(0, 0.3);
+	hRawData_absy1p2to2p4->GetYaxis()->SetRangeUser(0, 0.2);
 	hRawData_absy1p2to2p4->Draw("PZ");
 
 	hRecoMC_absy1p2to2p4->Draw("SAME PZ");
 
 	// hppXSec->Draw("SAME P");
+	// hppXSecGraph->Draw("SAME P");
 	// few cosmetics
 
 	TPaveText* header = new TPaveText(.3, .85, .9, .75, "NDCNB");
