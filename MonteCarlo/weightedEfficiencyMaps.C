@@ -376,7 +376,6 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 			if (gen_QQ_LV->Pt() > gPtMax) continue;
 
 			// single-muon acceptance
-
 			// positive muon first
 			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
@@ -386,11 +385,6 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
 			if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
-
-			// go to reco level
-			Int_t iReco = Gen_QQ_whichRec[iGen];
-
-			if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
 
 			// pt Weight at gen level
 			double gen_QQ_pt = gen_QQ_LV->Pt();
@@ -430,7 +424,23 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 			} else {
 				phiHX_gen = muPlus_HX_gen.Phi() * 180 / TMath::Pi();
 			}			
+
+			// polarization weights at gen level
+			if (isPhiFolded == kTRUE) {
+				weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS_gen.Theta()), 2) * std::cos(2 * fabs(muPlus_CS_gen.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS_gen.Theta()) * std::cos(fabs(muPlus_CS_gen.Phi()));
+				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX_gen.Theta()), 2) * std::cos(2 * fabs(muPlus_HX_gen.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX_gen.Theta()) * std::cos(fabs(muPlus_HX_gen.Phi()));
+			}
+
+			else {
+				weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS_gen.Theta()), 2) * std::cos(2 * muPlus_CS_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS_gen.Theta()) * std::cos(muPlus_CS_gen.Phi());
+				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX_gen.Theta()), 2) * std::cos(2 * muPlus_HX_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX_gen.Theta()) * std::cos(muPlus_HX_gen.Phi());
+			}
 			
+			/// go to reco level (numerator)
+			Int_t iReco = Gen_QQ_whichRec[iGen];
+
+			if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs			
+
 			/// all the reconstructed upsilons must pass the conditions below!
 
 			isRecoMatched = iReco > -1;
@@ -439,7 +449,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				recoLorentzVector = (TLorentzVector*)CloneArr_QQ->At(iReco);
 				double reco_QQ_pt = recoLorentzVector->Pt();
 
-				// dimuonPtWeight = Get_RecoPtWeight(recoLorentzVector->Rapidity(), reco_QQ_pt);
+				// dimuonPtWeight = Get_RecoPtWeight(recoLorentzVector->Rapidity(), reco_QQ_pt); // pt Weight at reco level
 
 				dimuonMatching = (Reco_QQ_trig[iReco] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1));
 
@@ -449,7 +459,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				int iMuPlus = Reco_QQ_mupl_idx[iReco];
 				int iMuMinus = Reco_QQ_mumi_idx[iReco];
 
-				// HLT filters
+				/// HLT filters
 				bool mupl_L2Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, gL2FilterBit))) == ((ULong64_t)pow(2, gL2FilterBit)));
 				bool mupl_L3Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, gL3FilterBit))) == ((ULong64_t)pow(2, gL3FilterBit)));
 				bool mumi_L2Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, gL2FilterBit))) == ((ULong64_t)pow(2, gL2FilterBit)));
@@ -466,7 +476,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				/// numerator for the efficiency
 				allGood = firesTrigger && isRecoMatched && dimuonMatching && goodVertexProba && passHLTFilterMuons && trackerAndGlobalMuons && hybridSoftMuons;
 
-				// get muon coordinates
+				// get muon coordinates at reco level
 				TLorentzVector* Reco_mupl_LV = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
 				double Reco_mupl_eta = Reco_mupl_LV->Eta();
 				double Reco_mupl_pt = Reco_mupl_LV->Pt();
@@ -520,7 +530,6 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				// }
 
 				/// muon scale factors
-
 				// muon trigger SF is tricky, need to know which muon passed which trigger filter
 				bool mupl_isL2 = (mupl_L2Filter && !mupl_L3Filter);
 				bool mupl_isL3 = (mupl_L2Filter && mupl_L3Filter);
@@ -575,16 +584,6 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				// dimuon efficiency weight = product of the total scale factors
 				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
-
-				if (isPhiFolded == kTRUE) {
-					weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS_gen.Theta()), 2) * std::cos(2 * fabs(muPlus_CS_gen.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_CS_gen.Theta()) * std::cos(fabs(muPlus_CS_gen.Phi()));
-					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX_gen.Theta()), 2) * std::cos(2 * fabs(muPlus_HX_gen.Phi())) + lambdaThetaPhi * std::sin(2 * muPlus_HX_gen.Theta()) * std::cos(fabs(muPlus_HX_gen.Phi()));
-				}
-
-				else {
-					weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS_gen.Theta()), 2) * std::cos(2 * muPlus_CS_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS_gen.Theta()) * std::cos(muPlus_CS_gen.Phi());
-					weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX_gen.Theta()), 2) * std::cos(2 * muPlus_HX_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX_gen.Theta()) * std::cos(muPlus_HX_gen.Phi());
-				}
 
 				// total weight
 				totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
@@ -847,10 +846,13 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 				// cout << endl;
 			}
+			// efficiency denominator
 			else {
-				totalWeightLab = eventWeight * dimuonPtWeight * 1.;
-				totalWeightCS = eventWeight * dimuonPtWeight * 1. * weightCS;
-				totalWeightHX = eventWeight * dimuonPtWeight * 1. * weightHX;
+				dimuWeight_nominal = 1.;
+
+				totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
+				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
 
 				allGood = 0;
 
