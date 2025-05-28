@@ -97,6 +97,13 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	RooRealVar eventWeightCSVar("eventWeightCS", "event-by-event weight (Ncoll x MC gen weight x reco pT reweighting x muon scale factors x polarization in CS)", 0, 100000);
 	RooRealVar eventWeightHXVar("eventWeightHX", "event-by-event weight (Ncoll x MC gen weight x reco pT reweighting x muon scale factors x polarization in HX)", 0, 100000);
 
+	// Add these new RooRealVars above dataset definition
+	RooRealVar errorWeightDownCSVar("errorWeightDownCS", "Downward error on event weight in CS", 0, 100000);
+	RooRealVar errorWeightUpCSVar("errorWeightUpCS", "Upward error on event weight in CS", 0, 100000);
+
+	RooRealVar errorWeightDownHXVar("errorWeightDownHX", "Downward error on event weight in HX", 0, 100000);
+	RooRealVar errorWeightUpHXVar("errorWeightUpHX", "Upward error on event weight in HX", 0, 100000);
+
 	Float_t lowMassCut = 8.8, highMassCut = 10.2;
 	RooRealVar massVar("mass", gMassVarTitle, lowMassCut, highMassCut, gMassUnit);
 	RooRealVar yVar("rapidity", gDimuonRapidityVarTitle, 0, 2.4);
@@ -133,8 +140,8 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 	lambdaThetaPhiVar.setVal(lambdaThetaPhi);
 	lambdaThetaPhiVar.setConstant(kTRUE);
 
-	RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar(eventWeightCSVar), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
-	RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar(eventWeightHXVar), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
+	RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, errorWeightDownCSVar, errorWeightUpCSVar), RooFit::WeightVar(eventWeightCSVar), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
+	RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, errorWeightDownHXVar, errorWeightUpHXVar), RooFit::WeightVar(eventWeightHXVar), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
 
 	// RooDataSet datasetCS("MCdatasetCS", "skimmed MC dataset in CS", RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightCS"), RooFit::StoreAsymError(RooArgSet(eventWeightCSVar)));
 	// RooDataSet datasetHX("MCdatasetHX", "skimmed MC dataset in HX", RooArgSet(centVar, eventWeightHXVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), RooFit::WeightVar("eventWeightHX"), RooFit::StoreAsymError(RooArgSet(eventWeightHXVar)));
@@ -476,9 +483,14 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 			eventWeightCSVar.setAsymError(errorWeightDownCS, errorWeightUpCS);
 			eventWeightHXVar.setAsymError(errorWeightDownHX, errorWeightUpHX);
 
+			errorWeightDownCSVar.setVal(errorWeightDownCS);
+			errorWeightUpCSVar.setVal(errorWeightUpCS);
+			errorWeightDownHXVar.setVal(errorWeightDownHX);
+			errorWeightUpHXVar.setVal(errorWeightUpHX);
+			
 			massVar = Reco_QQ_4mom->M();
 			yVar = fabs(Reco_QQ_4mom->Rapidity());
-			ptVar = Reco_QQ_4mom->Pt();
+			ptVar = gen_QQ_LV->Pt();
 
 			// cosThetaLabVar = Reco_mupl_4mom->CosTheta();
 			// phiLabVar = Reco_mupl_4mom->Phi() * 180 / TMath::Pi();
@@ -534,8 +546,8 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 					phiTildeHXVar.setVal(phiHXVar.getVal() - 45);
 			}
 
-			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), eventWeightCSVar.getVal(), errorWeightDownCS, errorWeightUpCS);
-			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), eventWeightHXVar.getVal(), errorWeightDownHX, errorWeightUpHX);
+			datasetCS.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, errorWeightDownCSVar, errorWeightUpCSVar), eventWeightCSVar.getVal(), errorWeightDownCS, errorWeightUpCS);
+			datasetHX.add(RooArgSet(centVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar, errorWeightDownHXVar, errorWeightUpHXVar), eventWeightHXVar.getVal(), errorWeightDownHX, errorWeightUpHX);
 			//	datasetCS.Print();
 
 			// datasetCS.add(RooArgSet(centVar, eventWeightCSVar, massVar, yVar, ptVar, cosThetaLabVar, phiLabVar, etaLabMuplVar, etaLabMumiVar, cosThetaCSVar, phiCSVar, phiTildeCSVar, cosThetaHXVar, phiHXVar, phiTildeHXVar), totalWeightCS, errorWeightDown, errorWeightUp);

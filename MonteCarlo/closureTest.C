@@ -356,15 +356,19 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	TH3D* systEff;
 	
 	if (!applyEff) {
+		/// apply underlying polarization parameters to only acceptance
 		accMap = getAcceptance3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
     	effMap = getEfficiency3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
 		systEff = getSysEff3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
 	}
 	
 	else {
+		/// apply underlying polarization parameters to only efficiency
 		// accMap = getAcceptance3DMap(refFrameName.Data(), 0, 0, 0, isPhiFolded);
 		// effMap = getEfficiency3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
     	// systEff = getSysEff3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
+
+		/// apply underlying polarization parameters to both acceptance and efficiency maps
 		accMap = getAcceptance3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
     	effMap = getEfficiency3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
 		systEff = getSysEff3DMap(refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
@@ -385,7 +389,7 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 	TH2D* hRatioCosThetaPhi = (TH2D*)hTotalCosThetaPhiAcc->Clone("hRatioCosThetaPhi");
 
-	hRatioCosThetaPhi->Divide(hPassedCosThetaPhiAcc, hTotalCosThetaPhiEff, 1, 1, "B");
+	hRatioCosThetaPhi->Divide(hPassedCosThetaPhiAcc, hTotalCosThetaPhiEff, 1, 1);
 	
 	/// draw acceptance and efficiency graph for check
 	TCanvas* accCanvas = nullptr;
@@ -406,22 +410,22 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	else {
 		accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 		effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-       
+        
+		ratioCanvas = draw2DMap(hRatioCosThetaPhi, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+		display2DMapContents(hRatioCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE, 0.04, kBlack, 4);
+
 		// accTotalCanvas = draw2DMap(hTotalCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
         // display2DMapContents(hTotalCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
        
-        // accPassedCanvas = draw2DMap(hPassedCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-        // display2DMapContents(hPassedCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
+        accPassedCanvas = draw2DMap(hPassedCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+        display2DMapContents(hPassedCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
         
-        // effTotalCanvas = draw2DMap(hTotalCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-        // display2DMapContents(hTotalCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
+        effTotalCanvas = draw2DMap(hTotalCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+        display2DMapContents(hTotalCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
 
-        // effPassedCanvas = draw2DMap(hPassedCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-        // display2DMapContents(hPassedCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
+        effPassedCanvas = draw2DMap(hPassedCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+        display2DMapContents(hPassedCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
 
-        ratioCanvas = draw2DMap(hRatioCosThetaPhi, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-        display2DMapContents(hRatioCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE);
-        
         // accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
         // effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, 0, 0, 0);
 	}
@@ -448,31 +452,52 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 			cout << "acceptance: " << acceptance << endl;
 			cout << "efficiency: " << efficiency << endl;
 
+			double relEffUncHigh = 0;
+			double relEffUncLow = 0;
+
+			double relAccUncHigh = 0;
+			double relAccUncLow = 0;
+
 			/// calculate weight
 			/// apply both eff and acc
 			if (applyAcc && applyEff) {
-				if (acceptance == 0 || efficiency == 0)
+				if (acceptance == 0 || efficiency == 0) {
 					weight = 0.;
-				else
+					relEffUncHigh = 0.;
+					relAccUncHigh = 0.;
+				}
+
+				else {
 					// weight = 1. / (acceptance * efficiency);
 					weight = 1. / (acceptance * efficiency) * residual;
-					// weight = 1. / (acceptance * efficiency * residual);
+
+					relEffUncHigh = effMapCosThetaPhi->GetEfficiencyErrorUp(iGlobalBin) / efficiency;
+					relAccUncHigh = accMapCosThetaPhi->GetEfficiencyErrorUp(iGlobalBin) / acceptance;
+				}
 			}
 
 			/// apply only eff
 			else if (!applyAcc && applyEff) {
-				if (efficiency == 0)
+				if (efficiency == 0) {
 					weight = 0.;
-				else
+					relEffUncHigh = 0.;
+				}
+				else {
 					weight = 1. / (efficiency);
+					relEffUncHigh = effMapCosThetaPhi->GetEfficiencyErrorUp(iGlobalBin) / efficiency;
+				}
 			}
 
 			/// apply only acc
 			else if (applyAcc && !applyEff) {
-				if (acceptance == 0)
+				if (acceptance == 0) {
 					weight = 0.;
-				else
+					relAccUncHigh = 0.;
+				}
+				else {
 					weight = 1. / (acceptance);
+					relAccUncHigh = accMapCosThetaPhi->GetEfficiencyErrorUp(iGlobalBin) / acceptance;
+				}
 			}
 
 			/// no detector effects
@@ -481,14 +506,8 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 			// weightMap->SetBinContent(iCosTheta + 1, iPhi + 1, weight);
 
-			// // propagate both scale factor uncertainties and efficiency stat errors to the weight
+			// propagate both scale factor uncertainties and efficiency stat errors to the weight
 			// double relSystUnc = systEff->GetBinContent(iCosTheta + 1, iPhi + 1) / efficiency;
-
-			// double relEffUncHigh = effMap->GetEfficiencyErrorUp(iGlobalBin) / efficiency;
-			// double relEffUncLow = effMap->GetEfficiencyErrorLow(iGlobalBin) / efficiency;
-
-			// double relAccUncHigh = accMap->GetEfficiencyErrorUp(iGlobalBin) / acceptance;
-			// double relAccUncLow = accMap->GetEfficiencyErrorLow(iGlobalBin) / acceptance;
 
 			// totalRelUncHigh = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncHigh), relAccUncHigh);
 			// totalRelUncLow = TMath::Hypot(TMath::Hypot(relSystUnc, relEffUncLow), relAccUncLow);
@@ -498,6 +517,10 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 			// totalUncHigh = totalRelUncHigh * efficiency * acceptance;
 			// totalUncLow = totalRelUncLow * efficiency * acceptance;
+
+			// full relative uncertainty on weight
+			double relWeightUnc = TMath::Hypot(relAccUncHigh, relEffUncHigh);
+			double deltaW = weight * relWeightUnc;
 
 			double recoMCVal = polarizedHist->GetBinContent(iCosTheta + 1, iPhi + 1);
 
@@ -509,6 +532,22 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 			cout << "recoMCVal: " << recoMCVal << endl;
 			cout << "recoMCUnc: " << recoMCUnc << endl;
 
+			// now propagate both sources of uncertainty:
+			double totalError = TMath::Sqrt(pow(weight * recoMCUnc, 2) + pow(recoMCVal * deltaW, 2)); // error from acc × eff)
+
+			cout << "weight: " << weight << endl;
+			cout << "relEffUncHigh: " << relEffUncHigh << endl;
+			cout << "relEffUncLow: " << relEffUncLow << endl;
+			cout << "relAccUncHigh: " << relAccUncHigh << endl;
+			cout << "relAccUncLow: " << relAccUncLow << endl;
+			cout << "relWeightUnc: " << relWeightUnc << endl;
+			cout << "deltaW: " << deltaW << endl;
+			cout << "residualVal: " << residualVal << endl;
+			cout << "residualUnc: " << residualUnc << endl;
+			cout << "recoMCUnc: " << recoMCUnc << endl;
+			cout << "recoMCVal: " << recoMCVal << endl;
+
+			cout << "totalError: " << totalError << endl;
 			/// set the bin contents reflecting weights
 			/// yield with acceptance x efficiency correction
 			correctedHist->SetBinContent(iCosTheta + 1, iPhi + 1, recoMCVal * weight);
@@ -516,7 +555,8 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 			// standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 
-			correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, recoMCUnc * weight);
+			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, recoMCUnc * weight);
+			correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, totalError);
 			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(recoMCUnc / recoMCVal, totalRelUncHigh));
 			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, residualUnc);
 
@@ -537,7 +577,7 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 	if (drawPlot) {
 		TCanvas* correctedCanvas = draw2DMap(correctedHist, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, kFALSE);
-		display2DMapContents(correctedHist, nCosThetaBins, nPhiBins, kFALSE);
+		display2DMapContents(correctedHist, nCosThetaBins, nPhiBins, kFALSE, 0.035, kWhite, 0);
 
 		/// Styles of the texts in the plot
 		TLatex* legend1 = new TLatex();
@@ -590,7 +630,8 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 
 	/// read the input MC file
 
-	const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_noMassCut.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	// const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_noMassCut.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_gen.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	// const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_HydjetWeight.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* infile = TFile::Open(Form("../Files/%s", inputFileName), "READ");
@@ -652,18 +693,19 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 		Double_t phiVal = ((RooRealVar*)iRooArgSet->find(PhiVarName(refFrameName.Data())))->getVal();
 		// Double_t phiTildeVal = ((RooRealVar*) iRooArgSet->find(PhiTildeVarName(refFrameName.Data())))->getVal();
 
-		/// get the weight
+		/// get the weight and its errors
 		Double_t weight = reducedDataset.weight(); // weight = nColl * Gen_weight * dimuonPtWeight * dimuWeight_nominal * polarWeight
-		// Double_t weightErrorUp = dynamic_cast<RooRealVar*> (iRooArgSet->find(Form("eventWeight%s", refFrameName.Data())))->getErrorHi();
-		// Double_t weightErrorDown = ((RooRealVar*) iRooArgSet->find("errorWeightDown"))->getVal();
+
+		double weightErrorUp = ((RooRealVar*)iRooArgSet->find(Form("errorWeightUp%s", refFrameName.Data())))->getVal();
+		double weightErrorDown = ((RooRealVar*)iRooArgSet->find(Form("errorWeightUp%s", refFrameName.Data())))->getVal();
 
 		/// get the bin numbers
 		Int_t iCosTheta = angDistHist2D->GetXaxis()->FindBin(cosThetaVal);
 		Int_t iPhi = angDistHist2D->GetYaxis()->FindBin(phiVal);
 
 		/// calculate the total errors on the weights
-		// tempErrorUp[iCosTheta - 1][iPhi - 1] = TMath::Hypot(tempErrorUp[iCosTheta - 1][iPhi - 1], weightErrorUp);
-		// tempErrorDown[iCosTheta - 1][iPhi - 1] = TMath::Hypot(tempErrorDown[iCosTheta - 1][iPhi - 1], weightErrorDown);
+		tempErrorUp[iCosTheta - 1][iPhi - 1] = TMath::Hypot(tempErrorUp[iCosTheta - 1][iPhi - 1], weightErrorUp);
+		tempErrorDown[iCosTheta - 1][iPhi - 1] = TMath::Hypot(tempErrorDown[iCosTheta - 1][iPhi - 1], weightErrorDown);
 
 		/// print out the values
 		// cout << "weight: " << weight << endl;
@@ -684,19 +726,19 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 
 		/// fill the histogram
 		angDistHist2D->Fill(cosThetaVal, phiVal, weight);
+		// angDistHist2D->SetBinError(iCosTheta, iPhi, tempErrorUp[iCosTheta - 1][iPhi - 1]);
 		// generalPolarTildeHist->Fill(cosThetaVal, phiTildeVal, weight);
 	}
 
-	// /// fill the error histogram
-	// for (int iCosTheta = 1; iCosTheta <= nCosThetaBins; iCosTheta++) {
-	// 	for (int iPhi = 1; iPhi <= nPhiBins; iPhi++) {
-	// errorHist->SetBinContent(iCosTheta, iPhi, tempErrorUp[iCosTheta - 1][iPhi - 1]);
-
-	// angDistHist2D->SetBinError(iCosTheta, iPhi, tempErrorUp[iCosTheta - 1][iPhi - 1]);
-	// cout << "BinError: " << angDistHist2D->GetBinError(iCosTheta, iPhi) << endl;
-	// cout << "BinValue: " << angDistHist2D->GetBinContent(iCosTheta, iPhi) << endl;
-	// 	}
-	// }
+	/// fill the error histogram
+	for (int iCosTheta = 1; iCosTheta <= nCosThetaBins; iCosTheta++) {
+		for (int iPhi = 1; iPhi <= nPhiBins; iPhi++) {
+			angDistHist2D->SetBinError(iCosTheta, iPhi, tempErrorUp[iCosTheta - 1][iPhi - 1]);
+			// cout << "Bin: (" << iCosTheta << ", " << iPhi << ")" << endl;
+			// cout << "BinError: " << angDistHist2D->GetBinError(iCosTheta, iPhi) << endl;
+			// cout << "BinValue: " << angDistHist2D->GetBinContent(iCosTheta, iPhi) << endl;
+		}
+	}
 
 	/// draw polarized MC histogram
 	draw2DMap(angDistHist2D, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
@@ -925,6 +967,7 @@ void closureTest(TString refFrameName = "CS",
 
 	/// place holder of the polarization parameters before and after iterations
 	vector<double> lambdaThetaArr, lambdaPhiArr, lambdaThetaPhiArr, lambdaTildeArr, numItrArr;
+	vector<double> lambdaThetaErrArr, lambdaPhiErrArr, lambdaThetaPhiErrArr, lambdaTildeErrArr, xErrArr;
 
 	/// set the initial values of the polarization parameters for acceptance and efficiency correction
 	lambdaThetaArr.push_back(lambdaTheta->getVal());
@@ -932,6 +975,13 @@ void closureTest(TString refFrameName = "CS",
 	lambdaThetaPhiArr.push_back(lambdaThetaPhi->getVal());
 	lambdaTildeArr.push_back(lambdaTilde->getVal());
 	numItrArr.push_back(-1);
+
+	lambdaThetaErrArr.push_back(lambdaTheta->getError());
+	lambdaPhiErrArr.push_back(lambdaPhi->getError());
+	lambdaThetaPhiErrArr.push_back(lambdaThetaPhi->getError());
+	lambdaTildeErrArr.push_back(lambdaTilde->getError());
+	
+	xErrArr.push_back(0.);
 
 	// cout << "lambdaTheta arr size: " << lambdaThetaArr.size() << endl;
 	// cout << lambdaThetaArr[0] << ", " << lambdaThetaArr[1] << endl;
@@ -980,6 +1030,13 @@ void closureTest(TString refFrameName = "CS",
 
 		numItrArr.push_back(iItr);
 
+		lambdaThetaErrArr.push_back(lambdaTheta->getError());
+		lambdaPhiErrArr.push_back(lambdaPhi->getError());
+		lambdaThetaPhiErrArr.push_back(lambdaThetaPhi->getError());
+		lambdaTildeErrArr.push_back(lambdaTilde->getError());
+	
+		xErrArr.push_back(0.);
+
 		// cout << "lambdaTheta arr size: " << lambdaThetaArr.size() << endl;
 		// cout << lambdaThetaArr[0] << ", " << lambdaThetaArr[1] << endl;
 		// cout << "lambdaPhi arr size: " << lambdaPhiArr.size() << endl;
@@ -999,7 +1056,7 @@ void closureTest(TString refFrameName = "CS",
 			// cout << "lambdaPhi diff: " << lambdaPhiArr[iItr] << ", " << fabs(lambdaPhiArr[iItr + 1] - lambdaPhiArr[iItr]) << endl;
 			// cout << "lambdaThetaPhi diff: " << lambdaThetaPhiArr[iItr] << ", " << fabs(lambdaThetaPhiArr[iItr + 1] - lambdaThetaPhiArr[iItr]) << endl;
 
-			break;
+			// break;
 		}
 
 		nItrs++;
@@ -1011,7 +1068,7 @@ void closureTest(TString refFrameName = "CS",
 	iterCanvas->SetRightMargin(0.05);
 	iterCanvas->cd();
 
-	TGraph* lambdaThetaGraph = new TGraph(lambdaThetaArr.size(), numItrArr.data(), lambdaThetaArr.data());
+	TGraphErrors* lambdaThetaGraph = new TGraphErrors(lambdaThetaArr.size(), numItrArr.data(), lambdaThetaArr.data(), xErrArr.data(), lambdaThetaErrArr.data());
 	lambdaThetaGraph->SetTitle("; Number of Iterations; Polarization Parameter Values");
 	lambdaThetaGraph->GetXaxis()->CenterTitle();
 	lambdaThetaGraph->GetYaxis()->CenterTitle();
@@ -1019,7 +1076,7 @@ void closureTest(TString refFrameName = "CS",
 	lambdaThetaGraph->SetMarkerColor((TColor::GetColor("#FF1F5B")));
 	lambdaThetaGraph->SetLineColor((TColor::GetColor("#FF1F5B")));
 	lambdaThetaGraph->SetLineWidth(2);
-	lambdaThetaGraph->SetMarkerSize(1.5);
+	lambdaThetaGraph->SetMarkerSize(1);
 	lambdaThetaGraph->SetMinimum(-1.2);
 	lambdaThetaGraph->SetMaximum(1.5);
 
@@ -1028,20 +1085,20 @@ void closureTest(TString refFrameName = "CS",
 	lambdaThetaGraph->GetXaxis()->SetNdivisions(nItrs + 2);
 	lambdaThetaGraph->Draw("APL");
 
-	TGraph* lambdaPhiGraph = new TGraph(lambdaPhiArr.size(), numItrArr.data(), lambdaPhiArr.data());
+	TGraphErrors* lambdaPhiGraph = new TGraphErrors(lambdaPhiArr.size(), numItrArr.data(), lambdaPhiArr.data(), xErrArr.data(), lambdaPhiErrArr.data());
 	lambdaPhiGraph->SetMarkerStyle(20);
 	lambdaPhiGraph->SetMarkerColor(TColor::GetColor("#009ADE"));
 	lambdaPhiGraph->SetLineColor(TColor::GetColor("#009ADE"));
 	lambdaPhiGraph->SetLineWidth(2);
-	lambdaPhiGraph->SetMarkerSize(1.5);
+	lambdaPhiGraph->SetMarkerSize(1);
 	lambdaPhiGraph->Draw("PL same");
 
-	TGraph* lambdaThetaPhiGraph = new TGraph(lambdaThetaPhiArr.size(), numItrArr.data(), lambdaThetaPhiArr.data());
+	TGraphErrors* lambdaThetaPhiGraph = new TGraphErrors(lambdaThetaPhiArr.size(), numItrArr.data(), lambdaThetaPhiArr.data(), xErrArr.data(), lambdaThetaPhiErrArr.data());
 	lambdaThetaPhiGraph->SetMarkerStyle(20);
 	lambdaThetaPhiGraph->SetMarkerColor(TColor::GetColor("#bababa"));
 	lambdaThetaPhiGraph->SetLineColor(TColor::GetColor("#bababa"));
 	lambdaThetaPhiGraph->SetLineWidth(2);
-	lambdaThetaPhiGraph->SetMarkerSize(1.5);
+	lambdaThetaPhiGraph->SetMarkerSize(1);
 	lambdaThetaPhiGraph->Draw("PL same");
 
 	if (nItrs == 0) {
@@ -1052,10 +1109,11 @@ void closureTest(TString refFrameName = "CS",
 	}
 
 	else {
-		drawLine(-1.57, 0, nItrs * 1.12, 0);
-		drawLine(-1.57, lambdaTheta0, nItrs * 1.12, lambdaTheta0);
-		drawLine(-1.57, lambdaPhi0, nItrs * 1.12, lambdaPhi0);
-		drawLine(-1.57, lambdaThetaPhi0, nItrs * 1.12, lambdaThetaPhi0);
+		cout << "nItrs: " << nItrs << endl;
+		drawLine(-1.57, 0, (nItrs - 1) * 1.1, 0);
+		drawLine(-1.57, lambdaTheta0, (nItrs - 1) * 1.1, lambdaTheta0);
+		drawLine(-1.57, lambdaPhi0, (nItrs - 1) * 1.1, lambdaPhi0);
+		drawLine(-1.57, lambdaThetaPhi0, (nItrs - 1) * 1.1, lambdaThetaPhi0);
 	}
 
 	TLegend* legend = new TLegend(0.16, 0.78, 0.46, 0.91);
