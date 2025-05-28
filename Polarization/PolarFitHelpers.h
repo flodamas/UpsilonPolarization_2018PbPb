@@ -230,6 +230,7 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 
 TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1, Bool_t isPhiFolded = kTRUE) {
 	TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 680, 600);
+	// TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 700, 600);
 
 	// SetColorPalette(gPreferredColorPaletteName);
 	SetColorPalette("TamDragon");
@@ -276,9 +277,11 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 	}
 
 	else {
+		// map2DCanvas->SetRightMargin(0.22);
 		map2DCanvas->SetRightMargin(0.18);
 
-		gStyle->SetPadRightMargin(0.2);
+		// gStyle->SetPadRightMargin(0.22);
+		map2DCanvas->SetRightMargin(0.2);
 
 		gPad->Modified();
 		gPad->Update();
@@ -309,6 +312,10 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		frameHist->SetStats(0);
 
 		if (!isRange0to1)
+			/// set the z-axis range from the minimum value to the maximum value of the map
+			// frameHist->GetZaxis()->SetRangeUser(mapCosThetaPhi->GetMinimum(), mapCosThetaPhi->GetMaximum());
+			
+			/// set the z-axis range from 0 to the maximum value of the map
 			frameHist->GetZaxis()->SetRangeUser(0, mapCosThetaPhi->GetMaximum());
 		else
 			frameHist->GetZaxis()->SetRangeUser(0, 1);
@@ -324,7 +331,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 }
 
 // display the uncertainties signal extraction yield on each bin of 2D yield map
-void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6, Bool_t displayError = kFALSE) {
+void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t nPhiBins = 6, Bool_t displayError = kFALSE, double textSize = 0.04, Color_t textColor = kWhite, Int_t desimalPlaces = 0) {
 	if (!mapCosThetaPhi) {
 		std::cout << "no 2D map found!!!" << std::endl;
 		exit(1);
@@ -344,15 +351,27 @@ void display2DMapContents(TH2D* mapCosThetaPhi, Int_t nCosThetaBins = 10, Int_t 
 
 			// Create a TLatex object to write the signal extraction yield uncertainties on each bin
 			TLatex latex;
-			latex.SetTextSize(0.04); // Adjust text size as needed
+			latex.SetTextSize(textSize); // Adjust text size as needed
 			latex.SetTextAlign(22);  // Center alignment
-			latex.SetTextColor(kWhite);
+			latex.SetTextColor(textColor);
 
 			if (displayError)
 				latex.DrawLatex(x, y, Form("%.1f%%", binUnc / binVal * 100));
 
-			else
+			else if (desimalPlaces == 0)
 				latex.DrawLatex(x, y, Form("%.0f", binVal));
+			else if (desimalPlaces == 1)
+				latex.DrawLatex(x, y, Form("%.1f", binVal));
+			else if (desimalPlaces == 2)
+				latex.DrawLatex(x, y, Form("%.2f", binVal));
+			else if (desimalPlaces == 3)
+				latex.DrawLatex(x, y, Form("%.3f", binVal));
+			else if (desimalPlaces == 4)
+				latex.DrawLatex(x, y, Form("%.4f", binVal));
+			else {
+				std::cerr << "Error: Invalid number of desimal places specified!" << std::endl;
+				exit(1);
+			}
 		}
 	}
 }

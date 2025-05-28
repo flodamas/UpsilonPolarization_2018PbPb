@@ -440,11 +440,14 @@ void draw2DGenRecoResolution() {
 
 		/// draw ratio histograms CS
 		ratioCosThetaPhiCanvasCS[iPtBin] = draw2DMap(ratioCosThetaPhiHistCS[iPtBin], "CS", NCosThetaBins, cosThetaEdges, NFullPhiBins, phiEdges, kFALSE, kFALSE, 1, kFALSE);
-		display2DMapContents(ratioCosThetaPhiHistCS[iPtBin], NCosThetaBins, NFullPhiBins, kFALSE);
+		display2DMapContents(ratioCosThetaPhiHistCS[iPtBin], NCosThetaBins, NFullPhiBins, kFALSE, 0.04, kWhite, 2);
 
-		ratioCosThetaPhiHistCS[iPtBin]->GetZaxis()->SetTitleOffset(1.2);
+		ratioCosThetaPhiHistCS[iPtBin]->GetZaxis()->SetTitleOffset(1.6);
 		ratioCosThetaPhiHistCS[iPtBin]->GetZaxis()->SetTitleSize(0.05);
 		ratioCosThetaPhiHistCS[iPtBin]->GetZaxis()->SetTitle("#varUpsilon(1S) N_{RECO} / N_{GEN}");
+
+		// ratioCosThetaPhiCanvasCS[iPtBin]->SetRightMargin(0.20);
+		// gStyle->SetPadRightMargin(0.2);
 
 		TPaveText* kinematicsTextCS = KinematicsText_v2(gCentralityBinMin, gCentralityBinMax, (int)gPtBinning[iPtBin], (int)gPtBinning[iPtBin + 1]);  // (HX, 2to6, -0.42to-0.14,
 		kinematicsTextCS->Draw();
@@ -454,12 +457,16 @@ void draw2DGenRecoResolution() {
 
 		/// draw ratio histograms HX
 		ratioCosThetaPhiCanvasHX[iPtBin] = draw2DMap(ratioCosThetaPhiHistHX[iPtBin], "HX", NCosThetaBins, cosThetaEdges, NFullPhiBins, phiEdges, kFALSE, kFALSE, 1, kFALSE);
-		display2DMapContents(ratioCosThetaPhiHistHX[iPtBin], NCosThetaBins, NFullPhiBins, kFALSE);
+		display2DMapContents(ratioCosThetaPhiHistHX[iPtBin], NCosThetaBins, NFullPhiBins, kFALSE, 0.04, kWhite, 2);
 		
-		ratioCosThetaPhiHistHX[iPtBin]->GetZaxis()->SetTitleOffset(1.2);
+		ratioCosThetaPhiHistHX[iPtBin]->GetZaxis()->SetTitleOffset(1.8);
 		ratioCosThetaPhiHistHX[iPtBin]->GetZaxis()->SetTitleSize(0.05);
 		ratioCosThetaPhiHistHX[iPtBin]->GetZaxis()->SetTitle("#varUpsilon(1S) N_{RECO} / N_{GEN}");
 		
+		// ratioCosThetaPhiCanvasHX[iPtBin]->SetRightMargin(0.20);
+
+		// gStyle->SetPadRightMargin(0.2);
+
 		TPaveText* kinematicsTextHX = KinematicsText_v2(gCentralityBinMin, gCentralityBinMax, (int)gPtBinning[iPtBin], (int)gPtBinning[iPtBin + 1]);  // (HX, 2to6, -0.42to-0.14,
 		kinematicsTextHX->Draw();
 
