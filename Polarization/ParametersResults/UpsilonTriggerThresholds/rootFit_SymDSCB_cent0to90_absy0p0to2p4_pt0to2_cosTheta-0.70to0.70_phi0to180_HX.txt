@@ -1,4 +1,4 @@
-lambdaTheta =  0.70480 +/- 0.33171 L(-2 - 2) 
-lambdaPhi = -0.125367 +/- 0.051589 L(-2 - 2) 
-lambdaThetaPhi = -0.110137 +/- 0.094601 L(-2 - 2) 
-lambdaTilde =  0.29208 +/- 0.13233 L(-2 - 2) 
+lambdaTheta =  1.1485 +/- 0.37118 L(-2 - 2) 
+lambdaPhi = -0.122218 +/- 0.052765 L(-2 - 2) 
+lambdaThetaPhi = -0.118564 +/- 0.10030 L(-2 - 2) 
+lambdaTilde =  0.69668 +/- 0.11807 L(-2 - 2) 
