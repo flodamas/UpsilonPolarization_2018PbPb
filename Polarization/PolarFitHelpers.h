@@ -237,6 +237,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 
 	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
 
+	// TH2D* frameHist = new TH2D(Form("%sframeHist", mapCosThetaPhi->GetName()), " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * 2);
 	TH2D* frameHist = new TH2D(Form("%sframeHist", mapCosThetaPhi->GetName()), " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
 
 	if (LEGO) {
@@ -297,6 +298,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 			frameHist->SetYTitle(Form("#varphi_{%s} (#circ)", refFrameName));
 
 		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+		// frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 2));
 		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
 
 		// /// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 18 bins from -180 to 180)
@@ -319,6 +321,8 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 			frameHist->GetZaxis()->SetRangeUser(0, mapCosThetaPhi->GetMaximum());
 		else
 			frameHist->GetZaxis()->SetRangeUser(0, 1);
+
+		gPad->RedrawAxis();
 	}
 
 	// CMS_lumi(map2DCanvas, gCMSLumiText);
