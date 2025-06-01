@@ -105,9 +105,9 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 			if (isAccCut) {
 				// single-muon acceptance
 
-				if (!MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName)) continue;
+				if (!MuonKinematicsWithinLimits(*gen_mupl_LV, accName)) continue;
 
-				if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
+				if (!MuonKinematicsWithinLimits(*gen_mumi_LV, accName)) continue;
 			}
 
 			// get positive muon's coordinates in the studied reference frames
@@ -190,7 +190,7 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 	const char* outputFileName;
 
 	if (isAccCut)
-		outputFileName = Form("Y1SGenNoFilterMCDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
+		outputFileName = Form("Y1SGenNoFilterMCDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", accName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	else
 		outputFileName = Form("Y1SGenNoFilterMCDataset_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
