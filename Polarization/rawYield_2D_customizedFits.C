@@ -20,7 +20,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* muonAccName = "UpsilonTriggerThresholds", const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t LEGOplot = kTRUE, const char* defaultBkgShapeName = "ExpTimesErr") { //Chebychev
+void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* muonAccName = "UpsilonTriggerThresholds", const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kTRUE, Bool_t LEGOplot = kTRUE, const char* defaultBkgShapeName = "ExpTimesErr") { //Chebychev
 	writeExtraText = true;                                                                                                                                                                                                                                                                                                                                                                                                   // if extra text
 	extraText = "       Preliminary";
 
@@ -124,25 +124,23 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 	/// polarization weight of the acceptance and efficiency maps (for now all 0)
 	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
 
-	Bool_t isPhiFolded = kTRUE;
-
 	/// get acceptance maps
 	const char* accMapPath = AcceptanceResultsPath(muonAccName);
 
-	TFile* acceptanceFile = openFile(Form("%s/AcceptanceResults%s.root", accMapPath, isPhiFolded ? "" : "_fullPhi"));
+	TFile* acceptanceFile = openFile(Form("%s/AcceptanceResults%s.root", accMapPath, "_fullPhi"));
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
 
 	/// rebin acceptance maps based on costheta, phi, and pT selection
-	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
+	TEfficiency* accMapCosThetaPhi = rebinTEff3DMap(accMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
 
 	/// get efficiency maps
 	const char* effMapPath = EfficiencyResultsPath(muonAccName);
 
-	TFile* efficiencyFile = openFile(Form("%s/EfficiencyResults%s.root", effMapPath, isPhiFolded ? "" : "_fullPhi"));
+	TFile* efficiencyFile = openFile(Form("%s/EfficiencyResults%s.root", effMapPath, "_fullPhi"));
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	/// rebin efficiency maps based on costheta, phi, and pT selection
-	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges);
+	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
 
 	/// get relative systematic uncertainty of efficiency
 	auto* systEff = (TH3D*)efficiencyFile->Get(SystTEfficiency3DName(refFrameName));
@@ -164,7 +162,6 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 	TH2D* hRatioCosThetaPhi = (TH2D*)hTotalCosThetaPhiAcc->Clone("hRatioCosThetaPhi");
 
 	hRatioCosThetaPhi->Divide(hPassedCosThetaPhiAcc, hTotalCosThetaPhiEff, 1, 1, "B");
-
 
 	// define a histogram to draw weight map
 	TH2D* weightMap = new TH2D("weightMap", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
@@ -289,12 +286,12 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 
 	/// draw 1/(acceptance x efficiency) map
 
-	TCanvas* weightCanvas = draw2DMap(weightMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE);
+	TCanvas* weightCanvas = draw2DMap(weightMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
 
 	weightMap->GetZaxis()->SetTitle("1 / (acc x eff)");
 	weightMap->GetZaxis()->SetTitleOffset(0.8);
 
-	display2DMapContents(weightMap, nCosThetaBins, nPhiBins, kFALSE);
+	display2DMapContents(weightMap, nCosThetaBins, nPhiBins, kFALSE, 0.04, kWhite, 2);
 
 	TPaveText* kinematicsText = new TPaveText(0.15, 0.79, 0.77, 0.99, "NDCNB");
 	kinematicsText->SetFillColor(4000);
@@ -330,7 +327,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 		kinematicsText->Draw("SAME");
 
 	else if (!LEGOplot) {
-		// display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE);
+		display2DMapContents(yieldMap, nCosThetaBins, nPhiBins, kTRUE, 0.04, kWhite, 1);
 		// kinematicsText_2D ->Draw("SAME");
 		TLatex legend;
 		legend.SetTextAlign(22);
@@ -376,7 +373,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 		kinematicsText->Draw("SAME");
 
 	else if (!LEGOplot) {
-		// display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kTRUE);
+		display2DMapContents(standardCorrectedMap, nCosThetaBins, nPhiBins, kTRUE, 0.04, kBlack, 1);
 		// kinematicsText_2D->Draw("SAME");
 		TLatex legend;
 		legend.SetTextAlign(22);
@@ -645,9 +642,9 @@ void scanRawYield_2D_customizedFits(const char* refFrameName = "CS") {
 	for (Int_t ptIdx = 0; ptIdx < NPtBins; ptIdx++) {
 		for (Int_t idx = 0; idx < 2; idx++) {
 			if (idx == 0)
-				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], gMuonAccName, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kFALSE, "ExpTimesErr"); // 2D plot
+				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], gMuonAccName, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, kFALSE, "ExpTimesErr"); // 2D plot
 			else
-				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], gMuonAccName, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, "ExpTimesErr"); // LEGO plot + fit
+				rawYield_2D_customizedFits(gPtBinning[ptIdx], gPtBinning[ptIdx + 1], gMuonAccName, refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, kTRUE, kTRUE, "ExpTimesErr"); // LEGO plot + fit
 		}
 	}
 }
