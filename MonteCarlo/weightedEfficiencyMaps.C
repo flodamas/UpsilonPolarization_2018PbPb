@@ -881,7 +881,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 	// instructions can be found here: https://twiki.cern.ch/twiki/pub/CMS/HIMuonTagProbe/TnpHeaderFile.pdf#page=5
 
 	// store the RELATIVE SYSTEMATIC UNCERTAINTIES (not in % though) with respect to the nominal efficiency, more useful at the end
-	const char* path = EfficiencyResultsPath(muonAccName.Data());
+	TString path = EfficiencyResultsPath(muonAccName.Data());
 
 	gSystem->mkdir(path, kTRUE);
 
@@ -908,7 +908,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 	hSystCS3D->GetYaxis()->SetRangeUser(-190, 240);
 
-	canvasCSsyst->SaveAs(Form("%s/RelatSystEff_CS%s.png", path, isPhiFolded ? "" : "_fullPhi"), "RECREATE");
+	canvasCSsyst->SaveAs(Form("%s/RelatSystEff_CS%s.png", path.Data(), isPhiFolded ? "" : "_fullPhi"), "RECREATE");
 
 	// HelicityTEfficiency
 	auto* hSystHX2D = SystEffHist(hNominalEffHX, hHX_trk_systUp, hHX_trk_systDown, hHX_muId_systUp, hHX_muId_systDown, hHX_trig_systUp, hHX_trig_systDown, hHX_trk_statUp, hHX_trk_statDown, hHX_muId_statUp, hHX_muId_statDown, hHX_trig_statUp, hHX_trig_statDown);
@@ -929,12 +929,12 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 	hSystHX3D->GetYaxis()->SetRangeUser(-190, 240);
 
-	canvasHXsyst->SaveAs(Form("%s/RelatSystEff_HX%s.png", path, isPhiFolded ? "" : "_fullPhi"), "RECREATE");
+	canvasHXsyst->SaveAs(Form("%s/RelatSystEff_HX%s.png", path.Data(), isPhiFolded ? "" : "_fullPhi"), "RECREATE");
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
-	const char* outputFileName = Form("%s/EfficiencyResults%s.root", path, isPhiFolded ? "" : "_fullPhi");
+	TString outputFileName = Form("%s/EfficiencyResults%s.root", path.Data(), isPhiFolded ? "" : "_fullPhi");
 
-	TFile outputFile(outputFileName, "UPDATE");
+	TFile outputFile(outputFileName.Data(), "UPDATE");
 
 	hNominalEffLab->Write();
 	hNominalEffCS->Write();
