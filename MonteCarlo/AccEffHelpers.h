@@ -46,7 +46,7 @@ std::vector<Double_t> setPhiBinEdges(Int_t nPhiBins, Int_t phiMin, Int_t phiMax)
 
 // common naming convention
 const char* TEfficiencyEndName(const char* refFrameName = "CS", Int_t ptMin = 0, Int_t ptMax = 30, Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
-	return Form("%s_%s_pt%dto%d_%s", refFrameName, gMuonAccName, ptMin, ptMax, PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	return Form("%s_%s_pt%dto%d_%s", refFrameName, gMuonAccName.Data(), ptMin, ptMax, PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
 }
 
 const char* TEfficiencyMainTitle(int iState = gUpsilonState, const char* title = "total efficiency") {
@@ -117,11 +117,11 @@ TEfficiency* CosThetaPhiAcceptance2D(const char* refFrameName = "CS", Int_t ptMi
 
 // naming function so that we can more easily get the TEfficiency from other codes
 const char* NominalTEfficiency3DName(const char* refFrameName = "CS", Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
-	return Form("Nominal3D%s%s_%s", refFrameName, gMuonAccName, PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	return Form("Nominal3D%s%s_%s", refFrameName, gMuonAccName.Data(), PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
 }
 
 const char* SystTEfficiency3DName(const char* refFrameName = "CS", Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
-	return Form("SystEff3D%s%s_%s", refFrameName, gMuonAccName, PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
+	return Form("SystEff3D%s%s_%s", refFrameName, gMuonAccName.Data(), PolaWeightName(lambdaTheta, lambdaPhi, lambdaThetaPhi));
 }
 
 const char* TEfficiency3DAxisTitle(const char* refFrameName = "CS") {
@@ -133,11 +133,11 @@ const char* TEfficiency3DTitle(const char* refFrameName = "CS", int iState = gUp
 }
 
 // needed for the ROOT file where in we store the TEfficiency objects AND the plots
-const char* AcceptanceResultsPath(const char* muonAccName = gMuonAccName) {
+const char* AcceptanceResultsPath(const char* muonAccName = gMuonAccName.Data()) {
 	return Form("../MonteCarlo/AcceptanceMaps/%s", muonAccName);
 }
 
-const char* EfficiencyResultsPath(const char* muonAccName = gMuonAccName) {
+const char* EfficiencyResultsPath(const char* muonAccName = gMuonAccName.Data()) {
 	return Form("../MonteCarlo/EfficiencyMaps/%s", muonAccName);
 }
 
@@ -438,7 +438,7 @@ TH1D* rebinRel3DUncPhi(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_
 
 // rebin TEfficiency 3D maps of efficiency systematic uncertainty to TEfficiency 2D map based on costheta, phi, and pT selection
 
-TH2D* rebinRel3DUncMap(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 6, const std::vector<Double_t>& phiBinEdges = {}) {
+TH2D* rebinRel3DUncMap(TEfficiency* effMap, TH3D* systEff, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 6, const std::vector<Double_t>& phiBinEdges = {}, Bool_t isPhiFolded = kFALSE) {
 	/// rebin efficiency maps based on costheta, phi, and pT selection
 	// uncertainty addition is sqrt(pow(unc1, 2) + pow(unc2, 2)), so fold it manually
 
@@ -1045,7 +1045,7 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 
 	// if (displayYieldsValues) displayYields(EffxAccHist, nCosThetaBins, nPhiBins);
 	std::string prefix = Form("RawYields/ExpTimesErr_SymDSCB_cent0to90_absy0p0to2p4_pt%dto%d", ptMin, ptMax);
-	std::string postfix = Form("%s%s%s", refFrameName, gMuonAccName, extraString);
+	std::string postfix = Form("%s%s%s", refFrameName, gMuonAccName.Data(), extraString);
 
 	if (displayYieldValues) displayYields(EffxAccHist, nCosThetaBins, nPhiBins, prefix, postfix);
 
