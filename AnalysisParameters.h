@@ -12,7 +12,7 @@ bool BeVerbose = true;
 
 const char* gCMSLumiText = "PbPb 1.61 nb^{#minus1} (5.02 TeV)";
 
-const char* gMuonAccName = "UpsilonTriggerThresholds"; // possible names listed in PhaseSpace.h
+TString gMuonAccName = "UpsilonTriggerThresholds"; // possible names listed in PhaseSpace.h
 // const char* gMuonAccName = "_2018Acc";
 // const char* gMuonAccName = "";
 
