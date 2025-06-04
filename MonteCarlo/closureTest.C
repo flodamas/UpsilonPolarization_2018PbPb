@@ -186,7 +186,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
                             Int_t ptMin = 0, Int_t ptMax = 30,
                             Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {},
                             Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {},
-                            Bool_t isPhiFolded = kFALSE, Bool_t applyEff = kTRUE) {
+                            Bool_t isPhiFolded = kFALSE, Bool_t applyEff = kTRUE, int nLegendRows = 1) {
 	
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
@@ -243,7 +243,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 	/// store fit results
 	RooArgSet fittedParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
 
-	TCanvas* mc2DCanvas = draw2DMap(fitHist, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, kFALSE, 1, isPhiFolded);
+	TCanvas* mc2DCanvas = draw2DMap(fitHist, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, kFALSE, 1, isPhiFolded, nLegendRows);
 
 	fitHist->GetZaxis()->SetRangeUser(0, maxYield * 2);
 	cout << "maxYield: " << maxYield << endl;
@@ -330,7 +330,8 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
                      Int_t nCosThetaBins = 20, const vector<Double_t>& cosThetaBinEdges = {},
                      Int_t nPhiBins = 18, const vector<Double_t>& phiBinEdges = {},
                      Bool_t drawPlot = kFALSE, Bool_t isPhiFolded = kTRUE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE,
-					 float lambdaTheta0 = 0, float lambdaPhi0 = 0, float lambdaThetaPhi0 = 0) {
+					 float lambdaTheta0 = 0, float lambdaPhi0 = 0, float lambdaThetaPhi0 = 0,
+					 int nLegendRows = 1) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 	// extraText = "       Simulation Preliminary";
@@ -381,16 +382,16 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	TH2D* systEffCosThetaPhi = rebinRel3DUncMap(effMap, systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
 
 	TH2D* hTotalCosThetaPhiAcc = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
-	hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
+	// hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
 
 	TH2D* hPassedCosThetaPhiAcc = (TH2D*)accMapCosThetaPhi->GetPassedHistogram();
-	hPassedCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance numerator");
+	// hPassedCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance numerator");
 
 	TH2D* hTotalCosThetaPhiEff = (TH2D*)effMapCosThetaPhi->GetTotalHistogram();
-	hTotalCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency denominator");
+	// hTotalCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency denominator");
 
 	TH2D* hPassedCosThetaPhiEff = (TH2D*)effMapCosThetaPhi->GetPassedHistogram();
-	hPassedCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency numerator");
+	// hPassedCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency numerator");
 
 	TH2D* hRatioCosThetaPhi = (TH2D*)hTotalCosThetaPhiAcc->Clone("hRatioCosThetaPhi");
 
@@ -409,38 +410,42 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	
 	/// draw 2D acc and eff maps
 	if (!applyEff) {
-		accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-		effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, 0, 0, 0);
+		accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi, nLegendRows);
+		effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kFALSE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, 0, 0, 0, nLegendRows);
 	
-		accTotalCanvas = draw2DMap(hTotalCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+		accTotalCanvas = draw2DMap(hTotalCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
         hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
 		display2DMapContents(hTotalCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE, 0.04, kBlack);
          
-        accPassedCanvas = draw2DMap(hPassedCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+        accPassedCanvas = draw2DMap(hPassedCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
         hPassedCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance numerator");
 		display2DMapContents(hPassedCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
         
 	}
 
 	else {
-		accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
-		effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+		accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi, nLegendRows);
+		effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi, nLegendRows);
         
-		ratioCanvas = draw2DMap(hRatioCosThetaPhi, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+		ratioCanvas = draw2DMap(hRatioCosThetaPhi, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
+		hRatioCosThetaPhi->GetZaxis()->SetTitle("acc num / eff den ratio");
 		display2DMapContents(hRatioCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE, 0.04, kBlack, 4);
 
-		accTotalCanvas = draw2DMap(hTotalCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+		accTotalCanvas = draw2DMap(hTotalCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
         hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
 		display2DMapContents(hTotalCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
        
-        // accPassedCanvas = draw2DMap(hPassedCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-        // display2DMapContents(hPassedCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
+        accPassedCanvas = draw2DMap(hPassedCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
+        hPassedCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance numerator");
+		display2DMapContents(hPassedCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
         
-        // effTotalCanvas = draw2DMap(hTotalCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-        // display2DMapContents(hTotalCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
+        // effTotalCanvas = draw2DMap(hTotalCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
+        // hTotalCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency denominator");
+		// display2DMapContents(hTotalCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
 
-        // effPassedCanvas = draw2DMap(hPassedCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
-        // display2DMapContents(hPassedCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
+        // effPassedCanvas = draw2DMap(hPassedCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
+        // hPassedCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency numerator");
+		// display2DMapContents(hPassedCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
 	}
 	
 	TCanvas* dummyCanvas = new TCanvas("dummyCanvas", "dummyCanvas", 600, 600); // this is dummy canvas due to the overwrite of the fitted histogram
@@ -464,6 +469,7 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 			cout << "acceptance: " << acceptance << endl;
 			cout << "efficiency: " << efficiency << endl;
+			cout << "residual: " << residual << endl;
 
 			double relEffUncHigh = 0;
 			double relEffUncLow = 0;
@@ -589,7 +595,7 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	}
 
 	if (drawPlot) {
-		TCanvas* correctedCanvas = draw2DMap(correctedHist, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, kFALSE);
+		TCanvas* correctedCanvas = draw2DMap(correctedHist, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, kFALSE, nLegendRows);
 		display2DMapContents(correctedHist, nCosThetaBins, nPhiBins, kFALSE, 0.035, kWhite, 0);
 
 		/// Styles of the texts in the plot
@@ -636,7 +642,7 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
                         Int_t ptMin = 0, Int_t ptMax = 30,
                         Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {},
                         Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {},
-                        Bool_t isPhiFolded = kFALSE) {
+                        Bool_t isPhiFolded = kFALSE, int nLegendRows = 1) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 	// extraText = "       Simulation Preliminary";
@@ -671,8 +677,8 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 	const char* kinematicCut;
 	if (!isPhiFolded) kinematicCut = Form("(pt > %d) && (pt < %d) && (cosTheta%s > %f) && (cosTheta%s < %f) && (%s > %d) && (%s < %d)", ptMin, ptMax, refFrameName.Data(), cosThetaBinEdges[0], refFrameName.Data(), cosThetaBinEdges[nCosThetaBins], PhiVarName(refFrameName.Data()), (int)phiBinEdges[0], PhiVarName(refFrameName.Data()), (int)phiBinEdges[nPhiBins]);
 	else kinematicCut = Form("(pt > %d) && (pt < %d) && (cosTheta%s > %f) && (cosTheta%s < %f) && (fabs(%s) > %d) && (fabs(%s) < %d)", ptMin, ptMax, refFrameName.Data(), cosThetaBinEdges[0], refFrameName.Data(), cosThetaBinEdges[nCosThetaBins], PhiVarName(refFrameName.Data()), (int)phiBinEdges[0], PhiVarName(refFrameName.Data()), (int)phiBinEdges[nPhiBins]);
-	cout << "!isPhiFolded: " << !isPhiFolded << endl;
-	cout << "Kinematic cut: " << kinematicCut << endl;
+	// cout << "!isPhiFolded: " << !isPhiFolded << endl;
+	// cout << "Kinematic cut: " << kinematicCut << endl;
 
 	RooDataSet reducedDataset = *(RooDataSet*)allDataset->reduce(kinematicCut);
 
@@ -701,7 +707,7 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 	ULong64_t totEvents = reducedDataset.numEntries();
 	cout << "Total number of events in the dataset: " << totEvents << endl;
 
-	for (Int_t iEvent = 0; iEvent < totEvents; iEvent++) {
+	for (Int_t iEvent = 0; (ULong64_t)iEvent < totEvents; iEvent++) {
 		// if (iEvent > 100) break;
 
 		/// get the event
@@ -764,11 +770,11 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 	}
 
 	/// draw polarized MC histogram
-	draw2DMap(angDistHist2D, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+	draw2DMap(angDistHist2D, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
 	display2DMapContents(angDistHist2D, nCosThetaBins, nPhiBins, kFALSE);
 
 	/// draw error histogram
-	// draw2DMap(errorHist, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+	// draw2DMap(errorHist, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
 	// display2DMapContents(errorHist, nCosThetaBins, nPhiBins, kFALSE);
 
 	/// Styles of the texts in the plot
@@ -795,7 +801,7 @@ void getGENMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
                   Int_t ptMin = 0, Int_t ptMax = 30,
                   Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {},
                   Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {},
-                  Bool_t applyAcc = kTRUE, Bool_t isPhiFolded = kFALSE) {
+                  Bool_t applyAcc = kTRUE, Bool_t isPhiFolded = kFALSE, int nLegendRows = 1) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 	// extraText = "       Simulation Preliminary";
@@ -855,7 +861,7 @@ void getGENMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 	/// loop over the dataset and fill 2D angular distribution histogram
 	ULong64_t totEvents = reducedDataset.numEntries();
 
-	for (Int_t iEvent = 0; iEvent < totEvents; iEvent++) {
+	for (Int_t iEvent = 0; (ULong64_t)iEvent < totEvents; iEvent++) {
 		// if (iEvent > 100) break;
 
 		/// get the event
@@ -914,11 +920,11 @@ void getGENMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 	// }
 
 	/// draw polarized MC histogram
-	TCanvas* mc2DCanvas = draw2DMap(angDistHist2D, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+	TCanvas* mc2DCanvas = draw2DMap(angDistHist2D, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
 	display2DMapContents(angDistHist2D, nCosThetaBins, nPhiBins, kFALSE);
 
 	/// draw error histogram
-	// draw2DMap(errorHist, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded);
+	// draw2DMap(errorHist, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
 	// display2DMapContents(errorHist, nCosThetaBins, nPhiBins, kFALSE);
 
 	/// Styles of the texts in the plot
@@ -957,7 +963,7 @@ void closureTest(TString refFrameName = "CS",
                  Int_t ptMin = 2, Int_t ptMax = 6,
                  const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7,
                  const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180,
-                 Bool_t isPhiFolded = kFALSE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE, int totNItrs = 0) {
+                 Bool_t isPhiFolded = kFALSE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE, int totNItrs = 0, int nLegendRows = 1) {
 	
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
@@ -1022,9 +1028,9 @@ void closureTest(TString refFrameName = "CS",
 
 	/// get MC histo with polarization (genMC without any filters or recoMC)
 	if (!applyEff)
-		getGENMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, applyAcc, isPhiFolded); /// apply polarization to NoGENFilter sample
+		getGENMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, applyAcc, isPhiFolded, nLegendRows); /// apply polarization to NoGENFilter sample
 	else
-		getPolarizedMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded); /// apply polarization to recoMC sample
+		getPolarizedMCHist(angDistHist2D, refFrameName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, nLegendRows); /// apply polarization to recoMC sample
 
 	/// define histograms
 	TH2D* correctedHist = new TH2D("correctedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
@@ -1036,13 +1042,13 @@ void closureTest(TString refFrameName = "CS",
 	// while (!((lambdaTheta0 == (round(lambdaTheta->getVal() * 100.) / 100.)) && (lambdaPhi0 == (round(lambdaPhi->getVal() * 100.) / 100.)) && (lambdaThetaPhi0 == round(lambdaThetaPhi->getVal() * 100. / 100.)))) {
 	for (int iItr = 0; iItr <= totNItrs; iItr++) {
 		/// correct the MC
-		correctMC2DHist(angDistHist2D, correctedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0);
+		correctMC2DHist(angDistHist2D, correctedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
 
 		/// due to drawing issue, separate correctedHist and fittedHist
-		correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0);
+		correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
 
 		/// extract parameters from the corrected hist
-		polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, applyEff);
+		polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, applyEff, nLegendRows);
 		cout << "extracted polarization parameters: " << endl;
 		polarParams.Print("v");
 
@@ -1070,20 +1076,18 @@ void closureTest(TString refFrameName = "CS",
 		// cout << lambdaTildeArr[0] << ", " << lambdaTildeArr[1] << endl;
 		// cout << "numItr arr size: " << numItrArr.size() << endl;
 		// cout << numItrArr[0] << ", " << numItrArr[1] << endl;
-	
-		
+
+		nItrs++;
+
 		/// if the difference between the new paramter and the previous one is less than 0.01, stop the iterative procedure
 		if ((fabs(lambdaThetaArr[iItr] - lambdaThetaArr[iItr + 1]) < 0.01) && (fabs(lambdaPhiArr[iItr] - lambdaPhiArr[iItr + 1]) < 0.01) && (fabs(lambdaThetaPhiArr[iItr] - lambdaThetaPhiArr[iItr + 1]) < 0.01)) {
 			// cout << "converged after " << iItr << " iterations" << endl;
 			// cout << "lambdaTheta diff: " << lambdaThetaArr[iItr] << ", " << lambdaThetaArr[iItr + 1] << ", " << fabs(lambdaThetaArr[iItr + 1] - lambdaThetaArr[iItr]) << endl;
 			// cout << "lambdaPhi diff: " << lambdaPhiArr[iItr] << ", " << fabs(lambdaPhiArr[iItr + 1] - lambdaPhiArr[iItr]) << endl;
 			// cout << "lambdaThetaPhi diff: " << lambdaThetaPhiArr[iItr] << ", " << fabs(lambdaThetaPhiArr[iItr + 1] - lambdaThetaPhiArr[iItr]) << endl;
-
-			break;
+			
+			// break;
 		}
-
-		nItrs++;
-
 	}
 
 	/// draw plots for polarization parameters vs # of Iterations
@@ -1105,7 +1109,8 @@ void closureTest(TString refFrameName = "CS",
 
 	gPad->Update(); // ensures the histogram behind the graph is created
 
-	lambdaThetaGraph->GetXaxis()->SetNdivisions(nItrs + 2);
+	if ((nItrs - 1) == 0) lambdaThetaGraph->GetXaxis()->SetNdivisions(nItrs + 1);
+	else lambdaThetaGraph->GetXaxis()->SetNdivisions(nItrs + 2);
 	lambdaThetaGraph->Draw("APL");
 
 	TGraphErrors* lambdaPhiGraph = new TGraphErrors(lambdaPhiArr.size(), numItrArr.data(), lambdaPhiArr.data(), xErrArr.data(), lambdaPhiErrArr.data());
@@ -1124,19 +1129,27 @@ void closureTest(TString refFrameName = "CS",
 	lambdaThetaPhiGraph->SetMarkerSize(1);
 	lambdaThetaPhiGraph->Draw("PL same");
 
-	if (nItrs == 0) {
+	if ((nItrs - 1) == 0) {
 		drawLine(-1.1, 0, 0, 0);
 		drawLine(-1.1, lambdaTheta0, 0, lambdaTheta0);
 		drawLine(-1.1, lambdaPhi0, 0, lambdaPhi0);
 		drawLine(-1.1, lambdaThetaPhi0, 0, lambdaThetaPhi0);
 	}
 
+    else if ((nItrs - 1) == 2) {
+		cout << "nItrs: " << nItrs << endl;
+		drawLine(-1.3, 0, 2.3, 0);
+		drawLine(-1.3, lambdaTheta0, 2.3, lambdaTheta0);
+		drawLine(-1.3, lambdaPhi0, 2.3, lambdaPhi0);
+		drawLine(-1.3, lambdaThetaPhi0, 2.3, lambdaThetaPhi0);
+    }
+
 	else {
 		cout << "nItrs: " << nItrs << endl;
-		drawLine(-1.57, 0, (nItrs - 1) * 1.1, 0);
-		drawLine(-1.57, lambdaTheta0, (nItrs - 1) * 1.1, lambdaTheta0);
-		drawLine(-1.57, lambdaPhi0, (nItrs - 1) * 1.1, lambdaPhi0);
-		drawLine(-1.57, lambdaThetaPhi0, (nItrs - 1) * 1.1, lambdaThetaPhi0);
+		drawLine(-1.575, 0, (nItrs - 1) * 1.12, 0);
+		drawLine(-1.575, lambdaTheta0, (nItrs - 1) * 1.12, lambdaTheta0);
+		drawLine(-1.575, lambdaPhi0, (nItrs - 1) * 1.12, lambdaPhi0);
+		drawLine(-1.575, lambdaThetaPhi0, (nItrs - 1) * 1.12, lambdaThetaPhi0);
 	}
 
 	TLegend* legend = new TLegend(0.16, 0.78, 0.46, 0.91);

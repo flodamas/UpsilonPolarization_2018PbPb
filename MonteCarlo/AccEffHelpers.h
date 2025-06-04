@@ -653,7 +653,7 @@ void DrawEfficiency1DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, TStrin
 	}
 }
 
-TCanvas* DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t displayValues = kFALSE, Bool_t displayErrors = kFALSE, const char* extraString = "", Bool_t isPhiFolded = kTRUE, Bool_t lambdaLegend = kFALSE, float lambdaTheta = 0, float lambdaPhi = 0, float lambdaThetaPhi = 0) {
+TCanvas* DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t isAcc = kTRUE, Bool_t displayValues = kFALSE, Bool_t displayErrors = kFALSE, const char* extraString = "", Bool_t isPhiFolded = kTRUE, Bool_t lambdaLegend = kFALSE, float lambdaTheta = 0, float lambdaPhi = 0, float lambdaThetaPhi = 0, int nLegendRows = 1) {
 	TCanvas* canvas;
 	if (isAcc)
 		canvas = new TCanvas("accCosThetaPhi", "", 680, 600);
@@ -665,7 +665,7 @@ TCanvas* DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, In
 
 	// empty frame for the axes
 	// TH2D* frameHist2D = new TH2D("frameHist2D", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * 2);
-	TH2D* frameHist2D = new TH2D("frameHist2D", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
+	TH2D* frameHist2D = new TH2D("frameHist2D", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * nLegendRows);
 
 	frameHist2D->Draw("COLZ");
 
@@ -723,7 +723,7 @@ TCanvas* DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, In
 
 	frameHist2D->GetXaxis()->SetRangeUser(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
 	// frameHist2D->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * 2);
-	frameHist2D->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
+	frameHist2D->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * nLegendRows);
 	frameHist2D->GetZaxis()->SetRangeUser(0, 1);
 
 	// frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins / 2.));
@@ -735,7 +735,7 @@ TCanvas* DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, In
 	/// Ndivision setting for the analysis binning (costheta: 5 bins from -0.7 to 0.7, phi: 7 bins from -180 to 240)
 	frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
 	// frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins) - 2);
-	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins) - 1);
+	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins) - nLegendRows);
 
 	// /// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 23 bins from -180 to 280)
 	// frameHist2D->GetXaxis()->SetNdivisions(-210); //cosTheta

@@ -228,7 +228,7 @@ TCanvas* drawContourPlots(Int_t ptMin = 0, Int_t ptMax = 30, Double_t cosThetaMi
 	return contourCanvas;
 }
 
-TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1, Bool_t isPhiFolded = kTRUE) {
+TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Bool_t LEGO = kFALSE, Bool_t isRange0to1 = kFALSE, Int_t iState = 1, Bool_t isPhiFolded = kTRUE, int nLegendRows = 1) {
 	TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 680, 600);
 	// TCanvas* map2DCanvas = new TCanvas(mapCosThetaPhi->GetName(), "", 700, 600);
 
@@ -238,7 +238,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 	Double_t phiStep = (phiBinEdges[nPhiBins] - phiBinEdges[0]) / nPhiBins;
 
 	// TH2D* frameHist = new TH2D(Form("%sframeHist", mapCosThetaPhi->GetName()), " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * 2);
-	TH2D* frameHist = new TH2D(Form("%sframeHist", mapCosThetaPhi->GetName()), " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep);
+	TH2D* frameHist = new TH2D(Form("%sframeHist", mapCosThetaPhi->GetName()), " ", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * nLegendRows);
 
 	if (LEGO) {
 		map2DCanvas->SetLeftMargin(0.18);
@@ -259,7 +259,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins));
 		else
 			// mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - 1) / 2.); // when using 12 bins ranging from -180 to 180
-			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - 1)); // when ranging unsing 6 bins from -180 to 180
+			mapCosThetaPhi->GetYaxis()->SetNdivisions(-500 - (nPhiBins - nLegendRows)); // when ranging unsing 6 bins from -180 to 180
 
 		mapCosThetaPhi->GetXaxis()->CenterTitle();
 		mapCosThetaPhi->GetYaxis()->CenterTitle();
@@ -269,10 +269,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 		mapCosThetaPhi->GetYaxis()->SetTitleOffset(1.5);
 		mapCosThetaPhi->GetZaxis()->SetTitleOffset(1.8);
 
-		if (isPhiFolded)
-			mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins]);
-		else
-			mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins - 1]);
+		mapCosThetaPhi->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins]);
 
 		mapCosThetaPhi->SetStats(0);
 	}
@@ -299,7 +296,7 @@ TCanvas* draw2DMap(TH2D* mapCosThetaPhi, const char* refFrameName = "CS", Int_t 
 
 		frameHist->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
 		// frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 2));
-		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + 1));
+		frameHist->GetYaxis()->SetNdivisions(-500 - (nPhiBins + nLegendRows));
 
 		// /// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 18 bins from -180 to 180)
 		// frameHist->GetXaxis()->SetNdivisions(-200 - (nCosThetaBins / 2.));
