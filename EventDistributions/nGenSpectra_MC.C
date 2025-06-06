@@ -81,8 +81,8 @@ void makePtSpectra_pythiaSignal(int iState = 1, TString muonAccName = "UpsilonTr
 			if (!withinAcceptance) continue;
 
             if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
-            hGenPt->Fill(gen_QQ_LV->Pt());
-
+            
+			hGenPt->Fill(gen_QQ_LV->Pt());
         }
     }
 
@@ -330,7 +330,8 @@ void makePtSpectra_HydjetGen(int iState = 1, TString muonAccName = "UpsilonTrigg
 			if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
 
 			// hGenPtHydjet->Fill(gen_QQ_pt, Gen_weight * FindNcoll(hiBin));
-            hGenPtHydjet->Fill(gen_QQ_pt, FindNcoll(hiBin));
+			hGenPtHydjet->Fill(gen_QQ_pt, Gen_weight);
+            // hGenPtHydjet->Fill(gen_QQ_pt, FindNcoll(hiBin));
         }
     }
 
@@ -345,8 +346,8 @@ void makePtSpectra_HydjetGen(int iState = 1, TString muonAccName = "UpsilonTrigg
     hGenPtHydjet->Draw("E1");
 
     // Save the histogram to a file
-    TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight_%s.root", muonAccName.Data()), "RECREATE");
-	// TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_%s.root", muonAccName.Data()), "RECREATE");
+    // TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight_%s.root", muonAccName.Data()), "RECREATE");
+	TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_noNColl_%s.root", muonAccName.Data()), "RECREATE");
     hGenPtHydjet->Write();
     outFile->Close();
 
@@ -376,8 +377,8 @@ void nGenSpectra_MC(TString muonAccName = "UpsilonTriggerThresholds") {
 
     /// open the Hydjet gen pt spectra file
 
-    const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight_%s.root", muonAccName.Data());
-    // const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_%s.root", muonAccName.Data());
+    // const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight_%s.root", muonAccName.Data());
+    const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_%s.root", muonAccName.Data());
 
     TFile* hydjetFile = TFile::Open(hydjetFilename, "READ");
 
