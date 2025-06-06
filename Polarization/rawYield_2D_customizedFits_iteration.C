@@ -167,7 +167,7 @@ TLine* drawLine(double x1, double y1, double x2, double y2) {
 }
 
 /// fit the corrected histo and extract polarization parameters
-RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
+RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHist1D, TString refFrameName = "CS",
                             Int_t ptMin = 0, Int_t ptMax = 30,
                             Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {},
                             Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {},
@@ -228,6 +228,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 	/// store fit results
 	RooArgSet fittedParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
 
+	/// draw the fit results
 	TCanvas* mc2DCanvas = draw2DMap(fitHist, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, kFALSE, 1, isPhiFolded);
 
 	fitHist->GetZaxis()->SetRangeUser(0, maxYield * 2);
@@ -299,6 +300,79 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 
 	gPad->Update();
 
+	/// draw 1D histograms along the cosTheta axis with the fit
+	TCanvas* corrected1DCanvas = new TCanvas("corrected1DCanvas", "corrected1DCanvas", 1500, 500);
+	corrected1DCanvas->Divide(3, 1);
+
+	for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+		corrected1DCanvas->cd(iPhi + 1);
+		
+		correctedHist1D[iPhi]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName.Data()));
+		correctedHist1D[iPhi]->GetXaxis()->CenterTitle();
+		correctedHist1D[iPhi]->GetXaxis()->SetNdivisions(-nCosThetaBins);
+
+		correctedHist1D[iPhi]->GetYaxis()->SetTitle("#varUpsilon(1S) weighted events");
+		correctedHist1D[iPhi]->GetYaxis()->SetRangeUser(0, correctedHist->GetMaximum() * 1.5);
+
+		correctedHist1D[iPhi]->SetMarkerStyle(20);
+		correctedHist1D[iPhi]->SetMarkerSize(0.8);
+		correctedHist1D[iPhi]->SetLineWidth(2);
+		
+		correctedHist1D[iPhi]->Draw("E");
+
+		TF1* polarFuncCosTheta = new TF1("polarFuncCosTheta", "[0] / (3 + [1]) * (1 + [1] * x * x + [2] * TMath::Sin(TMath::ACos(x)) * TMath::Sin(TMath::ACos(x)) * TMath::Cos(2. * [4] * pi / 180.) + [3] * TMath::Sin(2 * TMath::ACos(x)) * TMath::Cos([4] * pi / 180.))", -1, 1);
+		polarFuncCosTheta->SetParameter(0, normVal);
+		polarFuncCosTheta->SetParameter(1, lambdaThetaVal);
+		polarFuncCosTheta->SetParameter(2, lambdaPhiVal);
+		polarFuncCosTheta->SetParameter(3, lambdaThetaPhiVal);
+		polarFuncCosTheta->SetParameter(4, phiBinEdges[iPhi] + (phiBinEdges[iPhi + 1] - phiBinEdges[iPhi]) / 2.); // set the phi value for the fit
+
+		polarFuncCosTheta->SetLineColor(kRed);
+		polarFuncCosTheta->SetLineWidth(2);
+		polarFuncCosTheta->SetNpx(1000);
+		polarFuncCosTheta->Draw("SAME");
+
+		TLatex* text1D = new TLatex();
+		text1D->SetTextAlign(22);
+		text1D->SetTextSize(0.05);
+		/// Put texts inside the plot
+		text1D->DrawLatexNDC(.56, .84, Form("%s, %d < p_{T} < %d GeV/c, %d < |#varphi| < %d #circ", refFrameName.Data(), ptMin, ptMax, (int)phiBinEdges[iPhi], (int)phiBinEdges[iPhi + 1]));
+		// text1D->DrawLatexNDC(.55, .72, Form("(#lambda_{#theta}, #lambda_{#varphi}, #lambda_{#theta#varphi}) = (%.2f#pm%.2f, %.2f#pm%.2f, %.2f#pm%.2f)", lambdaThetaVal, lambdaThetaErr, lambdaPhiVal, lambdaPhiErr, lambdaThetaPhiVal, lambdaThetaPhiErr));
+		
+		TLegend* legend1D = new TLegend(.17, .25, .48, .35);
+		legend1D->SetTextSize(0.04);
+		legend1D->SetFillColor(0);
+		legend1D->SetFillStyle(1001);
+		legend1D->SetBorderSize(0);
+		legend1D->AddEntry(correctedHist1D[iPhi], "#varUpsilon(1S) corrected yield", "pe");
+		legend1D->AddEntry(polarFuncCosTheta, "fit:", "l");
+		legend1D->Draw("SAME");
+
+		TPaveText* resultTextRight1D = new TPaveText(0.29, 0.185, 0.66, 0.295, "NDC"); // Adjust coordinates
+		resultTextRight1D->SetFillColor(0);                                          // White background
+		resultTextRight1D->SetFillStyle(1001);                                       // Solid fill
+		resultTextRight1D->SetBorderSize(0);                                         // Optional: Thin border
+		resultTextRight1D->SetTextSize(0.045);
+		resultTextRight1D->SetTextAlign(12); // Align text left
+		resultTextRight1D->SetMargin(0.03);
+		resultTextRight1D->AddText(Form("#lambda_{#theta}  = %.2f #pm %.2f ", lambdaThetaVal, lambdaThetaErr));
+		resultTextRight1D->AddText(Form("#lambda_{#theta#varphi} = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr));
+		resultTextRight1D->Draw();
+
+		TPaveText* resultTextLeft1D = new TPaveText(0.61, 0.20, 0.88, 0.295, "NDC"); // Adjust coordinates
+		resultTextLeft1D->SetFillColor(0);                                           // White background
+		resultTextLeft1D->SetFillStyle(1001);                                        // Solid fill
+		resultTextLeft1D->SetBorderSize(0);                                          // Optional: Thin border
+		resultTextLeft1D->SetTextSize(0.045);
+		resultTextLeft1D->SetTextAlign(12); // Align text Left1D
+		resultTextLeft1D->SetMargin(0.03);
+		resultTextLeft1D->AddText(Form("#lambda_{#varphi} = %.2f #pm %.2f", lambdaPhiVal, lambdaPhiErr));
+		resultTextLeft1D->AddText(Form("#tilde{#lambda}  = %.2f #pm %.2f", lambdaTildeVal, lambdaTildeErr));
+		resultTextLeft1D->Draw();
+
+		CMS_lumi((TPad*)gPad, gCMSLumiText);	
+	}
+
 	gSystem->mkdir(Form("closureTest/%s", applyEff ? "HydjetAccEff": "PythiaAcc"), kTRUE);
 	if (isPhiFolded)
 		mc2DCanvas->SaveAs(Form("closureTest/%s/2Dfit_%s_pt%dto%d_cosTheta%.2fto%.2f_absphi%dto%d_lambdaTheta%.2f_Phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaThetaVal, lambdaPhiVal, lambdaThetaPhiVal));
@@ -309,7 +383,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 }
 
 /// correct the polarized MC with weights (1 / (acceptance and/or efficiency))
-void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameName = "CS",
+void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, std::vector<TH1D*>& correctedHist1D, TString refFrameName = "CS",
                      RooArgSet polarParams = RooArgSet(),
                      Int_t ptMin = 0, Int_t ptMax = 30,
                      Int_t nCosThetaBins = 20, const vector<Double_t>& cosThetaBinEdges = {},
@@ -432,8 +506,10 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	TCanvas* dummyCanvas = new TCanvas("dummyCanvas", "dummyCanvas", 600, 600); // this is dummy canvas due to the overwrite of the fitted histogram
 
 	/// apply acc x eff correction weights and errors to each costheta bin
-	for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
-		for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+	for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+		correctedHist1D[iPhi] = new TH1D(Form("correctedHist1D_phi%dto%d", (int)phiBinEdges[iPhi], (int)phiBinEdges[iPhi + 1]), "", nCosThetaBins, cosThetaBinEdges.data());
+
+		for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
 			Double_t weight = 1;
 
 			// get the global bin number of Efficiency
@@ -552,12 +628,16 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 			correctedHist->SetBinContent(iCosTheta + 1, iPhi + 1, recoMCVal * weight);
 			// correctedHist->SetBinContent(iCosTheta + 1, iPhi + 1, residualVal);
 
+			correctedHist1D[iPhi]->SetBinContent(iCosTheta + 1, recoMCVal * weight);
+
 			// standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 
 			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, recoMCUnc * weight);
 			correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, totalError);
 			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(recoMCUnc / recoMCVal, totalRelUncHigh));
 			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, residualUnc);
+
+			correctedHist1D[iPhi]->SetBinError(iCosTheta + 1, totalError);
 
 			cout << "correctedHist->GetBinContent(" << iCosTheta + 1 << ", " << iPhi + 1 << ") = " << correctedHist->GetBinContent(iCosTheta + 1, iPhi + 1) << endl;
 			cout << "correctedHist->GetBinError(" << iCosTheta + 1 << ", " << iPhi + 1 << ") = " << correctedHist->GetBinError(iCosTheta + 1, iPhi + 1) << endl;
@@ -591,6 +671,32 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 		gPad->Update();
 
+		// TCanvas* corrected1DCanvas = new TCanvas("corrected1DCanvas", "corrected1DCanvas", 1500, 500);
+		// corrected1DCanvas->Divide(3, 1);
+
+		// for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+		// 	corrected1DCanvas->cd(iPhi + 1);
+		// 	correctedHist1D[iPhi]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName.Data()));
+		// 	correctedHist1D[iPhi]->GetXaxis()->CenterTitle();
+		// 	correctedHist1D[iPhi]->GetXaxis()->SetNdivisions(-nCosThetaBins);
+		// 	correctedHist1D[iPhi]->GetYaxis()->SetTitle("#varUpsilon(1S) weighted events");
+		// 	correctedHist1D[iPhi]->Draw("E");
+		// 	correctedHist1D[iPhi]->SetMarkerStyle(20);
+		// 	correctedHist1D[iPhi]->SetMarkerSize(0.8);
+		// 	correctedHist1D[iPhi]->SetLineWidth(2);
+		// 	correctedHist1D[iPhi]->GetYaxis()->SetRangeUser(0, correctedHist->GetMaximum() * 1.5);
+			
+		// 	TLatex* legend1D = new TLatex();
+		// 	legend1D->SetTextAlign(22);
+		// 	legend1D->SetTextSize(0.05);
+		// 	/// Put texts inside the plot
+		// 	legend1D->DrawLatexNDC(.55, .88, "Corrected MC");
+		// 	legend1D->DrawLatexNDC(.55, .80, Form("%s, %d < p_{T} < %d GeV/c, %d < |#varphi| < %d #circ", refFrameName.Data(), ptMin, ptMax, (int)phiBinEdges[iPhi], (int)phiBinEdges[iPhi + 1]));
+		// 	// legend1D->DrawLatexNDC(.55, .72, Form("Input: #lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta0, lambdaPhi0, lambdaThetaPhi0));
+			
+		// 	CMS_lumi((TPad*)gPad, gCMSLumiText);	
+		// }
+
 		gSystem->mkdir(Form("closureTest/%s", applyEff ? "HydjetAccEff": "PythiaAcc"), kTRUE);
 		correctedCanvas->SaveAs(Form("closureTest/%s/2Dcorrected_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
 		correctedCanvas->SaveAs(Form("closureTest/%s/2Dcorrected_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.png", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
@@ -598,7 +704,7 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 	gPad->RedrawAxis();
 
-	/// save plots
+	/// save 2D acc and eff plots
 	gSystem->mkdir(Form("closureTest/%s", applyEff ? "HydjetAccEff": "PythiaAcc"), kTRUE);
 	if (isPhiFolded) {
 		/// png
@@ -742,7 +848,6 @@ void getYieldHist(TH2D* angDistHist2D, TString refFrameName = "CS", TString muon
 }
 
 void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString muonAccName = "UpsilonTriggerThresholds",
-                                          Float_t lambdaTheta0 = 1, Float_t lambdaPhi0 = 0, Float_t lambdaThetaPhi0 = 0,
                                           Int_t ptMin = 2, Int_t ptMax = 6,
                                           const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7,
                                           const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180,
@@ -760,6 +865,9 @@ void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString m
 
 	/// create 2D angular distribution histogram
 	TH2D* angDistHist2D = new TH2D("angDistHist2D", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	
+	/// mean nothing, just for the file name
+	Float_t lambdaTheta0 = 0, lambdaPhi0 = 0, lambdaThetaPhi0 = 0;
 
 	/// define polarization parameters that will be used for correction (acceptance and efficiency)
 	RooRealVar* lambdaTheta = new RooRealVar("lambdaTheta", "lambdaTheta", -3., 3.);
@@ -798,37 +906,40 @@ void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString m
 
 	/// define histograms
 	TH2D* correctedHist = new TH2D("correctedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	std::vector<TH1D*> correctedHist1D(nPhiBins);
+	
 	TH2D* fittedHist = new TH2D("fittedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
 	/// loop over the number of iterations
 	int nItrs = 0; /// number of iterations
 
-	// while (!((lambdaTheta0 == (round(lambdaTheta->getVal() * 100.) / 100.)) && (lambdaPhi0 == (round(lambdaPhi->getVal() * 100.) / 100.)) && (lambdaThetaPhi0 == round(lambdaThetaPhi->getVal() * 100. / 100.)))) {
 	for (int iItr = 0; iItr <= totNItrs; iItr++) {
 		/// correct the MC
-		correctMC2DHist(angDistHist2D, correctedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
+		correctMC2DHist(angDistHist2D, correctedHist, correctedHist1D, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
 
 		/// due to drawing issue, separate correctedHist and fittedHist
-		correctMC2DHist(angDistHist2D, fittedHist, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
+		correctMC2DHist(angDistHist2D, fittedHist, correctedHist1D, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
 
 		/// extract parameters from the corrected hist
-		polarParams = extractPolarParam(fittedHist, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, applyEff);
+		polarParams = extractPolarParam(fittedHist, correctedHist1D, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, applyEff);
 		cout << "extracted polarization parameters: " << endl;
 		polarParams.Print("v");
 
+		/// update the polarization parameters
 		lambdaThetaArr.push_back(lambdaTheta->getVal());
 		lambdaPhiArr.push_back(lambdaPhi->getVal());
 		lambdaThetaPhiArr.push_back(lambdaThetaPhi->getVal());
 		lambdaTildeArr.push_back(lambdaTilde->getVal());
 
-		numItrArr.push_back(iItr);
+		numItrArr.push_back(iItr); // x-axis values for the graph
 
+		/// update the errors of the polarization parameters
 		lambdaThetaErrArr.push_back(lambdaTheta->getError());
 		lambdaPhiErrArr.push_back(lambdaPhi->getError());
 		lambdaThetaPhiErrArr.push_back(lambdaThetaPhi->getError());
 		lambdaTildeErrArr.push_back(lambdaTilde->getError());
 	
-		xErrArr.push_back(0.);
+		xErrArr.push_back(0.); // x-axis error for the graph
 
 		// cout << "lambdaTheta arr size: " << lambdaThetaArr.size() << endl;
 		// cout << lambdaThetaArr[0] << ", " << lambdaThetaArr[1] << endl;
@@ -853,6 +964,11 @@ void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString m
 			// break;
 		}
 	}
+
+	/// save the last iteration results
+	const char* fitModelName = GetFitModelName("SymDSCB", ptMin, ptMax, refFrameName.Data(), cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (Int_t)phiBinEdges[0], (Int_t)phiBinEdges[nPhiBins]);
+
+	SavePolarizationFitParameters(&polarParams, "iteration", fitModelName, muonAccName);
 
 	/// draw plots for polarization parameters vs # of Iterations
 	TCanvas* iterCanvas = new TCanvas("iterCanvas", "iterCanvas", 650, 600);
@@ -955,10 +1071,10 @@ void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString m
 	double yRange = yMax - yMin;
 	
 	// Define box size and position around x = -1
-	double box_x1 = -1.2;
-	double box_x2 = -0.8;
-	double box_y1 = yMin - 0.06 * yRange;  // slightly below visible axis
-	double box_y2 = yMin + 0.02 * yRange;  // near the bottom of plot
+	double box_x1 = -1.21;
+	double box_x2 = -0.81;
+	double box_y1 = yMin - 0.06 * yRange - 0.1;  // slightly below visible axis
+	double box_y2 = yMin + 0.01 * yRange;  // near the bottom of plot
 	
 	// Draw box to cover the default label
 	TBox* cover = new TBox(box_x1, box_y1, box_x2, box_y2);
@@ -966,6 +1082,7 @@ void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString m
 	cover->SetLineColor(kWhite);
 	cover->SetFillStyle(1001);   // solid fill
 	cover->Draw("same");
+	// cout << box_x1 << ", " << box_x2 << ", " << box_y1 << ", " << box_y2 << endl;
 
 	// Add custom label at x = -1
 	TLatex* t = new TLatex(-1, -1.37, "Initial");
@@ -993,6 +1110,9 @@ void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString m
 
 	// kinematicsText->SetAllWith("", "align", 32);
 	// kinematicsText->Draw("same");
+	
+	CMS_lumi(iterCanvas, gCMSLumiText);	
+	// CMS_lumi(iterCanvas, "#varUpsilon(1S) Pythia 8 (5.02 TeV)");
 
 	gPad->RedrawAxis();
 
