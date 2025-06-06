@@ -16,7 +16,7 @@
 #include "../ReferenceFrameTransform/Transformations.h"
 
 /// skim the GenOnly file to get the pT spectra of the generated upsilons
-void makePtSpectra_pythiaSignal(int iState = 1) {
+void makePtSpectra_pythiaSignal(int iState = 1, TString muonAccName = "UpsilonTriggerThresholds") {
 	// Read GenOnly Nofilter file with polarization weights
 	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
 
@@ -47,6 +47,100 @@ void makePtSpectra_pythiaSignal(int iState = 1) {
 	TLorentzVector* gen_mumi_LV = new TLorentzVector();
 	TLorentzVector* gen_mupl_LV = new TLorentzVector();
 
+	Bool_t withinAcceptance;
+    
+	Long64_t totEntries = OniaTree->GetEntries(); 
+    
+    // const int nBins = 6;
+    // float ptBinning[nBins + 1] = {0, 2, 4, 6, 9, 12, 30};
+
+    // double ptBinning[] = {0.0, 2.0, 6.0, 12.0, 30.0};
+    double ptBinning[] = {0.0, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0, 30.0};
+    int nBins = sizeof(ptBinning)/sizeof(ptBinning[0]) - 1;
+
+    TH1D* hGenPt = new TH1D("hGenPt", "", nBins, ptBinning);
+    hGenPt->Sumw2();
+
+ 	// Loop over the events
+    for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
+		if (iEvent % 10000 == 0) {
+			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
+		}
+
+		OniaTree->GetEntry(iEvent);
+
+		// loop over all gen upsilons
+		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
+            gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
+
+			// single-muon acceptance cuts
+			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
+			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
+
+			withinAcceptance = MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName) && MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName);
+			if (!withinAcceptance) continue;
+
+            if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
+            hGenPt->Fill(gen_QQ_LV->Pt());
+
+        }
+    }
+
+    TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
+    hGenPt->SetTitle("");
+    hGenPt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+    hGenPt->GetYaxis()->SetTitle("Counts");
+    hGenPt->SetLineColor(kBlue);
+    hGenPt->SetMarkerStyle(20);
+    hGenPt->SetMarkerColor(kBlue);
+    hGenPt->SetMarkerSize(1.0);
+    hGenPt->Draw("E1");
+
+    // Save the histogram to a file
+    TFile* outFile = new TFile(Form("GenPtSpectra_pythiaSignal_finerBin_%s.root", muonAccName.Data()), "RECREATE");
+    hGenPt->Write();
+    outFile->Close();
+}
+
+/// skim the GenOnly file to get the pT spectra of the generated upsilons
+void makePtSpectra_pythiaSignal_141X(int iState = 1, TString muonAccName = "UpsilonTriggerThresholds") {
+	// Read GenOnly Nofilter file with polarization weights
+    const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_merge.root", iState);
+
+	TFile* file = TFile::Open(filename, "READ");
+	if (!file) {
+		cout << "File " << filename << " not found. Check the directory of the file." << endl;
+		return;
+	}
+
+	cout << "File " << filename << " opened" << endl;
+
+	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
+
+	/// OniaTree variables, quite old version (since this genonly file from 2015)
+    Short_t Gen_QQ_size;
+	TClonesArray* Gen_QQ_4mom = nullptr;
+    
+    TClonesArray* Gen_mu_4mom = nullptr;
+
+    TClonesArray* CloneArr_QQ = nullptr;
+    TClonesArray* CloneArr_mu = nullptr;
+
+    Short_t Gen_QQ_mupl_idx[1000];
+    Short_t Gen_QQ_mumi_idx[1000];
+
+	OniaTree->SetBranchAddress("Gen_QQ_size", &Gen_QQ_size);
+	OniaTree->SetBranchAddress("Gen_QQ_4mom", &Gen_QQ_4mom);
+
+	OniaTree->SetBranchAddress("Gen_mu_4mom", &Gen_mu_4mom);
+
+    OniaTree->SetBranchAddress("Gen_QQ_mumi_idx", &Gen_QQ_mumi_idx);
+    OniaTree->SetBranchAddress("Gen_QQ_mupl_idx", &Gen_QQ_mupl_idx);
+
+	TLorentzVector* gen_QQ_LV = new TLorentzVector();
+	TLorentzVector* gen_mumi_LV = new TLorentzVector();
+	TLorentzVector* gen_mupl_LV = new TLorentzVector();
+
     Long64_t totEntries = OniaTree->GetEntries(); 
     
     // const int nBins = 6;
@@ -72,8 +166,19 @@ void makePtSpectra_pythiaSignal(int iState = 1) {
             gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
 
             if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
-            hGenPt->Fill(gen_QQ_LV->Pt());
+            
+			// single-muon acceptance
+			// positive muon first
+			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
 
+			if (!MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName)) continue;
+
+			// then negative muon
+			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
+
+			if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
+
+			hGenPt->Fill(gen_QQ_LV->Pt());
         }
     }
 
@@ -88,13 +193,13 @@ void makePtSpectra_pythiaSignal(int iState = 1) {
     hGenPt->Draw("E1");
 
     // Save the histogram to a file
-    TFile* outFile = new TFile("GenPtSpectra_pythiaSignal_finerBin.root", "RECREATE");
+    TFile* outFile = new TFile(Form("GenPtSpectra_pythiaSignal_141X_finerBin_%s.root", muonAccName.Data()), "RECREATE");
     hGenPt->Write();
     outFile->Close();
 }
 
 /// skim the Hydjet Gen file to get the pT spectra of the generated upsilons
-void makePtSpectra_HydjetGen(int iState = 1) {
+void makePtSpectra_HydjetGen(int iState = 1, TString muonAccName = "UpsilonTriggerThresholds") {
     /// Read Hydjet Gen file
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
@@ -189,8 +294,8 @@ void makePtSpectra_HydjetGen(int iState = 1) {
 	
     Long64_t totEntries = OniaTree->GetEntries();
 
-    // double ptBinning[] = {0.0, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0, 30.0};
-    double ptBinning[] = {0.0, 2.0, 6.0, 12.0, 30.0};
+    double ptBinning[] = {0.0, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0, 30.0};
+    // double ptBinning[] = {0.0, 2.0, 6.0, 12.0, 30.0};
     int nBins = sizeof(ptBinning)/sizeof(ptBinning[0]) - 1;
 
     TH1D* hGenPtHydjet = new TH1D("hGenPtHydjet", "", nBins, ptBinning);
@@ -212,7 +317,19 @@ void makePtSpectra_HydjetGen(int iState = 1) {
             double gen_QQ_pt = gen_QQ_LV->Pt();
             
             if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
-            // hGenPtHydjet->Fill(gen_QQ_pt, Gen_weight * FindNcoll(hiBin));
+           
+						// single-muon acceptance
+			// positive muon first
+			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+
+			if (!MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName)) continue;
+
+			// then negative muon
+			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
+
+			if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
+
+			// hGenPtHydjet->Fill(gen_QQ_pt, Gen_weight * FindNcoll(hiBin));
             hGenPtHydjet->Fill(gen_QQ_pt, FindNcoll(hiBin));
         }
     }
@@ -228,18 +345,19 @@ void makePtSpectra_HydjetGen(int iState = 1) {
     hGenPtHydjet->Draw("E1");
 
     // Save the histogram to a file
-    TFile* outFile = new TFile("GenPtSpectra_HydjetGen_noGenWeight.root", "RECREATE");
+    TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight_%s.root", muonAccName.Data()), "RECREATE");
+	// TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_%s.root", muonAccName.Data()), "RECREATE");
     hGenPtHydjet->Write();
     outFile->Close();
 
 }
 
-void nGenSpectra_MC() {
+void nGenSpectra_MC(TString muonAccName = "UpsilonTriggerThresholds") {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
     /// open the Pythia signal gen pt spectra file
-	const char* filename = "GenPtSpectra_pythiaSignal_finerBin.root";
+	const char* filename = Form("GenPtSpectra_pythiaSignal_finerBin_%s.root", muonAccName.Data());
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -258,7 +376,8 @@ void nGenSpectra_MC() {
 
     /// open the Hydjet gen pt spectra file
 
-    const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight.root");
+    const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight_%s.root", muonAccName.Data());
+    // const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_%s.root", muonAccName.Data());
 
     TFile* hydjetFile = TFile::Open(hydjetFilename, "READ");
 

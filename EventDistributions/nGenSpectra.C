@@ -1,8 +1,11 @@
+#include "../Tools/BasicHeaders.h"
+
 #include "../AnalysisParameters.h"
 
 void makePtSpectra_pythiaSignal(int iState = 1) {
 	// Read GenOnly Nofilter file with polarization weights
 	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
+    // const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_merge.root", iState);
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -76,6 +79,93 @@ void makePtSpectra_pythiaSignal(int iState = 1) {
     outFile->Close();
 }
 
+void makePtSpectra_pythiaSignal_141X(int iState = 1) {
+	// Read GenOnly Nofilter file with polarization weights
+	// const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
+    const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_merge.root", iState);
+
+	TFile* file = TFile::Open(filename, "READ");
+	if (!file) {
+		cout << "File " << filename << " not found. Check the directory of the file." << endl;
+		return;
+	}
+
+	cout << "File " << filename << " opened" << endl;
+
+	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
+
+	/// OniaTree variables, quite old version (since this genonly file from 2015)
+	// Int_t Gen_QQ_size;
+    
+    Short_t Gen_QQ_size;
+	TClonesArray* Gen_QQ_4mom = nullptr;
+    
+    TClonesArray* Gen_mu_4mom = nullptr;
+
+    TClonesArray* CloneArr_QQ = nullptr;
+    TClonesArray* CloneArr_mu = nullptr;
+
+    Short_t Gen_QQ_mupl_idx[1000];
+    Short_t Gen_QQ_mumi_idx[1000];
+
+	OniaTree->SetBranchAddress("Gen_QQ_size", &Gen_QQ_size);
+	OniaTree->SetBranchAddress("Gen_QQ_4mom", &Gen_QQ_4mom);
+
+	OniaTree->SetBranchAddress("Gen_mu_4mom", &Gen_mu_4mom);
+
+    OniaTree->SetBranchAddress("Gen_QQ_mumi_idx", &Gen_QQ_mumi_idx);
+    OniaTree->SetBranchAddress("Gen_QQ_mupl_idx", &Gen_QQ_mupl_idx);
+
+	TLorentzVector* gen_QQ_LV = new TLorentzVector();
+	TLorentzVector* gen_mumi_LV = new TLorentzVector();
+	TLorentzVector* gen_mupl_LV = new TLorentzVector();
+
+    Long64_t totEntries = OniaTree->GetEntries(); 
+    
+    // const int nBins = 6;
+    // float ptBinning[nBins + 1] = {0, 2, 4, 6, 9, 12, 30};
+
+    double ptBinning[] = {0.0, 2.0, 6.0, 12.0, 30.0};
+    int nBins = sizeof(ptBinning)/sizeof(ptBinning[0]) - 1;
+
+    TH1D* hGenPt = new TH1D("hGenPt", "", nBins, ptBinning);
+    hGenPt->Sumw2();
+
+ 	// Loop over the events
+    for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
+		if (iEvent % 10000 == 0) {
+			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
+		}
+
+		OniaTree->GetEntry(iEvent);
+
+		// loop over all gen upsilons
+		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
+            gen_QQ_LV = (TLorentzVector*)Gen_QQ_4mom->At(iGen);
+
+            if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue;
+
+            hGenPt->Fill(gen_QQ_LV->Pt());
+
+        }
+    }
+
+    TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
+    hGenPt->SetTitle("");
+    hGenPt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+    hGenPt->GetYaxis()->SetTitle("Counts");
+    hGenPt->SetLineColor(kBlue);
+    hGenPt->SetMarkerStyle(20);
+    hGenPt->SetMarkerColor(kBlue);
+    hGenPt->SetMarkerSize(1.0);
+    hGenPt->Draw("E1");
+
+    // Save the histogram to a file
+    TFile* outFile = new TFile("GenPtSpectra_pythiaSignal_141X.root", "RECREATE");
+    hGenPt->Write();
+    outFile->Close();
+}
+
 TH1D* convertGraphToHist(TGraphErrors* hppXSecGraph, double& totalXS) {
 
     double ptEdges[] = {0.0, 2.0, 4.0, 6.0, 9.0, 12.0, 30.0};
@@ -119,7 +209,6 @@ TH1D* convertGraphToHist(TGraphErrors* hppXSecGraph, double& totalXS) {
             cout << "ySum: " << ySum << ", yErrSum: " << yErrSum << endl;
             cout << "totalXS: " << totalXS << endl;
 
-
             if (ptEdges[i + n + 1] == ptEdges_combined[i + 1]) break;
             n++;
         }
@@ -127,7 +216,7 @@ TH1D* convertGraphToHist(TGraphErrors* hppXSecGraph, double& totalXS) {
         cout << "ptEdges[i + n + 1]: " << ptEdges[i + n + 1] << ", ptEdges_combined[i + 1]: " << ptEdges_combined[i + 1] << endl;
         cout << "ySum: " << ySum << ", yErrSum: " << yErrSum << endl;
         cout << " " << endl;
-        
+
         hGraphAsHist->SetBinContent(i+1, ySum);
         hGraphAsHist->SetBinError(i+1, yErrSum);
 
@@ -165,11 +254,12 @@ void errorPropagation(TH1D* hratio, TH1D* hnum, TH1D* hden) {
 
 }
 
-void nGenSpectra(int iState = 1) {
+void nGenSpectra() {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 
-	const char* filename = "GenPtSpectra_pythiaSignal.root";
+	// const char* filename = "GenPtSpectra_pythiaSignal.root";
+	const char* filename = "GenPtSpectra_pythiaSignal_141X.root";
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
