@@ -1228,6 +1228,8 @@ void closureTest(TString refFrameName = "CS",
 
 	// kinematicsText->SetAllWith("", "align", 32);
 	// kinematicsText->Draw("same");
+	CMS_lumi(iterCanvas, gCMSLumiText);	
+	// CMS_lumi(iterCanvas, "#varUpsilon(1S) Pythia 8 (5.02 TeV)");
 
 	gPad->RedrawAxis();
 
