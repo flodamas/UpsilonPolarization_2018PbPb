@@ -287,7 +287,7 @@ void BuildInvariantMassModel(RooWorkspace& wspace, const char* signalShapeName, 
 	RooRealVar* exp_lambda = (RooRealVar*)wspace.var("exp_lambda");
 
 	const char* totalFitModelName = Form("%s_%s", bkgShapeName, fitModelName);
-	const char* savedFitResultFileName = Form("%s%s.root", totalFitModelName, gMuonAccName);
+	const char* savedFitResultFileName = Form("%s%s.root", totalFitModelName, gMuonAccName.Data());
 
 	// /// set the initial values of the parameters to the already fitted values
 	// if (savedFitResultFileName) {
