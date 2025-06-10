@@ -388,7 +388,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHi
 		polarFuncCosTheta->SetLineWidth(2);
 		polarFuncCosTheta->SetNpx(1000);
 
-		// 1 Sigma band
+		/// 1-, 2-, 3-Sigma band
 		TGraphAsymmErrors* errorBand1sigma = getConfidenceIntervalBands(nCosThetaBins, cosThetaBinEdges, phiBinCenter, polarFunc2D, fitResults, 0.6827);
 		TGraphAsymmErrors* errorBand2sigma = getConfidenceIntervalBands(nCosThetaBins, cosThetaBinEdges, phiBinCenter, polarFunc2D, fitResults, 0.9545);
 		TGraphAsymmErrors* errorBand3sigma = getConfidenceIntervalBands(nCosThetaBins, cosThetaBinEdges, phiBinCenter, polarFunc2D, fitResults, 0.9973);
@@ -398,7 +398,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHi
 		
 		gStyle->SetOptFit(1011);
 
-		// cosmetics
+		/// cosmetics
 		errorBand1sigma->SetFillColorAlpha(kRed - 9, 0.2);
 		errorBand1sigma->SetMarkerSize(0);
 
