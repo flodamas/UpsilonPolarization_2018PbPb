@@ -166,6 +166,59 @@ TLine* drawLine(double x1, double y1, double x2, double y2) {
 	return line;
 }
 
+TGraphAsymmErrors* getConfidenceIntervalBands(int nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {}, int phi = 30, TF2* polarFunc2D = nullptr, TFitResultPtr fitResults = nullptr, double confidenceLevel = 0.6827) {
+	/// Get the confidence interval bands for a histogram
+	/// Get nominal parameter values
+	double n = fitResults->Parameter(0);
+	double lambdaTheta = fitResults->Parameter(1);
+	double lambdaPhi = fitResults->Parameter(2);
+	double lambdaThetaPhi = fitResults->Parameter(3);
+
+	polarFunc2D->SetParameters(n, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+
+	TMatrixDSym cov = fitResults->GetCovarianceMatrix();
+
+	TGraphAsymmErrors* band = new TGraphAsymmErrors();
+
+	const int nPoints = 1000; // Number of points for the band
+	double step = (cosThetaBinEdges[nCosThetaBins] - cosThetaBinEdges[0]) / nPoints;	 
+	
+	for (int i = 0; i < nPoints; ++i) {
+		double x = cosThetaBinEdges[0] + i * step;
+
+		/// Set phi value
+		// double phiRad = phi * TMath::Pi() / 180.0; // Convert phi to radians
+
+		/// Evaluate the function 
+		double y = polarFunc2D->Eval(x, phi);
+
+		// Compute derivatives
+		double dfdn = 1.0 / (3 + lambdaTheta) * (1 + lambdaTheta * x * x + lambdaPhi * pow(sin(acos(x)), 2) * cos(2 * phi) + lambdaThetaPhi * sin(2 * acos(x)) * cos(phi));
+		double dfdlambdaTheta = -n / pow(3 + lambdaTheta, 2) * (1 + lambdaTheta * x * x + lambdaPhi * pow(sin(acos(x)), 2) * cos(2 * phi) + lambdaThetaPhi * sin(2 * acos(x)) * cos(phi)) + n / (3 + lambdaTheta) * (x * x);
+		double dfdlambdaPhi = n / (3 + lambdaTheta) * (pow(sin(acos(x)), 2) * cos(2 * phi));
+		double dfdlambdaThetaPhi = n / (3 + lambdaTheta) * (sin(2 * acos(x)) * cos(phi));
+
+		TVectorD grad(4);
+		grad[0] = dfdn;
+		grad[1] = dfdlambdaTheta;
+		grad[2] = dfdlambdaPhi;
+		grad[3] = dfdlambdaThetaPhi;
+
+		// Error^2 = grad^T * Cov * grad
+		
+		double err2 = cov.Similarity(grad);
+		double z = TMath::NormQuantile(0.5 * (1 + confidenceLevel));  // e.g., 1.96 for 95%
+		double err = z * sqrt(err2);
+
+		// double err = sqrt(err2);
+
+		band->SetPoint(i, x, y);
+		band->SetPointError(i, 0, 0, err, err); // symmetric
+	}
+
+	return band;
+}
+
 /// fit the corrected histo and extract polarization parameters
 RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHist1D, TString refFrameName = "CS",
                             Int_t ptMin = 0, Int_t ptMax = 30,
@@ -305,6 +358,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHi
 	corrected1DCanvas->Divide(3, 1);
 
 	for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+		/// cosmetics for 1D histograms along the cosTheta axis
 		corrected1DCanvas->cd(iPhi + 1);
 		
 		correctedHist1D[iPhi]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName.Data()));
@@ -320,18 +374,60 @@ RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHi
 		
 		correctedHist1D[iPhi]->Draw("E");
 
+		/// slice of the 2D fit along the cosTheta axis
 		TF1* polarFuncCosTheta = new TF1("polarFuncCosTheta", "[0] / (3 + [1]) * (1 + [1] * x * x + [2] * TMath::Sin(TMath::ACos(x)) * TMath::Sin(TMath::ACos(x)) * TMath::Cos(2. * [4] * pi / 180.) + [3] * TMath::Sin(2 * TMath::ACos(x)) * TMath::Cos([4] * pi / 180.))", -1, 1);
 		polarFuncCosTheta->SetParameter(0, normVal);
 		polarFuncCosTheta->SetParameter(1, lambdaThetaVal);
 		polarFuncCosTheta->SetParameter(2, lambdaPhiVal);
 		polarFuncCosTheta->SetParameter(3, lambdaThetaPhiVal);
-		polarFuncCosTheta->SetParameter(4, phiBinEdges[iPhi] + (phiBinEdges[iPhi + 1] - phiBinEdges[iPhi]) / 2.); // set the phi value for the fit
+		
+		double phiBinCenter = phiBinEdges[iPhi] + (phiBinEdges[iPhi + 1] - phiBinEdges[iPhi]) / 2.;
+		polarFuncCosTheta->SetParameter(4, phiBinCenter); // set the phi value for the fit
 
 		polarFuncCosTheta->SetLineColor(kRed);
 		polarFuncCosTheta->SetLineWidth(2);
 		polarFuncCosTheta->SetNpx(1000);
-		polarFuncCosTheta->Draw("SAME");
 
+		// 1 Sigma band
+		TGraphAsymmErrors* errorBand1sigma = getConfidenceIntervalBands(nCosThetaBins, cosThetaBinEdges, phiBinCenter, polarFunc2D, fitResults, 0.6827);
+		TGraphAsymmErrors* errorBand2sigma = getConfidenceIntervalBands(nCosThetaBins, cosThetaBinEdges, phiBinCenter, polarFunc2D, fitResults, 0.9545);
+		TGraphAsymmErrors* errorBand3sigma = getConfidenceIntervalBands(nCosThetaBins, cosThetaBinEdges, phiBinCenter, polarFunc2D, fitResults, 0.9973);
+
+		// new TH1D("errorBand", "", 1000, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
+		// (TVirtualFitter::GetFitter())->GetConfidenceIntervals(errorBand, 0.68);
+		
+		gStyle->SetOptFit(1011);
+
+		// cosmetics
+		errorBand1sigma->SetFillColorAlpha(kRed - 9, 0.2);
+		errorBand1sigma->SetMarkerSize(0);
+
+		errorBand2sigma->SetFillColorAlpha(kOrange-3, 0.2);
+		errorBand2sigma->SetMarkerSize(0);
+
+		errorBand3sigma->SetFillColorAlpha(kAzure+1, 0.15);
+		errorBand3sigma->SetMarkerSize(0);
+
+		errorBand3sigma->Draw("E3 SAME");	
+		errorBand2sigma->Draw("E3 SAME");
+		errorBand1sigma->Draw("E3 SAME");
+
+		polarFuncCosTheta->Draw("SAME");
+				
+		// /// contour plot
+		// // (ref: https://root-forum.cern.ch/t/roofit-minos-errors-for-2-parameters-of-interest/16157)
+		
+		// // set the confidence level
+		// gMinuit->SetErrorDef(2.30); // 1 sigma corresponds to delchi2 = 2.30 
+		// TGraph* contourPlot1 = (TGraph*)gMinuit->Contour(1000, 1, 0); // Contour(number of points, lambda_theta, normalization factor)
+
+		// gMinuit->SetErrorDef(6.18); // 2 sigma corresponds to delchi2 = 6.18
+		// TGraph* contourPlot2 = (TGraph*)gMinuit->Contour(1000, 1, 0);	
+
+		// TCanvas* contourCanvas = drawContourPlots(ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], refFrameName, contourPlot1, contourPlot2);
+
+
+		/// legend
 		TLatex* text1D = new TLatex();
 		text1D->SetTextAlign(22);
 		text1D->SetTextSize(0.05);
@@ -371,6 +467,10 @@ RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHi
 		resultTextLeft1D->Draw();
 
 		CMS_lumi((TPad*)gPad, gCMSLumiText);	
+		
+		gPad->RedrawAxis();
+
+		gPad->Update();
 	}
 
 	gSystem->mkdir(Form("closureTest/%s", applyEff ? "HydjetAccEff": "PythiaAcc"), kTRUE);
