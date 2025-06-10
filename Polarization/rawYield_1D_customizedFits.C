@@ -16,7 +16,8 @@
 #include "../Tools/Style/FitDistributions.h"
 
 #include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
-#include "../Tools/RooFitPDFs/cosThetaPolarFunc.h"
+// #include "../Tools/RooFitPDFs/cosThetaPolarFunc.h"
+#include "../Tools/RooFitPDFs/PolarFunc.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
@@ -32,9 +33,9 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	/// Bin edges and width 
 	// Set the bin edges along the cosTheta/phi axis depending on the number of bins 
 	// (The bin edges are pre-defined, so need to modify them if different bin edges are required)
-	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaBins);
+	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
 	
-	vector<Double_t> phiBinEdges = setPhiBinEdges(nPhiBins);
+	vector<Double_t> phiBinEdges = setPhiBinEdges(nPhiBins, phiMin, phiMax);
 
 	// bin width
 	Double_t cosThetaStep = (cosThetaBinEdges[nCosThetaBins] - cosThetaBinEdges[0]) / nCosThetaBins;
@@ -50,55 +51,64 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	const char* signalShapeName = "SymDSCB";
 
 	// background shape array: ChebychevOrderN or ExpTimesErr	
-	const char* bkgShapeNamesCosTheta[] = {
-	  // "ChebychevOrder1",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
+	// const char* bkgShapeNamesCosTheta[] = {
+	//   // "ChebychevOrder1",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
 
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
 
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
 
-	  "ChebychevOrder2"
-	  // "ChebychevOrder1"
-	};
-	const char* bkgShapeNamesPhi[] = {
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2"
-	};
-	// const char* bkgShapeNames[] = {
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr",
-	//   "ExpTimesErr"
+	//   "ChebychevOrder2"
+	//   // "ChebychevOrder1"
 	// };
+	// const char* bkgShapeNamesPhi[] = {
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2"
+	// };
+	const char* bkgShapeNamesCosTheta[] = {
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr"
+	};
+
+	const char* bkgShapeNamesPhi[] = {
+		"ExpTimesErr",
+		"ExpTimesErr",
+		"ExpTimesErr",
+		"ExpTimesErr",
+		"ExpTimesErr",
+		"ExpTimesErr",
+	};
 
 	/// "Standard" procedure: extract the yields per bin
 	TH1D* standardCorrectedCosThetaHist = new TH1D("standardCorrectedCosThetaHist", " ", nCosThetaBins, cosThetaBinEdges.data());
@@ -108,7 +118,18 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	const char* nominalMapName = NominalTEfficiency3DName(refFrameName);
 
 	// get acceptance maps
-	TFile* acceptanceFile = openFile("../MonteCarlo/AcceptanceMaps/1S/AcceptanceResults.root");
+	TFile* acceptanceFile = openFile(Form("%s/AcceptanceResults%s.root", AcceptanceResultsPath(gMuonAccName.Data()), "_fullPhi"));
+	
+	if (!acceptanceFile) {
+		std::cerr << "Error: acceptanceFile is null." << std::endl;
+		acceptanceFile->Close();
+		delete acceptanceFile;
+
+		// acceptanceMap_noGenFilter(0, 30, gUpsilonState, lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded, "MuonUpsilonTriggerAcc");
+
+		return;
+	}
+	
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
 
 	// rebin acceptance maps based on costheta, phi, and pT selection
@@ -117,7 +138,14 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	TEfficiency* accHistPhi = rebinTEff3DMapPhi(accMap, ptMin, ptMax, cosThetaMin, cosThetaMax, nPhiBins, phiBinEdges);
 
 	// get efficiency maps
-	TFile* efficiencyFile = openFile("../MonteCarlo/EfficiencyMaps/1S/EfficiencyResults.root");
+	TFile* efficiencyFile = openFile(Form("%s/EfficiencyResults%s.root", EfficiencyResultsPath(gMuonAccName.Data()), "_fullPhi"));
+	
+	if (!efficiencyFile) {
+		std::cerr << "Error: efficiencyFile is null." << std::endl;
+
+		return;
+	}	
+	
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	// rebin efficiency maps based on costheta, phi, and pT selection
@@ -126,12 +154,12 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 	TEfficiency* effHistPhi = rebinTEff3DMapPhi(effMap, ptMin, ptMax, cosThetaMin, cosThetaMax, nPhiBins, phiBinEdges);
 
 	// get relative systematic uncertainty of efficiency
-	auto* systEff = (TH3D*)efficiencyFile->Get(RelativeSystTEfficiency3DName(refFrameName));
+	auto* systEff = (TH3D*)efficiencyFile->Get(SystTEfficiency3DName(refFrameName));
 
 	// rebin uncertainty map based on costheta, phi, and pT selection
-	TH1D* systEffCosTheta = rebinRel3DUncCosTheta(systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiMin, phiMax);
+	TH1D* systEffCosTheta = rebinRel3DUncCosTheta(effMap, systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, phiMin, phiMax);
 
-	TH1D* systEffPhi = rebinRel3DUncPhi(systEff, ptMin, ptMax, cosThetaMin, cosThetaMax, nPhiBins, phiBinEdges);
+	TH1D* systEffPhi = rebinRel3DUncPhi(effMap, systEff, ptMin, ptMax, cosThetaMin, cosThetaMax, nPhiBins, phiBinEdges);
 
 	Bool_t isCSframe = (strcmp(refFrameName, "CS") == 0) ? kTRUE : kFALSE;
 
@@ -179,7 +207,7 @@ void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* r
 
 	polarCanvas->cd(1);
 
-	TF1* PolarFunc = cosThetaPolarFunc(maxYieldCosTheta);
+	TF1* PolarFunc = getCosThetaPolarFunc(maxYieldCosTheta);
 
 	TFitResultPtr fitResults = standardCorrectedCosThetaHist->Fit("PolarFunc", "ESV", "", cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]); //L:log likelihood fit (default: chi2 method), E: NINOS
 
