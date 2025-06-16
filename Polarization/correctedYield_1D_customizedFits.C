@@ -9,7 +9,9 @@
 #include "../Tools/Style/FitDistributions.h"
 
 #include "../Tools/RooFitPDFs/CosThetaPolarizationPDF.h"
-#include "../Tools/RooFitPDFs/cosThetaPolarFunc.h"
+// #include "../Tools/RooFitPDFs/cosThetaPolarFunc.h"
+
+#include "../Tools/RooFitPDFs/PolarFunc.h"
 
 void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS" /*, const Int_t nCosThetaBins = 10, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1.*/, Int_t phiMin = 0, Int_t phiMax = 180) {
 	writeExtraText = true; // if extra text
@@ -27,9 +29,10 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	RooRealVar* yield3S = new RooRealVar("yield3S", "", 10);
 
 	/// Bin width
-	const Int_t nCosThetaBins = 7;
+	const Int_t nCosThetaBins = 5;
 
-	Float_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7};
+	// Float_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7};
+	Float_t cosThetaBinEdges[nCosThetaBins + 1] = {-0.7, -0.42, -0.14, 0.14, 0.42, 0.7};
 	// Float_t cosThetaBinEdges[nCosThetaBins+1] = {-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8};
 
 	/// Set up the variables
@@ -40,17 +43,30 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 	const char* signalShapeName = "SymDSCB";
 
 	// background shape array: ChebychevOrderN or ExpTimesErr
+	// const char* bkgShapeName[] = {
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   "ChebychevOrder2",
+	//   // "ChebychevOrder2"
+	// };
+
 	const char* bkgShapeName[] = {
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  "ChebychevOrder2",
-	  // "ChebychevOrder2"
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  "ExpTimesErr",
+	  // "ExpTimesErr"
 	};
 
 	/// "Standard" procedure: extract the yields per bin
@@ -128,7 +144,7 @@ void correctedYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const c
 
 	gPad->Update();
 
-	//CMS_lumi(canvas, gCMSLumiText);
+	CMS_lumi(canvas, gCMSLumiText);
 
 	gSystem->mkdir("DistributionFits/1D", kTRUE);
 	canvas->SaveAs(Form("DistributionFits/1D/compareCorrectedCosTheta%s_cent%dto%d_pt%dto%dGeV_phi%dto%d.png", refFrameName, gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, phiMin, phiMax), "RECREATE");
