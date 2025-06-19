@@ -105,7 +105,9 @@ void makePtSpectra_pythiaSignal(int iState = 1, TString muonAccName = "UpsilonTr
 /// skim the GenOnly file to get the pT spectra of the generated upsilons
 void makePtSpectra_pythiaSignal_141X(int iState = 1, TString muonAccName = "UpsilonTriggerThresholds") {
 	// Read GenOnly Nofilter file with polarization weights
-    const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_merge.root", iState);
+    // const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_merge.root", iState);
+	// const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_combined.root", iState);
+	const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_50M.root", iState);
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -201,7 +203,8 @@ void makePtSpectra_pythiaSignal_141X(int iState = 1, TString muonAccName = "Upsi
 /// skim the Hydjet Gen file to get the pT spectra of the generated upsilons
 void makePtSpectra_HydjetGen(int iState = 1, TString muonAccName = "UpsilonTriggerThresholds") {
     /// Read Hydjet Gen file
-	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
+	// const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
+	const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_Hydjet_merge.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
 		cout << "File " << filename << " not found. Check the directory of the file." << endl;
@@ -330,7 +333,8 @@ void makePtSpectra_HydjetGen(int iState = 1, TString muonAccName = "UpsilonTrigg
 			if (!MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName)) continue;
 
 			// hGenPtHydjet->Fill(gen_QQ_pt, Gen_weight * FindNcoll(hiBin));
-			hGenPtHydjet->Fill(gen_QQ_pt, Gen_weight);
+			// hGenPtHydjet->Fill(gen_QQ_pt, Gen_weight);
+			hGenPtHydjet->Fill(gen_QQ_pt);
             // hGenPtHydjet->Fill(gen_QQ_pt, FindNcoll(hiBin));
         }
     }
@@ -347,7 +351,8 @@ void makePtSpectra_HydjetGen(int iState = 1, TString muonAccName = "UpsilonTrigg
 
     // Save the histogram to a file
     // TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight_%s.root", muonAccName.Data()), "RECREATE");
-	TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_noNColl_%s.root", muonAccName.Data()), "RECREATE");
+	// TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_noNColl_%s.root", muonAccName.Data()), "RECREATE");
+	TFile* outFile = new TFile(Form("GenPtSpectra_HydjetGen_finerBin_noNColl_noGenWeight_141X_%s.root", muonAccName.Data()), "RECREATE");
     hGenPtHydjet->Write();
     outFile->Close();
 
@@ -358,44 +363,63 @@ void nGenSpectra_MC(TString muonAccName = "UpsilonTriggerThresholds") {
 	extraText = "       Internal";
 
     /// open the Pythia signal gen pt spectra file
-	const char* filename = Form("GenPtSpectra_pythiaSignal_finerBin_%s.root", muonAccName.Data());
+	const char* pythiaFilename = Form("GenPtSpectra_pythiaSignal_141X_finerBin_%s.root", muonAccName.Data());
 
-	TFile* file = TFile::Open(filename, "READ");
-	if (!file) {
-		cout << "File " << filename << " not found. Check the directory of the file." << endl;
+	TFile* pythiaFile = TFile::Open(pythiaFilename, "READ");
+	if (!pythiaFile) {
+		cout << "File " << pythiaFilename << " not found. Check the directory of the file." << endl;
 		return;
 	}
 
-	cout << "File " << filename << " opened" << endl;
+	cout << "File " << pythiaFilename << " opened" << endl;
 
-    TH1D* hGenPt = (TH1D*)file->Get("hGenPt");
+    TH1D* hGenPt = (TH1D*)pythiaFile->Get("hGenPt");
     if (!hGenPt) {
         std::cerr << "Error: Could not find histogram 'hGenPt'!" << std::endl;
-        file->Close();
+        pythiaFile->Close();
         return;
     }
 
-    /// open the Hydjet gen pt spectra file
+	/// open the Pythia embedded Hydjet GEN pt spectra file with gen weights
+	const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_noNColl_%s.root", muonAccName.Data());
+	// const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_noNColl_141X_%s.root", muonAccName.Data());
 
-    // const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight_%s.root", muonAccName.Data());
-    const char* hydjetFilename = Form("GenPtSpectra_HydjetGen_finerBin_%s.root", muonAccName.Data());
+	TFile* hydjetFile = TFile::Open(hydjetFilename, "READ");
+	if (!hydjetFile) {
+		cout << "File " << hydjetFilename << " not found. Check the directory of the file." << endl;
+		return;
+	}
 
-    TFile* hydjetFile = TFile::Open(hydjetFilename, "READ");
+	cout << "File " << hydjetFilename << " opened" << endl;
 
-    if (!hydjetFile || hydjetFile->IsZombie()) {
-        std::cerr << "Error: Could not open file!" << std::endl;
-        return;
-    }
-
-    cout << "File " << hydjetFilename << " opened" << endl;
-
-    TH1D* hGenPtHydjet = (TH1D*)hydjetFile->Get("hGenPtHydjet");
-
-    if (!hGenPtHydjet) {
-        std::cerr << "Error: Could not find histogram 'hGenPtHydjet'!" << std::endl;
+    // TH1D* hGenPt = (TH1D*)file->Get("hGenPt");
+	TH1D* hGenPtHydjet_wWeight = (TH1D*)hydjetFile->Get("hGenPtHydjet");
+    if (!hGenPtHydjet_wWeight) {
+        std::cerr << "Error: Could not find histogram 'hGenPt'!" << std::endl;
         hydjetFile->Close();
         return;
     }
+
+    // /// open the Hydjet gen pt spectra file
+    // const char* hydjetFilename2 = Form("GenPtSpectra_HydjetGen_finerBin_noGenWeight_%s.root", muonAccName.Data());
+	// // const char* hydjetFilename2 = Form("GenPtSpectra_HydjetGen_finerBin_noNColl_noGenWeight_141X_%s.root", muonAccName.Data());
+
+    // TFile* hydjetFile2 = TFile::Open(hydjetFilename2, "READ");
+
+    // if (!hydjetFile2 || hydjetFile2->IsZombie()) {
+    //     std::cerr << "Error: Could not open file!" << std::endl;
+    //     return;
+    // }
+
+    // cout << "File " << hydjetFilename2 << " opened" << endl;
+
+    // TH1D* hGenPtHydjet_woWeight = (TH1D*)hydjetFile2->Get("hGenPtHydjet");
+
+    // if (!hGenPtHydjet_woWeight) {
+    //     std::cerr << "Error: Could not find histogram 'hGenPtHydjet'!" << std::endl;
+    //     hydjetFile2->Close();
+    //     return;
+    // }
 
 	gStyle->SetPadLeftMargin(.18);
 
@@ -407,8 +431,9 @@ void nGenSpectra_MC(TString muonAccName = "UpsilonTriggerThresholds") {
 	pad1->cd();
 
     hGenPt->SetTitle("");
-    hGenPt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
-    hGenPt->GetYaxis()->SetTitle("d#sigma^{2} / dydp_{T} (nb/GeV/c)");
+    hGenPt->GetXaxis()->SetTitle(gPtAxisTitle);
+    // hGenPt->GetYaxis()->SetTitle("d#sigma^{2} / dydp_{T} (nb/GeV/c)");
+	hGenPt->GetYaxis()->SetTitle(Form("dN(#varUpsilon(1S)) / d%s (%s)^{-1}", gPtVarName, gPtUnit));
     hGenPt->GetXaxis()->SetLabelSize(0);
     hGenPt->SetLineColor(kBlue);
     hGenPt->SetMarkerStyle(20);
@@ -420,13 +445,19 @@ void nGenSpectra_MC(TString muonAccName = "UpsilonTriggerThresholds") {
 
     hGenPt->Draw("E1");
 
-    hGenPtHydjet->Scale(1 / hGenPtHydjet->Integral());
-    hGenPtHydjet->SetLineColor(kBlack);
-    hGenPtHydjet->SetMarkerStyle(20);
-    hGenPtHydjet->SetMarkerColor(kBlack);
-    hGenPtHydjet->Draw("E1 same");
+    hGenPtHydjet_wWeight->Scale(1 / hGenPtHydjet_wWeight->Integral());
+    hGenPtHydjet_wWeight->SetLineColor(kBlack);
+    hGenPtHydjet_wWeight->SetMarkerStyle(22);
+    hGenPtHydjet_wWeight->SetMarkerColor(kBlack);
+    hGenPtHydjet_wWeight->Draw("E1 same");
 
-    hGenPt->GetYaxis()->SetRangeUser(0, std::max(hGenPtHydjet->GetMaximum(), hGenPt->GetMaximum()) * 1.2);
+    // hGenPtHydjet_woWeight->Scale(1 / hGenPtHydjet_woWeight->Integral());
+    // hGenPtHydjet_woWeight->SetLineColor(kRed);
+    // hGenPtHydjet_woWeight->SetMarkerStyle(23);
+    // hGenPtHydjet_woWeight->SetMarkerColor(kRed);
+    // hGenPtHydjet_woWeight->Draw("E1 same");
+
+    hGenPt->GetYaxis()->SetRangeUser(0, std::max(hGenPtHydjet_wWeight->GetMaximum(), hGenPt->GetMaximum()) * 1.2);
 
 	TPaveText* header = new TPaveText(.3, .85, .9, .75, "NDCNB");
 	header->SetFillColor(4000);
@@ -437,10 +468,12 @@ void nGenSpectra_MC(TString muonAccName = "UpsilonTriggerThresholds") {
 	header->Draw();
 
 	TLegend* legend = new TLegend(.5, .7, .85, .55);
-	legend->SetTextSize(.07);
-	legend->AddEntry(hGenPtHydjet, "Hydjet Gen MC", "lep");
+	legend->SetTextSize(.05);
+	// legend->AddEntry(hGenPtHydjet, "Hydjet Gen MC", "lep");
     legend->AddEntry(hGenPt, "Pythia Signal Gen MC", "lep");
-
+	// legend->AddEntry(hGenPtHydjet_woWeight, "Hydjet w/o GenWeight", "lep");
+    legend->AddEntry(hGenPtHydjet_wWeight, "Hydjet with GenWeight", "lep");
+	
 	legend->Draw();
 
 	// ratio plot
@@ -454,15 +487,15 @@ void nGenSpectra_MC(TString muonAccName = "UpsilonTriggerThresholds") {
 	pad2->cd();
 
     TH1D* hRatio = (TH1D*)hGenPt->Clone("hRatio");
-    hRatio->Divide(hGenPtHydjet);
+    hRatio->Divide(hGenPtHydjet_wWeight);
 
     hRatio->SetTitle(" ");
     hRatio->GetYaxis()->SetTitleOffset(0.65);
-    hRatio->GetYaxis()->SetTitle("Pythia Signal / Hydjet");
-    hRatio->GetYaxis()->SetTitleSize(0.13);
+    hRatio->GetYaxis()->SetTitle("Pythia / Hydjet");
+    hRatio->GetYaxis()->SetTitleSize(0.11);
     hRatio->GetYaxis()->SetLabelSize(0.11);
     hRatio->GetYaxis()->CenterTitle();
-    hRatio->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+    hRatio->GetXaxis()->SetTitle(gPtAxisTitle);
     hRatio->GetXaxis()->SetLabelSize(0.11);
     hRatio->GetXaxis()->SetTitleSize(0.13);
     hRatio->GetXaxis()->SetTickSize(0.06);
@@ -489,44 +522,44 @@ void nGenSpectra_MC(TString muonAccName = "UpsilonTriggerThresholds") {
     // TF1* fitFunc = new TF1("fitFunc", "[0]/pow(([1] + x), [2])", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
     // fitFunc->SetParameters(10.0, 0.1, 5.0); 
 
-    TF1* fitFunc = new TF1("fitFunc", "([0] + [1] * pow(x, 2.))/pow((x - [2]), 3)", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
+    // TF1* fitFunc = new TF1("fitFunc", "([0] + [1] * pow(x, 2.))/pow((x - [2]), 3)", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
     
-    // TF1* fitFunc = new TF1("fitFunc", "[0] + [1] / pow((x + [2]), [3])", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
+    // // TF1* fitFunc = new TF1("fitFunc", "[0] + [1] / pow((x + [2]), [3])", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
    
-    // TF1* fitFunc = new TF1("fitFunc", "[0] * exp(-x/[1])/(x + [2])", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
+    // // TF1* fitFunc = new TF1("fitFunc", "[0] * exp(-x/[1])/(x + [2])", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
 
-    // fitFunc->SetParLimits(0, 1.0, 5.0);  // A
-    // fitFunc->SetParLimits(1, 0.1, 10.0); // B
-    // fitFunc->SetParLimits(2, 0.5, 5.0);  // C
+    // // fitFunc->SetParLimits(0, 1.0, 5.0);  // A
+    // // fitFunc->SetParLimits(1, 0.1, 10.0); // B
+    // // fitFunc->SetParLimits(2, 0.5, 5.0);  // C
 
-    // Optionally set limits to keep it physically reasonable
-    // fitFunc->SetParLimits(0, 7, 20);     // A
-    // fitFunc->SetParLimits(1, 4, 10);   // B
-    // fitFunc->SetParLimits(2, 0.1, 5.0);   // C
+    // // Optionally set limits to keep it physically reasonable
+    // // fitFunc->SetParLimits(0, 7, 20);     // A
+    // // fitFunc->SetParLimits(1, 4, 10);   // B
+    // // fitFunc->SetParLimits(2, 0.1, 5.0);   // C
 
-    auto fitResult = hRatio->Fit(fitFunc, "QEMSR", "", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
-    fitResult->Print("v");
+    // auto fitResult = hRatio->Fit(fitFunc, "QEMSR", "", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
+    // fitResult->Print("v");
 
-  	// legend with fit result info
+  	// // legend with fit result info
 
-	TLegend* fitLegend = new TLegend(.4, .9, .7, .65);
-	fitLegend->SetTextSize(.09);
-	fitLegend->AddEntry(fitFunc, Form("#frac{A}{(p_{T} + B)}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
-		// fitLegend->AddEntry(fitFunc, Form("#frac{A + B p_{T}^{2}}{(p_{T} - C)^{3}}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
-    // fitLegend->AddEntry(fitFunc, Form("#frac{A}{(p_{T} + B)^{C}}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
+	// TLegend* fitLegend = new TLegend(.4, .9, .7, .65);
+	// fitLegend->SetTextSize(.09);
+	// fitLegend->AddEntry(fitFunc, Form("#frac{A}{(p_{T} + B)}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
+	// 	// fitLegend->AddEntry(fitFunc, Form("#frac{A + B p_{T}^{2}}{(p_{T} - C)^{3}}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
+    // // fitLegend->AddEntry(fitFunc, Form("#frac{A}{(p_{T} + B)^{C}}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
 	
-    fitLegend->Draw();
+    // fitLegend->Draw();
 
-	TPaveText* fitHeader = new TPaveText(.65, .7, .9, .45, "NDCNB");
-	fitHeader->SetFillColor(4000);
-	fitHeader->SetBorderSize(0);
-	fitHeader->SetTextSize(.09);
-	fitHeader->AddText(Form("A = %.1f #pm %.1f", fitFunc->GetParameter(0), fitFunc->GetParError(0)));
-	fitHeader->AddText(Form("B = %.1f #pm %.1f", fitFunc->GetParameter(1), fitFunc->GetParError(1)));
-	// fitHeader->AddText(Form("C = %.1f #pm %.1f", fitFunc->GetParameter(2), fitFunc->GetParError(2)));
+	// TPaveText* fitHeader = new TPaveText(.65, .7, .9, .45, "NDCNB");
+	// fitHeader->SetFillColor(4000);
+	// fitHeader->SetBorderSize(0);
+	// fitHeader->SetTextSize(.09);
+	// fitHeader->AddText(Form("A = %.1f #pm %.1f", fitFunc->GetParameter(0), fitFunc->GetParError(0)));
+	// fitHeader->AddText(Form("B = %.1f #pm %.1f", fitFunc->GetParameter(1), fitFunc->GetParError(1)));
+	// // fitHeader->AddText(Form("C = %.1f #pm %.1f", fitFunc->GetParameter(2), fitFunc->GetParError(2)));
 
-	fitHeader->SetAllWith("", "align", 12);
-	fitHeader->Draw();  
+	// fitHeader->SetAllWith("", "align", 12);
+	// fitHeader->Draw();  
 
 	canvas->Modified();
 	canvas->Update();
