@@ -21,7 +21,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 10, Int_t phiMin = -180, Int_t phiMax = 180, const Int_t nPhiBins = 6, Int_t cosThetaMin = -1, Int_t cosThetaMax = 1, Int_t iState = gUpsilonState) {
+void rawYield_1D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 10, Int_t phiMin = -180, Int_t phiMax = 180, const Int_t nPhiBins = 6, double cosThetaMin = -1, double cosThetaMax = 1, Int_t iState = gUpsilonState) {
 	
 	writeExtraText = true; // if extra text
 	extraText = "      Internal";
