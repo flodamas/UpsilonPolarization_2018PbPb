@@ -48,7 +48,7 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 	/// get acceptance and efficiency in 1D
 	TString nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TString fileName = Form("%s/AcceptanceResults%s.root", AcceptanceResultsPath(gMuonAccName.Data()), "_fullPhi");
+	TString fileName = Form("%s/AcceptanceResults_dimuonPtWeight%s.root", AcceptanceResultsPath(gMuonAccName.Data()), "_fullPhi");
 
 	// get acceptance maps
 	// TFile* acceptanceFile = openFile(fileName.Data());
@@ -111,6 +111,7 @@ TEfficiency* getEfficiency3DMap(const char* refFrameName, Double_t lambdaTheta =
 	TString nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TString fileName = Form("%s/EfficiencyResults%s.root", EfficiencyResultsPath(gMuonAccName.Data()), "_fullPhi");
+	// TString fileName = Form("%s/EfficiencyResults%s_noNColl.root", EfficiencyResultsPath(gMuonAccName.Data()), "_fullPhi");
 
 	// get efficiency maps
 	TFile* efficiencyFile = openFile(fileName.Data());
@@ -154,6 +155,7 @@ TH3D* getSysEff3DMap(const char* refFrameName, Double_t lambdaTheta = 0, Double_
 	const char* nominalMapName = SystTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TString fileName = Form("%s/EfficiencyResults%s.root", EfficiencyResultsPath(gMuonAccName.Data()), "_fullPhi");
+	// TString fileName = Form("%s/EfficiencyResults%s_noNColl.root", EfficiencyResultsPath(gMuonAccName.Data()), "_fullPhi");
 
 	// get relative systematic uncertainty of efficiency
 	TFile* efficiencyFile = openFile(fileName.Data());
@@ -381,17 +383,17 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
 	TH2D* systEffCosThetaPhi = rebinRel3DUncMap(effMap, systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
 
-	TH2D* hTotalCosThetaPhiAcc = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
-	// hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
+	TH2D* hTotalCosThetaPhiAcc = (TH2D*)(accMapCosThetaPhi->GetTotalHistogram())->Clone("hTotalCosThetaPhiAcc");
+	hTotalCosThetaPhiAcc->SetName("hTotalCosThetaPhiAcc");
 
 	TH2D* hPassedCosThetaPhiAcc = (TH2D*)accMapCosThetaPhi->GetPassedHistogram();
-	// hPassedCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance numerator");
+	hPassedCosThetaPhiAcc->SetName("hPassedCosThetaPhiAcc");
 
-	TH2D* hTotalCosThetaPhiEff = (TH2D*)effMapCosThetaPhi->GetTotalHistogram();
-	// hTotalCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency denominator");
+	TH2D* hTotalCosThetaPhiEff = (TH2D*)(effMapCosThetaPhi->GetTotalHistogram())->Clone("hTotalCosThetaPhiEff");
+	hTotalCosThetaPhiEff->SetName("hTotalCosThetaPhiEff");
 
 	TH2D* hPassedCosThetaPhiEff = (TH2D*)effMapCosThetaPhi->GetPassedHistogram();
-	// hPassedCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency numerator");
+	hPassedCosThetaPhiEff->SetName("hPassedCosThetaPhiEff");
 
 	TH2D* hRatioCosThetaPhi = (TH2D*)hTotalCosThetaPhiAcc->Clone("hRatioCosThetaPhi");
 
@@ -425,27 +427,30 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 	else {
 		accCanvas = DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kTRUE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi, nLegendRows);
+		// accMapCosThetaPhi->SetTitle("#varUpsilon(1S) acceptance");
+		
 		effCanvas = DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, gUpsilonState, kFALSE, kTRUE, kFALSE, "_TriggerAcc", isPhiFolded, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi, nLegendRows);
-        
+        // effMapCosThetaPhi->SetTitle("#varUpsilon(1S) total efficiency");
+
 		ratioCanvas = draw2DMap(hRatioCosThetaPhi, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
 		hRatioCosThetaPhi->GetZaxis()->SetTitle("acc num / eff den ratio");
 		display2DMapContents(hRatioCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE, 0.04, kBlack, 4);
 
 		accTotalCanvas = draw2DMap(hTotalCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
-        hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
+		hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
 		display2DMapContents(hTotalCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
        
         accPassedCanvas = draw2DMap(hPassedCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
         hPassedCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance numerator");
 		display2DMapContents(hPassedCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
         
-        // effTotalCanvas = draw2DMap(hTotalCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
-        // hTotalCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency denominator");
-		// display2DMapContents(hTotalCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
+        effTotalCanvas = draw2DMap(hTotalCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
+        hTotalCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency denominator");
+		display2DMapContents(hTotalCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
 
-        // effPassedCanvas = draw2DMap(hPassedCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
-        // hPassedCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency numerator");
-		// display2DMapContents(hPassedCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
+        effPassedCanvas = draw2DMap(hPassedCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
+        hPassedCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency numerator");
+		display2DMapContents(hPassedCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
 	}
 	
 	TCanvas* dummyCanvas = new TCanvas("dummyCanvas", "dummyCanvas", 600, 600); // this is dummy canvas due to the overwrite of the fitted histogram
@@ -487,8 +492,8 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 				}
 
 				else {
-					// weight = 1. / (acceptance * efficiency);
-					weight = 1. / (acceptance * efficiency) * residual;
+					weight = 1. / (acceptance * efficiency);
+					// weight = 1. / (acceptance * efficiency) * residual;
 
 					relEffUncHigh = effMapCosThetaPhi->GetEfficiencyErrorUp(iGlobalBin) / efficiency;
 					relAccUncHigh = accMapCosThetaPhi->GetEfficiencyErrorUp(iGlobalBin) / acceptance;
@@ -553,6 +558,8 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 			// now propagate both sources of uncertainty:
 			double totalError = TMath::Sqrt(pow(weight * recoMCUnc, 2) + pow(recoMCVal * deltaW, 2)); // error from acc × eff)
+			// double totalError = 1070; // error from acc × eff)
+
 
 			cout << "weight: " << weight << endl;
 			cout << "relEffUncHigh: " << relEffUncHigh << endl;
@@ -596,7 +603,7 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, TString refFrameN
 
 	if (drawPlot) {
 		TCanvas* correctedCanvas = draw2DMap(correctedHist, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, kFALSE, nLegendRows);
-		display2DMapContents(correctedHist, nCosThetaBins, nPhiBins, kFALSE, 0.035, kWhite, 0);
+		display2DMapContents(correctedHist, nCosThetaBins, nPhiBins, kTRUE, 0.035, kBlack, 4);
 
 		/// Styles of the texts in the plot
 		TLatex* legend1 = new TLatex();
@@ -651,6 +658,7 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 
 	// const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_noMassCut.root", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_gen.root", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	// const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_gen_noNColl.root", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	// const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_HydjetWeight.root", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
 	TFile* infile = TFile::Open(Form("../Files/%s", inputFileName), "READ");
@@ -1228,8 +1236,8 @@ void closureTest(TString refFrameName = "CS",
 
 	// kinematicsText->SetAllWith("", "align", 32);
 	// kinematicsText->Draw("same");
-	CMS_lumi(iterCanvas, gCMSLumiText);	
-	// CMS_lumi(iterCanvas, "#varUpsilon(1S) Pythia 8 (5.02 TeV)");
+	// CMS_lumi(iterCanvas, gCMSLumiText);	
+	CMS_lumi(iterCanvas, "#varUpsilon(1S) Pythia 8 (5.02 TeV)");
 
 	gPad->RedrawAxis();
 
