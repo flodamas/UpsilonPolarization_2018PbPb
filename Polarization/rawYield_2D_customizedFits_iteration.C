@@ -220,7 +220,7 @@ TGraphAsymmErrors* getConfidenceIntervalBands(int nCosThetaBins = 5, const vecto
 }
 
 /// fit the corrected histo and extract polarization parameters
-RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHist1D, TString refFrameName = "CS",
+RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHist1DCosTheta, TString refFrameName = "CS",
                             Int_t ptMin = 0, Int_t ptMax = 30,
                             Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {},
                             Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {},
@@ -354,25 +354,25 @@ RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHi
 	gPad->Update();
 
 	/// draw 1D histograms along the cosTheta axis with the fit
-	TCanvas* corrected1DCanvas = new TCanvas("corrected1DCanvas", "corrected1DCanvas", 1500, 500);
-	corrected1DCanvas->Divide(3, 1);
+	TCanvas* corrected1DFitCanvas = new TCanvas("corrected1DFitCanvas", "corrected1DFitCanvas", 1500, 500);
+	corrected1DFitCanvas->Divide(3, 1);
 
 	for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
 		/// cosmetics for 1D histograms along the cosTheta axis
-		corrected1DCanvas->cd(iPhi + 1);
+		corrected1DFitCanvas->cd(iPhi + 1);
 		
-		correctedHist1D[iPhi]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName.Data()));
-		correctedHist1D[iPhi]->GetXaxis()->CenterTitle();
-		correctedHist1D[iPhi]->GetXaxis()->SetNdivisions(-nCosThetaBins);
+		correctedHist1DCosTheta[iPhi]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName.Data()));
+		correctedHist1DCosTheta[iPhi]->GetXaxis()->CenterTitle();
+		correctedHist1DCosTheta[iPhi]->GetXaxis()->SetNdivisions(-nCosThetaBins);
 
-		correctedHist1D[iPhi]->GetYaxis()->SetTitle("#varUpsilon(1S) weighted events");
-		correctedHist1D[iPhi]->GetYaxis()->SetRangeUser(0, correctedHist->GetMaximum() * 1.5);
+		correctedHist1DCosTheta[iPhi]->GetYaxis()->SetTitle("#varUpsilon(1S) weighted events");
+		correctedHist1DCosTheta[iPhi]->GetYaxis()->SetRangeUser(0, correctedHist->GetMaximum() * 1.5);
 
-		correctedHist1D[iPhi]->SetMarkerStyle(20);
-		correctedHist1D[iPhi]->SetMarkerSize(0.8);
-		correctedHist1D[iPhi]->SetLineWidth(2);
+		correctedHist1DCosTheta[iPhi]->SetMarkerStyle(20);
+		correctedHist1DCosTheta[iPhi]->SetMarkerSize(1.2);
+		correctedHist1DCosTheta[iPhi]->SetLineWidth(2);
 		
-		correctedHist1D[iPhi]->Draw("E");
+		correctedHist1DCosTheta[iPhi]->Draw("E");
 
 		/// slice of the 2D fit along the cosTheta axis
 		TF1* polarFuncCosTheta = new TF1("polarFuncCosTheta", "[0] / (3 + [1]) * (1 + [1] * x * x + [2] * TMath::Sin(TMath::ACos(x)) * TMath::Sin(TMath::ACos(x)) * TMath::Cos(2. * [4] * pi / 180.) + [3] * TMath::Sin(2 * TMath::ACos(x)) * TMath::Cos([4] * pi / 180.))", -1, 1);
@@ -440,7 +440,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHi
 		legend1D->SetFillColor(0);
 		legend1D->SetFillStyle(1001);
 		legend1D->SetBorderSize(0);
-		legend1D->AddEntry(correctedHist1D[iPhi], "#varUpsilon(1S) corrected yield", "pe");
+		legend1D->AddEntry(correctedHist1DCosTheta[iPhi], "#varUpsilon(1S) corrected yield", "pe");
 		legend1D->AddEntry(polarFuncCosTheta, "fit:", "l");
 		legend1D->Draw("SAME");
 
@@ -483,7 +483,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHi
 }
 
 /// correct the polarized MC with weights (1 / (acceptance and/or efficiency))
-void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, std::vector<TH1D*>& correctedHist1D, TString refFrameName = "CS",
+void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, std::vector<TH1D*>& rawYieldHist1DCosTheta, std::vector<TH1D*>& rawYieldHist1DPhi, std::vector<TH1D*>& correctedHist1DCosTheta, std::vector<TH1D*>& correctedHist1DPhi, TString refFrameName = "CS",
                      RooArgSet polarParams = RooArgSet(),
                      Int_t ptMin = 0, Int_t ptMax = 30,
                      Int_t nCosThetaBins = 20, const vector<Double_t>& cosThetaBinEdges = {},
@@ -540,17 +540,17 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, std::vector<TH1D*
 	TEfficiency* effMapCosThetaPhi = rebinTEff3DMap(effMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
 	TH2D* systEffCosThetaPhi = rebinRel3DUncMap(effMap, systEff, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded);
 
-	TH2D* hTotalCosThetaPhiAcc = (TH2D*)accMapCosThetaPhi->GetTotalHistogram();
-	// hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
+	TH2D* hTotalCosThetaPhiAcc = (TH2D*)(accMapCosThetaPhi->GetTotalHistogram())->Clone("hTotalCosThetaPhiAcc");
+	hTotalCosThetaPhiAcc->SetName("hTotalCosThetaPhiAcc");
 
 	TH2D* hPassedCosThetaPhiAcc = (TH2D*)accMapCosThetaPhi->GetPassedHistogram();
-	// hPassedCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance numerator");
+	hPassedCosThetaPhiAcc->SetName("hPassedCosThetaPhiAcc");
 
-	TH2D* hTotalCosThetaPhiEff = (TH2D*)effMapCosThetaPhi->GetTotalHistogram();
-	// hTotalCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency denominator");
+	TH2D* hTotalCosThetaPhiEff = (TH2D*)(effMapCosThetaPhi->GetTotalHistogram())->Clone("hTotalCosThetaPhiEff");
+	hTotalCosThetaPhiEff->SetName("hTotalCosThetaPhiEff");
 
 	TH2D* hPassedCosThetaPhiEff = (TH2D*)effMapCosThetaPhi->GetPassedHistogram();
-	// hPassedCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency numerator");
+	hPassedCosThetaPhiEff->SetName("hPassedCosThetaPhiEff");
 
 	TH2D* hRatioCosThetaPhi = (TH2D*)hTotalCosThetaPhiAcc->Clone("hRatioCosThetaPhi");
 
@@ -590,26 +590,35 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, std::vector<TH1D*
 		display2DMapContents(hRatioCosThetaPhi, nCosThetaBins, nPhiBins, kFALSE, 0.04, kBlack, 4);
 
 		accTotalCanvas = draw2DMap(hTotalCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
-        hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
+		hTotalCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance denominator");
 		display2DMapContents(hTotalCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
        
-        // accPassedCanvas = draw2DMap(hPassedCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
-        // display2DMapContents(hPassedCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
+        accPassedCanvas = draw2DMap(hPassedCosThetaPhiAcc, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
+        hPassedCosThetaPhiAcc->GetZaxis()->SetTitle("#varUpsilon(1S) acceptance numerator");
+		display2DMapContents(hPassedCosThetaPhiAcc, nCosThetaBins, nPhiBins, kFALSE);
         
-        // effTotalCanvas = draw2DMap(hTotalCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
-        // display2DMapContents(hTotalCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
+        effTotalCanvas = draw2DMap(hTotalCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
+        hTotalCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency denominator");
+		display2DMapContents(hTotalCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
 
-        // effPassedCanvas = draw2DMap(hPassedCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
-        // display2DMapContents(hPassedCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
+        effPassedCanvas = draw2DMap(hPassedCosThetaPhiEff, refFrameName.Data(), nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, kFALSE, 1, isPhiFolded, nLegendRows);
+        hPassedCosThetaPhiEff->GetZaxis()->SetTitle("#varUpsilon(1S) efficiency numerator");
+		display2DMapContents(hPassedCosThetaPhiEff, nCosThetaBins, nPhiBins, kFALSE);
 	}
 	
 	TCanvas* dummyCanvas = new TCanvas("dummyCanvas", "dummyCanvas", 600, 600); // this is dummy canvas due to the overwrite of the fitted histogram
 
 	/// apply acc x eff correction weights and errors to each costheta bin
 	for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
-		correctedHist1D[iPhi] = new TH1D(Form("correctedHist1D_phi%dto%d", (int)phiBinEdges[iPhi], (int)phiBinEdges[iPhi + 1]), "", nCosThetaBins, cosThetaBinEdges.data());
+		correctedHist1DCosTheta[iPhi] = new TH1D(Form("correctedHist1DCosTheta_phi%dto%d", (int)phiBinEdges[iPhi], (int)phiBinEdges[iPhi + 1]), "", nCosThetaBins, cosThetaBinEdges.data());
+		rawYieldHist1DCosTheta[iPhi] = new TH1D(Form("rawYieldHist1DCosTheta_phi%dto%d", (int)phiBinEdges[iPhi], (int)phiBinEdges[iPhi + 1]), "", nCosThetaBins, cosThetaBinEdges.data());
 
 		for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
+			if (iPhi == 0) {
+				rawYieldHist1DPhi[iCosTheta] = new TH1D(Form("rawYieldHist1DPhi_cosTheta%dto%d", (int)cosThetaBinEdges[iCosTheta], (int)cosThetaBinEdges[iCosTheta + 1]), "", nPhiBins, phiBinEdges.data());
+				correctedHist1DPhi[iCosTheta] = new TH1D(Form("correctedHist1DPhi_cosTheta%dto%d", (int)cosThetaBinEdges[iCosTheta], (int)cosThetaBinEdges[iCosTheta + 1]), "", nPhiBins, phiBinEdges.data());
+			}
+
 			Double_t weight = 1;
 
 			// get the global bin number of Efficiency
@@ -704,31 +713,35 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, std::vector<TH1D*
 			double residualVal = hRatioCosThetaPhi->GetBinContent(iCosTheta + 1, iPhi + 1);
 			double residualUnc = hRatioCosThetaPhi->GetBinError(iCosTheta + 1, iPhi + 1);
 
-			cout << "recoMCVal: " << recoMCVal << endl;
-			cout << "recoMCUnc: " << recoMCUnc << endl;
+			// cout << "recoMCVal: " << recoMCVal << endl;
+			// cout << "recoMCUnc: " << recoMCUnc << endl;
 
 			// now propagate both sources of uncertainty:
 			double totalError = TMath::Sqrt(pow(weight * recoMCUnc, 2) + pow(recoMCVal * deltaW, 2)); // error from acc × eff)
 
-			cout << "weight: " << weight << endl;
-			cout << "relEffUncHigh: " << relEffUncHigh << endl;
-			cout << "relEffUncLow: " << relEffUncLow << endl;
-			cout << "relAccUncHigh: " << relAccUncHigh << endl;
-			cout << "relAccUncLow: " << relAccUncLow << endl;
-			cout << "relWeightUnc: " << relWeightUnc << endl;
-			cout << "deltaW: " << deltaW << endl;
-			cout << "residualVal: " << residualVal << endl;
-			cout << "residualUnc: " << residualUnc << endl;
-			cout << "recoMCUnc: " << recoMCUnc << endl;
-			cout << "recoMCVal: " << recoMCVal << endl;
+			// cout << "weight: " << weight << endl;
+			// cout << "relEffUncHigh: " << relEffUncHigh << endl;
+			// cout << "relEffUncLow: " << relEffUncLow << endl;
+			// cout << "relAccUncHigh: " << relAccUncHigh << endl;
+			// cout << "relAccUncLow: " << relAccUncLow << endl;
+			// cout << "relWeightUnc: " << relWeightUnc << endl;
+			// cout << "deltaW: " << deltaW << endl;
+			// cout << "residualVal: " << residualVal << endl;
+			// cout << "residualUnc: " << residualUnc << endl;
+			// cout << "recoMCUnc: " << recoMCUnc << endl;
+			// cout << "recoMCVal: " << recoMCVal << endl;
 
-			cout << "totalError: " << totalError << endl;
+			// cout << "totalError: " << totalError << endl;
 			/// set the bin contents reflecting weights
 			/// yield with acceptance x efficiency correction
 			correctedHist->SetBinContent(iCosTheta + 1, iPhi + 1, recoMCVal * weight);
 			// correctedHist->SetBinContent(iCosTheta + 1, iPhi + 1, residualVal);
+			
+			rawYieldHist1DCosTheta[iPhi]->SetBinContent(iCosTheta + 1, recoMCVal);
+			rawYieldHist1DPhi[iCosTheta]->SetBinContent(iPhi + 1, recoMCVal);
 
-			correctedHist1D[iPhi]->SetBinContent(iCosTheta + 1, recoMCVal * weight);
+			correctedHist1DCosTheta[iPhi]->SetBinContent(iCosTheta + 1, recoMCVal * weight);
+			correctedHist1DPhi[iCosTheta]->SetBinContent(iPhi + 1, recoMCVal * weight);
 
 			// standardCorrectedMap->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(yield1SUnc / yield1SVal, totalRelUncHigh) * yield1SVal * weight);
 
@@ -736,8 +749,12 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, std::vector<TH1D*
 			correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, totalError);
 			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, TMath::Hypot(recoMCUnc / recoMCVal, totalRelUncHigh));
 			// correctedHist->SetBinError(iCosTheta + 1, iPhi + 1, residualUnc);
+			
+			rawYieldHist1DCosTheta[iPhi]->SetBinError(iCosTheta + 1, recoMCUnc);
+			rawYieldHist1DPhi[iCosTheta]->SetBinError(iPhi + 1, recoMCUnc);
 
-			correctedHist1D[iPhi]->SetBinError(iCosTheta + 1, totalError);
+			correctedHist1DCosTheta[iPhi]->SetBinError(iCosTheta + 1, totalError);
+			correctedHist1DPhi[iCosTheta]->SetBinError(iPhi + 1, totalError);
 
 			cout << "correctedHist->GetBinContent(" << iCosTheta + 1 << ", " << iPhi + 1 << ") = " << correctedHist->GetBinContent(iCosTheta + 1, iPhi + 1) << endl;
 			cout << "correctedHist->GetBinError(" << iCosTheta + 1 << ", " << iPhi + 1 << ") = " << correctedHist->GetBinError(iCosTheta + 1, iPhi + 1) << endl;
@@ -770,32 +787,146 @@ void correctMC2DHist(TH2D* polarizedHist, TH2D* correctedHist, std::vector<TH1D*
 		gPad->RedrawAxis();
 
 		gPad->Update();
+	
+		/// draw 1D histograms along the cosTheta axis with the fit
+		TCanvas* rawYield1DCanvas = new TCanvas("rawYield1DCanvas", "rawYield1DCanvas", 1500, 500);
+		rawYield1DCanvas->Divide(3, 1, 0.001, 0.001);
 
-		// TCanvas* corrected1DCanvas = new TCanvas("corrected1DCanvas", "corrected1DCanvas", 1500, 500);
-		// corrected1DCanvas->Divide(3, 1);
+		TCanvas* corrected1DCanvas = new TCanvas("corrected1DCanvas", "corrected1DCanvas", 1500, 500);
+		corrected1DCanvas->Divide(3, 1, 0.001, 0.001);
 
-		// for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
-		// 	corrected1DCanvas->cd(iPhi + 1);
-		// 	correctedHist1D[iPhi]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName.Data()));
-		// 	correctedHist1D[iPhi]->GetXaxis()->CenterTitle();
-		// 	correctedHist1D[iPhi]->GetXaxis()->SetNdivisions(-nCosThetaBins);
-		// 	correctedHist1D[iPhi]->GetYaxis()->SetTitle("#varUpsilon(1S) weighted events");
-		// 	correctedHist1D[iPhi]->Draw("E");
-		// 	correctedHist1D[iPhi]->SetMarkerStyle(20);
-		// 	correctedHist1D[iPhi]->SetMarkerSize(0.8);
-		// 	correctedHist1D[iPhi]->SetLineWidth(2);
-		// 	correctedHist1D[iPhi]->GetYaxis()->SetRangeUser(0, correctedHist->GetMaximum() * 1.5);
+		for (Int_t iPhi = 0; iPhi < nPhiBins; iPhi++) {
+			/// cosmetics for 1D histograms along the cosTheta axis
+			rawYield1DCanvas->cd(iPhi + 1);
+			gPad->SetLeftMargin(0.17);
+
+			rawYieldHist1DCosTheta[iPhi]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName.Data()));
+			rawYieldHist1DCosTheta[iPhi]->GetXaxis()->CenterTitle();
+			rawYieldHist1DCosTheta[iPhi]->GetXaxis()->SetNdivisions(-nCosThetaBins);
+
+			rawYieldHist1DCosTheta[iPhi]->GetYaxis()->SetTitle("#varUpsilon(1S) raw events");
+			rawYieldHist1DCosTheta[iPhi]->GetYaxis()->SetRangeUser(0, rawYieldHist1DCosTheta[iPhi]->GetMaximum() * 1.5);
+			rawYieldHist1DCosTheta[iPhi]->GetYaxis()->SetTitleOffset(1.4);
+
+			rawYieldHist1DCosTheta[iPhi]->SetMarkerStyle(20);
+			rawYieldHist1DCosTheta[iPhi]->SetMarkerSize(1.2);
+			rawYieldHist1DCosTheta[iPhi]->SetLineWidth(2);
 			
-		// 	TLatex* legend1D = new TLatex();
-		// 	legend1D->SetTextAlign(22);
-		// 	legend1D->SetTextSize(0.05);
-		// 	/// Put texts inside the plot
-		// 	legend1D->DrawLatexNDC(.55, .88, "Corrected MC");
-		// 	legend1D->DrawLatexNDC(.55, .80, Form("%s, %d < p_{T} < %d GeV/c, %d < |#varphi| < %d #circ", refFrameName.Data(), ptMin, ptMax, (int)phiBinEdges[iPhi], (int)phiBinEdges[iPhi + 1]));
-		// 	// legend1D->DrawLatexNDC(.55, .72, Form("Input: #lambda_{#theta} = %.2f, #lambda_{#varphi} = %.2f, #lambda_{#theta#varphi} = %.2f", lambdaTheta0, lambdaPhi0, lambdaThetaPhi0));
+			rawYieldHist1DCosTheta[iPhi]->Draw("E");
+
+			/// legend
+			TLatex* text1D = new TLatex();
+			text1D->SetTextAlign(22);
+			text1D->SetTextSize(0.05);
+			/// Put texts inside the plot
+			text1D->DrawLatexNDC(.56, .86, Form("%s, %d < p_{T} < %d GeV/c", refFrameName.Data(), ptMin, ptMax));
+			text1D->DrawLatexNDC(.56, .80, Form("%d < |#varphi| < %d #circ", (int)phiBinEdges[iPhi], (int)phiBinEdges[iPhi + 1]));
+
+			CMS_lumi((TPad*)gPad, gCMSLumiText);	
 			
-		// 	CMS_lumi((TPad*)gPad, gCMSLumiText);	
-		// }
+			gPad->RedrawAxis();
+
+			gPad->Update();
+
+			corrected1DCanvas->cd(iPhi + 1);
+			gPad->SetLeftMargin(0.17);
+
+			correctedHist1DCosTheta[iPhi]->GetXaxis()->SetTitle(CosThetaVarTitle(refFrameName.Data()));
+			correctedHist1DCosTheta[iPhi]->GetXaxis()->CenterTitle();
+			correctedHist1DCosTheta[iPhi]->GetXaxis()->SetNdivisions(-nCosThetaBins);
+
+			correctedHist1DCosTheta[iPhi]->GetYaxis()->SetTitle("#varUpsilon(1S) weighted events");
+			correctedHist1DCosTheta[iPhi]->GetYaxis()->SetRangeUser(0, correctedHist1DCosTheta[iPhi]->GetMaximum() * 1.5);
+			correctedHist1DCosTheta[iPhi]->GetYaxis()->SetTitleOffset(1.4);
+			
+			correctedHist1DCosTheta[iPhi]->SetMarkerStyle(20);
+			correctedHist1DCosTheta[iPhi]->SetMarkerSize(1.2);
+			correctedHist1DCosTheta[iPhi]->SetLineWidth(2);
+
+			correctedHist1DCosTheta[iPhi]->Draw("E");
+
+			/// legend
+			TLatex* text1Dcorrected = new TLatex();
+			text1Dcorrected->SetTextAlign(22);
+			text1Dcorrected->SetTextSize(0.05);
+			/// Put texts inside the plot
+			text1Dcorrected->DrawLatexNDC(.56, .86, Form("%s, %d < p_{T} < %d GeV/c", refFrameName.Data(), ptMin, ptMax));
+			text1Dcorrected->DrawLatexNDC(.56, .80, Form("%d < |#varphi| < %d #circ", (int)phiBinEdges[iPhi], (int)phiBinEdges[iPhi + 1]));
+		
+			CMS_lumi((TPad*)gPad, gCMSLumiText);	
+		}
+
+		/// draw 1D histograms along the cosTheta axis with the fit
+		TCanvas* rawYield1DPhiCanvas = new TCanvas("rawYield1DPhiCanvas", "rawYield1DPhiCanvas", 1500, 300);
+		rawYield1DPhiCanvas->Divide(5, 1, 0.002, 0.001); // last two arguments: Reduce horizontal and vertical spacing
+
+		TCanvas* corrected1DPhiCanvas = new TCanvas("corrected1DPhiCanvas", "corrected1DPhiCanvas", 1500, 300);
+		corrected1DPhiCanvas->Divide(5, 1, 0.002, 0.001); // last two arguments: Reduce horizontal and vertical spacing
+
+		for (Int_t iCosTheta = 0; iCosTheta < nCosThetaBins; iCosTheta++) {
+			/// cosmetics for 1D histograms along the cosTheta axis
+			rawYield1DPhiCanvas->cd(iCosTheta + 1);
+			gPad->SetLeftMargin(0.17);
+
+			rawYieldHist1DPhi[iCosTheta]->GetXaxis()->SetTitle(AbsPhiAxisTitle(refFrameName.Data()));
+			rawYieldHist1DPhi[iCosTheta]->GetXaxis()->CenterTitle();
+			rawYieldHist1DPhi[iCosTheta]->GetXaxis()->SetNdivisions(-nPhiBins);
+
+			rawYieldHist1DPhi[iCosTheta]->GetYaxis()->SetTitle("#varUpsilon(1S) raw events");
+			rawYieldHist1DPhi[iCosTheta]->GetYaxis()->SetRangeUser(0, rawYieldHist1DPhi[iCosTheta]->GetMaximum() * 1.5);
+			rawYieldHist1DPhi[iCosTheta]->GetYaxis()->SetTitleOffset(1.4);
+
+			rawYieldHist1DPhi[iCosTheta]->SetMarkerStyle(20);
+			rawYieldHist1DPhi[iCosTheta]->SetMarkerSize(1.2);
+			rawYieldHist1DPhi[iCosTheta]->SetLineWidth(2);
+			
+			rawYieldHist1DPhi[iCosTheta]->Draw("E");
+
+			/// legend
+			TLatex* text1D = new TLatex();
+			text1D->SetTextAlign(22);
+			text1D->SetTextSize(0.05);
+			/// Put texts inside the plot
+			text1D->DrawLatexNDC(.56, .84, Form("%s, %d < p_{T} < %d GeV/c", refFrameName.Data(), ptMin, ptMax));
+			text1D->DrawLatexNDC(.56, .79, Form("%0.2f < cos#theta < %0.2f", cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1]));
+
+			CMS_lumi((TPad*)gPad, gCMSLumiText);	
+			
+			gPad->RedrawAxis();
+
+			gPad->Update();
+
+			corrected1DPhiCanvas->cd(iCosTheta + 1);
+			gPad->SetLeftMargin(0.17);
+
+			correctedHist1DPhi[iCosTheta]->GetXaxis()->SetTitle(AbsPhiAxisTitle(refFrameName.Data()));
+			correctedHist1DPhi[iCosTheta]->GetXaxis()->CenterTitle();
+			correctedHist1DPhi[iCosTheta]->GetXaxis()->SetNdivisions(-nPhiBins);
+
+			correctedHist1DPhi[iCosTheta]->GetYaxis()->SetTitle("#varUpsilon(1S) weighted events");
+			correctedHist1DPhi[iCosTheta]->GetYaxis()->SetRangeUser(0, correctedHist1DPhi[iCosTheta]->GetMaximum() * 1.5);
+			correctedHist1DPhi[iCosTheta]->GetYaxis()->SetTitleOffset(1.4);
+			
+			correctedHist1DPhi[iCosTheta]->SetMarkerStyle(20);
+			correctedHist1DPhi[iCosTheta]->SetMarkerSize(1.2);
+			correctedHist1DPhi[iCosTheta]->SetLineWidth(2);
+
+			correctedHist1DPhi[iCosTheta]->Draw("E");
+
+			/// legend
+			TLatex* text1Dcorrected = new TLatex();
+			text1Dcorrected->SetTextAlign(22);
+			text1Dcorrected->SetTextSize(0.05);
+			/// Put texts inside the plot
+			text1Dcorrected->DrawLatexNDC(.56, .84, Form("%s, %d < p_{T} < %d GeV/c", refFrameName.Data(), ptMin, ptMax));
+			text1Dcorrected->DrawLatexNDC(.56, .79, Form("%0.2f < cos#theta < %0.2f", cosThetaBinEdges[iCosTheta], cosThetaBinEdges[iCosTheta + 1]));
+
+			CMS_lumi((TPad*)gPad, gCMSLumiText);
+			
+			gPad->RedrawAxis();
+			
+			gPad->Update();
+		}
 
 		gSystem->mkdir(Form("closureTest/%s", applyEff ? "HydjetAccEff": "PythiaAcc"), kTRUE);
 		correctedCanvas->SaveAs(Form("closureTest/%s/2Dcorrected_%s_pt%dto%d_cosTheta%.2fto%.2f_phi%dto%d_lambdaTheta%.2f_phi%.2f_ThetaPhi%.2f.pdf", applyEff ? "HydjetAccEff": "PythiaAcc", refFrameName.Data(), ptMin, ptMax, cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins], (int)phiBinEdges[0], (int)phiBinEdges[nPhiBins], lambdaTheta, lambdaPhi, lambdaThetaPhi));
@@ -827,7 +958,7 @@ void getYieldHist(TH2D* angDistHist2D, TString refFrameName = "CS", TString muon
                   Int_t ptMin = 0, Int_t ptMax = 30,
                   Int_t nCosThetaBins = 5, const vector<Double_t>& cosThetaBinEdges = {},
                   Int_t nPhiBins = 6, const vector<Double_t>& phiBinEdges = {},
-                  Bool_t isPhiFolded = kFALSE, const char* defaultBkgShapeName = "ExpTimesErr", int nLegendRows = 1) {
+                  Bool_t isPhiFolded = kFALSE, const char* signalShapeName = "SymDSCB", const char* defaultBkgShapeName = "ExpTimesErr", int nLegendRows = 1) {
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
 	// extraText = "       Simulation Preliminary";
@@ -842,7 +973,8 @@ void getYieldHist(TH2D* angDistHist2D, TString refFrameName = "CS", TString muon
 	RooRealVar* yield3S = new RooRealVar("yield3S", "", 10);
 
 	/// Assign signal and background shape name to read the file for the yield extraction results
-	const char* signalShapeName = "SymDSCB";
+	// const char* signalShapeName = "SymDSCB";
+	// const char* signalShapeName = "Johnson";
 
 	// background shape array: ChebychevOrderN or ExpTimesErr
 
@@ -1002,11 +1134,15 @@ void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString m
 	/// store lambda parameters
 	RooArgSet polarParams(*lambdaTheta, *lambdaPhi, *lambdaThetaPhi, *lambdaTilde);
 
-    getYieldHist(angDistHist2D, refFrameName, muonAccName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, "ExpTimesErr", nLegendRows);
+    getYieldHist(angDistHist2D, refFrameName, muonAccName, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, "SymDSCB", "ExpTimesErr", nLegendRows);
 
 	/// define histograms
 	TH2D* correctedHist = new TH2D("correctedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
-	std::vector<TH1D*> correctedHist1D(nPhiBins);
+	std::vector<TH1D*> correctedHist1DCosTheta(nPhiBins);
+	std::vector<TH1D*> correctedHist1DPhi(nCosThetaBins);
+
+	std::vector<TH1D*> rawYieldHist1DCosTheta(nPhiBins);
+	std::vector<TH1D*> rawYieldHist1DPhi(nCosThetaBins);
 	
 	TH2D* fittedHist = new TH2D("fittedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 
@@ -1015,13 +1151,13 @@ void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString m
 
 	for (int iItr = 0; iItr <= totNItrs; iItr++) {
 		/// correct the MC
-		correctMC2DHist(angDistHist2D, correctedHist, correctedHist1D, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
+		correctMC2DHist(angDistHist2D, correctedHist, rawYieldHist1DCosTheta, rawYieldHist1DPhi, correctedHist1DCosTheta, correctedHist1DPhi, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kTRUE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
 
 		/// due to drawing issue, separate correctedHist and fittedHist
-		correctMC2DHist(angDistHist2D, fittedHist, correctedHist1D, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
+		correctMC2DHist(angDistHist2D, fittedHist, rawYieldHist1DCosTheta, rawYieldHist1DPhi, correctedHist1DCosTheta, correctedHist1DPhi, refFrameName, polarParams, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, kFALSE, isPhiFolded, applyAcc, applyEff, lambdaTheta0, lambdaPhi0, lambdaThetaPhi0, nLegendRows);
 
 		/// extract parameters from the corrected hist
-		polarParams = extractPolarParam(fittedHist, correctedHist1D, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, applyEff);
+		polarParams = extractPolarParam(fittedHist, correctedHist1DCosTheta, refFrameName, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, isPhiFolded, applyEff);
 		cout << "extracted polarization parameters: " << endl;
 		polarParams.Print("v");
 
