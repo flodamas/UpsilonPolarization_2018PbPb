@@ -166,7 +166,7 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, TString mu
 
 // create the (cos theta, phi) map of the total efficiency (fully reweighted) for a given pT range
 
-void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccName = "UpsilonTriggerThresholds", Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kTRUE, Int_t iState = gUpsilonState) {
+void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccName = "UpsilonTriggerThresholds", Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE, Int_t iState = gUpsilonState) {
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -362,7 +362,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 		hiBin = GetHiBinFromhiHF(HFmean);
 
-		eventWeight = Gen_weight * FindNcoll(hiBin); // * Get_zPV_weight(zVtx);
+		eventWeight = Gen_weight * FindNcoll(hiBin); // * Get_zPV_weight(zVtx); */
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
