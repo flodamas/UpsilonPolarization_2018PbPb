@@ -572,6 +572,7 @@ void skimReconstructedMCWeighted(TString muonAccName = "UpsilonTriggerThresholds
 
 	// const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_noMassCut.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	// const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	// const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_gen.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_gen.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	// const char* outputFileName = Form("Y%dSReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_HydjetWeight.root", iState, muonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
