@@ -8,6 +8,7 @@
 
 //#include "../Tools/Style/FitDistributions.h"
 #include "../Tools/Style/Legends.h"
+#include "../Tools/Parameters/EfficiencyWeights.h"
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
@@ -91,9 +92,11 @@ const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
 // (cos theta, phi) acceptance maps based on Y events generated without any decay kinematic cut
 // MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/ (This file was deleted:/)
 
-void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFolded = kTRUE, TString muonAccName = gMuonAccName, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Int_t iState = 1) {
+void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFolded = kFALSE, TString muonAccName = gMuonAccName, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Int_t iState = 1) {
 	// Read GenOnly Nofilter file with polarization weights
-	const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
+	// const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
+	// const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_combined.root", iState);
+	const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_50M.root", iState);
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -110,17 +113,39 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 	TTree* OniaTree = (TTree*)file->Get("hionia/myTree");
 
 	/// OniaTree variables, quite old version (since this genonly file from 2015)
-	Int_t Gen_QQ_size;
+	// Int_t Gen_QQ_size;
+	Short_t Gen_QQ_size;
 
 	TClonesArray* Gen_QQ_4mom = nullptr;
-	TClonesArray* Gen_QQ_mumi_4mom = nullptr;
-	TClonesArray* Gen_QQ_mupl_4mom = nullptr;
+    
+    TClonesArray* Gen_mu_4mom = nullptr;
+
+    TClonesArray* CloneArr_QQ = nullptr;
+    TClonesArray* CloneArr_mu = nullptr;
+
+    Short_t Gen_QQ_mupl_idx[1000];
+    Short_t Gen_QQ_mumi_idx[1000];
+
+	// TClonesArray* Gen_QQ_4mom = nullptr;
+	// TClonesArray* Gen_QQ_mumi_4mom = nullptr;
+	// TClonesArray* Gen_QQ_mupl_4mom = nullptr;
 
 	OniaTree->SetBranchAddress("Gen_QQ_size", &Gen_QQ_size);
 	OniaTree->SetBranchAddress("Gen_QQ_4mom", &Gen_QQ_4mom);
 
-	OniaTree->SetBranchAddress("Gen_QQ_mumi_4mom", &Gen_QQ_mumi_4mom);
-	OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
+	OniaTree->SetBranchAddress("Gen_mu_4mom", &Gen_mu_4mom);
+
+    OniaTree->SetBranchAddress("Gen_QQ_mumi_idx", &Gen_QQ_mumi_idx);
+    OniaTree->SetBranchAddress("Gen_QQ_mupl_idx", &Gen_QQ_mupl_idx);
+
+	// OniaTree->SetBranchAddress("Gen_QQ_mumi_4mom", &Gen_QQ_mumi_4mom);
+	// OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
+
+	TLorentzVector* gen_QQ_LV = new TLorentzVector();
+	TLorentzVector* gen_mumi_LV = new TLorentzVector();
+	TLorentzVector* gen_mupl_LV = new TLorentzVector();
+
+    // Long64_t totEntries = OniaTree->GetEntries(); 
 
 	// (cos theta, phi, pT) 3D maps for final acceptance correction, variable size binning for the stats
 	TEfficiency* accMatrixLab = TEfficiency3D(NominalTEfficiency3DName("Lab", lambdaTheta, lambdaPhi, lambdaThetaPhi), "Lab", iState, isPhiFolded);
@@ -144,13 +169,15 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 
 	TEfficiency* hAccHX1D = CosThetaTEfficiency1D("HX", ptMin, ptMax, iState, kTRUE, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TLorentzVector* gen_QQ_LV = new TLorentzVector();
-	TLorentzVector* gen_mumi_LV = new TLorentzVector();
-	TLorentzVector* gen_mupl_LV = new TLorentzVector();
+	// TLorentzVector* gen_QQ_LV = new TLorentzVector();
+	// TLorentzVector* gen_mumi_LV = new TLorentzVector();
+	// TLorentzVector* gen_mupl_LV = new TLorentzVector();
 
 	Bool_t withinAcceptance;
 
 	Double_t cosThetaCS, phiCS, cosThetaHX, phiHX, cosThetaLab, phiLab;
+
+	Double_t dimuonPtWeight = 1.0;
 
 	Float_t weightCS = 0, weightHX = 0;
 
@@ -164,7 +191,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 
 		OniaTree->GetEntry(iEvent);
 		// if (iEvent < 50) continue;
-		// if (iEvent == 10000) break;
+		if (iEvent == 10000000) break;
+		// if (iEvent == 20000000) break;
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
@@ -173,10 +201,17 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue; // upsilon within fiducial region
 
 			// single-muon acceptance cuts
-			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
-			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
+			// gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
+			// gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
+
+			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
 			withinAcceptance = MuonKinematicsWithinLimits(*gen_mupl_LV, muonAccName) && MuonKinematicsWithinLimits(*gen_mumi_LV, muonAccName);
+
+			// pt Weight at gen level
+			double gen_QQ_pt = gen_QQ_LV->Pt();
+			dimuonPtWeight = Get_GenPtWeight(gen_QQ_LV->Rapidity(), gen_QQ_pt);
 
 			// cout << "iEvent: " << iEvent << endl;
 			// cout << "iGen: " << iGen << endl;
@@ -192,7 +227,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 			if (isPhiFolded == kTRUE)
 				phiLab = fabs(phiLab);
 
-			accMatrixLab->FillWeighted(withinAcceptance, 1, cosThetaLab, phiLab, gen_QQ_LV->Pt());
+			accMatrixLab->FillWeighted(withinAcceptance, dimuonPtWeight, cosThetaLab, phiLab, gen_QQ_LV->Pt());
 
 			// Reference frame transformations
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
@@ -213,7 +248,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 			// cout << "cosThetaCS: " << cosThetaCS << endl;
 			// cout << "phiCS: " << phiCS << endl;
 
-			accMatrixCS->FillWeighted(withinAcceptance, weightCS, cosThetaCS, phiCS, gen_QQ_LV->Pt());
+			accMatrixCS->FillWeighted(withinAcceptance, weightCS * dimuonPtWeight, cosThetaCS, phiCS, gen_QQ_LV->Pt());
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 
@@ -227,11 +262,11 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 			else
 				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
 
-			// cout << "weightHX: " << weightHX << endl;
+				// cout << "weightHX: " << weightHX << endl;
 			// cout << "cosThetaHX: " << cosThetaHX << endl;
 			// cout << "phiHX: " << phiHX << endl;
 
-			accMatrixHX->FillWeighted(withinAcceptance, weightHX, cosThetaHX, phiHX, gen_QQ_LV->Pt());
+			accMatrixHX->FillWeighted(withinAcceptance, weightHX * dimuonPtWeight, cosThetaHX, phiHX, gen_QQ_LV->Pt());
 
 			if (gen_QQ_LV->Pt() > ptMin && gen_QQ_LV->Pt() < ptMax) { // pt bin of interest for the other distributions
 
@@ -290,7 +325,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 	const char* path = AcceptanceResultsPath(muonAccName.Data());
 
 	gSystem->mkdir(path, kTRUE);
-	const char* outputFileName = Form("%s/AcceptanceResults%s.root", path, isPhiFolded ? "" : "_fullPhi");
+	const char* outputFileName = Form("%s/AcceptanceResults_dimuonPtWeight%s.root", path, isPhiFolded ? "" : "_fullPhi");
 
 	TFile outputFile(outputFileName, "UPDATE");
 
