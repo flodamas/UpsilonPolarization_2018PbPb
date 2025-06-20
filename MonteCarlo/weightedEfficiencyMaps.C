@@ -166,7 +166,7 @@ void DrawEfficiencyMap(TEfficiency* effMap, Int_t ptMin, Int_t ptMax, TString mu
 
 // create the (cos theta, phi) map of the total efficiency (fully reweighted) for a given pT range
 
-void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccName = "UpsilonTriggerThresholds", Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE, Int_t iState = gUpsilonState) {
+void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccName = "UpsilonTriggerThresholds", Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Bool_t isPhiFolded = kFALSE, Int_t iState = gUpsilonState) { // please always Bool_t isPhiFolded = kFALSE for the efficiency matrix. Phifolding is applied later when rebinning the efficiency matrix
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -583,8 +583,10 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				}
 
 				// dimuon efficiency weight = product of the total scale factors
-				dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
+				// dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
 
+				dimuWeight_nominal = allGood ? tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal : 1; // if the event is not selected, we do not apply the dimuon weight to the denominator
+				
 				// total weight
 				totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
 				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;

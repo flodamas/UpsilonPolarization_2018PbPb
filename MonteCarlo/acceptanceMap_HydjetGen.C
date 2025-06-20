@@ -17,7 +17,7 @@
 
 #include "../ReferenceFrameTransform/Transformations.h"
 
-void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = gMuonAccName, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Int_t iState = 1) {
+void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kFALSE, TString muonAccName = gMuonAccName, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Int_t iState = 1) {
     // Read HydjetGen file with polarization weights
 	const char* filename = Form("../Files/OniaTree_Y%dS_pThat2_HydjetDrumMB_miniAOD.root", iState);
 	
@@ -163,7 +163,7 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
 
 		if (Centrality >= 2 * gCentralityBinMax) continue; // discard events with centrality >= 90% in 2018 data
 
-		// firesTrigger = ((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)));
+		firesTrigger = ((HLTriggers & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1)));
 
 		hiBin = GetHiBinFromhiHF(HFmean);
 
@@ -238,223 +238,243 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
 				weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX_gen.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX_gen.Theta()), 2) * std::cos(2 * muPlus_HX_gen.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX_gen.Theta()) * std::cos(muPlus_HX_gen.Phi());
 			}
 
-			totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal; // * dimuTrigWeight_nominal;
-			accMatrixLab->FillWeighted(withinAcceptance, totalWeightLab, cosThetaLab_gen, phiLab_gen, gen_QQ_pt);
+			// totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal; // * dimuTrigWeight_nominal;
+			// accMatrixLab->FillWeighted(withinAcceptance, totalWeightLab, cosThetaLab_gen, phiLab_gen, gen_QQ_pt);
 
-			totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal;
-			accMatrixCS->FillWeighted(withinAcceptance, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+			// totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+			// accMatrixCS->FillWeighted(withinAcceptance, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
 
-			// totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
-			totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal;
-			accMatrixHX->FillWeighted(withinAcceptance, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
-				
-			// // go to reco level (apply reco level weights to Hydjet GEN acceptance)
-			// Int_t iReco = Gen_QQ_whichRec[iGen];
+			// // totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
+			// totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+			// accMatrixHX->FillWeighted(withinAcceptance, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
-			// // if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
+			// go to reco level (apply reco level weights to Hydjet GEN acceptance)
+			Int_t iReco = Gen_QQ_whichRec[iGen];
 
-            // isRecoMatched = iReco > -1;
+			if (Reco_QQ_sign[iReco] != 0) continue; // only opposite-sign muon pairs
+
+            isRecoMatched = iReco > -1;
             
-            // if (isRecoMatched) {
+            if (isRecoMatched) {
 
-            //     recoLorentzVector = (TLorentzVector*)CloneArr_QQ->At(iReco);
-			// 	double reco_QQ_pt = recoLorentzVector->Pt();
+                recoLorentzVector = (TLorentzVector*)CloneArr_QQ->At(iReco);
+				double reco_QQ_pt = recoLorentzVector->Pt();
 
-			// 	dimuonPtWeight = Get_RecoPtWeight(recoLorentzVector->Rapidity(), reco_QQ_pt);
+				dimuonPtWeight = Get_RecoPtWeight(recoLorentzVector->Rapidity(), reco_QQ_pt);
 
-			// 	// dimuonMatching = (Reco_QQ_trig[iReco] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1));
+				dimuonMatching = (Reco_QQ_trig[iReco] & (ULong64_t)(1 << (gUpsilonHLTBit - 1))) == (ULong64_t)(1 << (gUpsilonHLTBit - 1));
 
-			// 	// goodVertexProba = Reco_QQ_VtxProb[iReco] > 0.01;
+				goodVertexProba = Reco_QQ_VtxProb[iReco] > 0.01;
 
-			// 	/// single-muon selection criteria
-			// 	int iMuPlus = Reco_QQ_mupl_idx[iReco];
-			// 	int iMuMinus = Reco_QQ_mumi_idx[iReco];
+				/// single-muon selection criteria
+				int iMuPlus = Reco_QQ_mupl_idx[iReco];
+				int iMuMinus = Reco_QQ_mumi_idx[iReco];
 
-			// 	// HLT filters
-			// 	bool mupl_L2Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, gL2FilterBit))) == ((ULong64_t)pow(2, gL2FilterBit)));
-			// 	bool mupl_L3Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, gL3FilterBit))) == ((ULong64_t)pow(2, gL3FilterBit)));
-			// 	bool mumi_L2Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, gL2FilterBit))) == ((ULong64_t)pow(2, gL2FilterBit)));
-			// 	bool mumi_L3Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, gL3FilterBit))) == ((ULong64_t)pow(2, gL3FilterBit)));
+				// HLT filters
+				bool mupl_L2Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, gL2FilterBit))) == ((ULong64_t)pow(2, gL2FilterBit)));
+				bool mupl_L3Filter = ((Reco_mu_trig[iMuPlus] & ((ULong64_t)pow(2, gL3FilterBit))) == ((ULong64_t)pow(2, gL3FilterBit)));
+				bool mumi_L2Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, gL2FilterBit))) == ((ULong64_t)pow(2, gL2FilterBit)));
+				bool mumi_L3Filter = ((Reco_mu_trig[iMuMinus] & ((ULong64_t)pow(2, gL3FilterBit))) == ((ULong64_t)pow(2, gL3FilterBit)));
 
-			// 	// passHLTFilterMuons = (mupl_L2Filter && mumi_L3Filter) || (mupl_L3Filter && mumi_L2Filter) || (mupl_L3Filter && mumi_L3Filter);
+				passHLTFilterMuons = (mupl_L2Filter && mumi_L3Filter) || (mupl_L3Filter && mumi_L2Filter) || (mupl_L3Filter && mumi_L3Filter);
 
-			// 	// // global AND tracker muons
-			// 	// trackerAndGlobalMuons = (Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8) && (Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8);
+				// global AND tracker muons
+				trackerAndGlobalMuons = (Reco_mu_SelectionType[iMuPlus] & 2) && (Reco_mu_SelectionType[iMuPlus] & 8) && (Reco_mu_SelectionType[iMuMinus] & 2) && (Reco_mu_SelectionType[iMuMinus] & 8);
 
-			// 	// // passing hybrid-soft Id
-			// 	// hybridSoftMuons = (Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.) && (Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.);
+				// passing hybrid-soft Id
+				hybridSoftMuons = (Reco_mu_nTrkWMea[iMuPlus] > 5) && (Reco_mu_nPixWMea[iMuPlus] > 0) && (fabs(Reco_mu_dxy[iMuPlus]) < 0.3) && (fabs(Reco_mu_dz[iMuPlus]) < 20.) && (Reco_mu_nTrkWMea[iMuMinus] > 5) && (Reco_mu_nPixWMea[iMuMinus] > 0) && (fabs(Reco_mu_dxy[iMuMinus]) < 0.3) && (fabs(Reco_mu_dz[iMuMinus]) < 20.);
 
-			// 	// /// numerator for the efficiency
-			// 	// allGood = firesTrigger && isRecoMatched && dimuonMatching && goodVertexProba && passHLTFilterMuons && trackerAndGlobalMuons && hybridSoftMuons;
+				/// numerator for the efficiency
+				allGood = firesTrigger && isRecoMatched && dimuonMatching && goodVertexProba && passHLTFilterMuons && trackerAndGlobalMuons && hybridSoftMuons;
 				
-            //     // get reco muon coordinates
-			// 	TLorentzVector* Reco_mupl_LV = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
-			// 	double Reco_mupl_eta = Reco_mupl_LV->Eta();
-			// 	double Reco_mupl_pt = Reco_mupl_LV->Pt();
+                // get reco muon coordinates
+				TLorentzVector* Reco_mupl_LV = (TLorentzVector*)CloneArr_mu->At(iMuPlus);
+				double Reco_mupl_eta = Reco_mupl_LV->Eta();
+				double Reco_mupl_pt = Reco_mupl_LV->Pt();
 
-			// 	TLorentzVector* Reco_mumi_LV = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
-			// 	double Reco_mumi_eta = Reco_mumi_LV->Eta();
-			// 	double Reco_mumi_pt = Reco_mumi_LV->Pt();
+				TLorentzVector* Reco_mumi_LV = (TLorentzVector*)CloneArr_mu->At(iMuMinus);
+				double Reco_mumi_eta = Reco_mumi_LV->Eta();
+				double Reco_mumi_pt = Reco_mumi_LV->Pt();
                 
-			// 	TVector3 Reco_mupl_vecLab = Reco_mupl_LV->Vect();
-			// 	TVector3 Reco_mupl_vecCS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
-			// 	TVector3 Reco_mupl_vecHX = MuPlusVector_Helicity(*recoLorentzVector, *Reco_mupl_LV);
+				TVector3 Reco_mupl_vecLab = Reco_mupl_LV->Vect();
+				TVector3 Reco_mupl_vecCS = MuPlusVector_CollinsSoper(*recoLorentzVector, *Reco_mupl_LV);
+				TVector3 Reco_mupl_vecHX = MuPlusVector_Helicity(*recoLorentzVector, *Reco_mupl_LV);
 
-			// 	/// cosTheta and phi
-			// 	/// lab
-			// 	cosThetaLab_reco = Reco_mupl_vecLab.CosTheta();
-			// 	phiLab_reco = Reco_mupl_vecLab.Phi() * 180 / TMath::Pi();
-			// 	if (isPhiFolded == kTRUE) phiLab_reco = fabs(phiLab_reco);
+				/// cosTheta and phi
+				/// lab
+				cosThetaLab_reco = Reco_mupl_vecLab.CosTheta();
+				phiLab_reco = Reco_mupl_vecLab.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiLab_reco = fabs(phiLab_reco);
 				
-			// 	/// CS
-			// 	cosThetaCS_reco = Reco_mupl_vecCS.CosTheta();
-			// 	phiCS_reco = Reco_mupl_vecCS.Phi() * 180 / TMath::Pi();
-			// 	if (isPhiFolded == kTRUE) phiCS_reco = fabs(phiCS_reco);
+				/// CS
+				cosThetaCS_reco = Reco_mupl_vecCS.CosTheta();
+				phiCS_reco = Reco_mupl_vecCS.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiCS_reco = fabs(phiCS_reco);
 				
-			// 	/// HX
-			// 	cosThetaHX_reco = Reco_mupl_vecHX.CosTheta();
-			// 	phiHX_reco = Reco_mupl_vecHX.Phi() * 180 / TMath::Pi();
-			// 	if (isPhiFolded == kTRUE) phiHX_reco = fabs(phiHX_reco);
+				/// HX
+				cosThetaHX_reco = Reco_mupl_vecHX.CosTheta();
+				phiHX_reco = Reco_mupl_vecHX.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiHX_reco = fabs(phiHX_reco);
 
-			// 	/// get gen muon coordinates
-			// 	/// LV
-			// 	gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
-			// 	gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
+				/// get gen muon coordinates
+				/// LV
+				gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+				gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
-			// 	/// vector
-            //     TVector3 Gen_mupl_vecLab = gen_mupl_LV->Vect();
-			// 	TVector3 Gen_mupl_vecCS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
-			// 	TVector3 Gen_mupl_vecHX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
+				/// vector
+                TVector3 Gen_mupl_vecLab = gen_mupl_LV->Vect();
+				TVector3 Gen_mupl_vecCS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
+				TVector3 Gen_mupl_vecHX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
 
-			// 	/// cosTheta and phi
-			// 	/// lab
-            //     cosThetaLab_gen = Gen_mupl_vecLab.CosTheta();
-            //     phiLab_gen = Gen_mupl_vecLab.Phi() * 180 / TMath::Pi();
-            //     if (isPhiFolded == kTRUE) phiLab_gen = fabs(phiLab_gen);
+				/// cosTheta and phi
+				/// lab
+                cosThetaLab_gen = Gen_mupl_vecLab.CosTheta();
+                phiLab_gen = Gen_mupl_vecLab.Phi() * 180 / TMath::Pi();
+                if (isPhiFolded == kTRUE) phiLab_gen = fabs(phiLab_gen);
 				
-			// 	/// CS
-            //     cosThetaCS_gen = Gen_mupl_vecCS.CosTheta();
-            //     phiCS_gen = Gen_mupl_vecCS.Phi() * 180 / TMath::Pi();
-			// 	if (isPhiFolded == kTRUE) phiCS_gen = fabs(phiCS_gen);
-            //     // cout << "cosThetaCS_gen: " << cosThetaCS_gen << endl;
-            //     // cout << "phiCS_gen: " << phiCS_gen << endl;
+				/// CS
+                cosThetaCS_gen = Gen_mupl_vecCS.CosTheta();
+                phiCS_gen = Gen_mupl_vecCS.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiCS_gen = fabs(phiCS_gen);
+                // cout << "cosThetaCS_gen: " << cosThetaCS_gen << endl;
+                // cout << "phiCS_gen: " << phiCS_gen << endl;
 				
-			// 	/// HX
-            //     cosThetaHX_gen = Gen_mupl_vecHX.CosTheta();
-            //     phiHX_gen = Gen_mupl_vecHX.Phi() * 180 / TMath::Pi();
-			// 	if (isPhiFolded == kTRUE) phiHX_gen = fabs(phiHX_gen);
+				/// HX
+                cosThetaHX_gen = Gen_mupl_vecHX.CosTheta();
+                phiHX_gen = Gen_mupl_vecHX.Phi() * 180 / TMath::Pi();
+				if (isPhiFolded == kTRUE) phiHX_gen = fabs(phiHX_gen);
 
-            //     /// muon scale factors
-			// 	// muon trigger SF is tricky, need to know which muon passed which trigger filter
-			// 	bool mupl_isL2 = (mupl_L2Filter && !mupl_L3Filter);
-			// 	bool mupl_isL3 = (mupl_L2Filter && mupl_L3Filter);
-			// 	bool mumi_isL2 = (mumi_L2Filter && !mumi_L3Filter);
-			// 	bool mumi_isL3 = (mumi_L2Filter && mumi_L3Filter);
+                /// muon scale factors
+				// muon trigger SF is tricky, need to know which muon passed which trigger filter
+				bool mupl_isL2 = (mupl_L2Filter && !mupl_L3Filter);
+				bool mupl_isL3 = (mupl_L2Filter && mupl_L3Filter);
+				bool mumi_isL2 = (mumi_L2Filter && !mumi_L3Filter);
+				bool mumi_isL3 = (mumi_L2Filter && mumi_L3Filter);
 
-			// 	if (mupl_isL2 && mumi_isL3) {
-			// 		dimuTrigWeight_nominal = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexNominal) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexNominal);
+				if (mupl_isL2 && mumi_isL3) {
+					dimuTrigWeight_nominal = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexNominal) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexNominal);
 
-			// 		dimuTrigWeight_systUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexSystUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexSystUp);
+					dimuTrigWeight_systUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexSystUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexSystUp);
 
-			// 		dimuTrigWeight_systDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexSystDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexSystDown);
+					dimuTrigWeight_systDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexSystDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexSystDown);
 
-			// 		dimuTrigWeight_statUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexStatUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexStatUp);
+					dimuTrigWeight_statUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexStatUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexStatUp);
 
-			// 		dimuTrigWeight_statDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexStatDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexStatDown);
+					dimuTrigWeight_statDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 2, indexStatDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 3, indexStatDown);
 
-			// 	}
+				}
 
-			// 	else if (mupl_isL3 && mumi_isL2) {
-			// 		dimuTrigWeight_nominal = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexNominal) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexNominal);
+				else if (mupl_isL3 && mumi_isL2) {
+					dimuTrigWeight_nominal = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexNominal) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexNominal);
 
-			// 		dimuTrigWeight_systUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexSystUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexSystUp);
+					dimuTrigWeight_systUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexSystUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexSystUp);
 
-			// 		dimuTrigWeight_systDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexSystDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexSystDown);
+					dimuTrigWeight_systDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexSystDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexSystDown);
 
-			// 		dimuTrigWeight_statUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexStatUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexStatUp);
+					dimuTrigWeight_statUp = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexStatUp) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexStatUp);
 
-			// 		dimuTrigWeight_statDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexStatDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexStatDown);
+					dimuTrigWeight_statDown = tnp_weight_trg_pbpb(Reco_mupl_pt, Reco_mupl_eta, 3, indexStatDown) * tnp_weight_trg_pbpb(Reco_mumi_pt, Reco_mumi_eta, 2, indexStatDown);
 
-			// 	}
+				}
 
-			// 	else if (mupl_isL3 && mumi_isL3) {
-			// 		dimuTrigWeight_nominal = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexNominal);
+				else if (mupl_isL3 && mumi_isL3) {
+					dimuTrigWeight_nominal = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexNominal);
 
-			// 		dimuTrigWeight_systUp = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexSystUp);
+					dimuTrigWeight_systUp = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexSystUp);
 
-			// 		dimuTrigWeight_systDown = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexSystDown);
+					dimuTrigWeight_systDown = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexSystDown);
 
-			// 		dimuTrigWeight_statUp = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexStatUp);
+					dimuTrigWeight_statUp = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexStatUp);
 
-			// 		dimuTrigWeight_statDown = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexStatDown);
-			// 	}
+					dimuTrigWeight_statDown = DimuonL3TriggerWeight(Reco_mupl_pt, Reco_mupl_eta, Reco_mumi_pt, Reco_mumi_eta, indexStatDown);
+				}
 
-			// 	else {
-			// 		dimuTrigWeight_nominal = 1;
-			// 		dimuTrigWeight_systUp = 1;
-			// 		dimuTrigWeight_systDown = 1;
-			// 		dimuTrigWeight_statUp = 1;
-			// 		dimuTrigWeight_statDown = 1;
-			// 	}
-			// 	// dimuon efficiency weight = product of the total scale factors
-			// 	dimuWeight_nominal = tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal;
+				else {
+					dimuTrigWeight_nominal = 1;
+					dimuTrigWeight_systUp = 1;
+					dimuTrigWeight_systDown = 1;
+					dimuTrigWeight_statUp = 1;
+					dimuTrigWeight_statDown = 1;
+				}
+				// dimuon efficiency weight = product of the total scale factors
+				dimuWeight_nominal = allGood ? tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal : 1; // if the event is not selected, we do not apply the dimuon weight to the denominator
+				
+                // totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				// totalWeightLab = 1;
+                // accMatrixLab->FillWeighted(withinAcceptance, totalWeightLab, cosThetaLab_reco, phiLab_reco, reco_QQ_pt);
 
+                // Reference frame transformations
 
-            //     // totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
-			// 	totalWeightLab = 1;
-            //     accMatrixLab->FillWeighted(withinAcceptance, totalWeightLab, cosThetaLab_reco, phiLab_reco, reco_QQ_pt);
+                if (isPhiFolded == kTRUE)
+                    weightCS = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecCS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecCS.Theta()), 2) * std::cos(2 * fabs(Gen_mupl_vecCS.Phi())) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecCS.Theta()) * std::cos(fabs(Gen_mupl_vecCS.Phi()));
+                else
+                    weightCS = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecCS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecCS.Theta()), 2) * std::cos(2 * Gen_mupl_vecCS.Phi()) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecCS.Theta()) * std::cos(Gen_mupl_vecCS.Phi());
 
-            //     // Reference frame transformations
+                // total weight
+				// totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
 
-            //     if (isPhiFolded == kTRUE)
-            //         weightCS = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecCS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecCS.Theta()), 2) * std::cos(2 * fabs(Gen_mupl_vecCS.Phi())) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecCS.Theta()) * std::cos(fabs(Gen_mupl_vecCS.Phi()));
-            //     else
-            //         weightCS = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecCS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecCS.Theta()), 2) * std::cos(2 * Gen_mupl_vecCS.Phi()) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecCS.Theta()) * std::cos(Gen_mupl_vecCS.Phi());
-
-            //     // total weight
-			// 	// totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
-
-            //     if (isPhiFolded == kTRUE)
-            //         weightHX = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecHX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecHX.Theta()), 2) * std::cos(2 * fabs(Gen_mupl_vecHX.Phi())) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecHX.Theta()) * std::cos(fabs(Gen_mupl_vecHX.Phi()));
-            //     else
-            //         weightHX = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecHX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecHX.Theta()), 2) * std::cos(2 * Gen_mupl_vecHX.Phi()) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecHX.Theta()) * std::cos(Gen_mupl_vecHX.Phi());
+                if (isPhiFolded == kTRUE)
+                    weightHX = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecHX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecHX.Theta()), 2) * std::cos(2 * fabs(Gen_mupl_vecHX.Phi())) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecHX.Theta()) * std::cos(fabs(Gen_mupl_vecHX.Phi()));
+                else
+                    weightHX = 1 + lambdaTheta * TMath::Power(Gen_mupl_vecHX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(Gen_mupl_vecHX.Theta()), 2) * std::cos(2 * Gen_mupl_vecHX.Phi()) + lambdaThetaPhi * std::sin(2 * Gen_mupl_vecHX.Theta()) * std::cos(Gen_mupl_vecHX.Phi());
                 
 
-			// 	// cout << "Event: " << iEvent << endl;
-			// 	// cout << "withinAcceptance: " << withinAcceptance << endl;
-			// 	// cout << "weightHX: " << totalWeightHX << endl;
-			// 	// cout << "cosThetaHX: " << cosThetaHX_reco << endl;
-			// 	// cout << "phiHX: " << phiHX_reco << endl;
-			// 	// cout << "reco_QQ_pt: " << reco_QQ_pt << endl;
+				// cout << "Event: " << iEvent << endl;
+				// cout << "withinAcceptance: " << withinAcceptance << endl;
+				// cout << "weightHX: " << totalWeightHX << endl;
+				// cout << "cosThetaHX: " << cosThetaHX_reco << endl;
+				// cout << "phiHX: " << phiHX_reco << endl;
+				// cout << "reco_QQ_pt: " << reco_QQ_pt << endl;
 
-			// 	// cout << "eventWeight: " << eventWeight << endl;
-			// 	// cout << "dimuonPtWeight: " << dimuonPtWeight << endl;
-			// 	// cout << "dimuWeight_nominal: " << dimuWeight_nominal << endl;
-			// 	// cout << "weightHX: " << weightHX << endl;
+				// cout << "eventWeight: " << eventWeight << endl;
+				// cout << "dimuonPtWeight: " << dimuonPtWeight << endl;
+				// cout << "dimuWeight_nominal: " << dimuWeight_nominal << endl;
+				// cout << "weightHX: " << weightHX << endl;
 
-			// 	// cout << "Reco_mupl_pt: " << Reco_mupl_pt << endl;
-			// 	// cout << "Reco_mupl_eta: " << Reco_mupl_eta << endl;
-			// 	// cout << "Reco_mumi_pt: " << Reco_mumi_pt << endl;
-			// 	// cout << "Reco_mumi_eta: " << Reco_mumi_eta << endl;
+				// cout << "Reco_mupl_pt: " << Reco_mupl_pt << endl;
+				// cout << "Reco_mupl_eta: " << Reco_mupl_eta << endl;
+				// cout << "Reco_mumi_pt: " << Reco_mumi_pt << endl;
+				// cout << "Reco_mumi_eta: " << Reco_mumi_eta << endl;
 
-			// 	// cout << "tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal): " << tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) << endl;
-			// 	// cout << "tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal): " << tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) << endl;
-			// 	// cout << "tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal): " << tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) << endl;
-			// 	// cout << "tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal): " << tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) << endl;
-			// 	// cout << "dimuTrigWeight_nominal: " << dimuTrigWeight_nominal << endl;
+				// cout << "tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal): " << tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) << endl;
+				// cout << "tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal): " << tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) << endl;
+				// cout << "tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal): " << tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) << endl;
+				// cout << "tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal): " << tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) << endl;
+				// cout << "dimuTrigWeight_nominal: " << dimuTrigWeight_nominal << endl;
 
-			// 	// cout << "mupl_isL2: " << mupl_isL2 << endl;
-			// 	// cout << "mupl_isL3: " << mupl_isL3 << endl;
-			// 	// cout << "mumi_isL2: " << mumi_isL2 << endl;
-			// 	// cout << "mumi_isL3: " << mumi_isL3 << endl;
-			// 	// cout << "mupl_L2Filter: " << mupl_L2Filter << endl;
-			// 	// cout << "mupl_L3Filter: " << mupl_L3Filter << endl;
-			// 	// cout << "mumi_L2Filter: " << mumi_L2Filter << endl;
-			// 	// cout << "mumi_L3Filter: " << mumi_L3Filter << endl;
+				// cout << "mupl_isL2: " << mupl_isL2 << endl;
+				// cout << "mupl_isL3: " << mupl_isL3 << endl;
+				// cout << "mumi_isL2: " << mumi_isL2 << endl;
+				// cout << "mumi_isL3: " << mumi_isL3 << endl;
+				// cout << "mupl_L2Filter: " << mupl_L2Filter << endl;
+				// cout << "mupl_L3Filter: " << mupl_L3Filter << endl;
+				// cout << "mumi_L2Filter: " << mumi_L2Filter << endl;
+				// cout << "mumi_L3Filter: " << mumi_L3Filter << endl;
 
-			// 	// cout << "" << endl;
+				// cout << "" << endl;
 
-			// }
+				totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				accMatrixLab->FillWeighted(withinAcceptance, totalWeightLab, cosThetaLab_gen, phiLab_gen, gen_QQ_pt);
+
+				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				accMatrixCS->FillWeighted(withinAcceptance, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+
+				// totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
+				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				accMatrixHX->FillWeighted(withinAcceptance, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
+			}
+			else {
+				dimuWeight_nominal = 1.;
+
+				totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				accMatrixLab->FillWeighted(withinAcceptance, totalWeightLab, cosThetaLab_gen, phiLab_gen, gen_QQ_pt);
+				
+				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				accMatrixCS->FillWeighted(withinAcceptance, totalWeightCS, cosThetaCS_gen, phiCS_gen, gen_QQ_pt);
+				
+				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				accMatrixHX->FillWeighted(withinAcceptance, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
+			}
         }
     }
 	// Set the plot styles
@@ -468,7 +488,7 @@ void acceptanceMap_HydjetGen(Bool_t isPhiFolded = kTRUE, TString muonAccName = g
 
     gSystem->mkdir(path, kTRUE);
     // const char* outputFileName = Form("%s/AcceptanceResults_Hydjet%s.root", path, isPhiFolded ? "" : "_fullPhi");
-	const char* outputFileName = Form("%s/AcceptanceResults_Gen_NColl_dimuonpT_SFWeights_Hydjet%s.root", path, isPhiFolded ? "" : "_fullPhi");
+	const char* outputFileName = Form("%s/AcceptanceResults_Gen_NColl_dimuonPt_SFWeights_Hydjet%s.root", path, isPhiFolded ? "" : "_fullPhi");
  
     TFile outputFile(outputFileName, "UPDATE");
  
@@ -549,7 +569,7 @@ void drawAcceptanceMap(TString refFrameName = "HX",
                       Int_t ptMin = 0, Int_t ptMax = 30,
                       const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7,
                       const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180,
-                      Bool_t isPhiFolded = kFALSE, int nLegendRows = 1) {
+                      Bool_t isPhiFolded = kFALSE, int nLegendRows = 2) {
 
 	writeExtraText = true; // if extra text
 	extraText = "       Internal";
@@ -569,8 +589,8 @@ void drawAcceptanceMap(TString refFrameName = "HX",
 	TEfficiency* accMap;
 	TEfficiency* accMap_flat;
 
-	TString fileName = Form("%s/AcceptanceResults_Gen_NColl_dimuonpTWeights_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
-	// TString fileName = Form("%s/AcceptanceResults_Gen_NColl_dimuonpT_SFWeights_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
+	// TString fileName = Form("%s/AcceptanceResults_Gen_NColl_dimuonPtWeights_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
+	TString fileName = Form("%s/AcceptanceResults_Gen_NColl_dimuonPt_SFWeights_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 	// TString fileName = Form("%s/AcceptanceResults_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 	// TString fileName_flat = Form("%s/AcceptanceResults%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 	TString fileName_flat = Form("%s/AcceptanceResults_dimuonPtWeight%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
