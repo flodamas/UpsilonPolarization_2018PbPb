@@ -13,7 +13,8 @@
 /// Definition of common helping functions for acceptance and efficiency distribution making codes
 
 // Option to estimate the confidence intervals in TEfficiency
-TEfficiency::EStatOption gTEffStatOption = TEfficiency::EStatOption::kFCP; /*default = Clopper-Pearson as recommended by PDG*/
+// TEfficiency::EStatOption gTEffStatOption = TEfficiency::EStatOption::kFCP; /*default = Clopper-Pearson as recommended by PDG*/
+TEfficiency::EStatOption gTEffStatOption = TEfficiency::kBUniform; // when applying weights, TEfficiency doesn't support Clopper-Pearson option, so we use Bayesian instead
 
 // Define cosTheta bin edges for acceptance and efficiency 3D map grid
 std::vector<Double_t> setCosThetaBinEdges(Int_t nCosThetaBins, Double_t cosThetaMin, Double_t cosThetaMax) {
