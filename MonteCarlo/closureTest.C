@@ -48,7 +48,7 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 	/// get acceptance and efficiency in 1D
 	TString nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TString fileName = Form("%s/AcceptanceResults_dimuonPtWeight%s.root", AcceptanceResultsPath(gMuonAccName.Data()), "_fullPhi");
+	TString fileName = Form("%s/AcceptanceResults_dimuonPtWeight%s_50M.root", AcceptanceResultsPath(gMuonAccName.Data()), "_fullPhi");
 
 	// get acceptance maps
 	// TFile* acceptanceFile = openFile(fileName.Data());
@@ -79,7 +79,8 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 		// create the acceptance map
 		cout << Form("Acceptance map not found. Creating a new one with (lambdaTheta, phi, thetaPhi) = (%.2f, %.2f, %.2f)....", lambdaTheta, lambdaPhi, lambdaThetaPhi) << endl;
 
-		acceptanceMap_noGenFilter(0, 30, kFALSE, "UpsilonTriggerThresholds", lambdaTheta, lambdaPhi, lambdaThetaPhi, gUpsilonState);
+		// acceptanceMap_noGenFilter(0, 30, kFALSE, "UpsilonTriggerThresholds", lambdaTheta, lambdaPhi, lambdaThetaPhi, gUpsilonState);
+		run_acceptanceMap_noGenFilter(10000000, 5000000);
 
         // force ROOT to forget cached file
         gROOT->GetListOfFiles()->Remove(gROOT->GetFile(fileName.Data()));
@@ -195,6 +196,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 	// extraText = "       Simulation Preliminary";
 
 	TH2D* fitHist = (TH2D*)correctedHist->Clone("fitHist");
+	fitHist->Sumw2(); // sum over the bins to get the total yield in each bin
 
 	Float_t maxYield = fitHist->GetMaximum();
 
@@ -203,6 +205,9 @@ RooArgSet extractPolarParam(TH2D* correctedHist, TString refFrameName = "CS",
 	/// Polarization fit
 	/// with Root Fit function (E: minos on, S: save results, V: Verbose, I: integral, M: imporve algorithm, R: specificed range)
 	TFitResultPtr fitResults = fitHist->Fit("generalPolarFunc", "ESVIMR"); // chi2 fit to the integrated bin
+	// TFitResultPtr fitResults = fitHist->Fit("generalPolarFunc", "ESVMR"); // chi2 fit to the integrated bin
+	cout << "lambdaTheta Error: " << fitResults->ParError(1) << endl;
+
 
 	/// Fit results
 	double chi2 = fitResults->Chi2();
@@ -658,6 +663,7 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 
 	// const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_noMassCut.root", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_gen.root", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	// const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_gen_noWeights.root", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	// const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_gen_noNColl.root", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 	// const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_HydjetWeight.root", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
@@ -1043,6 +1049,9 @@ void closureTest(TString refFrameName = "CS",
 	/// define histograms
 	TH2D* correctedHist = new TH2D("correctedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
 	TH2D* fittedHist = new TH2D("fittedHist", "; cos #theta; #varphi (#circ); Number of generated #varUpsilon(1S) events", nCosThetaBins, cosThetaMin, cosThetaMax, nPhiBins, phiMin, phiMax);
+	
+	correctedHist->Sumw2();
+	fittedHist->Sumw2();
 
 	/// loop over the number of iterations
 	int nItrs = 0; /// number of iterations
