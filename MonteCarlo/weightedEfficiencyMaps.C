@@ -196,6 +196,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 	TClonesArray* CloneArr_QQ = nullptr;
 	TClonesArray* CloneArr_mu = nullptr;
+
 	Short_t Reco_QQ_size;
 	Short_t Reco_QQ_sign[1000];
 	Short_t Reco_QQ_mupl_idx[1000];
@@ -207,6 +208,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 
 	ULong64_t Reco_mu_trig[1000];
 	Int_t Reco_mu_SelectionType[1000];
+	
 	//(parameters for quality cuts)
 	Float_t Reco_QQ_VtxProb[1000];
 	Int_t Reco_mu_nPixWMea[1000];
@@ -446,6 +448,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 			isRecoMatched = iReco > -1;
 
 			if (isRecoMatched) {
+				
 				recoLorentzVector = (TLorentzVector*)CloneArr_QQ->At(iReco);
 				double reco_QQ_pt = recoLorentzVector->Pt();
 
@@ -602,9 +605,10 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				hNominalEffHX->FillWeighted(allGood, totalWeightHX, cosThetaHX_gen, phiHX_gen, gen_QQ_pt);
 
 				// cout << "Event " << iEvent << endl;
+				// cout << "all good: " << allGood << endl;
 				// cout << "total weight HX: " << totalWeightHX << endl;
-				// cout << "cosThetaHX: " << cosThetaHX << endl;
-				// cout << "phiHX: " << phiHX << endl;
+				// cout << "cosThetaHX: " << cosThetaHX_gen << endl;
+				// cout << "phiHX: " << phiHX_gen << endl;
 				// cout << "reco_QQ_pt: " << reco_QQ_pt << endl;
 
 				// cout << "eventWeight: " << eventWeight << endl;
