@@ -16,6 +16,7 @@
 #include "TF1.h"
 #include "TF2.h"
 #include "TFile.h"
+#include "TFileMerger.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
 #include "TFormula.h"
