@@ -92,7 +92,7 @@ const char* Acceptance2DAxisTitle(const char* refFrameName = "CS") {
 // (cos theta, phi) acceptance maps based on Y events generated without any decay kinematic cut
 // MC files available here: /eos/cms/store/group/phys_heavyions/dileptons/MC2015/pp502TeV/TTrees/ (This file was deleted:/)
 
-void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFolded = kFALSE, TString muonAccName = gMuonAccName, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Int_t iState = 1) {
+void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFolded = kFALSE, TString muonAccName = gMuonAccName, Float_t lambdaTheta = 0, Float_t lambdaPhi = 0, Float_t lambdaThetaPhi = 0, Int_t iState = 1, Long64_t startEvent = 0, Long64_t endEvent = 10e6, int fileIndex = 0) {
 	// Read GenOnly Nofilter file with polarization weights
 	// const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
 	// const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_combined.root", iState);
@@ -141,9 +141,13 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 	// OniaTree->SetBranchAddress("Gen_QQ_mumi_4mom", &Gen_QQ_mumi_4mom);
 	// OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
 
-	TLorentzVector* gen_QQ_LV = new TLorentzVector();
-	TLorentzVector* gen_mumi_LV = new TLorentzVector();
-	TLorentzVector* gen_mupl_LV = new TLorentzVector();
+	// TLorentzVector* gen_QQ_LV = new TLorentzVector();
+	// TLorentzVector* gen_mumi_LV = new TLorentzVector();
+	// TLorentzVector* gen_mupl_LV = new TLorentzVector();
+
+	TLorentzVector* gen_QQ_LV = nullptr;
+	TLorentzVector* gen_mumi_LV = nullptr;
+	TLorentzVector* gen_mupl_LV = nullptr;
 
     // Long64_t totEntries = OniaTree->GetEntries(); 
 
@@ -184,15 +188,19 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 	Long64_t totEntries = OniaTree->GetEntries();
 	double counter = 0;
 	// Loop over the events
-	for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
+	// for (Long64_t iEvent = 0; iEvent < (totEntries); iEvent++) {
+	for (Long64_t iEvent = startEvent; iEvent < (totEntries); iEvent++) {
 		if (iEvent % 10000 == 0) {
 			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
 		}
 
 		OniaTree->GetEntry(iEvent);
 		// if (iEvent < 50) continue;
-		if (iEvent == 10000000) break;
+		// if (iEvent == 10000000) break;
 		// if (iEvent == 20000000) break;
+		// if (iEvent == 30000000) break;
+
+		if (endEvent > 0 && iEvent >= endEvent) break; // limit the number of events to process
 
 		// loop over all gen upsilons
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
@@ -325,7 +333,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 	const char* path = AcceptanceResultsPath(muonAccName.Data());
 
 	gSystem->mkdir(path, kTRUE);
-	const char* outputFileName = Form("%s/AcceptanceResults_dimuonPtWeight%s.root", path, isPhiFolded ? "" : "_fullPhi");
+	const char* outputFileName = Form("%s/AcceptanceResults_dimuonPtWeight%s_file%d.root", path, isPhiFolded ? "" : "_fullPhi", fileIndex);
+	// const char* outputFileName = Form("%s/AcceptanceResults_dimuonPtWeight%s_50M.root", path, isPhiFolded ? "" : "_fullPhi");
 
 	TFile outputFile(outputFileName, "UPDATE");
 
@@ -347,4 +356,55 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 	outputFile.Close();
 
 	if (BeVerbose) cout << "\nAcceptance maps saved in " << outputFileName << endl;
+}
+
+void mergeAcceptanceOutputs(TString outputName = "AcceptanceResults_dimuonPtWeight_fullPhi_50M.root",
+    						TString inputPattern = "AcceptanceResults_dimuonPtWeight_fullPhi_file",  // prefix pattern
+    						TString muonAccName = "UpsilonTriggerThresholds") {
+
+    const char* path = AcceptanceResultsPath(muonAccName.Data());
+
+	TFileMerger merger(kFALSE); // 'kFALSE' = don't compact memory
+    merger.OutputFile(Form("%s/%s", path, outputName.Data()), "RECREATE");
+
+	void* dirp = gSystem->OpenDirectory(path);	
+
+	const char* file;
+		
+    std::cout << "Merging files in directory: " << path << std::endl;
+
+    while ((file = gSystem->GetDirEntry(dirp))) {
+        TString fname = file;
+        if (!fname.EndsWith(".root")) continue;
+
+        if (fname.BeginsWith(inputPattern)) {
+            TString fullPath = TString::Format("%s/%s", path, fname.Data());
+            std::cout << "Adding file: " << fullPath << std::endl;
+            merger.AddFile(fullPath);
+        }
+    }
+
+    gSystem->FreeDirectory(dirp);
+
+    Bool_t success = merger.Merge();
+    if (success)
+        std::cout << "Merged files saved to " << outputName << std::endl;
+    else
+        std::cerr << "Merging failed." << std::endl;
+}
+
+void run_acceptanceMap_noGenFilter(Long64_t totNEvent = 50000000, Long64_t step = 5000000) {
+	
+	for (Long64_t startEvent = 0; startEvent < totNEvent; startEvent += step) {
+		Long64_t endEvent = startEvent + step;
+		if (endEvent > totNEvent) endEvent = totNEvent;
+
+		cout << "Processing events from " << startEvent << " to " << endEvent << endl;
+
+		gSystem->Exec(Form("root -l -b -q 'acceptanceMap_noGenFilter.C+(0,30,kFALSE,\"%s\",0,0,0,1,%lld,%lld,%lld)'", gMuonAccName.Data(), startEvent, endEvent, startEvent / step));
+	}
+
+	mergeAcceptanceOutputs("AcceptanceResults_dimuonPtWeight_fullPhi_50M.root", "AcceptanceResults_dimuonPtWeight_fullPhi_file",  gMuonAccName);
+
+	return;
 }
