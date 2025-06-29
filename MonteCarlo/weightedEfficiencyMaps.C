@@ -351,7 +351,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 			cout << Form("\rProcessing event %lld / %lld (%.0f%%)", iEvent, totEntries, 100. * iEvent / totEntries) << flush;
 		}
 
-		// if (iEvent > 100) break; // for testing
+		// if (iEvent > 100000) break; // for testing
 
 		OniaTree->GetEntry(iEvent);
 		//genLorentzVector->Clear();
@@ -591,9 +591,9 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				dimuWeight_nominal = allGood ? tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal : 1; // if the event is not selected, we do not apply the dimuon weight to the denominator
 				
 				// total weight
-				totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
-				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
-				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
+				totalWeightLab = eventWeight * dimuonPtWeight /* dimuWeight_nominal*/;
+				totalWeightCS = eventWeight * dimuonPtWeight /* dimuWeight_nominal */ * weightCS;
+				totalWeightHX = eventWeight * dimuonPtWeight /* dimuWeight_nominal */ * weightHX;
 
 				// cout << "eventWeight: " << eventWeight << endl;
 				// cout << "dimuonPtWeight: " << dimuonPtWeight << endl;
