@@ -393,7 +393,7 @@ void mergeAcceptanceOutputs(TString outputName = "AcceptanceResults_dimuonPtWeig
         std::cerr << "Merging failed." << std::endl;
 }
 
-void run_acceptanceMap_noGenFilter(Long64_t totNEvent = 50000000, Long64_t step = 5000000) {
+void run_acceptanceMap_noGenFilter(Long64_t totNEvent = 50000000, Long64_t step = 5000000, Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0) {
 	
 	for (Long64_t startEvent = 0; startEvent < totNEvent; startEvent += step) {
 		Long64_t endEvent = startEvent + step;
@@ -401,10 +401,10 @@ void run_acceptanceMap_noGenFilter(Long64_t totNEvent = 50000000, Long64_t step 
 
 		cout << "Processing events from " << startEvent << " to " << endEvent << endl;
 
-		gSystem->Exec(Form("root -l -b -q 'acceptanceMap_noGenFilter.C+(0,30,kFALSE,\"%s\",0,0,0,1,%lld,%lld,%lld)'", gMuonAccName.Data(), startEvent, endEvent, startEvent / step));
+		gSystem->Exec(Form("root -l -b -q 'acceptanceMap_noGenFilter.C+(0, 30, kFALSE, \"%s\", %f, %f, %f, 1, %lld, %lld, %lld)'", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, startEvent, endEvent, startEvent / step));
 	}
 
-	mergeAcceptanceOutputs("AcceptanceResults_dimuonPtWeight_fullPhi_50M.root", "AcceptanceResults_dimuonPtWeight_fullPhi_file",  gMuonAccName);
+	mergeAcceptanceOutputs("AcceptanceResults_dimuonPtWeight_fullPhi_50M_kFNormal.root", "AcceptanceResults_dimuonPtWeight_fullPhi_file",  gMuonAccName);
 
 	return;
 }
