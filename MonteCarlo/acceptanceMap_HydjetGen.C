@@ -591,10 +591,10 @@ void drawAcceptanceMap(TString refFrameName = "HX",
 	TEfficiency* accMap_flat;
 
 	// TString fileName = Form("%s/AcceptanceResults_Gen_NColl_dimuonPtWeights_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
-	TString fileName = Form("%s/AcceptanceResults_Gen_NColl_dimuonPt_SFWeights_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
+	TString fileName = Form("%s/AcceptanceResults_Gen_NColl_dimuonPtWeights_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 	// TString fileName = Form("%s/AcceptanceResults_Hydjet%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 	// TString fileName_flat = Form("%s/AcceptanceResults%s.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
-	TString fileName_flat = Form("%s/AcceptanceResults_dimuonPtWeight%s_50M.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
+	TString fileName_flat = Form("%s/AcceptanceResults_dimuonPtWeight%s_50M_kFNormal.root", AcceptanceResultsPath(gMuonAccName), isPhiFolded ? "" : "_fullPhi");
 
     accMap = getAcceptance3DMap(fileName, refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
 	accMap_flat = getAcceptance3DMap(fileName_flat, refFrameName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, isPhiFolded);
