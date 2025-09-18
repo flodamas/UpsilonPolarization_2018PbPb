@@ -127,7 +127,8 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 	/// get acceptance maps
 	const char* accMapPath = AcceptanceResultsPath(muonAccName);
 
-	TFile* acceptanceFile = openFile(Form("%s/AcceptanceResults%s.root", accMapPath, "_fullPhi"));
+	// TFile* acceptanceFile = openFile(Form("%s/AcceptanceResults%s.root", accMapPath, "_fullPhi"));
+	TFile* acceptanceFile = openFile(Form("%s/AcceptanceResults_dimuonPtWeight%s_50M_kFNormal.root", accMapPath, "_fullPhi"));
 	auto* accMap = (TEfficiency*)acceptanceFile->Get(nominalMapName);
 
 	/// rebin acceptance maps based on costheta, phi, and pT selection
@@ -136,7 +137,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 	/// get efficiency maps
 	const char* effMapPath = EfficiencyResultsPath(muonAccName);
 
-	TFile* efficiencyFile = openFile(Form("%s/EfficiencyResults%s.root", effMapPath, "_fullPhi"));
+	TFile* efficiencyFile = openFile(Form("%s/EfficiencyResults%s_kFNormal.root", effMapPath, "_fullPhi"));
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
 
 	/// rebin efficiency maps based on costheta, phi, and pT selection
@@ -349,7 +350,7 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 
 	TCanvas* correctedMapCanvas = draw2DMap(standardCorrectedMap, refFrameName, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, LEGOplot);
 
-	standardCorrectedMap->GetZaxis()->SetTitle("#varUpsilon(1S) corrected yield");
+	standardCorrectedMap->GetZaxis()->SetTitle("Corrected #varUpsilon(1S) yield");
 	standardCorrectedMap->GetZaxis()->SetTitleSize(0.055);
 	standardCorrectedMap->GetZaxis()->SetTitleOffset(1.4);
 	standardCorrectedMap->GetZaxis()->SetLabelSize(0.044);
@@ -439,20 +440,20 @@ void rawYield_2D_customizedFits(Int_t ptMin = 0, Int_t ptMax = 2, const char* mu
 		const char* fitModelName = GetFitModelName(signalShapeName, ptMin, ptMax, refFrameName, cosThetaMin, cosThetaMax, phiMin, phiMax);
 
 		SavePolarizationFitParameters(savedParams, "rootFit", fitModelName, muonAccName);
-		// TLegend legend2(.17, .7, .23, .87);
-		TLegend legend2(.18, .75, .25, .8);
+		TLegend legend2(.18, .765, .46, .875);
+		// TLegend legend2(.18, .75, .25, .8);
 		legend2.SetTextSize(.045);
 		legend2.SetFillColor(0);
 		legend2.SetFillStyle(1001);
 
-		//legend2.AddEntry(standardCorrectedMap, "#varUpsilon(1S) corrected yield", "lp");
+		legend2.AddEntry(standardCorrectedMap, "Corrected #varUpsilon(1S) yield", "lp");
 		// legend2.AddEntry(polarFunc2D, Form("fit: #lambda_{#theta}  = %.2f #pm %.2f    #lambda_{#varphi} = %.2f #pm %.2f", lambdaThetaVal, lambdaThetaErr, lambdaPhiVal, lambdaPhiErr), "l");
 		// legend2.AddEntry((TObject*)0, Form("     #lambda_{#theta#varphi} = %.2f #pm %.2f  #tilde{#lambda}  = %.2f #pm %.2f", lambdaThetaPhiVal, lambdaThetaPhiErr, lambdaTildeVal, lambdaTildeErr), "");
 		legend2.AddEntry(polarFunc2D, "fit: ", "l");
 
 		legend2.DrawClone();
 
-		TPaveText* resultTextRight = new TPaveText(0.25, 0.70, 0.60, 0.81, "NDC"); // Adjust coordinates
+		TPaveText* resultTextRight = new TPaveText(0.29, 0.70, 0.63, 0.815, "NDC"); // Adjust coordinates
 		resultTextRight->SetFillColor(0);                                          // White background
 		resultTextRight->SetFillStyle(1001);                                       // Solid fill
 		resultTextRight->SetBorderSize(0);                                         // Optional: Thin border
