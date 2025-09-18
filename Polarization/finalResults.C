@@ -355,7 +355,8 @@ void finalResults(Bool_t QMPoster = kFALSE, const char* bkgShapeName = "ExpTimes
 	const int NLambParams = 4;
 
 	const char* signalShapeName = "SymDSCB";
-	const char* methodName = "rootFit";
+	// const char* methodName = "rootFit";
+	const char* methodName = "iteration";
 
 	/// set the colors
 	const char* CSColor = "#009ADE"; // blue
