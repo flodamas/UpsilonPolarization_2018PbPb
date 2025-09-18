@@ -591,9 +591,9 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 				dimuWeight_nominal = allGood ? tnp_weight_trk_pbpb(Reco_mupl_eta, indexNominal) * tnp_weight_trk_pbpb(Reco_mumi_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mupl_pt, Reco_mupl_eta, indexNominal) * tnp_weight_muid_pbpb(Reco_mumi_pt, Reco_mumi_eta, indexNominal) * dimuTrigWeight_nominal : 1; // if the event is not selected, we do not apply the dimuon weight to the denominator
 				
 				// total weight
-				totalWeightLab = eventWeight * dimuonPtWeight /* dimuWeight_nominal*/;
-				totalWeightCS = eventWeight * dimuonPtWeight /* dimuWeight_nominal */ * weightCS;
-				totalWeightHX = eventWeight * dimuonPtWeight /* dimuWeight_nominal */ * weightHX;
+				totalWeightLab = eventWeight * dimuonPtWeight * dimuWeight_nominal;
+				totalWeightCS = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightCS;
+				totalWeightHX = eventWeight * dimuonPtWeight * dimuWeight_nominal * weightHX;
 
 				// cout << "eventWeight: " << eventWeight << endl;
 				// cout << "dimuonPtWeight: " << dimuonPtWeight << endl;
@@ -938,7 +938,7 @@ void weightedEfficiencyMaps(Int_t ptMin = 0, Int_t ptMax = 2, TString muonAccNam
 	canvasHXsyst->SaveAs(Form("%s/RelatSystEff_HX%s.png", path.Data(), isPhiFolded ? "" : "_fullPhi"), "RECREATE");
 
 	/// save the nominal efficiency results and the corresponding systematics in a file for later usage
-	TString outputFileName = Form("%s/EfficiencyResults%s.root", path.Data(), isPhiFolded ? "" : "_fullPhi");
+	TString outputFileName = Form("%s/EfficiencyResults%s_SF_kFNormal.root", path.Data(), isPhiFolded ? "" : "_fullPhi");
 
 	TFile outputFile(outputFileName.Data(), "UPDATE");
 
