@@ -34,7 +34,8 @@ RooDataSet InvMassDataset(RooWorkspace& wspace, Int_t ptMin = 0, Int_t ptMax = 3
 
 void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe = kTRUE, Float_t cosThetaMin = -1, Float_t cosThetaMax = 1, Int_t phiMin = -180, Int_t phiMax = 180, Bool_t isPhiFolded = kTRUE, Float_t massMin = MassBinMin, Float_t massMax = MassBinMax, const char* signalShapeName = "SymDSCB", const char* bkgShapeName = "ExpTimesErr", const char* muonAccName = "UpsilonTriggerThresholds") {
 	writeExtraText = true; // if extra text
-	extraText = "      Internal";
+	// extraText = "      Internal";
+	extraText = "      Work in progress";
 
 	/// Set up the data
 	using namespace RooFit;
@@ -72,6 +73,7 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	// BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true);
 	BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, true, muonAccName); // fix sigma to MC
+	// BuildInvariantMassModel(wspace, signalShapeName, bkgShapeName, fitModelName, nEntries, false, muonAccName); // free sigma
 
 	RooAddPdf invMassModel = *((RooAddPdf*)wspace.pdf("invMassModel"));
 	invMassModel.setNormRange("MassFitRange");
@@ -93,16 +95,17 @@ void nominalFit_RawDataset(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isCSframe =
 
 	RooPlot* frame = InvariantMassRooPlot(wspace, reducedDataset);
 	frame->GetXaxis()->SetLabelOffset(1); // to make it disappear under the pull distribution pad
+	frame->GetYaxis()->SetRangeUser(0.0, frame->GetMaximum() * 1.2);
 
 	frame->addObject(KinematicsText(gCentralityBinMin, gCentralityBinMax, ptMin, ptMax, 0.67, 0.70, 0.94, 0.95)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.67, 0.70, 0.94, 0.95 // (HX, 12to20, 0.42to0.70, 60to120): 0.63, 0.695, 0.94, 0.95
 
 	if (!isPhiFolded)
 		frame->addObject(RefFrameText(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax));
 	else
-		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, 0.595, 0.47, 0.945, 0.66, 32)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.595, 0.47, 0.945, 0.66, 32 // (HX, 12to20, 0.42to0.70, 60to120): 0.605, 0.47, 0.945, 0.66
+		frame->addObject(RefFrameTextPhiFolded(isCSframe, cosThetaMin, cosThetaMax, phiMin, phiMax, 0.595, 0.47, 0.945, 0.66, 12)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.595, 0.47, 0.945, 0.66, 32 // (HX, 12to20, 0.42to0.70, 60to120): 0.605, 0.47, 0.945, 0.66
 
 	if (strcmp(signalShapeName, "SymDSCB") == 0)
-		frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2), 0.14, 0.07, 0.48, 0.35, 12)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.14, 0.07, 0.48, 0.35, 12 // (HX, 12to20, 0.42to0.70, 60to120): 0.147, 0.70, 0.458, 0.95
+		frame->addObject(FitResultText(*wspace.var("yield1S"), ComputeSignalSignificance(wspace, 1), *wspace.var("yield2S"), ComputeSignalSignificance(wspace, 2), 0.14, 0.07, 0.48, 0.35, 32)); // (HX, 2to6, -0.42to-0.14, 60to120): 0.14, 0.07, 0.48, 0.35, 12 // (HX, 12to20, 0.42to0.70, 60to120): 0.147, 0.70, 0.458, 0.95
 	else
 		frame->addObject(FitResultText(*wspace.var("yield1S"), 0, *wspace.var("yield2S"), 0));
 
