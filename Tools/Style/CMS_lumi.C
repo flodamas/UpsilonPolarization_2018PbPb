@@ -1,7 +1,7 @@
 #include "CMS_lumi.h"
 #include <iostream>
 
-void CMS_lumi(TPad* pad, TString lumiText, int iPosX = 0) {
+void CMS_lumi(TPad* pad, TString lumiText, int iPosX = 0, double Yoffset = 0) {
 	bool outOfFrame = false;
 	
 	if (iPosX / 10 == 0) {
@@ -39,13 +39,13 @@ void CMS_lumi(TPad* pad, TString lumiText, int iPosX = 0) {
 	latex.SetTextFont(42);
 	latex.SetTextAlign(31);
 	latex.SetTextSize(lumiTextSize * t);
-	latex.DrawLatex(1 - r, 1 - t + lumiTextOffset * t, lumiText);
+	latex.DrawLatex(1 - r, 1 - t + lumiTextOffset * t + Yoffset, lumiText);
 
 	if (outOfFrame) {
 		latex.SetTextFont(cmsTextFont);
 		latex.SetTextAlign(11);
 		latex.SetTextSize(cmsTextSize * t);
-		latex.DrawLatex(l, 1 - t + lumiTextOffset * t, cmsText);
+		latex.DrawLatex(l, 1 - t + lumiTextOffset * t + Yoffset, cmsText);
 	}
 
 	pad->cd();
@@ -69,7 +69,7 @@ void CMS_lumi(TPad* pad, TString lumiText, int iPosX = 0) {
 			float xl_1 = posX_ + 0.15 * H / W;
 			float yl_1 = posY_;
 			TASImage* CMS_logo = new TASImage("CMS-BW-label.png");
-			TPad* pad_logo = new TPad("logo", "logo", xl_0, yl_0, xl_1, yl_1);
+			TPad* pad_logo = new TPad("logo", "logo", xl_0, yl_0 + Yoffset, xl_1, yl_1 + Yoffset);
 			pad_logo->Draw();
 			pad_logo->cd();
 			CMS_logo->Draw("X");
@@ -79,14 +79,14 @@ void CMS_lumi(TPad* pad, TString lumiText, int iPosX = 0) {
 			latex.SetTextFont(cmsTextFont);
 			latex.SetTextSize(cmsTextSize * t);
 			latex.SetTextAlign(align_);
-			latex.DrawLatex(posX_, posY_, cmsText);
+			latex.DrawLatex(posX_, posY_ + Yoffset, cmsText);
 			if (writeExtraText) {
 				latex.SetTextFont(extraTextFont);
 				latex.SetTextAlign(align_);
 				latex.SetTextSize(extraTextSize * t);
 				// latex.DrawLatex(posX_, posY_ - relExtraDY * cmsTextSize * t, extraText);
 				// when it conflicts to the exponent on the y axis, write the extraText right next to CMS
-				latex.DrawLatex(posX_ + relPosX - 0.008, posY_ -0.006, extraText);
+				latex.DrawLatex(posX_ + relPosX - 0.008, posY_ -0.006 + Yoffset, extraText);
 			}
 		}
 	} else if (writeExtraText) {
@@ -97,7 +97,7 @@ void CMS_lumi(TPad* pad, TString lumiText, int iPosX = 0) {
 		latex.SetTextFont(extraTextFont);
 		latex.SetTextSize(extraTextSize * t);
 		latex.SetTextAlign(align_);
-		latex.DrawLatex(posX_, posY_, extraText);
+		latex.DrawLatex(posX_, posY_ + Yoffset, extraText);
 	}
 	return;
 }
