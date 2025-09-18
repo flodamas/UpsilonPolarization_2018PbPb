@@ -122,7 +122,8 @@ const int NCPUs = 3;
 
 const float MassBinMin = 7;
 // const float MassBinMax = 13;
-const float MassBinMax = 12;
+// const float MassBinMax = 12;
+const float MassBinMax = 11.5;
 const int NMassBins = 100;
 
 // error estimate
@@ -224,7 +225,7 @@ const char* RawDatasetName(const char* refFrameName = "CS") {
 }
 
 const char* PolaWeightName(Float_t lambdaTheta = 0., Float_t lambdaPhi = 0., Float_t lambdaThetaPhi = 0.) {
-	return Form("LambdaTheta%.2fPhi%.2fThetaPhi%.2f", lambdaTheta, lambdaPhi, lambdaThetaPhi);
+	return Form("LambdaTheta%.4fPhi%.4fThetaPhi%.4f", lambdaTheta, lambdaPhi, lambdaThetaPhi);
 }
 
 #endif
