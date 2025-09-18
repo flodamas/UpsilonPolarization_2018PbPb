@@ -75,11 +75,14 @@ Double_t PtWeight_absy1p2to2p4(Float_t pT) {
 // }
 
 Double_t PtGenWeight_absy0to2p4(Float_t pT) {
-	TF1* PtWeightFunc_absy0to2p4 = new TF1("PtGenWeightFunc_absy0to2p4", "[0]/([1] + x)", gPtBinning[0], gPtBinning[NPtBins]);
-	PtWeightFunc_absy0to2p4->SetParameter(0, 3.2);
-	PtWeightFunc_absy0to2p4->SetParError(0, 0.1);
-	PtWeightFunc_absy0to2p4->SetParameter(1, -0.2);
-	PtWeightFunc_absy0to2p4->SetParError(1, 0.1);
+	// TF1* PtWeightFunc_absy0to2p4 = new TF1("PtGenWeightFunc_absy0to2p4", "[0]/([1] + x)", gPtBinning[0], gPtBinning[NPtBins]);
+	TF1* PtWeightFunc_absy0to2p4 = new TF1("PtGenWeightFunc_absy0to2p4", "[0]/pow(([1] + x), [2])", gPtBinning[0], gPtBinning[NPtBins]);
+	PtWeightFunc_absy0to2p4->SetParameter(0, 7.9);
+	PtWeightFunc_absy0to2p4->SetParError(0, 1.8);
+	PtWeightFunc_absy0to2p4->SetParameter(1, 0.7);
+	PtWeightFunc_absy0to2p4->SetParError(1, 0.4);
+	PtWeightFunc_absy0to2p4->SetParameter(2, 1.3);
+	PtWeightFunc_absy0to2p4->SetParError(2, 0.1);
 
 	return PtWeightFunc_absy0to2p4->Eval(pT);
 }
