@@ -65,11 +65,11 @@ void makePtSpectra_pythiaSignal(int iState = 1) {
 
     TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
     hGenPt->SetTitle("");
-    hGenPt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+    hGenPt->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
     hGenPt->GetYaxis()->SetTitle("Counts");
-    hGenPt->SetLineColor(kBlue);
+    hGenPt->SetLineColor(TColor::GetColor("#009ADE"));
     hGenPt->SetMarkerStyle(20);
-    hGenPt->SetMarkerColor(kBlue);
+    hGenPt->SetMarkerColor(TColor::GetColor("#009ADE"));
     hGenPt->SetMarkerSize(1.0);
     hGenPt->Draw("E1");
 
@@ -82,7 +82,9 @@ void makePtSpectra_pythiaSignal(int iState = 1) {
 void makePtSpectra_pythiaSignal_141X(int iState = 1) {
 	// Read GenOnly Nofilter file with polarization weights
 	// const char* filename = Form("../Files/OniaTree_Y%dS_GENONLY_NoFilter.root", iState);
-    const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_merge.root", iState);
+    // const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_merge.root", iState);
+    // const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_combined.root", iState);
+    const char* filename = Form("../Files/Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_50M.root", iState);
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -122,11 +124,11 @@ void makePtSpectra_pythiaSignal_141X(int iState = 1) {
 
     Long64_t totEntries = OniaTree->GetEntries(); 
     
-    // const int nBins = 6;
-    // float ptBinning[nBins + 1] = {0, 2, 4, 6, 9, 12, 30};
+    const int nBins = 6;
+    float ptBinning[nBins + 1] = {0, 2, 4, 6, 9, 12, 30};
 
-    double ptBinning[] = {0.0, 2.0, 6.0, 12.0, 30.0};
-    int nBins = sizeof(ptBinning)/sizeof(ptBinning[0]) - 1;
+    // double ptBinning[] = {0.0, 2.0, 6.0, 12.0, 30.0};
+    // int nBins = sizeof(ptBinning)/sizeof(ptBinning[0]) - 1;
 
     TH1D* hGenPt = new TH1D("hGenPt", "", nBins, ptBinning);
     hGenPt->Sumw2();
@@ -152,16 +154,16 @@ void makePtSpectra_pythiaSignal_141X(int iState = 1) {
 
     TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
     hGenPt->SetTitle("");
-    hGenPt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+    hGenPt->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
     hGenPt->GetYaxis()->SetTitle("Counts");
-    hGenPt->SetLineColor(kBlue);
+    hGenPt->SetLineColor(TColor::GetColor("#009ADE"));
     hGenPt->SetMarkerStyle(20);
-    hGenPt->SetMarkerColor(kBlue);
+    hGenPt->SetMarkerColor(TColor::GetColor("#009ADE"));
     hGenPt->SetMarkerSize(1.0);
     hGenPt->Draw("E1");
 
     // Save the histogram to a file
-    TFile* outFile = new TFile("GenPtSpectra_pythiaSignal_141X.root", "RECREATE");
+    TFile* outFile = new TFile("GenPtSpectra_pythiaSignal_141X_XSBinning.root", "RECREATE");
     hGenPt->Write();
     outFile->Close();
 }
@@ -173,6 +175,9 @@ TH1D* convertGraphToHist(TGraphErrors* hppXSecGraph, double& totalXS) {
 
     double ptEdges_combined[] = {0.0, 2.0, 6.0, 12.0, 30.0};
     int nBins_combined = sizeof(ptEdges_combined)/sizeof(ptEdges_combined[0]) - 1;
+
+    // double ptEdges_combined[] = {0.0, 2.0, 4.0, 6.0, 9.0, 12.0, 30.0};
+    // int nBins_combined = sizeof(ptEdges_combined)/sizeof(ptEdges_combined[0]) - 1;
 
     TH1D* hGraphAsHist = new TH1D("hGraphAsHist", "", nBins_combined, ptEdges_combined);
     hGraphAsHist->Sumw2();
@@ -260,6 +265,7 @@ void nGenSpectra() {
 
 	// const char* filename = "GenPtSpectra_pythiaSignal.root";
 	const char* filename = "GenPtSpectra_pythiaSignal_141X.root";
+    // const char* filename = "GenPtSpectra_pythiaSignal_141X_XSBinning.root";
 
 	TFile* file = TFile::Open(filename, "READ");
 	if (!file) {
@@ -302,41 +308,55 @@ void nGenSpectra() {
 	gStyle->SetPadLeftMargin(.18);
 
 	auto canvas = new TCanvas("canvas", "", 600, 650);
+    // canvas->SetTopMargin(0.);
 	TPad* pad1 = new TPad("pad1", "pad1", 0, 0.4, 1, 1.0);
-	pad1->SetBottomMargin(0.04);
+	pad1->SetBottomMargin(0.025);
 	pad1->SetTopMargin(0.1);
 	pad1->Draw();
 	pad1->cd();
 
     hGenPt->SetTitle("");
-    hGenPt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
-    hGenPt->GetYaxis()->SetTitle("d#sigma^{2} / dydp_{T} (nb/GeV/c)");
+    hGenPt->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
+    hGenPt->GetYaxis()->SetTitle("d#sigma^{2} / dyd#it{p}_{T} (nb/GeV/#it{c})");
     hGenPt->GetXaxis()->SetLabelSize(0);
-    hGenPt->SetLineColor(kBlue);
+    hGenPt->SetLineColor(TColor::GetColor("#009ADE"));
     hGenPt->SetMarkerStyle(20);
-    hGenPt->SetMarkerColor(kBlue);
+    hGenPt->SetMarkerColor(TColor::GetColor("#009ADE"));
     hGenPt->SetMarkerSize(1.0);
     hGenPt->Sumw2();
+
+    cout << "Bin content = " << hGenPt->GetBinContent(1)
+         << ", Error = " << hGenPt->GetBinError(1) << endl;
+    cout << "Bin content = " << hGenPt->GetBinContent(2)
+         << ", Error = " << hGenPt->GetBinError(2) << endl;        
     
     double totalXS = 0;
     TH1D* hppXSecHist = convertGraphToHist(hppXSecGraph, totalXS);
+    hppXSecHist->SetMarkerColor(TColor::GetColor("#FF1F5B"));
+    hppXSecHist->SetLineColor(TColor::GetColor("#FF1F5B"));
+    hppXSecHist->SetMarkerStyle(20);
 
     hGenPt->Scale(totalXS / hGenPt->Integral("width"));
+
+    cout << "Bin content = " << hGenPt->GetBinContent(1)
+         << ", Error = " << hGenPt->GetBinError(1) << endl;
+    cout << "Bin content = " << hGenPt->GetBinContent(2)
+         << ", Error = " << hGenPt->GetBinError(2) << endl;   
 
     hGenPt->GetYaxis()->SetRangeUser(0, std::max(hppXSecHist->GetMaximum(), hGenPt->GetMaximum()) * 1.2);
     hGenPt->Draw("E1");
 
 	hppXSecHist->Draw("SAME P");
-
-	TPaveText* header = new TPaveText(.3, .85, .9, .75, "NDCNB");
+    // 0.3511706,0.736,0.951505,0.8373333
+	TPaveText* header = new TPaveText(.345, .74, .90, .84, "NDCNB");
 	header->SetFillColor(4000);
 	header->SetBorderSize(0);
 	header->SetTextSize(.07);
 	header->AddText(Form("%s, %s", CentralityRangeText(), DimuonRapidityRangeText(0., 2.4)));
 	header->SetAllWith("", "align", 12);
 	header->Draw();
-
-	TLegend* legend = new TLegend(.5, .7, .85, .55);
+    // 0.5585284,0.5546667,0.9080268,0.704
+	TLegend* legend = new TLegend(.56, .55, .87, .70);
 	legend->SetTextSize(.07);
 	legend->AddEntry(hppXSecHist, "Published pp XS", "lep");
     legend->AddEntry(hGenPt, "Gen MC", "lep");
@@ -357,16 +377,19 @@ void nGenSpectra() {
     hRatio->Divide(hGenPt);
 
     hRatio->SetTitle(" ");
-    hRatio->GetYaxis()->SetTitleOffset(0.65);
+    hRatio->GetYaxis()->SetTitleOffset(0.61);
     hRatio->GetYaxis()->SetTitle("Data / MC");
     hRatio->GetYaxis()->SetTitleSize(0.13);
     hRatio->GetYaxis()->SetLabelSize(0.11);
     hRatio->GetYaxis()->CenterTitle();
-    hRatio->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+    hRatio->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
     hRatio->GetXaxis()->SetLabelSize(0.11);
     hRatio->GetXaxis()->SetTitleSize(0.13);
     hRatio->GetXaxis()->SetTickSize(0.06);
     hRatio->GetYaxis()->SetNdivisions(505);
+    hRatio->SetLineColor(kBlack);
+    hRatio->SetMarkerColor(kBlack);
+    hRatio->GetYaxis()->SetRangeUser(0., 4.5);
     hRatio->Draw("E1");
     // hRatio->SetMinimum(0.1);
     // hRatio->SetMaximum(2.3);
@@ -374,7 +397,7 @@ void nGenSpectra() {
 
     errorPropagation(hRatio, hppXSecHist, hGenPt);
 
-	TF1* fitFunc = new TF1("fitFunc", "[0]/([1] + x)", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
+	// TF1* fitFunc = new TF1("fitFunc", "[0]/([1] + x)", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
     // TF1* fitFunc = new TF1("fitFunc", "[0]/([1] + x)", 0, 30);
     // TF1* fitFunc = new TF1("fitFunc", "([0]  + [1]*x*x) / ( x - [2])^3", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
     // fitFunc->SetParameters(11.0, 6.0); 
@@ -384,8 +407,14 @@ void nGenSpectra() {
     // TF1* fitFunc = new TF1("fitFunc", "[0]/pow(1 + (x / [1]), [2])", 0, 30);
     // fitFunc->SetParameters(2.5, 2.5, 2.2);  // A, B, C
     
-    // TF1* fitFunc = new TF1("fitFunc", "[0]/pow(([1] + x), [2])", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
+    TF1* fitFunc = new TF1("fitFunc", "[0]/pow(([1] + x), [2])", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
+    fitFunc->SetLineColor(TColor::GetColor("#FEB24C")); // Set a distinct color for the fit function
+    fitFunc->SetLineWidth(3);
     // fitFunc->SetParameters(10.0, 0.1, 5.0); 
+
+    // TF1* fitFunc = new TF1("fitFunc", "[0] * exp(-[1] * x) + [2]", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
+
+    // TF1* fitFunc = new TF1("fitFunc", "[0] / (1 + [1] * x + [2] * pow(x, 2))", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
 
     // TF1* fitFunc = new TF1("fitFunc", "([0] + [1] * pow(x, 2.))/pow((x - [2]), 3)", gPtFineBinning[0], gPtFineBinning[NPtFineBins]);
 
@@ -402,25 +431,31 @@ void nGenSpectra() {
     fitResult->Print("v");
 
   	// legend with fit result info
-
-	TLegend* fitLegend = new TLegend(.4, .9, .7, .65);
+    // 0.4046823,0.688,0.7056856,0.936 
+	TLegend* fitLegend = new TLegend(.4, .69, .90, .94);
 	fitLegend->SetTextSize(.09);
-	fitLegend->AddEntry(fitFunc, Form("#frac{A}{(p_{T} + B)}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
-		// fitLegend->AddEntry(fitFunc, Form("#frac{A + B p_{T}^{2}}{(p_{T} - C)^{3}}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
+	// fitLegend->AddEntry(fitFunc, Form("#frac{A}{(p_{T} + B)}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
+	// fitLegend->AddEntry(fitFunc, Form("#frac{A + B p_{T}^{2}}{(p_{T} - C)^{3}}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
     // fitLegend->AddEntry(fitFunc, Form("#frac{A}{(p_{T} + B)^{C}}  fit (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
-	
-    fitLegend->Draw();
+	fitLegend->AddEntry(fitFunc, Form("#frac{A}{(p_{T} + B)^{C}} (#chi^{2} / n_{dof} = %.1f / %d)", fitResult->Chi2(), fitResult->Ndf()), "l");
 
-	TPaveText* fitHeader = new TPaveText(.65, .7, .9, .45, "NDCNB");
+    fitLegend->Draw();
+    // 0.729097,0.512,0.9782609,0.76
+	TPaveText* fitHeader = new TPaveText(.73, .51, .98, .76, "NDCNB");
 	fitHeader->SetFillColor(4000);
 	fitHeader->SetBorderSize(0);
 	fitHeader->SetTextSize(.09);
 	fitHeader->AddText(Form("A = %.1f #pm %.1f", fitFunc->GetParameter(0), fitFunc->GetParError(0)));
 	fitHeader->AddText(Form("B = %.1f #pm %.1f", fitFunc->GetParameter(1), fitFunc->GetParError(1)));
-	// fitHeader->AddText(Form("C = %.1f #pm %.1f", fitFunc->GetParameter(2), fitFunc->GetParError(2)));
+	fitHeader->AddText(Form("C = %.1f #pm %.1f", fitFunc->GetParameter(2), fitFunc->GetParError(2)));
 
 	fitHeader->SetAllWith("", "align", 12);
 	fitHeader->Draw();  
+
+    TLine *line = new TLine(0, 1, 30, 1);
+    line->SetLineStyle(2);
+    line->SetLineColor(kGray+2);
+    line->Draw("same");
 
 	canvas->Modified();
 	canvas->Update();
@@ -430,6 +465,11 @@ void nGenSpectra() {
 
 	pad2->Draw();
 
-	CMS_lumi(pad1, gCMSLumiText);
+	CMS_lumi(pad1, gCMSLumiText, 0, -0.013);
+
+    // Save the canvas to a file
+    gSystem->mkdir("plots", true);
+    canvas->SaveAs("./plots/nGenSpectra.pdf");
+    canvas->SaveAs("./plots/nGenSpectra.png");
 
 }
