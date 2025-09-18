@@ -40,7 +40,8 @@ Float_t correctRawYield1DHist(TH1D* standardCorrectedHist, TEfficiency* accMap, 
 		totalUncLow = totalRelUncLow * efficiency * acceptance;
 
 		// get yields and their uncertainties
-		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeNames[iBin]), fitModelNames[iBin]);
+		// RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, Form("RawData_%s", bkgShapeNames[iBin]), fitModelNames[iBin]);
+		RooArgSet signalYields = GetSignalYields(yield1S, yield2S, yield3S, bkgShapeNames[iBin], fitModelNames[iBin]);
 
 		double yield1SVal = yield1S->getVal();
 
