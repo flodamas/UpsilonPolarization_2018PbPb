@@ -21,7 +21,7 @@
 #include "../ReferenceFrameTransform/Transformations.h"
 
 
-void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
+void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameName = "CS", const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7, const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180, Int_t iState = gUpsilonState, Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc", float lambdaTheta = 0, float lambdaPhi = 0, float lambdaThetaPhi = 0, int nLegendRows = 2) { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc"
 	writeExtraText = true; // if extra text
 	extraText = "      Simulation Preliminary";
 
@@ -45,14 +45,14 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	TString nominalMapName = NominalTEfficiency3DName(refFrameName);
 
 	// get acceptance maps
-	Double_t lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
+	// float lambdaTheta = 0., lambdaPhi = 0., lambdaThetaPhi = 0.;
 	
 	TString MuonAccName = "";
 	TString accFileName = "";
 
 	if (accName == TString("MuonUpsilonTriggerAcc")) MuonAccName = "UpsilonTriggerThresholds";
-	else if (accName == TString("MuonWithin2018PbPbAcc")) MuonAccName = "_2018PbPbAcc";
-	else if (accName == TString("MuonSimpleAcc")) MuonAccName = "_SimpleAcc";
+	else if (accName == TString("MuonWithin2018PbPbAcc")) MuonAccName = "2018PbPbAcc";
+	else if (accName == TString("MuonSimpleAcc")) MuonAccName = "FlatMuonPt3p5Cut";
 	else {
 		cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
 		return;
@@ -60,8 +60,10 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 
 	// if (isPhiFolded == kTRUE) accFileName = Form("./AcceptanceMaps/%s/AcceptanceResults%s.root", MuonAccName.Data());
 	// else accFileName = Form("./AcceptanceMaps/1S/AcceptanceResults%s_fullPhi.root", MuonAccName.Data());
-	accFileName = Form("./AcceptanceMaps/%s/AcceptanceResults_fullPhi.root", MuonAccName.Data());
-
+	// accFileName = Form("./AcceptanceMaps/%s/AcceptanceResults_fullPhi.root", MuonAccName.Data());
+	accFileName = Form("./AcceptanceMaps/%s/AcceptanceResults_dimuonPtWeight_fullPhi_50M_kFNormal.root", MuonAccName.Data());
+ 	// accFileName = ("./AcceptanceMaps/FlatMuonPt3p5Cut/AcceptanceResults_dimuonPtWeight_fullPhi_FlatAcc_10M.root");
+	
 	TFile* acceptanceFile = openFile(accFileName);
 	cout << accFileName << " opened" << endl;
 	
@@ -84,7 +86,8 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	// if (isPhiFolded == kTRUE) effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", MuonAccName.Data());
 	// else effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s_fullPhi.root", MuonAccName.Data());
 
-	effFileName = Form("./EfficiencyMaps/%s/EfficiencyResults_fullPhi.root", MuonAccName.Data());
+	// effFileName = Form("./EfficiencyMaps/%s/EfficiencyResults_fullPhi.root", MuonAccName.Data());
+	effFileName = Form("./EfficiencyMaps/%s/EfficiencyResults_fullPhi_kFNormal.root", MuonAccName.Data());
 
 	TFile* efficiencyFile = openFile(effFileName);
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName.Data());
@@ -116,13 +119,22 @@ void accEffMaps_3Dto2D(Int_t ptMin = 0, Int_t ptMax = 30, const char* refFrameNa
 	TCanvas* massCanvas = 0;
 
 	// draw acc and eff histograms to check if the rebinning works well
- 	// (last five variables: isAcc, displayValues, displayErrors, extraString, isPhiFolded)
-	DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded);
+	/// (show values)
+ 	// // (last five variables: isAcc, displayValues, displayErrors, extraString, isPhiFolded)
+	// DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded, kFALSE, lambdaTheta, lambdaPhi, lambdaThetaPhi, nLegendRows);
 
-	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded);
+	// DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded, kFALSE, lambdaTheta, lambdaPhi, lambdaThetaPhi, nLegendRows);
+	
+	// // (last five variables: isAcc, displayEffValues, displayEffErrors, displayYieldValues, extraString, isPhiFolded)
+	// DrawEffxAcc2DHist(accMapCosThetaPhi, effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kFALSE, kFALSE, MuonAccName.Data(), isPhiFolded);
+
+	/// (no values)
+	DrawEfficiency2DHist(accMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded, kFALSE, lambdaTheta, lambdaPhi, lambdaThetaPhi, nLegendRows);
+
+	DrawEfficiency2DHist(effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kFALSE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded, kFALSE, lambdaTheta, lambdaPhi, lambdaThetaPhi, nLegendRows);
  	
-	// (last five variables: isAcc, displayEffValues, displayEffErrors, displayYieldValues, extraString, isPhiFolded)
-	DrawEffxAcc2DHist(accMapCosThetaPhi, effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded);
+	DrawEffxAcc2DHist(accMapCosThetaPhi, effMapCosThetaPhi, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, nPhiBins, phiBinEdges, iState, kTRUE, kTRUE, kFALSE, MuonAccName.Data(), isPhiFolded, nLegendRows);
+
 }
 
 void accEffMaps_3Dto2D_scan(const char* refFrameName = "CS", Bool_t isPhiFolded = kFALSE, TString accName = "MuonUpsilonTriggerAcc") { // accName = "MuonSimpleAcc", "MuonWithin2018PbPbAcc", or "MuonUpsilonTriggerAcc") {
@@ -133,7 +145,7 @@ void accEffMaps_3Dto2D_scan(const char* refFrameName = "CS", Bool_t isPhiFolded 
 	for (int ipt = 0; ipt < NptBins; ipt++) {
 		// accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 20, -1, 1, 23, -180, 280, 1, isPhiFolded, accName);
 		// accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 5, -0.7, 0.7, 7, -180, 240, 1, isPhiFolded, accName);
-		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 5, -0.7, 0.7, 3, 0, 180, 1, isPhiFolded, accName);
+		accEffMaps_3Dto2D(ptBinEdges[ipt], ptBinEdges[ipt + 1], refFrameName, 5, -0.7, 0.7, 6, -180, 180, 1, isPhiFolded, accName);
 	}
 
 }
