@@ -32,7 +32,7 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 	/// get acceptance and efficiency in 1D
 	TString nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TString fileName = Form("%s/AcceptanceResults%s.root", AcceptanceResultsPath(gMuonAccName.Data()), "_fullPhi");
+	TString fileName = Form("%s/AcceptanceResults_dimuonPtWeight%s_10M_kFNormal.root", AcceptanceResultsPath(gMuonAccName.Data()), "_fullPhi");
 
 	// get acceptance maps
 	// TFile* acceptanceFile = openFile(fileName.Data());
@@ -63,7 +63,9 @@ TEfficiency* getAcceptance3DMap(const char* refFrameName, Double_t lambdaTheta =
 		// create the acceptance map
 		cout << Form("Acceptance map not found. Creating a new one with (lambdaTheta, phi, thetaPhi) = (%.2f, %.2f, %.2f)....", lambdaTheta, lambdaPhi, lambdaThetaPhi) << endl;
 
-		acceptanceMap_noGenFilter(0, 30, kFALSE, "UpsilonTriggerThresholds", lambdaTheta, lambdaPhi, lambdaThetaPhi, gUpsilonState);
+		// acceptanceMap_noGenFilter(0, 30, kFALSE, "UpsilonTriggerThresholds", lambdaTheta, lambdaPhi, lambdaThetaPhi, gUpsilonState);
+		run_acceptanceMap_noGenFilter(10000000, 5000000, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+		// run_acceptanceMap_noGenFilter(40000000, 5000000, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
         // force ROOT to forget cached file
         gROOT->GetListOfFiles()->Remove(gROOT->GetFile(fileName.Data()));
@@ -94,7 +96,7 @@ TEfficiency* getEfficiency3DMap(const char* refFrameName, Double_t lambdaTheta =
 	/// get acceptance and efficiency in 1D
 	TString nominalMapName = NominalTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TString fileName = Form("%s/EfficiencyResults%s.root", EfficiencyResultsPath(gMuonAccName.Data()), "_fullPhi");
+	TString fileName = Form("%s/EfficiencyResults%s_SF_kFNormal.root", EfficiencyResultsPath(gMuonAccName.Data()), "_fullPhi");
 
 	// get efficiency maps
 	TFile* efficiencyFile = openFile(fileName.Data());
@@ -137,7 +139,7 @@ TH3D* getSysEff3DMap(const char* refFrameName, Double_t lambdaTheta = 0, Double_
 	/// get acceptance and efficiency in 1D
 	const char* nominalMapName = SystTEfficiency3DName(refFrameName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
-	TString fileName = Form("%s/EfficiencyResults%s.root", EfficiencyResultsPath(gMuonAccName.Data()), "_fullPhi");
+	TString fileName = Form("%s/EfficiencyResults%s_SF_kFNormal.root", EfficiencyResultsPath(gMuonAccName.Data()), "_fullPhi");
 
 	// get relative systematic uncertainty of efficiency
 	TFile* efficiencyFile = openFile(fileName.Data());
@@ -440,7 +442,7 @@ RooArgSet extractPolarParam(TH2D* correctedHist, std::vector<TH1D*>& correctedHi
 		legend1D->SetFillColor(0);
 		legend1D->SetFillStyle(1001);
 		legend1D->SetBorderSize(0);
-		legend1D->AddEntry(correctedHist1DCosTheta[iPhi], "#varUpsilon(1S) corrected yield", "pe");
+		legend1D->AddEntry(correctedHist1DCosTheta[iPhi], "Corrected #varUpsilon(1S) yield", "pe");
 		legend1D->AddEntry(polarFuncCosTheta, "fit:", "l");
 		legend1D->Draw("SAME");
 
@@ -1082,8 +1084,8 @@ void getYieldHist(TH2D* angDistHist2D, TString refFrameName = "CS", TString muon
 void rawYield_2D_customizedFits_iteration(TString refFrameName = "CS", TString muonAccName = "UpsilonTriggerThresholds",
                                           Int_t ptMin = 2, Int_t ptMax = 6,
                                           const Int_t nCosThetaBins = 5, Double_t cosThetaMin = -0.7, Double_t cosThetaMax = 0.7,
-                                          const Int_t nPhiBins = 6, Int_t phiMin = -180, Int_t phiMax = 180,
-                                          Bool_t isPhiFolded = kFALSE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kFALSE, int totNItrs = 0, int nLegendRows = 1) {
+                                          const Int_t nPhiBins = 3, Int_t phiMin = 0, Int_t phiMax = 180,
+                                          Bool_t isPhiFolded = kTRUE, Bool_t applyAcc = kTRUE, Bool_t applyEff = kTRUE, int totNItrs = 5, int nLegendRows = 1) {
 
 	/// set bin edges and width
 	vector<Double_t> cosThetaBinEdges = setCosThetaBinEdges(nCosThetaBins, cosThetaMin, cosThetaMax);
