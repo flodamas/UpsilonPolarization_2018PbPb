@@ -8,22 +8,28 @@
 
 #include "../Tools/Parameters/PhaseSpace.h"
 
-void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter.root", Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Bool_t isAccCut = kFALSE, TString accName = gMuonAccName) {
+void skimGenUpsilonMC(Double_t lambdaTheta = 0, Double_t lambdaPhi = 0, Double_t lambdaThetaPhi = 0, Bool_t isAccCut = kTRUE, TString accName = gMuonAccName, Int_t iState = 1) {
+	
+	const char* inputFileName = Form("Oniatree_Upsilon%dS_5p02TeV_TuneCP5_141X_GenOnly_50M.root", iState);
+
 	TFile* infile = TFile::Open(inputFileName, "READ");
 	TTree* OniaTree = (TTree*)infile->Get("hionia/myTree");
 
 	/// OniaTree variables, quite old version
-	Int_t Gen_QQ_size;
+	Short_t Gen_QQ_size;
+
+	Short_t Gen_QQ_mupl_idx[1000];
+	Short_t Gen_QQ_mumi_idx[1000];
 
 	TClonesArray* Gen_QQ_4mom = nullptr;
-	TClonesArray* Gen_QQ_mumi_4mom = nullptr;
-	TClonesArray* Gen_QQ_mupl_4mom = nullptr;
+	TClonesArray* Gen_mu_4mom = nullptr;
 
 	OniaTree->SetBranchAddress("Gen_QQ_size", &Gen_QQ_size);
 	OniaTree->SetBranchAddress("Gen_QQ_4mom", &Gen_QQ_4mom);
 
-	OniaTree->SetBranchAddress("Gen_QQ_mumi_4mom", &Gen_QQ_mumi_4mom);
-	OniaTree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
+	OniaTree->SetBranchAddress("Gen_mu_4mom", &Gen_mu_4mom);
+	OniaTree->SetBranchAddress("Gen_QQ_mupl_idx", Gen_QQ_mupl_idx);
+	OniaTree->SetBranchAddress("Gen_QQ_mumi_idx", Gen_QQ_mumi_idx);
 
 	/// RooDataSet output: one entry = one dimuon candidate!
 
@@ -90,7 +96,7 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 
 		OniaTree->GetEntry(iEvent);
 
-		// if (iEvent == 10000) break;
+		if (iEvent == 10000000) break;
 
 		// loop over gen
 		for (int iGen = 0; iGen < Gen_QQ_size; iGen++) {
@@ -98,9 +104,8 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 
 			if (fabs(gen_QQ_LV->Rapidity()) < gRapidityMin || fabs(gen_QQ_LV->Rapidity()) > gRapidityMax) continue; // upsilon within fiducial region
 
-			gen_mupl_LV = (TLorentzVector*)Gen_QQ_mupl_4mom->At(iGen);
-
-			gen_mumi_LV = (TLorentzVector*)Gen_QQ_mumi_4mom->At(iGen);
+			gen_mupl_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mupl_idx[iGen]);
+			gen_mumi_LV = (TLorentzVector*)Gen_mu_4mom->At(Gen_QQ_mumi_idx[iGen]);
 
 			if (isAccCut) {
 				// single-muon acceptance
@@ -114,6 +119,8 @@ void skimGenUpsilonMC(const char* inputFileName = "OniaTree_Y1S_GENONLY_NoFilter
 			TVector3 muPlus_CS = MuPlusVector_CollinsSoper(*gen_QQ_LV, *gen_mupl_LV);
 
 			TVector3 muPlus_HX = MuPlusVector_Helicity(*gen_QQ_LV, *gen_mupl_LV);
+
+			// dimuonPtWeight = Get_GenPtWeight(gen_QQ_LV->Rapidity(), gen_QQ_pt);
 
 			weightCS = 1 + lambdaTheta * TMath::Power(muPlus_CS.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_CS.Theta()), 2) * std::cos(2 * muPlus_CS.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_CS.Theta()) * std::cos(muPlus_CS.Phi());
 			weightHX = 1 + lambdaTheta * TMath::Power(muPlus_HX.CosTheta(), 2) + lambdaPhi * TMath::Power(std::sin(muPlus_HX.Theta()), 2) * std::cos(2 * muPlus_HX.Phi()) + lambdaThetaPhi * std::sin(2 * muPlus_HX.Theta()) * std::cos(muPlus_HX.Phi());
