@@ -270,6 +270,7 @@ TEfficiency* rebinTEff3DMapPhi(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t pt
 TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax = 30, Int_t nCosThetaBins = 10, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 10, const std::vector<Double_t>& phiBinEdges = {}, Bool_t isPhiFolded = kFALSE) {
 	// define TEfficiency that will contain cosTheta-phi 2D TEfficiency map
 	TEfficiency* TEffCosThetaPhi = new TEfficiency(TEff3DMap->GetName(), "cos #theta;#varphi; efficiency", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges.data());
+	TEffCosThetaPhi->SetStatisticOption(gTEffStatOption);
 
 	TH2D* hTotalCosThetaPhi = (TH2D*)TEffCosThetaPhi->GetTotalHistogram();
 
@@ -277,6 +278,7 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 	if (!isPhiFolded) {
 		for (Int_t iRow = 0; iRow < nPhiBins; iRow++) {
 			TEfficiency* TEffCosTheta = rebinTEff3DMapCosTheta(TEff3DMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, (Int_t)phiBinEdges[iRow], (Int_t)phiBinEdges[iRow + 1]);
+			TEffCosTheta->SetStatisticOption(gTEffStatOption);
 			// std::cout << "Phi: " << phiBinEdges[iRow] << " - " << phiBinEdges[iRow + 1] << std::endl;
 
 			TH1D* hPassedCosTheta = (TH1D*)TEffCosTheta->GetPassedHistogram();
@@ -303,6 +305,10 @@ TEfficiency* rebinTEff3DMap(TEfficiency* TEff3DMap, Int_t ptMin = 0, Int_t ptMax
 		for (Int_t iRow = 0; iRow < nPhiBins; iRow++) {
 			TEfficiency* TEffCosTheta = rebinTEff3DMapCosTheta(TEff3DMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, (Int_t)phiBinEdges[iRow], (Int_t)phiBinEdges[iRow + 1]);
 			TEfficiency* TEffCosThetaNeg = rebinTEff3DMapCosTheta(TEff3DMap, ptMin, ptMax, nCosThetaBins, cosThetaBinEdges, (Int_t)phiBinEdges[iRow + 1] * (-1.), (Int_t)phiBinEdges[iRow] * (-1.));
+			
+			TEffCosTheta->SetStatisticOption(gTEffStatOption);
+			TEffCosThetaNeg->SetStatisticOption(gTEffStatOption);
+
 			// std::cout << "Phi: " << phiBinEdges[iRow] << " - " << phiBinEdges[iRow + 1] << std::endl;
 
 			TH1D* hPassedCosTheta = (TH1D*)TEffCosTheta->GetPassedHistogram();
@@ -736,6 +742,7 @@ TCanvas* DrawEfficiency2DHist(TEfficiency* effHist, Int_t ptMin, Int_t ptMax, In
 
 	/// Ndivision setting for the analysis binning (costheta: 5 bins from -0.7 to 0.7, phi: 7 bins from -180 to 240)
 	frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+	// frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins / 2.));
 	// frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins) - 2);
 	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins) - nLegendRows);
 
@@ -963,7 +970,7 @@ TEfficiency* DrawEffxAcc1DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t
 	return EffxAccHist;
 }
 
-void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t displayValues = kFALSE, Bool_t displayErrors = kFALSE, Bool_t displayYieldValues = kTRUE, const char* extraString = "", Bool_t isPhiFolded = kFALSE) {
+void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, Int_t ptMax, Int_t nCosThetaBins = 5, const std::vector<Double_t>& cosThetaBinEdges = {}, Int_t nPhiBins = 5, const std::vector<Double_t>& phiBinEdges = {}, Int_t iState = gUpsilonState, Bool_t displayValues = kFALSE, Bool_t displayErrors = kFALSE, Bool_t displayYieldValues = kTRUE, const char* extraString = "", Bool_t isPhiFolded = kFALSE, int nLegendRows = 1) {
 	TCanvas* canvas = new TCanvas("EffxAccCosThetaPhi", "", 680, 600);
 
 	canvas->SetRightMargin(0.18);
@@ -975,7 +982,7 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	TEfficiency* EffxAccHist = MultiplyTEfficiencies2D(accHist, effHist);
 
 	// empty frame for the axes
-	TH2D* frameHist2D = new TH2D("frameHist2D", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * 2);
+	TH2D* frameHist2D = new TH2D("frameHist2D", "", nCosThetaBins, cosThetaBinEdges.data(), nPhiBins, phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * nLegendRows);
 
 	frameHist2D->Draw("COLZ");
 
@@ -993,12 +1000,13 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	legend.SetTextSize(0.04);
 	legend.DrawLatexNDC(.48, .86, Form("%s < 2.4, %s", gDimuonRapidityVarTitle, DimuonPtRangeText(ptMin, ptMax)));
 
-	if (strcmp(extraString, "_TriggerAcc") == 0)
-		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
-	else if (strcmp(extraString, "_SimpleAcc") == 0)
-		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
-	else if (strcmp(extraString, "_2018PbPbAcc") == 0)
-		legend.DrawLatexNDC(.48, .80, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
+	if (strcmp(extraString, "UpsilonTriggerThresholds") == 0)
+		// legend.DrawLatexNDC(.48, .83, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+		legend.DrawLatexNDC(.48, .8, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, %s", iState, gMuonPtCutText));
+	else if (strcmp(extraString, "SimpleAcc") == 0)
+		legend.DrawLatexNDC(.48, .83, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 3.5 GeV/#it{c}", iState));
+	else if (strcmp(extraString, "2018PbPbAcc") == 0)
+		legend.DrawLatexNDC(.48, .83, Form("#varUpsilon(%dS) acc. for |#eta^{#mu}| < 2.4, #it{p}_{T}^{ #mu} > 2018PbPbAcc", iState));
 
 	const char* refFrameName = "";
 
@@ -1028,26 +1036,28 @@ void DrawEffxAcc2DHist(TEfficiency* accHist, TEfficiency* effHist, Int_t ptMin, 
 	frameHist2D->GetYaxis()->SetTitleOffset(1.2);
 
 	frameHist2D->GetXaxis()->SetRangeUser(cosThetaBinEdges[0], cosThetaBinEdges[nCosThetaBins]);
-	frameHist2D->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * 2);
+	frameHist2D->GetYaxis()->SetRangeUser(phiBinEdges[0], phiBinEdges[nPhiBins] + phiStep * nLegendRows);
 
 	double maxEffxAcc = GetMaxEfficiencyValue(*EffxAccHist);
 	frameHist2D->GetZaxis()->SetRangeUser(0, maxEffxAcc);
 	// frameHist2D->GetZaxis()->SetRangeUser(0, 1);
 
-	// /// Ndivision setting for the analysis binning (costheta: 5 bins from -0.7 to 0.7, phi: 10 bins from -180 to 280)
-	// frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
-	// frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins)-1);
+	/// Ndivision setting for the analysis binning (costheta: 5 bins from -0.7 to 0.7, phi: 7 bins from -180 to 240)
+	frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins));
+	// frameHist2D->GetXaxis()->SetNdivisions(-500 - (nCosThetaBins / 2.));
+	// frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins) - 2);
+	frameHist2D->GetYaxis()->SetNdivisions(-500 - (nPhiBins) - nLegendRows);
 
-	/// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 23 bins from -180 to 280)
-	frameHist2D->GetXaxis()->SetNdivisions(-210); //cosTheta
-	frameHist2D->GetYaxis()->SetNdivisions(-308); //phi
+	// /// Ndivision setting for the finer binning (costheta: 20 bins from -1 to 1, phi: 23 bins from -180 to 280)
+	// frameHist2D->GetXaxis()->SetNdivisions(-210); //cosTheta
+	// frameHist2D->GetYaxis()->SetNdivisions(-308); //phi
 
 	frameHist2D->GetXaxis()->SetLabelSize(0.045);
 	frameHist2D->GetYaxis()->SetLabelSize(0.045);
 
 	// if (displayYieldsValues) displayYields(EffxAccHist, nCosThetaBins, nPhiBins);
 	std::string prefix = Form("RawYields/ExpTimesErr_SymDSCB_cent0to90_absy0p0to2p4_pt%dto%d", ptMin, ptMax);
-	std::string postfix = Form("%s%s%s", refFrameName, gMuonAccName.Data(), extraString);
+	std::string postfix = Form("%s%s", refFrameName, extraString);
 
 	if (displayYieldValues) displayYields(EffxAccHist, nCosThetaBins, nPhiBins, prefix, postfix);
 
