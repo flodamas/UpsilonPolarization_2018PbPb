@@ -63,14 +63,17 @@ TPad* drawPulls(TEfficiency* positiveHist, TEfficiency* negativeHist, const char
 	frameHist->GetYaxis()->SetTitle("Pull");
 	frameHist->GetYaxis()->SetTitleOffset(0.37);
 	frameHist->GetYaxis()->SetTitleSize(0.18);
-	frameHist->GetYaxis()->SetLabelSize(0.15);
+	frameHist->GetYaxis()->SetLabelSize(0.13);
 	frameHist->GetYaxis()->CenterTitle();
 
 	if (isCosTheta) frameHist->GetXaxis()->SetNdivisions(-5);
 	else frameHist->GetXaxis()->SetNdivisions(-6);
 
-	frameHist->GetYaxis()->SetRangeUser(-4.5, 4.5);
-	frameHist->GetYaxis()->SetNdivisions(405);
+	// frameHist->GetYaxis()->SetRangeUser(-4.5, 4.5);
+	// frameHist->GetYaxis()->SetRangeUser(-6.5, 6.5);
+	frameHist->GetYaxis()->SetRangeUser(-6.8, 6.8);
+	frameHist->GetYaxis()->SetNdivisions(407);
+
 
 	/// Create a new graph
 	TGraphErrors* pullGraph = new TGraphErrors(nBins);
@@ -137,6 +140,9 @@ TPad* drawPulls(TEfficiency* positiveHist, TEfficiency* negativeHist, const char
 	TLine* line4 = drawLine(xmin, 4, xmax, 4);
 	TLine* line_4 = drawLine(xmin, -4, xmax, -4);
 
+	TLine* line6 = drawLine(xmin, 6, xmax, 6);
+	TLine* line_6 = drawLine(xmin, -6, xmax, -6);
+
 	/// Draw the graph
 	pullGraph->Draw("P");	
 
@@ -186,8 +192,8 @@ TPad* drawPulls(TH1D* positiveHist, TH1D* negativeHist, const char* xTitle, bool
 	if (isCosTheta) frameHist->GetXaxis()->SetNdivisions(-5);
 	else frameHist->GetXaxis()->SetNdivisions(-6);
 
-	frameHist->GetYaxis()->SetRangeUser(-4.5, 4.5);
-	frameHist->GetYaxis()->SetNdivisions(405);
+	frameHist->GetYaxis()->SetRangeUser(-6.5, 6.5);
+	frameHist->GetYaxis()->SetNdivisions(-304);
 
 	/// Create a new graph
 	TGraphErrors* pullGraph = new TGraphErrors(nBins);
@@ -290,17 +296,19 @@ std::vector<std::vector<TEfficiency*>> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t
 	TString MuonAccName = "";
 	TString accFileName = "";
 
-	if (accName == TString("MuonUpsilonTriggerAcc")) MuonAccName = "_TriggerAcc";
-	else if (accName == TString("MuonWithin2018PbPbAcc")) MuonAccName = "_2018PbPbAcc";
-	else if (accName == TString("MuonSimpleAcc")) MuonAccName = "_SimpleAcc";
-	else if (accName == TString("test")) MuonAccName = "_test";
+	if (accName == TString("MuonUpsilonTriggerAcc")) MuonAccName = "UpsilonTriggerThresholds";
+	else if (accName == TString("MuonWithin2018PbPbAcc")) MuonAccName = "2018PbPbAcc";
+	else if (accName == TString("MuonSimpleAcc")) MuonAccName = "SimpleAcc";
 	else {
 		cout << "Invalid acceptance name. Please choose from 'MuonUpsilonTriggerAcc', 'MuonWithin2018PbPbAcc', or 'MuonSimpleAcc'." << endl;
-		return {};
+		exit(1);
 	}
 
-	if (isPhiFolded == kTRUE) accFileName = Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", MuonAccName.Data());
-	else accFileName = Form("./AcceptanceMaps/1S/AcceptanceResults%s_fullPhi.root", MuonAccName.Data());
+	// if (isPhiFolded == kTRUE) accFileName = Form("./AcceptanceMaps/1S/AcceptanceResults%s.root", MuonAccName.Data());
+	// else accFileName = Form("./AcceptanceMaps/1S/AcceptanceResults%s_fullPhi.root", MuonAccName.Data());
+
+	accFileName = Form("./AcceptanceMaps/%s/AcceptanceResults_dimuonPtWeight_fullPhi_50M_kFNormal.root", MuonAccName.Data());
+	// accFileName = ("./AcceptanceMaps/FlatMuonPt3p5Cut/AcceptanceResults_dimuonPtWeight_fullPhi_FlatAcc_10M.root");
 
 	TFile* acceptanceFile = openFile(accFileName);
 	cout << accFileName << " opened" << endl;
@@ -322,8 +330,10 @@ std::vector<std::vector<TEfficiency*>> accEffplots_3Dto1D(Int_t ptMin = 0, Int_t
 	/// get efficiency maps
 	TString effFileName = "";
 
-	if (isPhiFolded == kTRUE) effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", MuonAccName.Data());
-	else effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s_fullPhi.root", MuonAccName.Data());
+	// if (isPhiFolded == kTRUE) effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s.root", MuonAccName.Data());
+	// else effFileName = Form("./EfficiencyMaps/1S/EfficiencyResults%s_fullPhi.root", MuonAccName.Data());
+
+	effFileName = Form("./EfficiencyMaps/%s/EfficiencyResults_fullPhi_kFNormal.root", MuonAccName.Data());
 
 	TFile* efficiencyFile = openFile(effFileName);
 	auto* effMap = (TEfficiency*)efficiencyFile->Get(nominalMapName);
@@ -444,7 +454,8 @@ void accEffplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const char*
 		pad1->SetRightMargin(0.03);
 
 		frameHist1D[plotTypeBin]->Draw("same");
-		frameHist1D[plotTypeBin]->GetYaxis()->SetRangeUser(0, 1.4);
+		// frameHist1D[plotTypeBin]->GetYaxis()->SetRangeUser(0, 1.4);
+		frameHist1D[plotTypeBin]->GetYaxis()->SetRangeUser(0, 1.6);
 
 		/// Set the axis titles
 		TString xTitle = "";
@@ -556,7 +567,7 @@ void scan_accEffplots_3Dto1D_comparison(){
 
 	// for (int ptBin = 0; ptBin < NPtBins; ++ptBin) {
 	for (int ptBin = 1; ptBin < NPtBins; ++ptBin) {
-		for (int cosThetaBin = 3; cosThetaBin < NCosThetaBins; ++cosThetaBin) {
+		for (int cosThetaBin = 0; cosThetaBin < NCosThetaBins; ++cosThetaBin) {
 			for (int refFrame = 0; refFrame < 2; ++refFrame) {
 				accEffplots_3Dto1D_comparison(gPtBinning[ptBin], gPtBinning[ptBin + 1], refFrame == 0 ? "CS" : "HX", 1, gCosThetaBinning[cosThetaBin], gCosThetaBinning[cosThetaBin + 1], 6, -180, 180, gUpsilonState, kFALSE, kFALSE, "MuonUpsilonTriggerAcc");
 			}
@@ -717,7 +728,8 @@ void accEffDenplots_3Dto1D_comparison(Int_t ptMin = 2, Int_t ptMax = 6, const ch
 		}
 
 		/// set the range of the y-axis
-		frameHist1D[plotTypeBin]->GetYaxis()->SetRangeUser(0, max(positiveDenHist[plotTypeBin]->GetMaximum(), negativeDenHist[plotTypeBin]->GetMaximum()) * 1.4);
+		// frameHist1D[plotTypeBin]->GetYaxis()->SetRangeUser(0, max(positiveDenHist[plotTypeBin]->GetMaximum(), negativeDenHist[plotTypeBin]->GetMaximum()) * 1.4);
+		frameHist1D[plotTypeBin]->GetYaxis()->SetRangeUser(0, max(positiveDenHist[plotTypeBin]->GetMaximum(), negativeDenHist[plotTypeBin]->GetMaximum()) * 1.6);
 
 		/// draw acceptance x efficiency 1D histograms for positive and negative sides
 		positiveDenHist[plotTypeBin]->Draw("EP same");
