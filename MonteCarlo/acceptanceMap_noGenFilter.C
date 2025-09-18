@@ -220,6 +220,7 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 			// pt Weight at gen level
 			double gen_QQ_pt = gen_QQ_LV->Pt();
 			dimuonPtWeight = Get_GenPtWeight(gen_QQ_LV->Rapidity(), gen_QQ_pt);
+			// dimuonPtWeight = 1.;
 
 			// cout << "iEvent: " << iEvent << endl;
 			// cout << "iGen: " << iGen << endl;
@@ -279,9 +280,9 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 			if (gen_QQ_LV->Pt() > ptMin && gen_QQ_LV->Pt() < ptMax) { // pt bin of interest for the other distributions
 
 				hGranularCS->FillWeighted(withinAcceptance, weightCS, cosThetaCS, phiCS);
-				hAnalysisCS->FillWeighted(withinAcceptance, weightHX, cosThetaCS, phiCS);
+				hAnalysisCS->FillWeighted(withinAcceptance, weightCS, cosThetaCS, phiCS);
 
-				hGranularHX->FillWeighted(withinAcceptance, weightCS, cosThetaHX, phiHX);
+				hGranularHX->FillWeighted(withinAcceptance, weightHX, cosThetaHX, phiHX);
 				hAnalysisHX->FillWeighted(withinAcceptance, weightHX, cosThetaHX, phiHX);
 
 				//	hGranularLab->Fill(withinAcceptance, gen_mupl_LV->CosTheta(), gen_mupl_LV->Phi() * 180 / TMath::Pi());
@@ -334,7 +335,8 @@ void acceptanceMap_noGenFilter(Int_t ptMin = 0, Int_t ptMax = 30, Bool_t isPhiFo
 
 	gSystem->mkdir(path, kTRUE);
 	const char* outputFileName = Form("%s/AcceptanceResults_dimuonPtWeight%s_file%d.root", path, isPhiFolded ? "" : "_fullPhi", fileIndex);
-	// const char* outputFileName = Form("%s/AcceptanceResults_dimuonPtWeight%s_50M.root", path, isPhiFolded ? "" : "_fullPhi");
+	// const char* outputFileName = Form("%s/AcceptanceResults%s_file%d.root", path, isPhiFolded ? "" : "_fullPhi", fileIndex);
+	// const char* outputFileName = Form("%s/AcceptanceResults_dimuonPtWeight%s_FlatAcc_10M.root", path, isPhiFolded ? "" : "_fullPhi");
 
 	TFile outputFile(outputFileName, "UPDATE");
 
@@ -401,10 +403,12 @@ void run_acceptanceMap_noGenFilter(Long64_t totNEvent = 50000000, Long64_t step 
 
 		cout << "Processing events from " << startEvent << " to " << endEvent << endl;
 
-		gSystem->Exec(Form("root -l -b -q 'acceptanceMap_noGenFilter.C+(0, 30, kFALSE, \"%s\", %f, %f, %f, 1, %lld, %lld, %lld)'", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, startEvent, endEvent, startEvent / step));
+		gSystem->Exec(Form("root -l -b -q '../MonteCarlo/acceptanceMap_noGenFilter.C+(0, 30, kFALSE, \"%s\", %f, %f, %f, 1, %lld, %lld, %lld)'", gMuonAccName.Data(), lambdaTheta, lambdaPhi, lambdaThetaPhi, startEvent, endEvent, startEvent / step));
 	}
 
-	mergeAcceptanceOutputs("AcceptanceResults_dimuonPtWeight_fullPhi_50M_kFNormal.root", "AcceptanceResults_dimuonPtWeight_fullPhi_file",  gMuonAccName);
-
+	// mergeAcceptanceOutputs("AcceptanceResults_dimuonPtWeight_fullPhi_50M_kFNormal.root", "AcceptanceResults_dimuonPtWeight_fullPhi_file",  gMuonAccName);
+	mergeAcceptanceOutputs("AcceptanceResults_dimuonPtWeight_fullPhi_10M_kFNormal.root", "AcceptanceResults_dimuonPtWeight_fullPhi_file",  gMuonAccName);
+	// mergeAcceptanceOutputs("AcceptanceResults_fullPhi_10M_kFNormal.root", "AcceptanceResults_fullPhi_file",  gMuonAccName);
+	
 	return;
 }
