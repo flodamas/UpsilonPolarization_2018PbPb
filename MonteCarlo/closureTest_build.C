@@ -587,7 +587,8 @@ void getPolarizedMCHist(TH2D* angDistHist2D, TString refFrameName = "CS",
 
     /// read the input MC file
 
-    const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_noMassCut.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+    // const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_noMassCut.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
+    const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
     // const char* inputFileName = Form("../Files/Y1SReconstructedMCWeightedDataset_%s_Lambda_Theta%.2f_Phi%.2f_ThetaPhi%.2f_HydjetWeight.root", gMuonAccName, lambdaTheta, lambdaPhi, lambdaThetaPhi);
 
     TFile* infile = TFile::Open(Form("../Files/%s", inputFileName), "READ");
